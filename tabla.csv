@@ -1,0 +1,101 @@
+Numero,Coach,Academia,Modalidad,Nombres de participantes / Equipo,Numero de integrantes,Categoría
+1,Sofía Iturbe,Sparkle Cheer Studio,Grupal,Sparkle Tiny Stars,15,Tiny
+2,Sofía Iturbe,Sparkle Cheer Studio,Solista,Camila Rodríguez,1,Tiny
+3,Regina Casillas,Glitter & Tumbling School,Grupal,Glitter Tiny Sparks,14,Tiny
+4,Paulina Elizondo,Dynamic Dance Center,Solista,Elena Torres,1,Tiny
+5,Natalia Ontiveros,Royal Cheer Elementary,Grupal,Royal Tiny Princesses,16,Tiny
+6,Ximena Alcántara,Cheer Diamonds Academy,Solista,Valentina Rios,1,Tiny
+7,Santiago Tovar,Apex Cheer Athletics,Grupal,Apex Tiny Titans,18,Tiny
+8,Miranda Solís,Gravity Tumbling,Dueto,Ana y Sofía,2,Tiny
+9,Regina Casillas,Glitter & Tumbling School,Solista,Lucía Méndez,1,Tiny
+10,Ximena Alcántara,Cheer Diamonds Academy,Trío,Mía Fer y Vale,3,Tiny
+11,Sofía Iturbe,Sparkle Cheer Studio,Grupal,Sparkle Mini Stars,19,Mini
+12,Camila Trejo,Pink Bows Cheer Athletics,Grupal,Pink Bows Mini,20,Mini
+13,Sofía Iturbe,Sparkle Cheer Studio,Solista,Natalia Herrera,1,Mini
+14,Regina Casillas,Glitter & Tumbling School,Grupal,Glitter Mini Crew,17,Mini
+15,Valeria Reséndiz,Flyers & Motion Academy,Solista,Victoria Luján,1,Mini
+16,Natalia Ontiveros,Royal Cheer Elementary,Grupal,Royal Mini Squad,15,Mini
+17,Camila Trejo,Pink Bows Cheer Athletics,Solista,Daniela Castro,1,Mini
+18,Renata Barrientos,Starlets Cheer Academy,Grupal,Starlets Mini,21,Mini
+19,Paulina Elizondo,Dynamic Dance Center,Dueto,Emma y Sara,2,Mini
+20,Mateo Palacios,Thunder Cheer & Tumbling,Grupal,Thunder Mini Squad,18,Mini
+21,Miranda Solís,Gravity Tumbling,Solista,Isabella Rojas,1,Mini
+22,Ximena Alcántara,Cheer Diamonds Academy,Solista,Pau Lau,1,Mini
+23,Daniela Murillo,Golden Spirit Cheer,Grupal,Golden Basic Team,22,Elementary Basic
+24,Daniela Murillo,Golden Spirit Cheer,Solista,Romina Flores,1,Elementary Basic
+25,Mariana Zúñiga,Twist & Shout Cheer Space,Grupal,Twist Basic Stars,20,Elementary Basic
+26,Paulina Elizondo,Dynamic Dance Center,Grupal,Dynamic Basic Elite,24,Elementary Basic
+27,Sofía Iturbe,Sparkle Cheer Studio,Solista,Abril Ortiz,1,Elementary Basic
+28,Romina Cavazos,Elevation Cheer,Grupal,Elevation Basic,19,Elementary Basic
+29,Camila Trejo,Pink Bows Cheer Athletics,Dueto,Ximena y Reny,2,Elementary Basic
+30,Santiago Tovar,Apex Cheer Athletics,Grupal,Apex Basic Force,23,Elementary Basic
+31,Regina Casillas,Glitter & Tumbling School,Solista,Alondra Villa,1,Elementary Basic
+32,Damián Franco,Impact Cheer Space,Grupal,Impact Basic Team,18,Elementary Basic
+33,Fernanda Esquivel,Starlight All-Stars,Solista,Ivanna Luna,1,Elementary Basic
+34,Mariana Zúñiga,Twist & Shout Cheer Space,Trío,Fer Ana y Zoe,3,Elementary Basic
+35,Andrea Villalobos,Vibe Cheer & Tumble,Solista,Paula Nava,1,Elementary Basic
+36,Daniela Murillo,Golden Spirit Cheer,Grupal,Golden Queens Adv,25,Elementary Adv
+37,Daniela Murillo,Golden Spirit Cheer,Solista,Montse Silva,1,Elementary Adv
+38,Camila Trejo,Pink Bows Cheer Athletics,Grupal,Pink Force Adv,24,Elementary Adv
+39,Ximena Alcántara,Cheer Diamonds Academy,Grupal,Diamonds Adv Squad,22,Elementary Adv
+40,Andrea Villalobos,Vibe Cheer & Tumble,Grupal,Vibe Elite Adv,21,Elementary Adv
+41,Fernanda Esquivel,Starlight All-Stars,Grupal,Starlight Adv Stars,20,Elementary Adv
+42,Valeria Reséndiz,Flyers & Motion Academy,Solista,Rebeca Sosa,1,Elementary Adv
+43,Gael Quintanilla,Titanium All-Stars,Grupal,Titanium Adv Force,19,Elementary Adv
+44,Romina Cavazos,Elevation Cheer,Dueto,Lia y Fer,2,Elementary Adv
+45,Paulina Elizondo,Dynamic Dance Center,Solista,Karla Peña,1,Elementary Adv
+46,Mariana Zúñiga,Twist & Shout Cheer Space,Solista,Aitana Gomez,1,Elementary Adv
+47,Ximena Alcántara,Cheer Diamonds Academy,Trío,Ami Eli y Luz,3,Elementary Adv
+48,Fernanda Esquivel,Starlight All-Stars,Solista,Regina Lara,1,Elementary Adv
+49,Santiago Tovar,Apex Cheer Athletics,Solista,Alan Tovar,1,Elementary Adv
+50,Fernanda Esquivel,Starlight All-Stars,Grupal,Starlight Junior Elite,24,Junior
+51,Lupita Altamirano,Infinity Flyers Studio,Grupal,Infinity Junior Force,23,Junior
+52,Fernanda Esquivel,Starlight All-Stars,Solista,Jimena Leguizamo,1,Junior
+53,Jimena Leguizamo,Glow Cheer & Dance,Grupal,Glow Junior Team,20,Junior
+54,Lupita Altamirano,Infinity Flyers Studio,Solista,Dalia Contreras,1,Junior
+55,Mateo Palacios,Thunder Cheer & Tumbling,Grupal,Thunder Junior Squad,22,Junior
+56,Romina Cavazos,Elevation Cheer,Grupal,Elevation Junior,19,Junior
+57,Jimena Leguizamo,Glow Cheer & Dance,Dueto,Valeria y Sofia,2,Junior
+58,Paulina Elizondo,Dynamic Dance Center,Solista,Ilse Orozco,1,Junior
+59,Natalia Ontiveros,Royal Cheer Elementary,Dueto,Chelsy y Alexa,2,Junior
+60,Lupita Altamirano,Infinity Flyers Studio,Trío,Isa Mar y Sol,3,Junior
+61,Daniela Murillo,Golden Spirit Cheer,Solista,Melanie Rios,1,Junior
+62,Mateo Palacios,Thunder Cheer & Tumbling,Solista,Natalia Mar,1,Junior
+63,Jimena Leguizamo,Glow Cheer & Dance,Grupal,Glow College Crew,23,College
+64,Gael Quintanilla,Titanium All-Stars,Grupal,Titanium College Force,21,College
+65,Andrea Villalobos,Vibe Cheer & Tumble,Grupal,Vibe College AllStars,22,College
+66,Jimena Leguizamo,Glow Cheer & Dance,Solista,Christian Matus,1,College
+67,Gael Quintanilla,Titanium All-Stars,Solista,Fer Salcido,1,College
+68,Damián Franco,Impact Cheer Space,Grupal,Impact College Elite,20,College
+69,Andrea Villalobos,Vibe Cheer & Tumble,Dueto,Tanairy y Mya,2,College
+70,Ximena Alcántara,Cheer Diamonds Academy,Solista,Bianca Méndez,1,College
+71,Gael Quintanilla,Titanium All-Stars,Trío,Gael Max y Leo,3,College
+72,Valeria Reséndiz,Flyers & Motion Academy,Solista,Paola Long,1,College
+73,Damián Franco,Impact Cheer Space,Solista,Sebastian Rey,1,College
+74,Fernanda Esquivel,Starlight All-Stars,Grupal,Starlight Open Elite,25,Open
+75,Ximena Alcántara,Cheer Diamonds Academy,Grupal,Diamonds Open Squad,24,Open
+76,Santiago Tovar,Apex Cheer Athletics,Grupal,Apex Alpha Squad,23,Open
+77,Mateo Palacios,Thunder Cheer & Tumbling,Grupal,Thunder Open Elite,22,Open
+78,Damián Franco,Impact Cheer Space,Grupal,Impact Open Crew,20,Open
+79,Fernanda Esquivel,Starlight All-Stars,Solista,Valeria Ramírez,1,Open
+80,Ximena Alcántara,Cheer Diamonds Academy,Dueto,Monika y Fer,2,Open
+81,Lupita Altamirano,Infinity Flyers Studio,Solista,Victoria Sánchez,1,Open
+82,Mariana Zúñiga,Twist & Shout Cheer Space,Solista,Leonora Bravo,1,Open
+83,Sofía Iturbe,Sparkle Cheer Studio,Solista,Ian Ramírez,1,Open
+84,Gael Quintanilla,Titanium All-Stars,Solista,Paola Castillo,1,Open
+85,Romina Cavazos,Elevation Cheer,Solista,Erik Iglesias,1,Open
+86,Camila Trejo,Pink Bows Cheer Athletics,Solista,Victoria Sánchez,1,Open
+87,Daniela Murillo,Golden Spirit Cheer,Trío,Ilse Orozco y Chelsey,3,Open
+88,Andrea Villalobos,Vibe Cheer & Tumble,Solista,Valeria Ramírez,1,Open
+89,Jimena Leguizamo,Glow Cheer & Dance,Solista,Bianca Méndez,1,Open
+90,Natalia Ontiveros,Royal Cheer Elementary,Solista,Fer Salcido,1,Open
+91,Santiago Tovar,Apex Cheer Athletics,Solista,Christian Matus,1,Open
+92,Regina Casillas,Glitter & Tumbling School,Grupal,Glitter Open Legends,21,Open
+93,Paulina Elizondo,Dynamic Dance Center,Solista,Alan Tovar,1,Open
+94,Miranda Solís,Gravity Tumbling,Solista,Dalia Contreras,1,Open
+95,Lupita Altamirano,Infinity Flyers Studio,Dueto,Julieta y Montse,2,Open
+96,Renata Barrientos,Starlets Cheer Academy,Solista,Aitana Gomez,1,Open
+97,Damián Franco,Impact Cheer Space,Solista,Sebastian Rey,1,Open
+98,Fernanda Esquivel,Starlight All-Stars,Trío,Leonora y Valeria,3,Open
+99,Mateo Palacios,Thunder Cheer & Tumbling,Solista,Paola Long,1,Open
+100,Ximena Alcántara,Cheer Diamonds Academy,Solista,Karla Peña,1,Open
