@@ -1010,38 +1010,38 @@ function StepView(props: {
 
     case 'instruction_1': {
       return (
-        <div className="flex flex-col justify-center max-w-xl mx-auto py-4 space-y-6">
-          <div className="text-center space-y-2">
-            <p className="font-display text-xs tracking-[0.4em] text-[#1E414C]">PASO 1 DE 2</p>
-            <h2 className="font-display text-3xl lg:text-4xl text-[#1A1D1E]">REGLAS Y CATEGORÍAS</h2>
+        <div className="flex flex-col justify-center max-w-xl mx-auto py-2 lg:py-4 space-y-3 lg:space-y-6">
+          <div className="text-center space-y-0.5 lg:space-y-2">
+            <p className="font-display text-[10px] lg:text-xs tracking-[0.4em] text-[#1E414C]">PASO 1 DE 2</p>
+            <h2 className="font-display text-2xl lg:text-4xl text-[#1A1D1E]">REGLAS Y CATEGORÍAS</h2>
           </div>
 
-          <div className="space-y-4">
-            <div className="bg-white border border-[#C2BCB0] rounded-2xl p-5 shadow-sm space-y-3 flex items-start gap-4 active:scale-[0.99] transition-all duration-150">
-              <span className="shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-[#1E414C] text-white font-display font-bold">1</span>
-              <div className="space-y-1">
-                <h4 className="font-display text-base text-[#1E414C] tracking-wider uppercase">Categorías de Edad</h4>
-                <p className="text-sm text-[#3D4143] leading-relaxed">
-                  Se calculan automáticamente según la fecha de nacimiento de cada participante. Si la categoría automática no coincide, puedes cambiarla manualmente antes de finalizar.
+          <div className="space-y-2 lg:space-y-4">
+            <div className="bg-white border border-[#C2BCB0] rounded-2xl p-3 lg:p-5 shadow-sm flex items-start gap-3 lg:gap-4 active:scale-[0.99] transition-all duration-150">
+              <span className="shrink-0 flex items-center justify-center w-6 h-6 lg:w-8 lg:h-8 rounded-full bg-[#1E414C] text-white font-display text-xs lg:text-base font-bold">1</span>
+              <div className="space-y-0.5">
+                <h4 className="font-display text-xs lg:text-base text-[#1E414C] tracking-wider uppercase font-semibold">Categorías de Edad</h4>
+                <p className="text-[11px] lg:text-sm text-[#3D4143] leading-relaxed">
+                  Se calculan automáticamente según la fecha de nacimiento. Si la categoría automática no coincide, puedes cambiarla manualmente antes de finalizar.
                 </p>
               </div>
             </div>
 
-            <div className="bg-white border border-[#C2BCB0] rounded-2xl p-5 shadow-sm space-y-3 flex items-start gap-4 active:scale-[0.99] transition-all duration-150">
-              <span className="shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-[#1E414C] text-white font-display font-bold">2</span>
-              <div className="space-y-1">
-                <h4 className="font-display text-base text-[#1E414C] tracking-wider uppercase">Integrantes del Equipo</h4>
-                <p className="text-sm text-[#3D4143] leading-relaxed">
-                  Registra a todos tus alumnos/as primero. Debes contar a todos los que bailarán, incluyendo solistas, duetos, tríos y grupales.
+            <div className="bg-white border border-[#C2BCB0] rounded-2xl p-3 lg:p-5 shadow-sm flex items-start gap-3 lg:gap-4 active:scale-[0.99] transition-all duration-150">
+              <span className="shrink-0 flex items-center justify-center w-6 h-6 lg:w-8 lg:h-8 rounded-full bg-[#1E414C] text-white font-display text-xs lg:text-base font-bold">2</span>
+              <div className="space-y-0.5">
+                <h4 className="font-display text-xs lg:text-base text-[#1E414C] tracking-wider uppercase font-semibold">Integrantes del Equipo</h4>
+                <p className="text-[11px] lg:text-sm text-[#3D4143] leading-relaxed">
+                  Registra a todos tus alumnos/as primero. Cuenta a todos los que bailarán, incluyendo solistas, duetos, tríos y grupales.
                 </p>
               </div>
             </div>
 
-            <div className="bg-white border border-[#C2BCB0] rounded-2xl p-5 shadow-sm space-y-3 flex items-start gap-4 active:scale-[0.99] transition-all duration-150">
-              <span className="shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-[#1E414C] text-white font-display font-bold">3</span>
-              <div className="space-y-1">
-                <h4 className="font-display text-base text-[#1E414C] tracking-wider uppercase">Nombre de Equipo</h4>
-                <p className="text-sm text-[#3D4143] leading-relaxed">
+            <div className="bg-white border border-[#C2BCB0] rounded-2xl p-3 lg:p-5 shadow-sm flex items-start gap-3 lg:gap-4 active:scale-[0.99] transition-all duration-150">
+              <span className="shrink-0 flex items-center justify-center w-6 h-6 lg:w-8 lg:h-8 rounded-full bg-[#1E414C] text-white font-display text-xs lg:text-base font-bold">3</span>
+              <div className="space-y-0.5">
+                <h4 className="font-display text-xs lg:text-base text-[#1E414C] tracking-wider uppercase font-semibold">Nombre de Equipo</h4>
+                <p className="text-[11px] lg:text-sm text-[#3D4143] leading-relaxed">
                   Si el nombre de tu equipo coincide con el de tu academia o escuela, puedes dejar el campo vacío y presionar "Siguiente".
                 </p>
               </div>
@@ -1050,7 +1050,7 @@ function StepView(props: {
 
           <button
             onClick={onNext}
-            className="w-full bg-[#1E414C] active:bg-[#122C34] hover:bg-[#122C34] text-white font-display text-xl tracking-widest py-4 rounded-2xl transition-all shadow-md active:scale-[0.98] duration-150"
+            className="w-full bg-[#1E414C] active:bg-[#122C34] hover:bg-[#122C34] text-white font-display text-lg lg:text-xl tracking-widest py-3 lg:py-4 rounded-2xl transition-all shadow-md active:scale-[0.98] duration-150"
           >
             ENTENDIDO, SIGUIENTE PASO
           </button>
@@ -1060,38 +1060,38 @@ function StepView(props: {
 
     case 'instruction_2': {
       return (
-        <div className="flex flex-col justify-center max-w-xl mx-auto py-4 space-y-6">
-          <div className="text-center space-y-2">
-            <p className="font-display text-xs tracking-[0.4em] text-[#1E414C]">PASO 2 DE 2</p>
-            <h2 className="font-display text-3xl lg:text-4xl text-[#1A1D1E]">ACTOS Y COSTOS</h2>
+        <div className="flex flex-col justify-center max-w-xl mx-auto py-2 lg:py-4 space-y-3 lg:space-y-6">
+          <div className="text-center space-y-0.5 lg:space-y-2">
+            <p className="font-display text-[10px] lg:text-xs tracking-[0.4em] text-[#1E414C]">PASO 2 DE 2</p>
+            <h2 className="font-display text-2xl lg:text-4xl text-[#1A1D1E]">ACTOS Y COSTOS</h2>
           </div>
 
-          <div className="space-y-4">
-            <div className="bg-white border border-[#C2BCB0] rounded-2xl p-5 shadow-sm space-y-3 flex items-start gap-4 active:scale-[0.99] transition-all duration-150">
-              <span className="shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-[#1E414C] text-white font-display font-bold">4</span>
-              <div className="space-y-1">
-                <h4 className="font-display text-base text-[#1E414C] tracking-wider uppercase">Registro de Actos</h4>
-                <p className="text-sm text-[#3D4143] leading-relaxed">
+          <div className="space-y-2 lg:space-y-4">
+            <div className="bg-white border border-[#C2BCB0] rounded-2xl p-3 lg:p-5 shadow-sm flex items-start gap-3 lg:gap-4 active:scale-[0.99] transition-all duration-150">
+              <span className="shrink-0 flex items-center justify-center w-6 h-6 lg:w-8 lg:h-8 rounded-full bg-[#1E414C] text-white font-display text-xs lg:text-base font-bold">4</span>
+              <div className="space-y-0.5">
+                <h4 className="font-display text-xs lg:text-base text-[#1E414C] tracking-wider uppercase font-semibold">Registro de Actos</h4>
+                <p className="text-[11px] lg:text-sm text-[#3D4143] leading-relaxed">
                   Registra tus actos en orden, de la categoría de edad más joven a la más alta (por ejemplo: Tiny → Mini → Elementary → Junior → Senior → College → Open).
                 </p>
               </div>
             </div>
 
-            <div className="bg-white border border-[#C2BCB0] rounded-2xl p-5 shadow-sm space-y-3 flex items-start gap-4 active:scale-[0.99] transition-all duration-150">
-              <span className="shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-[#1E414C] text-white font-display font-bold">5</span>
-              <div className="space-y-1">
-                <h4 className="font-display text-base text-[#1E414C] tracking-wider uppercase">Cálculo de Costos</h4>
-                <p className="text-sm text-[#3D4143] leading-relaxed">
+            <div className="bg-white border border-[#C2BCB0] rounded-2xl p-3 lg:p-5 shadow-sm flex items-start gap-3 lg:gap-4 active:scale-[0.99] transition-all duration-150">
+              <span className="shrink-0 flex items-center justify-center w-6 h-6 lg:w-8 lg:h-8 rounded-full bg-[#1E414C] text-white font-display text-xs lg:text-base font-bold">5</span>
+              <div className="space-y-0.5">
+                <h4 className="font-display text-xs lg:text-base text-[#1E414C] tracking-wider uppercase font-semibold">Cálculo de Costos</h4>
+                <p className="text-[11px] lg:text-sm text-[#3D4143] leading-relaxed">
                   El sistema calculará automáticamente el costo de la primera participación (paquete inicial) y el costo de las repeticiones o grupales correspondientes.
                 </p>
               </div>
             </div>
 
-            <div className="bg-white border border-[#C2BCB0] rounded-2xl p-5 shadow-sm space-y-3 flex items-start gap-4 active:scale-[0.99] transition-all duration-150">
-              <span className="shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-[#1E414C] text-white font-display font-bold">6</span>
-              <div className="space-y-1">
-                <h4 className="font-display text-base text-[#1E414C] tracking-wider uppercase">Revisión Final</h4>
-                <p className="text-sm text-[#3D4143] leading-relaxed">
+            <div className="bg-white border border-[#C2BCB0] rounded-2xl p-3 lg:p-5 shadow-sm flex items-start gap-3 lg:gap-4 active:scale-[0.99] transition-all duration-150">
+              <span className="shrink-0 flex items-center justify-center w-6 h-6 lg:w-8 lg:h-8 rounded-full bg-[#1E414C] text-white font-display text-xs lg:text-base font-bold">6</span>
+              <div className="space-y-0.5">
+                <h4 className="font-display text-xs lg:text-base text-[#1E414C] tracking-wider uppercase font-semibold">Revisión Final</h4>
+                <p className="text-[11px] lg:text-sm text-[#3D4143] leading-relaxed">
                   Al final del flujo tendrás una pantalla de resumen completa donde podrás editar cualquier dato antes de confirmar de forma definitiva tu registro.
                 </p>
               </div>
@@ -1100,7 +1100,7 @@ function StepView(props: {
 
           <button
             onClick={onNext}
-            className="w-full bg-[#9E4F36] active:bg-[#7D3D2A] hover:bg-[#7D3D2A] text-white font-display text-xl tracking-widest py-4 rounded-2xl transition-all shadow-md active:scale-[0.98] duration-150"
+            className="w-full bg-[#9E4F36] active:bg-[#7D3D2A] hover:bg-[#7D3D2A] text-white font-display text-lg lg:text-xl tracking-widest py-3 lg:py-4 rounded-2xl transition-all shadow-md active:scale-[0.98] duration-150"
           >
             COMENZAR REGISTRO
           </button>
