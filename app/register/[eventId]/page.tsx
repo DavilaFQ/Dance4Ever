@@ -540,7 +540,7 @@ export default function RegisterPage({ params }: Props) {
       </div>
 
       <main
-        className="flex-1 min-h-0 px-4 lg:px-8 pt-3 lg:pt-5 flex flex-col overflow-hidden"
+        className="flex-1 min-h-0 px-4 lg:px-8 pt-3 lg:pt-5 flex flex-col overflow-y-auto lg:overflow-hidden"
         style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 16px)' }}
       >
         {/* DESKTOP HEADER */}
@@ -570,7 +570,7 @@ export default function RegisterPage({ params }: Props) {
         </div>
 
         <div className="flex-1 min-h-0 flex justify-center">
-          <div className={`w-full ${step.kind === 'summary' || step.kind === 'confirmed' || step.kind === 'dancer' ? '' : 'max-w-5xl'} h-full flex flex-col justify-center min-h-0`}>
+          <div className={`w-full ${step.kind === 'summary' || step.kind === 'confirmed' || step.kind === 'dancer' ? '' : 'max-w-5xl'} min-h-full lg:h-full flex flex-col justify-center min-h-0`}>
             <StepView
               step={step}
               state={state}
@@ -1000,7 +1000,6 @@ function StepView(props: {
             autoCorrect="off"
             placeholder={state.academy}
             className="w-full bg-white border border-[#C2BCB0] text-[#1A1D1E] text-3xl rounded-2xl px-6 py-5 outline-none focus:border-[#1E414C] focus:ring-1 focus:ring-[#1E414C] text-center placeholder:text-[#3D4143]/60 transition-all shadow-sm"
-            autoFocus
           />
           <p className="text-[#9E4F36] text-base text-center italic font-medium">
             Si el equipo se llama igual que la escuela/academia, deja vacío y dale a Siguiente.
@@ -1062,7 +1061,6 @@ function StepView(props: {
                     placeholder="Nombre y apellidos"
                     className="w-full bg-white border border-[#C2BCB0] text-[#1A1D1E] text-xl rounded-2xl px-5 h-16 outline-none focus:border-[#1E414C] focus:ring-1 focus:ring-[#1E414C] text-center placeholder:text-[#3D4143]/60 transition-all shadow-sm"
                     autoCapitalize="words"
-                    autoFocus
                   />
                 </div>
                 <div>
@@ -1485,7 +1483,6 @@ function FieldStep({ title, hint, notice, value, onChange, onNext, disabled, typ
         autoCapitalize={autoCapitalize ?? 'words'}
         autoCorrect="off"
         className="w-full bg-white border border-[#C2BCB0] text-[#1A1D1E] text-2xl lg:text-4xl rounded-2xl px-4 py-4 lg:px-6 lg:py-6 outline-none focus:border-[#1E414C] focus:ring-1 focus:ring-[#1E414C] text-center transition-all shadow-sm"
-        autoFocus
       />
       {notice && (
         <p className="text-[#9E4F36] text-sm lg:text-lg text-center italic font-medium">{notice}</p>
@@ -1582,7 +1579,6 @@ function NumberInput({ value, onChange, max, disabled, onEnter }: {
       onKeyDown={e => { if (e.key === 'Enter' && onEnter) onEnter() }}
       disabled={disabled}
       className="w-full max-w-xs mx-auto block bg-white border border-[#C2BCB0] text-[#1A1D1E] text-5xl text-center rounded-2xl h-20 outline-none focus:border-[#1E414C] focus:ring-1 focus:ring-[#1E414C] font-display disabled:opacity-60 transition-all shadow-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-      autoFocus
     />
   )
 }
@@ -1687,7 +1683,7 @@ function Wrapper({ title, subtitle, children }: { title: string, subtitle?: stri
         {subtitle && <p className="font-display text-xs tracking-[0.4em] text-[#1E414C]">{subtitle}</p>}
         <h2 className="font-display text-2xl md:text-4xl lg:text-5xl leading-tight px-2 text-[#1A1D1E]">{title}</h2>
       </div>
-      <div className="flex-1 min-h-0 flex flex-col justify-start lg:justify-center gap-5 lg:gap-8">
+      <div className="flex-1 min-h-0 flex flex-col justify-center gap-5 lg:gap-8">
         {children}
       </div>
     </div>
