@@ -492,21 +492,43 @@ export default function RegisterPage({ params }: Props) {
 
   return (
     <div className="h-[100dvh] bg-neutral-900 text-white flex flex-col overflow-hidden">
-      <main className="flex-1 min-h-0 px-4 lg:px-8 pt-3 lg:pt-5 pb-2 lg:pb-4 flex flex-col overflow-hidden">
-        {/* MOBILE COMPACT HEADER */}
-        <div className="shrink-0 flex items-center gap-3 pb-2 lg:hidden">
-          <Image src="/logo.png" alt="Dance4ever" width={48} height={36} priority className="shrink-0 h-9 w-auto" />
-          <div className="min-w-0 flex-1">
-            <p className="font-display text-[10px] tracking-[0.3em] text-yellow-500 leading-none">REGISTRO PARA</p>
-            <p className="font-display text-base uppercase text-white truncate leading-tight mt-0.5">
-              {event?.name || 'EVENTO'}{event?.date ? ` · ${formatEventDate(event.date)}` : ''}
-            </p>
-          </div>
-          {editMode && (
-            <span className="shrink-0 bg-yellow-400/15 border border-yellow-400/40 text-yellow-400 px-2 py-0.5 rounded text-[10px] font-display tracking-wider">EDITANDO</span>
-          )}
+      {/* MOBILE HEADER — sticky, minimal, with safe-area top */}
+      <div
+        className="shrink-0 lg:hidden bg-neutral-900/90 backdrop-blur flex items-center gap-3 px-4 pb-3 border-b border-neutral-800/60"
+        style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 12px)' }}
+      >
+        {canBack && step.kind !== 'summary' ? (
+          <button
+            onClick={goBack}
+            className="shrink-0 inline-flex items-center justify-center text-yellow-500 active:opacity-60 h-10 w-10 -ml-2 rounded-full"
+            aria-label="Atrás"
+          >
+            <ArrowLeft className="w-6 h-6" />
+          </button>
+        ) : (
+          <Image src="/logo.png" alt="Dance4ever" width={44} height={33} priority className="shrink-0 h-8 w-auto" />
+        )}
+        <div className="min-w-0 flex-1">
+          <p className="font-display text-[10px] tracking-[0.3em] text-yellow-500 leading-none">REGISTRO PARA</p>
+          <p className="font-display text-sm uppercase text-white truncate leading-tight mt-1">
+            {event?.name || 'EVENTO'}{event?.date ? ` · ${formatEventDate(event.date)}` : ''}
+          </p>
         </div>
+        <a
+          href="https://wa.me/523337290374"
+          target="_blank"
+          rel="noreferrer"
+          className="shrink-0 inline-flex items-center justify-center h-10 w-10 -mr-2 rounded-full active:opacity-60"
+          aria-label="WhatsApp ayuda"
+        >
+          <MessageCircle className="w-6 h-6 text-green-500" />
+        </a>
+      </div>
 
+      <main
+        className="flex-1 min-h-0 px-4 lg:px-8 pt-3 lg:pt-5 flex flex-col overflow-hidden"
+        style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 16px)' }}
+      >
         {/* DESKTOP HEADER */}
         <div className="shrink-0 hidden lg:flex items-center gap-6 pb-4">
           <div className="shrink-0 flex items-baseline gap-5">
@@ -608,28 +630,6 @@ export default function RegisterPage({ params }: Props) {
         )}
       </div>
 
-      {/* MOBILE BOTTOM BAR */}
-      <div className="lg:hidden shrink-0 bg-black border-t border-neutral-800 px-3 py-2 flex items-center gap-2">
-        {canBack && step.kind !== 'summary' && (
-          <button
-            onClick={goBack}
-            className="shrink-0 inline-flex items-center justify-center bg-neutral-800 active:bg-neutral-700 text-yellow-500 h-12 w-12 rounded-lg border border-yellow-500/40"
-            aria-label="Atrás"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </button>
-        )}
-        <a
-          href="https://wa.me/523337290374"
-          target="_blank"
-          rel="noreferrer"
-          className="flex items-center justify-center gap-2 bg-neutral-800 active:bg-neutral-700 text-neutral-300 h-12 w-12 rounded-lg shrink-0"
-          aria-label="WhatsApp"
-        >
-          <MessageCircle className="w-5 h-5 text-green-500" />
-        </a>
-        <div className="flex-1" />
-      </div>
 
       {/* MOBILE BOTTOM SHEET: Lista de integrantes */}
       {mobileSheet === 'dancers' && (
@@ -1712,12 +1712,12 @@ function EditNotice({ text }: { text: string }) {
 
 function Wrapper({ title, subtitle, children }: { title: string, subtitle?: string, children: React.ReactNode }) {
   return (
-    <div className="space-y-5 lg:space-y-8">
+    <div className="flex flex-col h-full justify-start lg:justify-center pt-6 lg:pt-0 gap-6 lg:gap-8">
       <div className="text-center space-y-2 lg:space-y-3">
-        {subtitle && <p className="font-display text-sm lg:text-xl tracking-[0.4em] text-yellow-500">{subtitle}</p>}
-        <h2 className="font-display text-2xl md:text-4xl lg:text-6xl leading-tight">{title}</h2>
+        {subtitle && <p className="font-display text-xs lg:text-xl tracking-[0.4em] text-yellow-500">{subtitle}</p>}
+        <h2 className="font-display text-2xl md:text-4xl lg:text-6xl leading-tight px-2">{title}</h2>
       </div>
-      {children}
+      <div className="flex flex-col gap-5 lg:gap-8 px-1">{children}</div>
     </div>
   )
 }

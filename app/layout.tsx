@@ -16,6 +16,11 @@ const bebas = Bebas_Neue({
 export const metadata: Metadata = {
   title: "Dance4ever",
   description: "Programa en tiempo real de Dance4ever",
+  appleWebApp: {
+    capable: true,
+    title: "Dance4ever",
+    statusBarStyle: "black-translucent",
+  },
 };
 
 export const viewport: Viewport = {
