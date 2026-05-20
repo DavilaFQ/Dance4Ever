@@ -572,15 +572,15 @@ export default function RegisterPage({ params }: Props) {
   if (authState === 'loading') {
     return (
       <Centered>
-        <p className="font-display text-3xl tracking-widest text-[#B91C1C] animate-pulse">CARGANDO…</p>
+        <p className="font-display text-3xl tracking-widest text-[rgb(var(--c-primary))] animate-pulse">CARGANDO…</p>
       </Centered>
     )
   }
   if (authState === 'invalid') {
     return (
       <Centered>
-        <p className="font-display text-4xl tracking-widest text-[#EA580C]">LINK INVÁLIDO</p>
-        <p className="text-[#334155] text-center text-lg mt-2">Verifica el enlace o ponte en contacto con los organizadores.</p>
+        <p className="font-display text-4xl tracking-widest text-[rgb(var(--c-accent))]">LINK INVÁLIDO</p>
+        <p className="text-[rgb(var(--c-text))] text-center text-lg mt-2">Verifica el enlace o ponte en contacto con los organizadores.</p>
       </Centered>
     )
   }
@@ -590,21 +590,21 @@ export default function RegisterPage({ params }: Props) {
 
   return (
     <div
-      className="bg-[#F6F4EF] text-[#1A1D1E] flex flex-col overflow-hidden font-sans select-none w-full"
+      className="bg-[rgb(var(--c-surface))] text-[rgb(var(--c-text-strong))] flex flex-col overflow-hidden font-sans select-none w-full"
       style={{ height: 'var(--viewport-height, 100dvh)' }}
     >
       {showSuccessSplash && (
-        <div className="fixed inset-0 z-[9999] bg-[#2A5C4E] text-white flex flex-col items-center justify-center p-6" style={{ animation: 'fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards' }}>
+        <div className="fixed inset-0 z-[9999] bg-[rgb(var(--c-success))] text-white flex flex-col items-center justify-center p-6" style={{ animation: 'fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards' }}>
           <div className="text-center space-y-6 max-w-md mx-auto">
             <div className="flex justify-center">
               <div className="bg-white/10 p-6 rounded-full ring-8 ring-white/5 animate-bounce">
-                <Check className="w-20 h-20 text-[#F6F4EF]" strokeWidth={3} />
+                <Check className="w-20 h-20 text-[rgb(var(--c-surface))]" strokeWidth={3} />
               </div>
             </div>
-            <h1 className="font-display text-4xl lg:text-5xl font-bold tracking-wider leading-tight text-[#F6F4EF]">
+            <h1 className="font-display text-4xl lg:text-5xl font-bold tracking-wider leading-tight text-[rgb(var(--c-surface))]">
               ¡REGISTRO EXITOSO!
             </h1>
-            <p className="text-lg lg:text-xl text-[#F6F4EF]/90 leading-relaxed font-medium">
+            <p className="text-lg lg:text-xl text-[rgb(var(--c-surface)/0.9)] leading-relaxed font-medium">
               Registraste con éxito tu academia/equipo.
             </p>
           </div>
@@ -618,7 +618,7 @@ export default function RegisterPage({ params }: Props) {
           to { opacity: 1; transform: scale(1); }
         }
         html, body {
-          background-color: #F6F4EF !important;
+          background-color: rgb(var(--c-surface)) !important;
           overflow: hidden !important;
           position: fixed !important;
           width: 100% !important;
@@ -641,23 +641,23 @@ export default function RegisterPage({ params }: Props) {
         {/* DESKTOP HEADER */}
         <div className="shrink-0 hidden lg:flex items-center gap-6 pb-4">
           <div className="shrink-0 flex items-baseline gap-5">
-            <p className="font-display text-3xl lg:text-4xl tracking-[0.3em] text-[#B91C1C] leading-none">REGISTRO PARA</p>
-            <h1 className="font-display text-3xl lg:text-4xl uppercase text-[#1A1D1E] truncate leading-none">{event?.name || 'EVENTO'}</h1>
-            {event?.date && <p className="font-display text-3xl lg:text-4xl uppercase text-[#334155] leading-none">{formatEventDate(event.date)}</p>}
+            <p className="font-display text-3xl lg:text-4xl tracking-[0.3em] text-[rgb(var(--c-primary))] leading-none">REGISTRO PARA</p>
+            <h1 className="font-display text-3xl lg:text-4xl uppercase text-[rgb(var(--c-text-strong))] truncate leading-none">{event?.name || 'EVENTO'}</h1>
+            {event?.date && <p className="font-display text-3xl lg:text-4xl uppercase text-[rgb(var(--c-text))] leading-none">{formatEventDate(event.date)}</p>}
           </div>
           <div className="flex-1" />
           {(step.kind === 'summary' || step.kind === 'confirmed') && (
             <div className="text-right self-center shrink-0">
-              <h2 className="font-display text-3xl lg:text-4xl uppercase text-[#B91C1C] leading-tight">
+              <h2 className="font-display text-3xl lg:text-4xl uppercase text-[rgb(var(--c-primary))] leading-tight">
                 {step.kind === 'confirmed' ? 'REGISTRO CONFIRMADO' : 'REVISA TU REGISTRO'}
               </h2>
-              <p className="font-display text-base lg:text-lg tracking-[0.4em] text-[#B91C1C]/70 leading-none mt-2">
+              <p className="font-display text-base lg:text-lg tracking-[0.4em] text-[rgb(var(--c-primary)/0.7)] leading-none mt-2">
                 {step.kind === 'confirmed' ? '¡GRACIAS!' : editMode ? 'EDITA Y VUELVE A CONFIRMAR' : 'SI TODO ES CORRECTO, CONFIRMA'}
               </p>
             </div>
           )}
           {editMode && (
-            <div className="bg-[#EA580C]/10 border border-[#EA580C]/30 text-[#EA580C] px-3 py-1.5 rounded-xl font-display text-xs tracking-widest self-center">
+            <div className="bg-[rgb(var(--c-accent)/0.1)] border border-[rgb(var(--c-accent)/0.3)] text-[rgb(var(--c-accent))] px-3 py-1.5 rounded-xl font-display text-xs tracking-widest self-center">
               MODO EDICIÓN
             </div>
           )}
@@ -699,13 +699,13 @@ export default function RegisterPage({ params }: Props) {
       {/* MOBILE BOTTOM BAR — sticky at the bottom, hidden when keyboard is open */}
       {!isKeyboardOpen && !(step.kind === 'welcome' || step.kind === 'instruction_1' || step.kind === 'instruction_2' || step.kind === 'summary' || step.kind === 'confirmed') && (
         <div
-          className="shrink-0 lg:hidden bg-[#F6F4EF]/95 backdrop-blur flex items-center gap-4 px-5 py-3 border-t border-[#C2BCB0]/50"
+          className="shrink-0 lg:hidden bg-[rgb(var(--c-surface)/0.95)] backdrop-blur flex items-center gap-4 px-5 py-3 border-t border-[rgb(var(--c-border)/0.5)]"
           style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 8px)' }}
         >
           {canBack ? (
             <button
               onClick={goBack}
-              className="shrink-0 inline-flex items-center justify-center text-[#B91C1C] active:opacity-60 h-10 w-10 -ml-2 rounded-full active:scale-95 transition-all duration-150"
+              className="shrink-0 inline-flex items-center justify-center text-[rgb(var(--c-primary))] active:opacity-60 h-10 w-10 -ml-2 rounded-full active:scale-95 transition-all duration-150"
               aria-label="Atrás"
             >
               <ArrowLeft className="w-6 h-6" />
@@ -716,15 +716,15 @@ export default function RegisterPage({ params }: Props) {
           
           <div className="min-w-0 flex-1 flex items-center gap-2.5">
             <div className="truncate">
-              <p className="font-display text-[9px] tracking-[0.25em] text-[#B91C1C]/80 leading-none font-bold">REGISTRO PARA</p>
-              <p className="font-display text-sm uppercase text-[#1A1D1E] truncate leading-tight mt-1 font-bold">
+              <p className="font-display text-[9px] tracking-[0.25em] text-[rgb(var(--c-primary)/0.8)] leading-none font-bold">REGISTRO PARA</p>
+              <p className="font-display text-sm uppercase text-[rgb(var(--c-text-strong))] truncate leading-tight mt-1 font-bold">
                 {event?.name || 'EVENTO'}{event?.date ? ` · ${formatEventDate(event.date)}` : ''}
               </p>
             </div>
             {step.kind === 'dancer' && (
               <button
                 onClick={() => setMobileSheet('dancers')}
-                className="shrink-0 inline-flex items-center gap-1 bg-[#2A5C4E]/10 text-[#2A5C4E] border border-[#2A5C4E]/30 px-3 py-1.5 rounded-full font-display text-xs tracking-wider font-bold active:scale-95 transition-all duration-150"
+                className="shrink-0 inline-flex items-center gap-1 bg-[rgb(var(--c-success)/0.1)] text-[rgb(var(--c-success))] border border-[rgb(var(--c-success)/0.3)] px-3 py-1.5 rounded-full font-display text-xs tracking-wider font-bold active:scale-95 transition-all duration-150"
               >
                 <Check className="w-3.5 h-3.5" />
                 <span>{state.dancers.filter(x => x.name.trim().length >= 2 && x.birthdate.length === 10).length}/{state.teamSize ?? 0} REG.</span>
@@ -739,7 +739,7 @@ export default function RegisterPage({ params }: Props) {
             className="shrink-0 inline-flex items-center justify-center h-10 w-10 -mr-2 rounded-full active:scale-95 transition-all duration-150"
             aria-label="WhatsApp ayuda"
           >
-            <MessageCircle className="w-6 h-6 text-[#2A5C4E]" />
+            <MessageCircle className="w-6 h-6 text-[rgb(var(--c-success))]" />
           </a>
         </div>
       )}
@@ -752,12 +752,12 @@ export default function RegisterPage({ params }: Props) {
               href="https://wa.me/523337290374"
               target="_blank"
               rel="noreferrer"
-              className="flex items-center gap-3 text-[#334155] hover:text-[#B91C1C] transition-all group active:scale-98"
+              className="flex items-center gap-3 text-[rgb(var(--c-text))] hover:text-[rgb(var(--c-primary))] transition-all group active:scale-98"
             >
-              <MessageCircle className="w-5 h-5 text-[#2A5C4E] group-hover:text-[#164235] shrink-0" />
+              <MessageCircle className="w-5 h-5 text-[rgb(var(--c-success))] group-hover:text-[rgb(var(--c-success-strong))] shrink-0" />
               <span className="text-sm md:text-base">
                 ¿Dudas o ayuda? Escríbenos por WhatsApp:{' '}
-                <span className="font-display tracking-wider text-[#B91C1C] group-hover:text-[#7F1D1D]">333 729 0374</span>
+                <span className="font-display tracking-wider text-[rgb(var(--c-primary))] group-hover:text-[rgb(var(--c-primary-strong))]">333 729 0374</span>
               </span>
             </a>
           </div>
@@ -767,7 +767,7 @@ export default function RegisterPage({ params }: Props) {
               {canBack && (
                 <button
                   onClick={goBack}
-                  className="inline-flex items-center gap-3 bg-[#E8E3D5] hover:bg-[#DDD8CA] active:bg-[#C2BCB0] text-[#B91C1C] font-display text-base tracking-[0.2em] uppercase px-4 py-2 rounded-xl transition-all border border-[#C2BCB0]/50 active:scale-95"
+                  className="inline-flex items-center gap-3 bg-[rgb(var(--c-surface-2))] hover:bg-[rgb(var(--c-surface-3))] active:bg-[rgb(var(--c-border))] text-[rgb(var(--c-primary))] font-display text-base tracking-[0.2em] uppercase px-4 py-2 rounded-xl transition-all border border-[rgb(var(--c-border)/0.5)] active:scale-95"
                 >
                   <ArrowLeft className="w-5 h-5" />
                   REGRESAR
@@ -778,12 +778,12 @@ export default function RegisterPage({ params }: Props) {
               href="https://wa.me/523337290374"
               target="_blank"
               rel="noreferrer"
-              className="flex items-center gap-3 text-[#334155] hover:text-[#B91C1C] transition-all group active:scale-98"
+              className="flex items-center gap-3 text-[rgb(var(--c-text))] hover:text-[rgb(var(--c-primary))] transition-all group active:scale-98"
             >
-              <MessageCircle className="w-5 h-5 text-[#2A5C4E] group-hover:text-[#164235] shrink-0" />
+              <MessageCircle className="w-5 h-5 text-[rgb(var(--c-success))] group-hover:text-[rgb(var(--c-success-strong))] shrink-0" />
               <span className="text-sm md:text-base text-right">
                 ¿Dudas o ayuda? Escríbenos por WhatsApp:{' '}
-                <span className="font-display tracking-wider text-[#B91C1C] group-hover:text-[#7F1D1D]">333 729 0374</span>
+                <span className="font-display tracking-wider text-[rgb(var(--c-primary))] group-hover:text-[rgb(var(--c-primary-strong))]">333 729 0374</span>
               </span>
             </a>
           </div>
@@ -795,18 +795,18 @@ export default function RegisterPage({ params }: Props) {
       {mobileSheet === 'dancers' && (
         <div className="lg:hidden fixed inset-0 z-50 flex items-end" onClick={() => setMobileSheet(null)}>
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
-          <div className="relative w-full bg-[#F6F4EF] border-t-2 border-[#B91C1C] rounded-t-3xl max-h-[80vh] flex flex-col shadow-[0_-8px_30px_rgba(0,0,0,0.08)]" onClick={e => e.stopPropagation()}>
-            <div className="shrink-0 flex items-center justify-between px-5 py-4 border-b border-[#C2BCB0]/40">
-              <p className="font-display text-base tracking-[0.3em] text-[#B91C1C]">
+          <div className="relative w-full bg-[rgb(var(--c-surface))] border-t-2 border-[rgb(var(--c-primary))] rounded-t-3xl max-h-[80vh] flex flex-col shadow-[0_-8px_30px_rgba(0,0,0,0.08)]" onClick={e => e.stopPropagation()}>
+            <div className="shrink-0 flex items-center justify-between px-5 py-4 border-b border-[rgb(var(--c-border)/0.4)]">
+              <p className="font-display text-base tracking-[0.3em] text-[rgb(var(--c-primary))]">
                 ALUMNOS/AS · {state.dancers.filter(d => d.name.trim().length >= 2 && d.birthdate.length === 10).length}/{state.dancers.length}
               </p>
-              <button onClick={() => setMobileSheet(null)} className="text-[#334155] active:text-[#1A1D1E] active:scale-90 transition-all">
+              <button onClick={() => setMobileSheet(null)} className="text-[rgb(var(--c-text))] active:text-[rgb(var(--c-text-strong))] active:scale-90 transition-all">
                 <X className="w-6 h-6" />
               </button>
             </div>
             <div className="flex-1 min-h-0 overflow-y-auto p-3 space-y-1">
               {state.dancers.filter(d => d.name.trim().length > 0).length === 0 ? (
-                <p className="text-[#334155] italic text-sm text-center py-10">Aún no has registrado alumnos/as</p>
+                <p className="text-[rgb(var(--c-text))] italic text-sm text-center py-10">Aún no has registrado alumnos/as</p>
               ) : (
                 state.dancers.map((d, i) => {
                   if (!d.name.trim()) return null
@@ -817,7 +817,7 @@ export default function RegisterPage({ params }: Props) {
                       key={i}
                       onClick={() => { setStep({ kind: 'dancer', i }); setMobileSheet(null) }}
                       className={`w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 active:scale-[0.98] transition-all duration-150 ${
-                        isCurrent ? 'bg-[#B91C1C] text-white shadow-md' : complete ? 'bg-[#2A5C4E]/10 text-[#2A5C4E] active:bg-[#2A5C4E]/20' : 'bg-[#EA580C]/10 text-[#EA580C] active:bg-[#EA580C]/20'
+                        isCurrent ? 'bg-[rgb(var(--c-primary))] text-white shadow-md' : complete ? 'bg-[rgb(var(--c-success)/0.1)] text-[rgb(var(--c-success))] active:bg-[rgb(var(--c-success)/0.2)]' : 'bg-[rgb(var(--c-accent)/0.1)] text-[rgb(var(--c-accent))] active:bg-[rgb(var(--c-accent)/0.2)]'
                       }`}
                     >
                       <span className="font-display text-sm opacity-60 w-6 text-center shrink-0">{i + 1}</span>
@@ -834,17 +834,17 @@ export default function RegisterPage({ params }: Props) {
 
       {editMenu && (
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-6" onClick={() => setEditMenu(null)}>
-          <div className="bg-[#F6F4EF] border border-[#C2BCB0] rounded-3xl max-w-2xl w-full max-h-full overflow-hidden flex flex-col shadow-2xl" onClick={e => e.stopPropagation()}>
-            <div className="bg-[#E8E3D5] px-6 py-4 flex items-center justify-between shrink-0 border-b border-[#C2BCB0]">
-              <h3 className="font-display text-2xl tracking-widest text-[#B91C1C]">
+          <div className="bg-[rgb(var(--c-surface))] border border-[rgb(var(--c-border))] rounded-3xl max-w-2xl w-full max-h-full overflow-hidden flex flex-col shadow-2xl" onClick={e => e.stopPropagation()}>
+            <div className="bg-[rgb(var(--c-surface-2))] px-6 py-4 flex items-center justify-between shrink-0 border-b border-[rgb(var(--c-border))]">
+              <h3 className="font-display text-2xl tracking-widest text-[rgb(var(--c-primary))]">
                 {editMenu === 'main' ? '¿QUÉ DESEAS EDITAR?' : editMenu === 'pick_dancer' ? 'ELIGE EL ALUMNO/A' : 'ELIGE EL ACTO'}
               </h3>
-              <button onClick={() => setEditMenu(null)} className="text-[#334155] hover:text-[#1A1D1E] active:scale-90 transition-all"><X className="w-6 h-6" /></button>
+              <button onClick={() => setEditMenu(null)} className="text-[rgb(var(--c-text))] hover:text-[rgb(var(--c-text-strong))] active:scale-90 transition-all"><X className="w-6 h-6" /></button>
             </div>
             <div className="flex-1 min-h-0 overflow-y-auto p-5 space-y-3">
               {editMenu === 'main' && (
                 <>
-                  <p className="text-sm text-[#334155] text-center mb-2">Al editar, se borrará lo capturado en esa sección para llenarlo de nuevo.</p>
+                  <p className="text-sm text-[rgb(var(--c-text))] text-center mb-2">Al editar, se borrará lo capturado en esa sección para llenarlo de nuevo.</p>
                   <EditMenuButton label="DATOS DEL COACH" sub={state.coach.name} onClick={() => startEditScope({ kind: 'coach' })} />
                   <EditMenuButton label="ACADEMIA · EQUIPO" sub={`${state.academy} — ${state.teamName}`} onClick={() => startEditScope({ kind: 'academy' })} />
                   <EditMenuButton label={`ALUMNO/A (${state.dancers.length})`} sub="Editar un integrante" onClick={() => setEditMenu('pick_dancer')} />
@@ -897,10 +897,10 @@ function EditMenuButton({ label, sub, onClick }: { label: string, sub?: string, 
   return (
     <button
       onClick={onClick}
-      className="w-full text-left bg-white border border-[#C2BCB0] hover:bg-[#E8E3D5] active:bg-[#E8E3D5] px-5 py-4 rounded-2xl transition-all shadow-sm active:scale-[0.98] duration-150"
+      className="w-full text-left bg-white border border-[rgb(var(--c-border))] hover:bg-[rgb(var(--c-surface-2))] active:bg-[rgb(var(--c-surface-2))] px-5 py-4 rounded-2xl transition-all shadow-sm active:scale-[0.98] duration-150"
     >
-      <div className="font-display text-xl uppercase text-[#B91C1C]">{label}</div>
-      {sub && <div className="text-sm text-[#334155] mt-1 truncate">{sub}</div>}
+      <div className="font-display text-xl uppercase text-[rgb(var(--c-primary))]">{label}</div>
+      {sub && <div className="text-sm text-[rgb(var(--c-text))] mt-1 truncate">{sub}</div>}
     </button>
   )
 }
@@ -1046,26 +1046,26 @@ function StepView(props: {
         <div className="flex flex-col items-center justify-center text-center space-y-6 max-w-xl mx-auto py-4">
           <Image src="/logo.png" alt="Dance4ever" width={160} height={120} priority className="mix-blend-multiply active:scale-95 transition-all duration-150" />
           <div className="space-y-2">
-            <p className="font-sans text-xs tracking-widest text-[#B91C1C] font-medium">SISTEMA OFICIAL DE REGISTRO</p>
-            <h2 className="font-sans text-3xl lg:text-4xl text-[#1A1D1E] font-semibold tracking-tight">{event?.name || 'EVENTO'}</h2>
+            <p className="font-sans text-xs tracking-widest text-[rgb(var(--c-primary))] font-medium">SISTEMA OFICIAL DE REGISTRO</p>
+            <h2 className="font-sans text-3xl lg:text-4xl text-[rgb(var(--c-text-strong))] font-semibold tracking-tight">{event?.name || 'EVENTO'}</h2>
             {event?.date && (
-              <p className="font-sans text-base lg:text-lg text-[#334155] font-normal">{eventCity} · {formatEventDate(event.date)}</p>
+              <p className="font-sans text-base lg:text-lg text-[rgb(var(--c-text))] font-normal">{eventCity} · {formatEventDate(event.date)}</p>
             )}
           </div>
 
-          <div className="w-full bg-[#E8E3D5]/40 border border-[#C2BCB0]/50 rounded-2xl p-5 space-y-4 text-left shadow-sm">
+          <div className="w-full bg-[rgb(var(--c-surface-2)/0.4)] border border-[rgb(var(--c-border)/0.5)] rounded-2xl p-5 space-y-4 text-left shadow-sm">
             <div className="space-y-0.5">
-              <p className="text-xs font-sans text-[#334155]/70">FECHA LÍMITE DE REGISTRO</p>
-              <p className="text-lg text-[#B91C1C] font-medium">{regDeadline}</p>
+              <p className="text-xs font-sans text-[rgb(var(--c-text)/0.7)]">FECHA LÍMITE DE REGISTRO</p>
+              <p className="text-lg text-[rgb(var(--c-primary))] font-medium">{regDeadline}</p>
             </div>
-            <div className="h-px bg-[#C2BCB0]/30" />
+            <div className="h-px bg-[rgb(var(--c-border)/0.3)]" />
             <div className="space-y-0.5">
-              <p className="text-xs font-sans text-[#334155]/70">FECHA LÍMITE PARA CAMBIOS</p>
-              <p className="text-lg text-[#EA580C] font-medium">{chgDeadline}</p>
+              <p className="text-xs font-sans text-[rgb(var(--c-text)/0.7)]">FECHA LÍMITE PARA CAMBIOS</p>
+              <p className="text-lg text-[rgb(var(--c-accent))] font-medium">{chgDeadline}</p>
             </div>
           </div>
 
-          <div className="flex items-start gap-3 bg-[#EA580C]/10 border border-[#EA580C]/30 text-[#EA580C] px-5 py-4 rounded-2xl text-left">
+          <div className="flex items-start gap-3 bg-[rgb(var(--c-accent)/0.1)] border border-[rgb(var(--c-accent)/0.3)] text-[rgb(var(--c-accent))] px-5 py-4 rounded-2xl text-left">
             <Info className="w-5 h-5 shrink-0 mt-0.5" />
             <p className="text-xs lg:text-sm leading-snug">
               <strong>Atención:</strong> Por favor, lee con mucho cuidado todas las instrucciones y pasos del proceso. Esto garantizará que las categorías de tus alumnos, el costo de tus paquetes y el registro de tus actos sean 100% correctos.
@@ -1074,7 +1074,7 @@ function StepView(props: {
 
           <button
             onClick={onNext}
-            className="w-full bg-[#B91C1C] active:bg-[#7F1D1D] hover:bg-[#7F1D1D] text-white font-display text-xl tracking-widest py-4 rounded-2xl transition-all shadow-md active:scale-[0.98] duration-150"
+            className="w-full bg-[rgb(var(--c-primary))] active:bg-[rgb(var(--c-primary-strong))] hover:bg-[rgb(var(--c-primary-strong))] text-white font-display text-xl tracking-widest py-4 rounded-2xl transition-all shadow-md active:scale-[0.98] duration-150"
           >
             ENTENDIDO, LEER INSTRUCCIONES
           </button>
@@ -1086,36 +1086,36 @@ function StepView(props: {
       return (
         <div className="flex flex-col justify-center w-full max-w-2xl mx-auto py-1 px-0 space-y-3 lg:space-y-6">
           <div className="text-center space-y-0.5 lg:space-y-2">
-            <p className="font-display text-[10px] lg:text-sm tracking-[0.4em] text-[#B91C1C] font-bold">PASO 1 DE 2</p>
-            <h2 className="font-display text-2xl lg:text-4xl text-[#0B132B] font-bold">REGLAS Y CATEGORÍAS</h2>
+            <p className="font-display text-[10px] lg:text-sm tracking-[0.4em] text-[rgb(var(--c-primary))] font-bold">PASO 1 DE 2</p>
+            <h2 className="font-display text-2xl lg:text-4xl text-[rgb(var(--c-text-darkest))] font-bold">REGLAS Y CATEGORÍAS</h2>
           </div>
 
           <div className="space-y-2 lg:space-y-4">
-            <div className="bg-white border border-[#C2BCB0] rounded-xl p-3 lg:p-6 shadow-sm flex items-start gap-2.5 lg:gap-4 active:scale-[0.99] transition-all duration-150">
-              <span className="shrink-0 flex items-center justify-center w-6 h-6 lg:w-9 lg:h-9 rounded-full bg-[#B91C1C] text-white font-display text-xs lg:text-base font-bold">1</span>
+            <div className="bg-white border border-[rgb(var(--c-border))] rounded-xl p-3 lg:p-6 shadow-sm flex items-start gap-2.5 lg:gap-4 active:scale-[0.99] transition-all duration-150">
+              <span className="shrink-0 flex items-center justify-center w-6 h-6 lg:w-9 lg:h-9 rounded-full bg-[rgb(var(--c-primary))] text-white font-display text-xs lg:text-base font-bold">1</span>
               <div className="space-y-0.5">
-                <h4 className="font-display text-xs lg:text-lg text-[#B91C1C] tracking-wider uppercase font-bold">Categorías de Edad</h4>
-                <p className="text-xs lg:text-base text-[#1E293B] leading-snug">
+                <h4 className="font-display text-xs lg:text-lg text-[rgb(var(--c-primary))] tracking-wider uppercase font-bold">Categorías de Edad</h4>
+                <p className="text-xs lg:text-base text-[rgb(var(--c-text-darker))] leading-snug">
                   Se calculan automáticamente por fecha de nacimiento. Puedes cambiarla si es necesario.
                 </p>
               </div>
             </div>
 
-            <div className="bg-white border border-[#C2BCB0] rounded-xl p-3 lg:p-6 shadow-sm flex items-start gap-2.5 lg:gap-4 active:scale-[0.99] transition-all duration-150">
-              <span className="shrink-0 flex items-center justify-center w-6 h-6 lg:w-9 lg:h-9 rounded-full bg-[#B91C1C] text-white font-display text-xs lg:text-base font-bold">2</span>
+            <div className="bg-white border border-[rgb(var(--c-border))] rounded-xl p-3 lg:p-6 shadow-sm flex items-start gap-2.5 lg:gap-4 active:scale-[0.99] transition-all duration-150">
+              <span className="shrink-0 flex items-center justify-center w-6 h-6 lg:w-9 lg:h-9 rounded-full bg-[rgb(var(--c-primary))] text-white font-display text-xs lg:text-base font-bold">2</span>
               <div className="space-y-0.5">
-                <h4 className="font-display text-xs lg:text-lg text-[#B91C1C] tracking-wider uppercase font-bold">Integrantes del Equipo</h4>
-                <p className="text-xs lg:text-base text-[#1E293B] leading-snug">
+                <h4 className="font-display text-xs lg:text-lg text-[rgb(var(--c-primary))] tracking-wider uppercase font-bold">Integrantes del Equipo</h4>
+                <p className="text-xs lg:text-base text-[rgb(var(--c-text-darker))] leading-snug">
                   Registra a todos tus alumnos/as primero. Cuenta a todos: solistas, duetos, tríos y grupales.
                 </p>
               </div>
             </div>
 
-            <div className="bg-white border border-[#C2BCB0] rounded-xl p-3 lg:p-6 shadow-sm flex items-start gap-2.5 lg:gap-4 active:scale-[0.99] transition-all duration-150">
-              <span className="shrink-0 flex items-center justify-center w-6 h-6 lg:w-9 lg:h-9 rounded-full bg-[#B91C1C] text-white font-display text-xs lg:text-base font-bold">3</span>
+            <div className="bg-white border border-[rgb(var(--c-border))] rounded-xl p-3 lg:p-6 shadow-sm flex items-start gap-2.5 lg:gap-4 active:scale-[0.99] transition-all duration-150">
+              <span className="shrink-0 flex items-center justify-center w-6 h-6 lg:w-9 lg:h-9 rounded-full bg-[rgb(var(--c-primary))] text-white font-display text-xs lg:text-base font-bold">3</span>
               <div className="space-y-0.5">
-                <h4 className="font-display text-xs lg:text-lg text-[#B91C1C] tracking-wider uppercase font-bold">Nombre de Equipo</h4>
-                <p className="text-xs lg:text-base text-[#1E293B] leading-snug">
+                <h4 className="font-display text-xs lg:text-lg text-[rgb(var(--c-primary))] tracking-wider uppercase font-bold">Nombre de Equipo</h4>
+                <p className="text-xs lg:text-base text-[rgb(var(--c-text-darker))] leading-snug">
                   Si se llama igual que tu academia, puedes dejar el campo vacío y presionar "Siguiente".
                 </p>
               </div>
@@ -1124,7 +1124,7 @@ function StepView(props: {
 
           <button
             onClick={onNext}
-            className="w-full bg-[#B91C1C] active:bg-[#7F1D1D] hover:bg-[#7F1D1D] text-white font-display text-lg lg:text-xl tracking-widest py-4 rounded-2xl transition-all shadow-md active:scale-[0.98] duration-150 font-bold"
+            className="w-full bg-[rgb(var(--c-primary))] active:bg-[rgb(var(--c-primary-strong))] hover:bg-[rgb(var(--c-primary-strong))] text-white font-display text-lg lg:text-xl tracking-widest py-4 rounded-2xl transition-all shadow-md active:scale-[0.98] duration-150 font-bold"
           >
             ENTENDIDO, SIGUIENTE PASO
           </button>
@@ -1136,36 +1136,36 @@ function StepView(props: {
       return (
         <div className="flex flex-col justify-center w-full max-w-2xl mx-auto py-1 px-0 space-y-3 lg:space-y-6">
           <div className="text-center space-y-0.5 lg:space-y-2">
-            <p className="font-display text-[10px] lg:text-sm tracking-[0.4em] text-[#B91C1C] font-bold">PASO 2 DE 2</p>
-            <h2 className="font-display text-2xl lg:text-4xl text-[#0B132B] font-bold">ACTOS Y COSTOS</h2>
+            <p className="font-display text-[10px] lg:text-sm tracking-[0.4em] text-[rgb(var(--c-primary))] font-bold">PASO 2 DE 2</p>
+            <h2 className="font-display text-2xl lg:text-4xl text-[rgb(var(--c-text-darkest))] font-bold">ACTOS Y COSTOS</h2>
           </div>
 
           <div className="space-y-2 lg:space-y-4">
-            <div className="bg-white border border-[#C2BCB0] rounded-xl p-3 lg:p-6 shadow-sm flex items-start gap-2.5 lg:gap-4 active:scale-[0.99] transition-all duration-150">
-              <span className="shrink-0 flex items-center justify-center w-6 h-6 lg:w-9 lg:h-9 rounded-full bg-[#B91C1C] text-white font-display text-xs lg:text-base font-bold">4</span>
+            <div className="bg-white border border-[rgb(var(--c-border))] rounded-xl p-3 lg:p-6 shadow-sm flex items-start gap-2.5 lg:gap-4 active:scale-[0.99] transition-all duration-150">
+              <span className="shrink-0 flex items-center justify-center w-6 h-6 lg:w-9 lg:h-9 rounded-full bg-[rgb(var(--c-primary))] text-white font-display text-xs lg:text-base font-bold">4</span>
               <div className="space-y-0.5">
-                <h4 className="font-display text-xs lg:text-lg text-[#B91C1C] tracking-wider uppercase font-bold">Registro de Actos</h4>
-                <p className="text-xs lg:text-base text-[#1E293B] leading-snug">
+                <h4 className="font-display text-xs lg:text-lg text-[rgb(var(--c-primary))] tracking-wider uppercase font-bold">Registro de Actos</h4>
+                <p className="text-xs lg:text-base text-[rgb(var(--c-text-darker))] leading-snug">
                   Registra tus actos en orden, de la categoría más joven a la más alta (Tiny → Open).
                 </p>
               </div>
             </div>
 
-            <div className="bg-white border border-[#C2BCB0] rounded-xl p-3 lg:p-6 shadow-sm flex items-start gap-2.5 lg:gap-4 active:scale-[0.99] transition-all duration-150">
-              <span className="shrink-0 flex items-center justify-center w-6 h-6 lg:w-9 lg:h-9 rounded-full bg-[#B91C1C] text-white font-display text-xs lg:text-base font-bold">5</span>
+            <div className="bg-white border border-[rgb(var(--c-border))] rounded-xl p-3 lg:p-6 shadow-sm flex items-start gap-2.5 lg:gap-4 active:scale-[0.99] transition-all duration-150">
+              <span className="shrink-0 flex items-center justify-center w-6 h-6 lg:w-9 lg:h-9 rounded-full bg-[rgb(var(--c-primary))] text-white font-display text-xs lg:text-base font-bold">5</span>
               <div className="space-y-0.5">
-                <h4 className="font-display text-xs lg:text-lg text-[#B91C1C] tracking-wider uppercase font-bold">Cálculo de Costos</h4>
-                <p className="text-xs lg:text-base text-[#1E293B] leading-snug">
+                <h4 className="font-display text-xs lg:text-lg text-[rgb(var(--c-primary))] tracking-wider uppercase font-bold">Cálculo de Costos</h4>
+                <p className="text-xs lg:text-base text-[rgb(var(--c-text-darker))] leading-snug">
                   El sistema calculará automáticamente el paquete inicial y repeticiones grupales.
                 </p>
               </div>
             </div>
 
-            <div className="bg-white border border-[#C2BCB0] rounded-xl p-3 lg:p-6 shadow-sm flex items-start gap-2.5 lg:gap-4 active:scale-[0.99] transition-all duration-150">
-              <span className="shrink-0 flex items-center justify-center w-6 h-6 lg:w-9 lg:h-9 rounded-full bg-[#B91C1C] text-white font-display text-xs lg:text-base font-bold">6</span>
+            <div className="bg-white border border-[rgb(var(--c-border))] rounded-xl p-3 lg:p-6 shadow-sm flex items-start gap-2.5 lg:gap-4 active:scale-[0.99] transition-all duration-150">
+              <span className="shrink-0 flex items-center justify-center w-6 h-6 lg:w-9 lg:h-9 rounded-full bg-[rgb(var(--c-primary))] text-white font-display text-xs lg:text-base font-bold">6</span>
               <div className="space-y-0.5">
-                <h4 className="font-display text-xs lg:text-lg text-[#B91C1C] tracking-wider uppercase font-bold">Revisión Final</h4>
-                <p className="text-xs lg:text-base text-[#1E293B] leading-snug">
+                <h4 className="font-display text-xs lg:text-lg text-[rgb(var(--c-primary))] tracking-wider uppercase font-bold">Revisión Final</h4>
+                <p className="text-xs lg:text-base text-[rgb(var(--c-text-darker))] leading-snug">
                   Tendrás una pantalla de resumen completa para editar todo antes de confirmar.
                 </p>
               </div>
@@ -1174,7 +1174,7 @@ function StepView(props: {
 
           <button
             onClick={onNext}
-            className="w-full bg-[#EA580C] active:bg-[#9A3412] hover:bg-[#9A3412] text-white font-display text-lg lg:text-xl tracking-widest py-4 rounded-2xl transition-all shadow-md active:scale-[0.98] duration-150 font-bold animate-[pulse_2s_infinite]"
+            className="w-full bg-[rgb(var(--c-accent))] active:bg-[rgb(var(--c-accent-strong))] hover:bg-[rgb(var(--c-accent-strong))] text-white font-display text-lg lg:text-xl tracking-widest py-4 rounded-2xl transition-all shadow-md active:scale-[0.98] duration-150 font-bold animate-[pulse_2s_infinite]"
           >
             COMENZAR REGISTRO
           </button>
@@ -1248,12 +1248,12 @@ function StepView(props: {
                   value={e}
                   onChange={ev => updateCoach({ extras: extras.map((x, j) => j === i ? ev.target.value : x) })}
                   placeholder={`Coach ${i + 2}`}
-                  className="flex-1 bg-white border border-[#C2BCB0] text-[#1A1D1E] text-2xl rounded-2xl px-5 py-4 outline-none focus:border-[#B91C1C] focus:ring-1 focus:ring-[#B91C1C] text-center transition-all shadow-sm"
+                  className="flex-1 bg-white border border-[rgb(var(--c-border))] text-[rgb(var(--c-text-strong))] text-2xl rounded-2xl px-5 py-4 outline-none focus:border-[rgb(var(--c-primary))] focus:ring-1 focus:ring-[rgb(var(--c-primary))] text-center transition-all shadow-sm"
                   autoCapitalize="words"
                 />
                 <button
                   onClick={() => updateCoach({ extras: extras.filter((_, j) => j !== i) })}
-                  className="bg-[#EA580C]/10 active:bg-[#EA580C]/20 text-[#EA580C] px-4 rounded-2xl shrink-0 transition-all active:scale-95 duration-150"
+                  className="bg-[rgb(var(--c-accent)/0.1)] active:bg-[rgb(var(--c-accent)/0.2)] text-[rgb(var(--c-accent))] px-4 rounded-2xl shrink-0 transition-all active:scale-95 duration-150"
                   aria-label="Quitar"
                 >
                   <Trash2 className="w-6 h-6" />
@@ -1262,7 +1262,7 @@ function StepView(props: {
             ))}
             <button
               onClick={() => updateCoach({ extras: [...extras, ''] })}
-              className="w-full flex items-center justify-center gap-2 bg-[#E8E3D5] active:bg-[#C2BCB0] text-[#B91C1C] py-4 rounded-2xl font-display text-lg tracking-wider transition-all border border-[#C2BCB0]/40 active:scale-[0.98] duration-150"
+              className="w-full flex items-center justify-center gap-2 bg-[rgb(var(--c-surface-2))] active:bg-[rgb(var(--c-border))] text-[rgb(var(--c-primary))] py-4 rounded-2xl font-display text-lg tracking-wider transition-all border border-[rgb(var(--c-border)/0.4)] active:scale-[0.98] duration-150"
             >
               <Plus className="w-6 h-6" /> AGREGAR OTRO COACH
             </button>
@@ -1302,9 +1302,9 @@ function StepView(props: {
             autoCapitalize="sentences"
             autoCorrect="off"
             placeholder={state.academy}
-            className="w-full bg-white border border-[#C2BCB0] text-[#1A1D1E] text-2xl lg:text-4xl rounded-2xl px-4 py-4 lg:px-6 lg:py-6 outline-none focus:border-[#B91C1C] focus:ring-1 focus:ring-[#B91C1C] text-center placeholder:text-[#334155]/60 transition-all shadow-sm"
+            className="w-full bg-white border border-[rgb(var(--c-border))] text-[rgb(var(--c-text-strong))] text-2xl lg:text-4xl rounded-2xl px-4 py-4 lg:px-6 lg:py-6 outline-none focus:border-[rgb(var(--c-primary))] focus:ring-1 focus:ring-[rgb(var(--c-primary))] text-center placeholder:text-[rgb(var(--c-text)/0.6)] transition-all shadow-sm"
           />
-          <p className="text-[#EA580C] text-base text-center italic font-medium">
+          <p className="text-[rgb(var(--c-accent))] text-base text-center italic font-medium">
             Si el equipo se llama igual que la escuela/academia, deja vacío y dale a Siguiente.
           </p>
           <NextButton onClick={handleNext} disabled={false} />
@@ -1325,7 +1325,7 @@ function StepView(props: {
             disabled={editMode}
             onEnter={() => { if (v && v >= 1) { syncDancersArray(); onNext() } }}
           />
-          <p className="text-[#EA580C] text-base text-center italic font-medium">
+          <p className="text-[rgb(var(--c-accent))] text-base text-center italic font-medium">
             Cuenta a todos los alumnos/as del equipo, incluyendo solistas, duetos y tríos.
           </p>
           <NextButton onClick={() => { syncDancersArray(); onNext() }} disabled={!v || v < 1} />
@@ -1346,19 +1346,19 @@ function StepView(props: {
             <Wrapper title={`Alumno/a ${i + 1} de ${state.teamSize}`} isKeyboardOpen={isKeyboardOpen}>
               <div className="space-y-5 w-full">
                 <div className="max-w-xs md:max-w-sm mx-auto w-full">
-                  <label className="block text-sm font-display tracking-widest text-[#334155] mb-3 text-center">NOMBRE COMPLETO</label>
+                  <label className="block text-sm font-display tracking-widest text-[rgb(var(--c-text))] mb-3 text-center">NOMBRE COMPLETO</label>
                   <input
                     key={`name-${i}`}
                     value={d.name}
                     onChange={e => updateDancer(i, { name: e.target.value })}
                     onKeyDown={e => { if (e.key === 'Enter' && valid) onNext() }}
                     placeholder="Nombre y apellidos"
-                    className="w-full bg-white border border-[#C2BCB0] text-[#1A1D1E] text-xl rounded-2xl px-5 h-16 outline-none focus:border-[#B91C1C] focus:ring-1 focus:ring-[#B91C1C] text-center placeholder:text-[#334155]/60 transition-all shadow-sm animate-none"
+                    className="w-full bg-white border border-[rgb(var(--c-border))] text-[rgb(var(--c-text-strong))] text-xl rounded-2xl px-5 h-16 outline-none focus:border-[rgb(var(--c-primary))] focus:ring-1 focus:ring-[rgb(var(--c-primary))] text-center placeholder:text-[rgb(var(--c-text)/0.6)] transition-all shadow-sm animate-none"
                     autoCapitalize="words"
                   />
                 </div>
                 <div className="max-w-xs md:max-w-sm mx-auto w-full">
-                  <label className="block text-sm font-display tracking-widest text-[#334155] mb-3 text-center">FECHA DE NACIMIENTO</label>
+                  <label className="block text-sm font-display tracking-widest text-[rgb(var(--c-text))] mb-3 text-center">FECHA DE NACIMIENTO</label>
                   <DateInput
                     key={i}
                     value={d.birthdate}
@@ -1368,16 +1368,16 @@ function StepView(props: {
                 </div>
                 {effectiveCat && (
                   <div className="max-w-xs md:max-w-sm mx-auto w-full">
-                    <label className="block text-sm font-display tracking-widest text-[#334155] mb-3 text-center">
-                      CATEGORÍA {d.categoryOverride && <span className="text-[#EA580C]">· MODIFICADA</span>}
+                    <label className="block text-sm font-display tracking-widest text-[rgb(var(--c-text))] mb-3 text-center">
+                      CATEGORÍA {d.categoryOverride && <span className="text-[rgb(var(--c-accent))]">· MODIFICADA</span>}
                     </label>
                     <select
                       value={d.categoryOverride ?? ''}
                       onChange={e => updateDancer(i, { categoryOverride: (e.target.value || null) as AgeCategory | null })}
-                      className={`w-full h-14 text-[#1A1D1E] text-lg text-center rounded-2xl outline-none font-display appearance-none cursor-pointer px-3 transition-all border ${
+                      className={`w-full h-14 text-[rgb(var(--c-text-strong))] text-lg text-center rounded-2xl outline-none font-display appearance-none cursor-pointer px-3 transition-all border ${
                         d.categoryOverride
-                          ? 'bg-[#EA580C]/10 border-[#EA580C]/50 ring-1 ring-[#EA580C]/30'
-                          : 'bg-white border-[#C2BCB0] focus:border-[#B91C1C] focus:ring-1 focus:ring-[#B91C1C]'
+                          ? 'bg-[rgb(var(--c-accent)/0.1)] border-[rgb(var(--c-accent)/0.5)] ring-1 ring-[rgb(var(--c-accent)/0.3)]'
+                          : 'bg-white border-[rgb(var(--c-border))] focus:border-[rgb(var(--c-primary))] focus:ring-1 focus:ring-[rgb(var(--c-primary))]'
                       }`}
                     >
                       <option value="">Auto: {computedCat ? AGE_CATEGORY_LABELS[computedCat] : '—'}</option>
@@ -1385,7 +1385,7 @@ function StepView(props: {
                         <option key={cat} value={cat}>{AGE_CATEGORY_LABELS[cat]} — {AGE_CATEGORY_HINTS[cat]}</option>
                       ))}
                     </select>
-                    <p className="text-xs text-[#EA580C] mt-3 text-center leading-snug font-medium">
+                    <p className="text-xs text-[rgb(var(--c-accent))] mt-3 text-center leading-snug font-medium">
                       Se asigna automáticamente por la fecha de nacimiento. Si crees que la categoría es incorrecta, da click arriba y elige la correcta.
                     </p>
                   </div>
@@ -1420,7 +1420,7 @@ function StepView(props: {
             disabled={editMode}
             onEnter={() => { if (v && v >= 1) { syncActsArray(); onNext() } }}
           />
-          <p className="text-[#EA580C] text-base text-center italic font-medium">
+          <p className="text-[rgb(var(--c-accent))] text-base text-center italic font-medium">
             Cada acto se anota individualmente en los siguientes pasos.
           </p>
           <NextButton onClick={() => { syncActsArray(); onNext() }} disabled={!v || v < 1} />
@@ -1453,7 +1453,7 @@ function StepView(props: {
             ))}
           </div>
           {firstAct && (
-            <div className="flex items-start gap-3 bg-[#B91C1C]/10 border border-[#B91C1C]/30 text-[#B91C1C] px-5 py-4 rounded-2xl">
+            <div className="flex items-start gap-3 bg-[rgb(var(--c-primary)/0.1)] border border-[rgb(var(--c-primary)/0.3)] text-[rgb(var(--c-primary))] px-5 py-4 rounded-2xl">
               <Info className="w-6 h-6 shrink-0 mt-0.5" />
               <p className="text-base md:text-lg leading-snug">
                 <strong>Importante:</strong> registra los actos en orden, de la categoría más joven a la más alta
@@ -1461,22 +1461,22 @@ function StepView(props: {
               </p>
             </div>
           )}
-          <p className="text-center text-xs text-[#334155] italic">
+          <p className="text-center text-xs text-[rgb(var(--c-text))] italic">
             En Solistas, Duetos y Tríos no existe la sub-categoría Básico — siempre son Avanzado.
           </p>
           <div className="w-full max-w-3xl mx-auto space-y-2">
             <button
               onClick={() => setShowCategoriesInfo(!showCategoriesInfo)}
-              className="w-full flex items-center justify-between bg-white border border-[#C2BCB0] px-5 py-3.5 rounded-2xl font-display text-sm tracking-wider text-[#B91C1C] transition-all hover:bg-[#E8E3D5]/20 active:scale-[0.99] shadow-sm duration-150"
+              className="w-full flex items-center justify-between bg-white border border-[rgb(var(--c-border))] px-5 py-3.5 rounded-2xl font-display text-sm tracking-wider text-[rgb(var(--c-primary))] transition-all hover:bg-[rgb(var(--c-surface-2)/0.2)] active:scale-[0.99] shadow-sm duration-150"
             >
               <span>MOSTRAR TABLA DE CATEGORÍAS Y REGLAS</span>
-              <ChevronDown className={`w-5 h-5 transition-transform duration-300 ${showCategoriesInfo ? 'rotate-180 text-[#EA580C]' : ''}`} />
+              <ChevronDown className={`w-5 h-5 transition-transform duration-300 ${showCategoriesInfo ? 'rotate-180 text-[rgb(var(--c-accent))]' : ''}`} />
             </button>
             {showCategoriesInfo && (
-              <div className="bg-white border border-[#C2BCB0] rounded-2xl overflow-x-auto shadow-md w-full" style={{ animation: 'fadeIn 0.25s ease-out forwards' }}>
+              <div className="bg-white border border-[rgb(var(--c-border))] rounded-2xl overflow-x-auto shadow-md w-full" style={{ animation: 'fadeIn 0.25s ease-out forwards' }}>
                 <table className="w-full text-left min-w-[500px]">
                   <thead>
-                    <tr className="bg-[#E8E3D5] text-[#B91C1C] font-display text-xs tracking-widest border-b border-[#C2BCB0]">
+                    <tr className="bg-[rgb(var(--c-surface-2))] text-[rgb(var(--c-primary))] font-display text-xs tracking-widest border-b border-[rgb(var(--c-border))]">
                       <th className="px-4 py-3">CATEGORÍA</th>
                       <th className="px-4 py-3">NIVEL ESCOLAR</th>
                       <th className="px-4 py-3 text-center">SUB-CATEGORÍAS</th>
@@ -1484,10 +1484,10 @@ function StepView(props: {
                   </thead>
                   <tbody>
                     {AGE_CATEGORY_ORDER.map(cat => (
-                      <tr key={cat} className="border-t border-[#C2BCB0]/40 last:border-0 hover:bg-[#F6F4EF]/30 transition-all duration-150">
-                        <td className="px-4 py-3 font-display text-base text-[#1A1D1E] uppercase">{AGE_CATEGORY_LABELS[cat]}</td>
-                        <td className="px-4 py-3 text-sm text-[#334155]">{AGE_CATEGORY_HINTS[cat]}</td>
-                        <td className="px-4 py-3 text-sm text-[#334155] text-center">Básico · Avanzado</td>
+                      <tr key={cat} className="border-t border-[rgb(var(--c-border)/0.4)] last:border-0 hover:bg-[rgb(var(--c-surface)/0.3)] transition-all duration-150">
+                        <td className="px-4 py-3 font-display text-base text-[rgb(var(--c-text-strong))] uppercase">{AGE_CATEGORY_LABELS[cat]}</td>
+                        <td className="px-4 py-3 text-sm text-[rgb(var(--c-text))]">{AGE_CATEGORY_HINTS[cat]}</td>
+                        <td className="px-4 py-3 text-sm text-[rgb(var(--c-text))] text-center">Básico · Avanzado</td>
                       </tr>
                     ))}
                   </tbody>
@@ -1507,8 +1507,8 @@ function StepView(props: {
       return (
         <Wrapper title={`Acto ${i + 1} · ${a.modality ? modalityLabel(a.modality) : ''}`} subtitle="CATEGORÍA" isKeyboardOpen={isKeyboardOpen}>
           {avgCat && (
-            <p className="text-center text-[#334155] text-base">
-              Categoría sugerida por edad promedio del equipo: <span className="text-[#B91C1C] font-display">{AGE_CATEGORY_LABELS[avgCat].toUpperCase()}</span>
+            <p className="text-center text-[rgb(var(--c-text))] text-base">
+              Categoría sugerida por edad promedio del equipo: <span className="text-[rgb(var(--c-primary))] font-display">{AGE_CATEGORY_LABELS[avgCat].toUpperCase()}</span>
             </p>
           )}
           <div className={`grid gap-4 ${options.length === 2 ? 'grid-cols-2' : 'grid-cols-3'} max-w-3xl mx-auto`}>
@@ -1518,10 +1518,10 @@ function StepView(props: {
                 onClick={() => { updateAct(i, { ageCategory: cat }); onNext() }}
                 className={`py-7 px-3 rounded-2xl font-display tracking-wider transition-all flex flex-col items-center justify-center gap-1 border active:scale-[0.98] duration-150 ${
                   a.ageCategory === cat
-                    ? 'bg-[#B91C1C] border-[#B91C1C] text-white shadow-md'
+                    ? 'bg-[rgb(var(--c-primary))] border-[rgb(var(--c-primary))] text-white shadow-md'
                     : cat === avgCat
-                      ? 'bg-white text-[#1A1D1E] border-2 border-[#B91C1C] hover:bg-[#E8E3D5]'
-                      : 'bg-white border-[#C2BCB0] text-[#1A1D1E] active:bg-[#E8E3D5] hover:bg-[#E8E3D5]'
+                      ? 'bg-white text-[rgb(var(--c-text-strong))] border-2 border-[rgb(var(--c-primary))] hover:bg-[rgb(var(--c-surface-2))]'
+                      : 'bg-white border-[rgb(var(--c-border))] text-[rgb(var(--c-text-strong))] active:bg-[rgb(var(--c-surface-2))] hover:bg-[rgb(var(--c-surface-2))]'
                 }`}
               >
                 <span className="text-2xl">{AGE_CATEGORY_LABELS[cat].toUpperCase()}</span>
@@ -1617,15 +1617,15 @@ function StepView(props: {
       return (
         <div className="flex flex-col h-auto lg:h-full max-h-full min-h-0">
           <div className="text-center space-y-3 shrink-0 mb-5">
-            <p className="font-display text-xs md:text-sm tracking-[0.4em] text-[#B91C1C]">
+            <p className="font-display text-xs md:text-sm tracking-[0.4em] text-[rgb(var(--c-primary))]">
               {`SELECCIONA ${needs} ${needs === 1 ? 'ALUMNO/A' : 'ALUMNOS/AS'}`}
               {lockedCategory && ` · ${AGE_CATEGORY_LABELS[lockedCategory].toUpperCase()}`}
             </p>
-            <h2 className="font-display text-3xl md:text-4xl leading-tight text-[#1A1D1E]">{`Acto ${i + 1} · ${a.modality ? modalityLabel(a.modality) : ''}`}</h2>
+            <h2 className="font-display text-3xl md:text-4xl leading-tight text-[rgb(var(--c-text-strong))]">{`Acto ${i + 1} · ${a.modality ? modalityLabel(a.modality) : ''}`}</h2>
           </div>
           {sortedCats.length === 0 ? (
             <div className="flex-1 min-h-0 flex items-center justify-center">
-              <p className="text-[#334155] text-center text-base italic">
+              <p className="text-[rgb(var(--c-text))] text-center text-base italic">
                 No hay integrantes con fecha de nacimiento válida en el equipo.<br />
                 Regresa y verifica los datos de los alumnos/as.
               </p>
@@ -1637,7 +1637,7 @@ function StepView(props: {
                 const disabled = lockedCategory !== null && cat !== lockedCategory
                 return (
                   <div key={cat} className={disabled ? 'opacity-30' : ''}>
-                    <p className="font-display text-xs tracking-[0.4em] text-[#B91C1C] mb-2 sticky top-0 bg-[#F6F4EF] py-1.5 z-10">
+                    <p className="font-display text-xs tracking-[0.4em] text-[rgb(var(--c-primary))] mb-2 sticky top-0 bg-[rgb(var(--c-surface))] py-1.5 z-10">
                       {AGE_CATEGORY_LABELS[cat].toUpperCase()} · {AGE_CATEGORY_HINTS[cat]}
                     </p>
                     <div className={`grid ${list.length > 6 ? 'grid-cols-2' : 'grid-cols-1'} gap-2`}>
@@ -1650,10 +1650,10 @@ function StepView(props: {
                             disabled={disabled}
                             className={`text-left px-4 py-3 rounded-2xl flex items-center gap-3 border transition-all active:scale-[0.98] duration-150 ${
                               isSel
-                                ? 'bg-[#B91C1C] border-[#B91C1C] text-white shadow-sm'
+                                ? 'bg-[rgb(var(--c-primary))] border-[rgb(var(--c-primary))] text-white shadow-sm'
                                 : disabled
-                                  ? 'bg-[#E8E3D5] text-[#334155]/40 border-[#C2BCB0]/50 cursor-not-allowed opacity-55'
-                                  : 'bg-white border-[#C2BCB0] text-[#1A1D1E] active:bg-[#E8E3D5] hover:bg-[#E8E3D5]'
+                                  ? 'bg-[rgb(var(--c-surface-2))] text-[rgb(var(--c-text)/0.4)] border-[rgb(var(--c-border)/0.5)] cursor-not-allowed opacity-55'
+                                  : 'bg-white border-[rgb(var(--c-border))] text-[rgb(var(--c-text-strong))] active:bg-[rgb(var(--c-surface-2))] hover:bg-[rgb(var(--c-surface-2))]'
                             }`}
                           >
                             <span className="font-display text-base opacity-50 w-7 text-center shrink-0">{di + 1}</span>
@@ -1669,7 +1669,7 @@ function StepView(props: {
             </div>
           )}
           <div className="shrink-0 pt-5 space-y-4">
-            <p className="text-center text-[#1A1D1E] font-display text-2xl tracking-wider">
+            <p className="text-center text-[rgb(var(--c-text-strong))] font-display text-2xl tracking-wider">
               {selected} / {needs}
             </p>
             <NextButton onClick={onNext} disabled={!valid} />
@@ -1686,20 +1686,20 @@ function StepView(props: {
         <div className="flex flex-col h-auto lg:h-full min-h-0">
           {!isKeyboardOpen && (
             <div className="shrink-0 text-center space-y-2 lg:space-y-3 pt-2 lg:pt-0 pb-4 lg:pb-6">
-              <p className="font-display text-xs lg:text-sm tracking-[0.4em] text-[#B91C1C]">COSTOS</p>
-              <h2 className="font-display text-2xl md:text-4xl lg:text-6xl leading-tight text-[#1A1D1E]">Costos acordados</h2>
+              <p className="font-display text-xs lg:text-sm tracking-[0.4em] text-[rgb(var(--c-primary))]">COSTOS</p>
+              <h2 className="font-display text-2xl md:text-4xl lg:text-6xl leading-tight text-[rgb(var(--c-text-strong))]">Costos acordados</h2>
             </div>
           )}
           <div className="flex-1 min-h-0 overflow-y-auto pb-3 -mx-1 px-1">
             <div className={`space-y-3 lg:space-y-6 max-w-3xl mx-auto ${isKeyboardOpen ? 'pt-2' : ''}`}>
               {!isKeyboardOpen && (
-                <p className="text-[#EA580C] text-sm lg:text-base italic text-center leading-snug font-medium">
+                <p className="text-[rgb(var(--c-accent))] text-sm lg:text-base italic text-center leading-snug font-medium">
                   Indica los costos que tu academia acordó con los organizadores. Se cobra el de paquete por la primera participación de cada alumno/a, y el de repetición por cada participación adicional.
                 </p>
               )}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-5">
                 <div>
-                  <label className="block text-xs font-display tracking-widest text-[#334155] mb-2 text-center font-bold">PRIMERA PARTICIPACIÓN</label>
+                  <label className="block text-xs font-display tracking-widest text-[rgb(var(--c-text))] mb-2 text-center font-bold">PRIMERA PARTICIPACIÓN</label>
                   <MoneyInput
                     value={state.costPaquete}
                     onChange={n => updateState(s => ({ ...s, costPaquete: n }))}
@@ -1707,7 +1707,7 @@ function StepView(props: {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-display tracking-widest text-[#334155] mb-2 text-center font-bold">REPETICIÓN</label>
+                  <label className="block text-xs font-display tracking-widest text-[rgb(var(--c-text))] mb-2 text-center font-bold">REPETICIÓN</label>
                   <MoneyInput
                     value={state.costRepeticion}
                     onChange={n => updateState(s => ({ ...s, costRepeticion: n }))}
@@ -1716,7 +1716,7 @@ function StepView(props: {
                 </div>
               </div>
               {valid && (
-                <div className={`text-center bg-[#EA580C] text-white rounded-2xl shadow-sm transition-all duration-150 ${isKeyboardOpen ? 'p-2.5 mt-2.5' : 'p-4 mt-4'}`}>
+                <div className={`text-center bg-[rgb(var(--c-accent))] text-white rounded-2xl shadow-sm transition-all duration-150 ${isKeyboardOpen ? 'p-2.5 mt-2.5' : 'p-4 mt-4'}`}>
                   <p className={`font-display tracking-widest opacity-90 leading-none ${isKeyboardOpen ? 'text-[10px] mb-1' : 'text-xs lg:text-sm mb-1.5'}`}>TOTAL A PAGAR</p>
                   <p className={`font-display leading-none ${isKeyboardOpen ? 'text-xl' : 'text-3xl lg:text-4xl'}`}>{formatMoney(total)}</p>
                 </div>
@@ -1795,10 +1795,10 @@ function FieldStep({ title, hint, notice, value, onChange, onNext, disabled, typ
         onKeyDown={e => { if (e.key === 'Enter' && !disabled) onNext() }}
         autoCapitalize={autoCapitalize ?? 'words'}
         autoCorrect="off"
-        className="w-full bg-white border border-[#C2BCB0] text-[#1A1D1E] text-2xl lg:text-4xl rounded-2xl px-4 py-4 lg:px-6 lg:py-6 outline-none focus:border-[#B91C1C] focus:ring-1 focus:ring-[#B91C1C] text-center transition-all shadow-sm"
+        className="w-full bg-white border border-[rgb(var(--c-border))] text-[rgb(var(--c-text-strong))] text-2xl lg:text-4xl rounded-2xl px-4 py-4 lg:px-6 lg:py-6 outline-none focus:border-[rgb(var(--c-primary))] focus:ring-1 focus:ring-[rgb(var(--c-primary))] text-center transition-all shadow-sm"
       />
       {notice && (
-        <p className="text-[#EA580C] text-sm lg:text-lg text-center italic font-medium">{notice}</p>
+        <p className="text-[rgb(var(--c-accent))] text-sm lg:text-lg text-center italic font-medium">{notice}</p>
       )}
       <NextButton onClick={onNext} disabled={disabled} />
     </Wrapper>
@@ -1818,8 +1818,8 @@ function YesNoStep({ title, value, onYes, onNo }: {
           onClick={onNo}
           className={`rounded-2xl font-display text-3xl lg:text-4xl tracking-widest transition-all flex items-center justify-center lg:py-10 active:scale-95 duration-150 ${
             value === false
-              ? 'bg-[#B91C1C] text-white hover:bg-[#7F1D1D] shadow-md'
-              : 'bg-white border border-[#C2BCB0] text-[#1A1D1E] hover:bg-[#E8E3D5] active:bg-[#E8E3D5]'
+              ? 'bg-[rgb(var(--c-primary))] text-white hover:bg-[rgb(var(--c-primary-strong))] shadow-md'
+              : 'bg-white border border-[rgb(var(--c-border))] text-[rgb(var(--c-text-strong))] hover:bg-[rgb(var(--c-surface-2))] active:bg-[rgb(var(--c-surface-2))]'
           }`}
         >
           NO
@@ -1828,8 +1828,8 @@ function YesNoStep({ title, value, onYes, onNo }: {
           onClick={onYes}
           className={`rounded-2xl font-display text-3xl lg:text-4xl tracking-widest transition-all flex items-center justify-center lg:py-10 active:scale-95 duration-150 ${
             value === true
-              ? 'bg-[#B91C1C] text-white hover:bg-[#7F1D1D] shadow-md'
-              : 'bg-white border border-[#C2BCB0] text-[#1A1D1E] hover:bg-[#E8E3D5] active:bg-[#E8E3D5]'
+              ? 'bg-[rgb(var(--c-primary))] text-white hover:bg-[rgb(var(--c-primary-strong))] shadow-md'
+              : 'bg-white border border-[rgb(var(--c-border))] text-[rgb(var(--c-text-strong))] hover:bg-[rgb(var(--c-surface-2))] active:bg-[rgb(var(--c-surface-2))]'
           }`}
         >
           SÍ
@@ -1846,7 +1846,7 @@ function MoneyInput({ value, onChange, onEnter }: {
 }) {
   return (
     <div className="relative max-w-sm mx-auto">
-      <span className="absolute left-4 lg:left-5 top-1/2 -translate-y-1/2 text-[#B91C1C] font-display text-2xl lg:text-3xl pointer-events-none">$</span>
+      <span className="absolute left-4 lg:left-5 top-1/2 -translate-y-1/2 text-[rgb(var(--c-primary))] font-display text-2xl lg:text-3xl pointer-events-none">$</span>
       <input
         type="text"
         inputMode="decimal"
@@ -1861,7 +1861,7 @@ function MoneyInput({ value, onChange, onEnter }: {
         }}
         onKeyDown={e => { if (e.key === 'Enter' && onEnter) onEnter() }}
         placeholder="0"
-        className="w-full bg-white border border-[#C2BCB0] text-[#1A1D1E] text-3xl lg:text-4xl text-center rounded-2xl h-14 lg:h-20 outline-none focus:border-[#B91C1C] focus:ring-1 focus:ring-[#B91C1C] font-display pl-10 lg:pl-12 pr-10 lg:pr-12 placeholder:text-[#334155]/60 transition-all shadow-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+        className="w-full bg-white border border-[rgb(var(--c-border))] text-[rgb(var(--c-text-strong))] text-3xl lg:text-4xl text-center rounded-2xl h-14 lg:h-20 outline-none focus:border-[rgb(var(--c-primary))] focus:ring-1 focus:ring-[rgb(var(--c-primary))] font-display pl-10 lg:pl-12 pr-10 lg:pr-12 placeholder:text-[rgb(var(--c-text)/0.6)] transition-all shadow-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
       />
     </div>
   )
@@ -1891,7 +1891,7 @@ function NumberInput({ value, onChange, max, disabled, onEnter }: {
       }}
       onKeyDown={e => { if (e.key === 'Enter' && onEnter) onEnter() }}
       disabled={disabled}
-      className="w-full max-w-xs mx-auto block bg-white border border-[#C2BCB0] text-[#1A1D1E] text-5xl text-center rounded-2xl h-20 outline-none focus:border-[#B91C1C] focus:ring-1 focus:ring-[#B91C1C] font-display disabled:opacity-60 transition-all shadow-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+      className="w-full max-w-xs mx-auto block bg-white border border-[rgb(var(--c-border))] text-[rgb(var(--c-text-strong))] text-5xl text-center rounded-2xl h-20 outline-none focus:border-[rgb(var(--c-primary))] focus:ring-1 focus:ring-[rgb(var(--c-primary))] font-display disabled:opacity-60 transition-all shadow-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
     />
   )
 }
@@ -1912,8 +1912,8 @@ function DateInput({ value, onChange, onEnter }: { value: string, onChange: (iso
         max={maxDate}
         className={`w-full h-14 rounded-2xl text-center outline-none font-display text-lg tracking-wider border transition-all cursor-pointer ${
           value
-            ? 'bg-white border-[#B91C1C] text-[#B91C1C] focus:ring-1 focus:ring-[#B91C1C] shadow-sm font-semibold'
-            : 'bg-white border-[#C2BCB0] text-[#334155]/60 focus:border-[#B91C1C] focus:ring-1 focus:ring-[#B91C1C]'
+            ? 'bg-white border-[rgb(var(--c-primary))] text-[rgb(var(--c-primary))] focus:ring-1 focus:ring-[rgb(var(--c-primary))] shadow-sm font-semibold'
+            : 'bg-white border-[rgb(var(--c-border))] text-[rgb(var(--c-text)/0.6)] focus:border-[rgb(var(--c-primary))] focus:ring-1 focus:ring-[rgb(var(--c-primary))]'
         }`}
         style={{
           WebkitAppearance: 'none',
@@ -1956,13 +1956,13 @@ function DancerList({ dancers, currentIndex, onSelect }: {
 
   return (
     <div className="h-full w-full flex flex-col min-h-0">
-      <p className="text-xs font-display tracking-[0.4em] text-[#B91C1C] mb-4 shrink-0 text-center">
+      <p className="text-xs font-display tracking-[0.4em] text-[rgb(var(--c-primary))] mb-4 shrink-0 text-center">
         ALUMNOS/AS · {completeCount}/{dancers.length}
       </p>
       <div className="flex-1 min-h-0 overflow-x-auto overflow-y-hidden">
         <div className="h-full flex flex-col flex-wrap content-center gap-x-12 gap-y-2 px-2">
           {filled.length === 0 && (
-            <p className="text-[#334155]/60 italic text-base self-center my-auto">Los nombres aparecerán aquí</p>
+            <p className="text-[rgb(var(--c-text)/0.6)] italic text-base self-center my-auto">Los nombres aparecerán aquí</p>
           )}
           {filled.map(({ d, i }) => {
             const isCurrent = i === currentIndex
@@ -1970,8 +1970,8 @@ function DancerList({ dancers, currentIndex, onSelect }: {
               <button
                 key={i}
                 onClick={() => onSelect(i)}
-                className={`text-center font-display text-2xl uppercase tracking-wide transition-all whitespace-nowrap hover:text-[#B91C1C] active:scale-95 duration-150 ${
-                  isCurrent ? 'text-[#B91C1C] underline underline-offset-4 font-semibold' : 'text-[#2A5C4E]'
+                className={`text-center font-display text-2xl uppercase tracking-wide transition-all whitespace-nowrap hover:text-[rgb(var(--c-primary))] active:scale-95 duration-150 ${
+                  isCurrent ? 'text-[rgb(var(--c-primary))] underline underline-offset-4 font-semibold' : 'text-[rgb(var(--c-success))]'
                 }`}
               >
                 {d.name}
@@ -1990,8 +1990,8 @@ function CategoryButton({ label, selected, onClick, className = '' }: { label: s
       onClick={onClick}
       className={`py-6 px-4 rounded-2xl font-display text-2xl md:text-3xl lg:text-4xl font-semibold tracking-wider transition-all border active:scale-95 duration-150 ${
         selected
-          ? 'bg-[#B91C1C] border-[#B91C1C] text-white shadow-md'
-          : 'bg-white border-[#C2BCB0] text-[#1A1D1E] active:bg-[#E8E3D5] hover:bg-[#E8E3D5]'
+          ? 'bg-[rgb(var(--c-primary))] border-[rgb(var(--c-primary))] text-white shadow-md'
+          : 'bg-white border-[rgb(var(--c-border))] text-[rgb(var(--c-text-strong))] active:bg-[rgb(var(--c-surface-2))] hover:bg-[rgb(var(--c-surface-2))]'
       } ${className}`}
     >
       {label}
@@ -2001,7 +2001,7 @@ function CategoryButton({ label, selected, onClick, className = '' }: { label: s
 
 function EditNotice({ text }: { text: string }) {
   return (
-    <p className="bg-[#EA580C]/10 border border-[#EA580C]/30 text-[#EA580C] text-center text-sm px-4 py-3 rounded-xl font-medium">
+    <p className="bg-[rgb(var(--c-accent)/0.1)] border border-[rgb(var(--c-accent)/0.3)] text-[rgb(var(--c-accent))] text-center text-sm px-4 py-3 rounded-xl font-medium">
       {text}
     </p>
   )
@@ -2014,8 +2014,8 @@ function Wrapper({ title, subtitle, children, isKeyboardOpen }: { title: string,
         <Image src="/logo.png" alt="Dance4ever" width={64} height={48} priority className="mx-auto mb-3 shrink-0 mix-blend-multiply lg:hidden animate-[fadeIn_0.2s_ease-out_forwards]" />
       )}
       <div className="shrink-0 text-center space-y-1.5 lg:space-y-3 pt-0 pb-3 lg:pb-6">
-        {!isKeyboardOpen && subtitle && <p className="font-display text-xs tracking-[0.4em] text-[#B91C1C] font-bold">{subtitle}</p>}
-        <h2 className="font-display text-2xl md:text-4xl lg:text-5xl leading-tight px-2 text-[#1A1D1E] font-semibold">{title}</h2>
+        {!isKeyboardOpen && subtitle && <p className="font-display text-xs tracking-[0.4em] text-[rgb(var(--c-primary))] font-bold">{subtitle}</p>}
+        <h2 className="font-display text-2xl md:text-4xl lg:text-5xl leading-tight px-2 text-[rgb(var(--c-text-strong))] font-semibold">{title}</h2>
       </div>
       <div className="flex-1 flex flex-col justify-start lg:justify-center gap-4 lg:gap-8">
         {children}
@@ -2029,7 +2029,7 @@ function NextButton({ onClick, disabled, label }: { onClick: () => void, disable
     <button
       onClick={onClick}
       disabled={disabled}
-      className="w-full bg-[#B91C1C] active:bg-[#7F1D1D] hover:bg-[#7F1D1D] text-white font-display text-xl lg:text-2xl tracking-widest py-4 lg:py-5 rounded-2xl disabled:opacity-40 transition-all shadow-md active:scale-[0.98] duration-150"
+      className="w-full bg-[rgb(var(--c-primary))] active:bg-[rgb(var(--c-primary-strong))] hover:bg-[rgb(var(--c-primary-strong))] text-white font-display text-xl lg:text-2xl tracking-widest py-4 lg:py-5 rounded-2xl disabled:opacity-40 transition-all shadow-md active:scale-[0.98] duration-150"
     >
       {label ?? 'SIGUIENTE'}
     </button>
@@ -2038,7 +2038,7 @@ function NextButton({ onClick, disabled, label }: { onClick: () => void, disable
 
 function Centered({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-[100dvh] bg-[#F6F4EF] text-[#1A1D1E] flex flex-col font-sans">
+    <div className="min-h-[100dvh] bg-[rgb(var(--c-surface))] text-[rgb(var(--c-text-strong))] flex flex-col font-sans">
       <div className="flex-1 flex flex-col items-center justify-center p-6 gap-4">
         {children}
       </div>
@@ -2047,12 +2047,12 @@ function Centered({ children }: { children: React.ReactNode }) {
           href="https://wa.me/523337290374"
           target="_blank"
           rel="noreferrer"
-          className="flex items-center gap-3 text-[#334155] hover:text-[#B91C1C] transition-all group active:scale-98"
+          className="flex items-center gap-3 text-[rgb(var(--c-text))] hover:text-[rgb(var(--c-primary))] transition-all group active:scale-98"
         >
-          <MessageCircle className="w-5 h-5 text-[#2A5C4E] shrink-0" />
+          <MessageCircle className="w-5 h-5 text-[rgb(var(--c-success))] shrink-0" />
           <span className="text-sm md:text-base">
             ¿Dudas o ayuda? Escríbenos por WhatsApp:{' '}
-            <span className="font-display tracking-wider text-[#B91C1C]">333 729 0374</span>
+            <span className="font-display tracking-wider text-[rgb(var(--c-primary))]">333 729 0374</span>
           </span>
         </a>
       </div>
@@ -2088,22 +2088,22 @@ function MobileSummary({ state, editMode, tab, setTab, confirmed, confirm, savin
     <div className="flex flex-col h-full max-h-full min-h-0 gap-3">
       {/* TOTAL A PAGAR siempre visible arriba */}
       {hasCosts && (
-        <div className="shrink-0 bg-[#EA580C] text-white rounded-2xl py-3 px-4 text-center shadow-sm">
+        <div className="shrink-0 bg-[rgb(var(--c-accent))] text-white rounded-2xl py-3 px-4 text-center shadow-sm">
           <p className="text-xs font-display tracking-widest opacity-90 leading-none">TOTAL A PAGAR</p>
           <p className="font-display text-3xl leading-none mt-1.5">{formatMoney(total)}</p>
         </div>
       )}
 
       {/* TABS - Estilo de cápsula iOS Segmented Control */}
-      <div className="shrink-0 grid grid-cols-4 gap-1 bg-[#E8E3D5] border border-[#C2BCB0]/40 p-1 rounded-2xl">
+      <div className="shrink-0 grid grid-cols-4 gap-1 bg-[rgb(var(--c-surface-2))] border border-[rgb(var(--c-border)/0.4)] p-1 rounded-2xl">
         {tabs.map(t => (
           <button
             key={t.id}
             onClick={() => setTab(t.id)}
             className={`py-2.5 rounded-xl font-display text-xs tracking-widest flex flex-col items-center justify-center gap-0.5 transition-all active:scale-[0.96] duration-150 ${
               tab === t.id
-                ? 'bg-white text-[#B91C1C] border border-[#C2BCB0]/30 shadow-sm'
-                : 'text-[#334155] hover:text-[#B91C1C] active:bg-[#E8E3D5]/50'
+                ? 'bg-white text-[rgb(var(--c-primary))] border border-[rgb(var(--c-border)/0.3)] shadow-sm'
+                : 'text-[rgb(var(--c-text))] hover:text-[rgb(var(--c-primary))] active:bg-[rgb(var(--c-surface-2)/0.5)]'
             }`}
           >
             <span>{t.label}</span>
@@ -2113,63 +2113,63 @@ function MobileSummary({ state, editMode, tab, setTab, confirmed, confirm, savin
       </div>
 
       {/* TAB CONTENT */}
-      <div className="flex-1 min-h-0 overflow-y-auto bg-white border border-[#C2BCB0] rounded-2xl p-4 shadow-sm text-[#1A1D1E]">
+      <div className="flex-1 min-h-0 overflow-y-auto bg-white border border-[rgb(var(--c-border))] rounded-2xl p-4 shadow-sm text-[rgb(var(--c-text-strong))]">
         {tab === 'coach' && (
           <div className="flex-1 w-full h-full min-h-[320px] flex flex-col items-center justify-center text-center space-y-5 animate-[fadeIn_0.2s_ease-out_forwards]">
-            <div className="w-16 h-16 bg-[#B91C1C]/10 rounded-full flex items-center justify-center text-[#B91C1C] mb-1">
+            <div className="w-16 h-16 bg-[rgb(var(--c-primary)/0.1)] rounded-full flex items-center justify-center text-[rgb(var(--c-primary))] mb-1">
               <Pencil className="w-7 h-7" />
             </div>
             <div>
-              <p className="text-sm tracking-widest text-[#B91C1C] uppercase font-bold mb-1">Nombre del Coach</p>
-              <p className="text-3xl uppercase font-semibold text-[#1A1D1E] break-words max-w-xs">{state.coach.name}</p>
+              <p className="text-sm tracking-widest text-[rgb(var(--c-primary))] uppercase font-bold mb-1">Nombre del Coach</p>
+              <p className="text-3xl uppercase font-semibold text-[rgb(var(--c-text-strong))] break-words max-w-xs">{state.coach.name}</p>
             </div>
-            <div className="space-y-2 text-base text-[#334155]">
+            <div className="space-y-2 text-base text-[rgb(var(--c-text))]">
               <p className="flex items-center justify-center gap-2">
                 <span>📱</span> <span className="font-semibold text-lg">{state.coach.phone}</span>
               </p>
               {state.coach.email && (
-                <p className="flex items-center justify-center gap-2 text-base text-[#334155] break-all max-w-xs">
+                <p className="flex items-center justify-center gap-2 text-base text-[rgb(var(--c-text))] break-all max-w-xs">
                   <span>✉️</span> <span>{state.coach.email}</span>
                 </p>
               )}
             </div>
             {state.coach.extras.filter(e => e.trim()).length > 0 && (
-              <div className="pt-2 border-t border-[#C2BCB0]/20 w-full max-w-xs">
-                <p className="text-xs tracking-widest text-[#B91C1C] mb-1 font-bold">OTROS COACHES</p>
-                <p className="text-sm text-[#334155]">{state.coach.extras.filter(e => e.trim()).join(', ')}</p>
+              <div className="pt-2 border-t border-[rgb(var(--c-border)/0.2)] w-full max-w-xs">
+                <p className="text-xs tracking-widest text-[rgb(var(--c-primary))] mb-1 font-bold">OTROS COACHES</p>
+                <p className="text-sm text-[rgb(var(--c-text))]">{state.coach.extras.filter(e => e.trim()).join(', ')}</p>
               </div>
             )}
           </div>
         )}
         {tab === 'academy' && (
           <div className="flex-1 w-full h-full min-h-[320px] flex flex-col items-center justify-center text-center space-y-6 animate-[fadeIn_0.2s_ease-out_forwards]">
-            <div className="w-16 h-16 bg-[#EA580C]/10 rounded-full flex items-center justify-center text-[#EA580C] mb-1">
+            <div className="w-16 h-16 bg-[rgb(var(--c-accent)/0.1)] rounded-full flex items-center justify-center text-[rgb(var(--c-accent))] mb-1">
               <Check className="w-7 h-7" />
             </div>
             <div className="w-full max-w-xs">
-              <p className="text-sm tracking-widest text-[#B91C1C] uppercase font-bold mb-1">Colegio / Academia</p>
-              <p className="text-3xl uppercase font-semibold text-[#1A1D1E] break-words leading-tight">{state.academy}</p>
+              <p className="text-sm tracking-widest text-[rgb(var(--c-primary))] uppercase font-bold mb-1">Colegio / Academia</p>
+              <p className="text-3xl uppercase font-semibold text-[rgb(var(--c-text-strong))] break-words leading-tight">{state.academy}</p>
             </div>
             <div className="w-full max-w-xs">
-              <p className="text-sm tracking-widest text-[#EA580C] uppercase font-bold mb-1">Nombre del Equipo</p>
-              <p className="text-2xl uppercase font-semibold text-[#2A5C4E] break-words leading-tight">{state.teamName || state.academy}</p>
+              <p className="text-sm tracking-widest text-[rgb(var(--c-accent))] uppercase font-bold mb-1">Nombre del Equipo</p>
+              <p className="text-2xl uppercase font-semibold text-[rgb(var(--c-success))] break-words leading-tight">{state.teamName || state.academy}</p>
             </div>
           </div>
         )}
         {tab === 'dancers' && (
           <div className="space-y-1.5">
             {filledDancers.length === 0 ? (
-              <p className="text-[#334155]/50 italic text-sm text-center">Sin integrantes</p>
+              <p className="text-[rgb(var(--c-text)/0.5)] italic text-sm text-center">Sin integrantes</p>
             ) : filledDancers.map(d => {
               const di = state.dancers.indexOf(d)
               const n = counts.get(di) ?? 0
               const cost = hasCosts && n > 0 ? (state.costPaquete ?? 0) + Math.max(0, n - 1) * (state.costRepeticion ?? 0) : null
               return (
-                <div key={di} className="flex items-baseline gap-2 py-1.5 border-b border-[#C2BCB0]/30 last:border-0">
-                  <span className="font-display text-xs text-[#334155]/50 w-6 text-center shrink-0">{di + 1}.</span>
-                  <span className="font-display text-base uppercase text-[#2A5C4E] flex-1 truncate font-semibold">{d.name}</span>
-                  {n > 0 && <span className="text-xs text-[#B91C1C] font-bold shrink-0">{n}×</span>}
-                  {cost !== null && <span className="text-xs text-[#EA580C] font-bold shrink-0">{formatMoney(cost)}</span>}
+                <div key={di} className="flex items-baseline gap-2 py-1.5 border-b border-[rgb(var(--c-border)/0.3)] last:border-0">
+                  <span className="font-display text-xs text-[rgb(var(--c-text)/0.5)] w-6 text-center shrink-0">{di + 1}.</span>
+                  <span className="font-display text-base uppercase text-[rgb(var(--c-success))] flex-1 truncate font-semibold">{d.name}</span>
+                  {n > 0 && <span className="text-xs text-[rgb(var(--c-primary))] font-bold shrink-0">{n}×</span>}
+                  {cost !== null && <span className="text-xs text-[rgb(var(--c-accent))] font-bold shrink-0">{formatMoney(cost)}</span>}
                 </div>
               )
             })}
@@ -2178,19 +2178,19 @@ function MobileSummary({ state, editMode, tab, setTab, confirmed, confirm, savin
         {tab === 'acts' && (
           <div className="space-y-3">
             {state.acts.length === 0 ? (
-              <p className="text-[#334155]/50 italic text-sm text-center">Sin actos</p>
+              <p className="text-[rgb(var(--c-text)/0.5)] italic text-sm text-center">Sin actos</p>
             ) : state.acts.map((a, i) => {
               const cat = a.ageCategory ? AGE_CATEGORY_LABELS[a.ageCategory] : '—'
               const mod = a.modality ? modalityLabel(a.modality) : '—'
               const lvl = a.modality === 'grupal' ? (a.level === 'basico' ? ' BÁSICO' : a.level === 'avanzado' ? ' AVANZADO' : '') : ''
               return (
-                <div key={i} className="border-b border-[#C2BCB0]/30 last:border-0 pb-2 last:pb-0">
-                  <div className="font-display text-base text-[#1A1D1E] font-semibold">
-                    <span className="text-[#B91C1C]">#{i + 1}</span> {cat.toUpperCase()} · {mod}{lvl}
+                <div key={i} className="border-b border-[rgb(var(--c-border)/0.3)] last:border-0 pb-2 last:pb-0">
+                  <div className="font-display text-base text-[rgb(var(--c-text-strong))] font-semibold">
+                    <span className="text-[rgb(var(--c-primary))]">#{i + 1}</span> {cat.toUpperCase()} · {mod}{lvl}
                   </div>
-                  <div className="text-xs text-[#334155] mt-0.5">{a.style ?? '—'}</div>
+                  <div className="text-xs text-[rgb(var(--c-text))] mt-0.5">{a.style ?? '—'}</div>
                   {a.dancerIndices.length > 0 && (
-                    <div className="text-[11px] text-[#334155]/80 mt-0.5 font-medium">
+                    <div className="text-[11px] text-[rgb(var(--c-text)/0.8)] mt-0.5 font-medium">
                       {a.dancerIndices.map(di => state.dancers[di]?.name).filter(Boolean).join(' · ')}
                     </div>
                   )}
@@ -2203,22 +2203,22 @@ function MobileSummary({ state, editMode, tab, setTab, confirmed, confirm, savin
 
       {/* BUTTONS */}
       {saveErr && (
-        <p className="shrink-0 text-[#EA580C] text-xs bg-[#EA580C]/10 border border-[#EA580C]/30 rounded-xl px-3 py-2.5 break-words font-medium">{saveErr}</p>
+        <p className="shrink-0 text-[rgb(var(--c-accent))] text-xs bg-[rgb(var(--c-accent)/0.1)] border border-[rgb(var(--c-accent)/0.3)] rounded-xl px-3 py-2.5 break-words font-medium">{saveErr}</p>
       )}
       {confirmed ? (
         <button
           onClick={startEdit}
-          className="shrink-0 h-14 flex items-center justify-center gap-2 bg-white border border-[#C2BCB0] hover:bg-[#E8E3D5] text-[#1A1D1E] font-display text-lg tracking-widest rounded-2xl transition-all shadow-sm active:scale-[0.98] duration-150"
+          className="shrink-0 h-14 flex items-center justify-center gap-2 bg-white border border-[rgb(var(--c-border))] hover:bg-[rgb(var(--c-surface-2))] text-[rgb(var(--c-text-strong))] font-display text-lg tracking-widest rounded-2xl transition-all shadow-sm active:scale-[0.98] duration-150"
         >
-          <Pencil className="w-5 h-5 text-[#B91C1C]" /> EDITAR REGISTRO
+          <Pencil className="w-5 h-5 text-[rgb(var(--c-primary))]" /> EDITAR REGISTRO
         </button>
       ) : (
         <div className="shrink-0 grid grid-cols-2 gap-2">
           <button
             onClick={onEditRequest}
-            className="h-14 flex items-center justify-center gap-2 bg-white border border-[#C2BCB0] hover:bg-[#E8E3D5] text-[#1A1D1E] font-display text-base tracking-widest rounded-2xl transition-all shadow-sm active:scale-[0.98] duration-150"
+            className="h-14 flex items-center justify-center gap-2 bg-white border border-[rgb(var(--c-border))] hover:bg-[rgb(var(--c-surface-2))] text-[rgb(var(--c-text-strong))] font-display text-base tracking-widest rounded-2xl transition-all shadow-sm active:scale-[0.98] duration-150"
           >
-            <Pencil className="w-5 h-5 text-[#B91C1C]" /> EDITAR
+            <Pencil className="w-5 h-5 text-[rgb(var(--c-primary))]" /> EDITAR
           </button>
           <button
             onClick={() => {
@@ -2228,7 +2228,7 @@ function MobileSummary({ state, editMode, tab, setTab, confirmed, confirm, savin
               else if (confirm) confirm()
             }}
             disabled={saving}
-            className="h-14 bg-[#B91C1C] hover:bg-[#7F1D1D] active:bg-[#7F1D1D] text-white font-display text-base tracking-widest rounded-2xl disabled:opacity-50 transition-all shadow-md active:scale-[0.98] duration-150"
+            className="h-14 bg-[rgb(var(--c-primary))] hover:bg-[rgb(var(--c-primary-strong))] active:bg-[rgb(var(--c-primary-strong))] text-white font-display text-base tracking-widest rounded-2xl disabled:opacity-50 transition-all shadow-md active:scale-[0.98] duration-150"
           >
             {tab !== 'acts'
               ? 'SIGUIENTE'
@@ -2262,32 +2262,32 @@ function SummaryGrid({ state, editMode, confirmed, confirm, saving, saveErr, sta
     <div className="lg:h-full lg:max-h-full lg:min-h-0 grid grid-cols-1 lg:grid-cols-6 lg:grid-rows-[auto_minmax(0,1fr)] gap-4 w-full">
       <div className="lg:col-span-2 lg:min-h-0">
         <Card title="COACH">
-          <p className="text-xl md:text-2xl lg:text-3xl font-display uppercase truncate text-[#1A1D1E]">{state.coach.name}</p>
-          <p className="text-sm md:text-base text-[#334155] mt-2 truncate">
+          <p className="text-xl md:text-2xl lg:text-3xl font-display uppercase truncate text-[rgb(var(--c-text-strong))]">{state.coach.name}</p>
+          <p className="text-sm md:text-base text-[rgb(var(--c-text))] mt-2 truncate">
             {state.coach.phone}{state.coach.email ? ` · ${state.coach.email}` : ''}
           </p>
           {state.coach.extras.filter(e => e.trim()).length > 0 && (
-            <p className="text-sm text-[#334155] mt-1 truncate">Otros: {state.coach.extras.filter(e => e.trim()).join(', ')}</p>
+            <p className="text-sm text-[rgb(var(--c-text))] mt-1 truncate">Otros: {state.coach.extras.filter(e => e.trim()).join(', ')}</p>
           )}
         </Card>
       </div>
 
       <div className="lg:col-span-3 lg:min-h-0">
         <Card title="ACADEMIA · EQUIPO">
-          <p className="text-xl md:text-2xl lg:text-3xl font-display uppercase truncate text-[#1A1D1E]">{state.academy}</p>
-          <p className="text-sm md:text-base text-[#334155] mt-2 truncate">{state.teamName}</p>
+          <p className="text-xl md:text-2xl lg:text-3xl font-display uppercase truncate text-[rgb(var(--c-text-strong))]">{state.academy}</p>
+          <p className="text-sm md:text-base text-[rgb(var(--c-text))] mt-2 truncate">{state.teamName}</p>
         </Card>
       </div>
 
       <div className="lg:col-span-1 lg:min-h-0">
         {hasCosts ? (
-          <div className="bg-[#EA580C] text-white rounded-2xl h-full p-4 flex flex-col items-center justify-center shadow-sm">
+          <div className="bg-[rgb(var(--c-accent))] text-white rounded-2xl h-full p-4 flex flex-col items-center justify-center shadow-sm">
             <p className="text-base md:text-lg font-display tracking-widest opacity-90 leading-none text-center">TOTAL A PAGAR</p>
             <p className="font-display text-3xl md:text-4xl leading-none mt-2">{formatMoney(total)}</p>
           </div>
         ) : (
-          <div className="bg-white border border-[#C2BCB0] rounded-2xl h-full p-3 flex items-center justify-center shadow-sm">
-            <p className="text-[#334155]/50 italic text-sm text-center">Sin costos</p>
+          <div className="bg-white border border-[rgb(var(--c-border))] rounded-2xl h-full p-3 flex items-center justify-center shadow-sm">
+            <p className="text-[rgb(var(--c-text)/0.5)] italic text-sm text-center">Sin costos</p>
           </div>
         )}
       </div>
@@ -2297,17 +2297,17 @@ function SummaryGrid({ state, editMode, confirmed, confirm, saving, saveErr, sta
           <div className="max-h-[60vh] lg:max-h-none lg:flex-1 lg:min-h-0 overflow-y-auto lg:overflow-x-auto lg:overflow-y-hidden">
             <div className="lg:h-full flex flex-col lg:flex-wrap lg:content-start gap-x-12 gap-y-2 px-1">
               {filledDancers.length === 0 ? (
-                <p className="text-[#334155]/50 italic text-base self-center my-auto">Sin integrantes</p>
+                <p className="text-[rgb(var(--c-text)/0.5)] italic text-base self-center my-auto">Sin integrantes</p>
               ) : filledDancers.map((d) => {
                 const di = state.dancers.indexOf(d)
                 const n = counts.get(di) ?? 0
                 const cost = hasCosts && n > 0 ? (state.costPaquete ?? 0) + Math.max(0, n - 1) * (state.costRepeticion ?? 0) : null
                 return (
-                  <div key={di} className="font-display text-lg md:text-xl lg:text-2xl uppercase text-[#2A5C4E] whitespace-nowrap flex items-baseline gap-3">
-                    <span className="opacity-40 text-sm text-[#334155]">{di + 1}.</span>
+                  <div key={di} className="font-display text-lg md:text-xl lg:text-2xl uppercase text-[rgb(var(--c-success))] whitespace-nowrap flex items-baseline gap-3">
+                    <span className="opacity-40 text-sm text-[rgb(var(--c-text))]">{di + 1}.</span>
                     <span>{d.name}</span>
-                    {n > 0 && <span className="text-sm text-[#B91C1C] font-bold">{n} acto{n === 1 ? '' : 's'}</span>}
-                    {cost !== null && <span className="text-sm text-[#EA580C] font-bold">{formatMoney(cost)}</span>}
+                    {n > 0 && <span className="text-sm text-[rgb(var(--c-primary))] font-bold">{n} acto{n === 1 ? '' : 's'}</span>}
+                    {cost !== null && <span className="text-sm text-[rgb(var(--c-accent))] font-bold">{formatMoney(cost)}</span>}
                   </div>
                 )
               })}
@@ -2320,20 +2320,20 @@ function SummaryGrid({ state, editMode, confirmed, confirm, saving, saveErr, sta
         <Card title={`ACTOS (${state.acts.length})`} className="lg:flex-1 lg:min-h-0">
           <div className="max-h-[50vh] lg:max-h-none lg:flex-1 lg:min-h-0 overflow-y-auto pr-1 space-y-3">
             {state.acts.length === 0 ? (
-              <p className="text-[#334155]/50 italic text-base">Sin actos</p>
+              <p className="text-[rgb(var(--c-text)/0.5)] italic text-base">Sin actos</p>
             ) : state.acts.map((a, i) => {
               const cat = a.ageCategory ? AGE_CATEGORY_LABELS[a.ageCategory] : '—'
               const mod = a.modality ? modalityLabel(a.modality) : '—'
               const lvl = a.modality === 'grupal' ? (a.level === 'basico' ? ' BÁSICO' : a.level === 'avanzado' ? ' AVANZADO' : '') : ''
               return (
-                <div key={i} className="border-b border-[#C2BCB0]/30 last:border-0 pb-3 last:pb-0">
-                  <div className="font-display text-lg text-[#1A1D1E]">
-                    <span className="text-[#B91C1C]">#{i + 1}</span>{' '}
+                <div key={i} className="border-b border-[rgb(var(--c-border)/0.3)] last:border-0 pb-3 last:pb-0">
+                  <div className="font-display text-lg text-[rgb(var(--c-text-strong))]">
+                    <span className="text-[rgb(var(--c-primary))]">#{i + 1}</span>{' '}
                     {cat.toUpperCase()} · {mod}{lvl}
                   </div>
-                  <div className="text-base text-[#334155] mt-1">{a.style ?? '—'}</div>
+                  <div className="text-base text-[rgb(var(--c-text))] mt-1">{a.style ?? '—'}</div>
                   {a.dancerIndices.length > 0 && (
-                    <div className="text-xs text-[#334155]/70 mt-1">
+                    <div className="text-xs text-[rgb(var(--c-text)/0.7)] mt-1">
                       {a.dancerIndices.map(di => state.dancers[di]?.name).filter(Boolean).join(' · ')}
                     </div>
                   )}
@@ -2345,29 +2345,29 @@ function SummaryGrid({ state, editMode, confirmed, confirm, saving, saveErr, sta
         {confirmed ? (
           <button
             onClick={startEdit}
-            className="shrink-0 h-28 flex items-center justify-center gap-2 bg-white border border-[#C2BCB0] hover:bg-[#E8E3D5] text-[#1A1D1E] font-display text-2xl tracking-widest rounded-2xl transition-all shadow-sm active:scale-[0.98] duration-150"
+            className="shrink-0 h-28 flex items-center justify-center gap-2 bg-white border border-[rgb(var(--c-border))] hover:bg-[rgb(var(--c-surface-2))] text-[rgb(var(--c-text-strong))] font-display text-2xl tracking-widest rounded-2xl transition-all shadow-sm active:scale-[0.98] duration-150"
           >
-            <Pencil className="w-6 h-6 text-[#B91C1C]" /> EDITAR REGISTRO
+            <Pencil className="w-6 h-6 text-[rgb(var(--c-primary))]" /> EDITAR REGISTRO
           </button>
         ) : (
           <>
             <button
               onClick={onEditRequest}
-              className="shrink-0 h-14 flex items-center justify-center gap-2 bg-white border border-[#C2BCB0] hover:bg-[#E8E3D5] text-[#1A1D1E] font-display text-lg tracking-widest rounded-2xl transition-all shadow-sm active:scale-[0.98] duration-150"
+              className="shrink-0 h-14 flex items-center justify-center gap-2 bg-white border border-[rgb(var(--c-border))] hover:bg-[rgb(var(--c-surface-2))] text-[rgb(var(--c-text-strong))] font-display text-lg tracking-widest rounded-2xl transition-all shadow-sm active:scale-[0.98] duration-150"
             >
-              <Pencil className="w-5 h-5 text-[#B91C1C]" /> EDITAR
+              <Pencil className="w-5 h-5 text-[rgb(var(--c-primary))]" /> EDITAR
             </button>
             <button
               onClick={confirm}
               disabled={saving}
-              className="shrink-0 h-28 bg-[#B91C1C] hover:bg-[#7F1D1D] active:bg-[#7F1D1D] text-white font-display text-2xl tracking-widest rounded-2xl disabled:opacity-50 transition-all shadow-md active:scale-[0.98] duration-150"
+              className="shrink-0 h-28 bg-[rgb(var(--c-primary))] hover:bg-[rgb(var(--c-primary-strong))] active:bg-[rgb(var(--c-primary-strong))] text-white font-display text-2xl tracking-widest rounded-2xl disabled:opacity-50 transition-all shadow-md active:scale-[0.98] duration-150"
             >
               {saving ? 'GUARDANDO…' : editMode ? 'GUARDAR CAMBIOS' : 'CONFIRMAR REGISTRO'}
             </button>
           </>
         )}
         {saveErr && (
-          <p className="shrink-0 text-[#EA580C] text-sm bg-[#EA580C]/10 border border-[#EA580C]/30 rounded-2xl px-3 py-2 break-words font-medium">{saveErr}</p>
+          <p className="shrink-0 text-[rgb(var(--c-accent))] text-sm bg-[rgb(var(--c-accent)/0.1)] border border-[rgb(var(--c-accent)/0.3)] rounded-2xl px-3 py-2 break-words font-medium">{saveErr}</p>
         )}
       </div>
     </div>
@@ -2376,8 +2376,8 @@ function SummaryGrid({ state, editMode, confirmed, confirm, saving, saveErr, sta
 
 function Card({ title, children, className }: { title: string, children: React.ReactNode, className?: string }) {
   return (
-    <div className={`bg-white border border-[#C2BCB0] rounded-2xl p-5 flex flex-col min-h-0 shadow-sm text-[#1A1D1E] ${className ?? ''}`}>
-      <p className="text-xs font-display tracking-widest text-[#B91C1C] mb-3 shrink-0">{title}</p>
+    <div className={`bg-white border border-[rgb(var(--c-border))] rounded-2xl p-5 flex flex-col min-h-0 shadow-sm text-[rgb(var(--c-text-strong))] ${className ?? ''}`}>
+      <p className="text-xs font-display tracking-widest text-[rgb(var(--c-primary))] mb-3 shrink-0">{title}</p>
       <div className="flex-1 min-h-0 flex flex-col">{children}</div>
     </div>
   )
@@ -2387,24 +2387,24 @@ function Summary({ state, compact }: { state: State, compact?: boolean }) {
   return (
     <div className="space-y-3 text-left">
       <SummaryBlock label="COACH">
-        <div className="text-2xl font-display text-[#1A1D1E]">{state.coach.name}</div>
-        <div className="text-base text-[#334155] mt-1">{state.coach.phone}{state.coach.email ? ` · ${state.coach.email}` : ''}</div>
+        <div className="text-2xl font-display text-[rgb(var(--c-text-strong))]">{state.coach.name}</div>
+        <div className="text-base text-[rgb(var(--c-text))] mt-1">{state.coach.phone}{state.coach.email ? ` · ${state.coach.email}` : ''}</div>
         {state.coach.extras.filter(e => e.trim()).length > 0 && (
-          <div className="text-sm text-[#334155] mt-1">Otros coaches: {state.coach.extras.filter(e => e.trim()).join(', ')}</div>
+          <div className="text-sm text-[rgb(var(--c-text))] mt-1">Otros coaches: {state.coach.extras.filter(e => e.trim()).join(', ')}</div>
         )}
       </SummaryBlock>
 
       <SummaryBlock label="ACADEMIA · EQUIPO">
-        <div className="text-2xl font-display text-[#1A1D1E]">{state.academy}</div>
-        <div className="text-base text-[#334155] mt-1">{state.teamName}</div>
+        <div className="text-2xl font-display text-[rgb(var(--c-text-strong))]">{state.academy}</div>
+        <div className="text-base text-[rgb(var(--c-text))] mt-1">{state.teamName}</div>
       </SummaryBlock>
 
       <SummaryBlock label={`ALUMNOS/AS (${state.dancers.length})`}>
         <div className={`grid ${compact ? 'grid-cols-2' : 'grid-cols-1 md:grid-cols-2'} gap-x-6 gap-y-1`}>
           {state.dancers.map((d, i) => (
-            <div key={i} className="flex justify-between text-base border-b border-[#C2BCB0]/30 last:border-0 py-1 text-[#1A1D1E]">
+            <div key={i} className="flex justify-between text-base border-b border-[rgb(var(--c-border)/0.3)] last:border-0 py-1 text-[rgb(var(--c-text-strong))]">
               <span className="truncate">{d.name}</span>
-              <span className="text-[#334155] ml-2 shrink-0">{formatBirthdate(d.birthdate)}</span>
+              <span className="text-[rgb(var(--c-text))] ml-2 shrink-0">{formatBirthdate(d.birthdate)}</span>
             </div>
           ))}
         </div>
@@ -2417,13 +2417,13 @@ function Summary({ state, compact }: { state: State, compact?: boolean }) {
             const mod = a.modality ? modalityLabel(a.modality) : '—'
             const lvl = a.modality === 'grupal' ? (a.level === 'basico' ? ' BÁSICO' : a.level === 'avanzado' ? ' AVANZADO' : '') : ''
             return (
-            <div key={i} className="border-b border-[#C2BCB0]/30 last:border-0 py-2 text-[#1A1D1E]">
+            <div key={i} className="border-b border-[rgb(var(--c-border)/0.3)] last:border-0 py-2 text-[rgb(var(--c-text-strong))]">
               <div className="font-display text-lg">
-                <span className="text-[#B91C1C]">#{i + 1}</span>{' '}
+                <span className="text-[rgb(var(--c-primary))]">#{i + 1}</span>{' '}
                 {cat.toUpperCase()} · {mod}{lvl} · {a.style ?? '—'}
               </div>
               {a.dancerIndices.length > 0 && (
-                <div className="text-sm text-[#334155] mt-1">
+                <div className="text-sm text-[rgb(var(--c-text))] mt-1">
                   {a.dancerIndices.map(di => state.dancers[di]?.name).filter(Boolean).join(' · ')}
                 </div>
               )}
@@ -2438,8 +2438,8 @@ function Summary({ state, compact }: { state: State, compact?: boolean }) {
 
 function SummaryBlock({ label, children }: { label: string, children: React.ReactNode }) {
   return (
-    <div className="bg-white border border-[#C2BCB0] rounded-2xl p-4 shadow-sm">
-      <div className="text-xs font-display tracking-widest text-[#B91C1C] mb-2">{label}</div>
+    <div className="bg-white border border-[rgb(var(--c-border))] rounded-2xl p-4 shadow-sm">
+      <div className="text-xs font-display tracking-widest text-[rgb(var(--c-primary))] mb-2">{label}</div>
       {children}
     </div>
   )
