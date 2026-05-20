@@ -7,20 +7,20 @@
 
 :root {
   /* Brand palette — channel values so Tailwind opacity modifiers work via rgb(var(--c-x)/<alpha>) */
-  --c-primary: 185 28 28;          /* red — headings, primary buttons, key CTA */
-  --c-primary-strong: 127 29 29;   /* red darker — hover/active of primary */
-  --c-accent: 234 88 12;           /* orange — badges, deadlines, secondary info */
-  --c-accent-strong: 154 52 18;    /* orange darker — accent hover */
-  --c-success: 42 92 78;           /* green — whatsapp / success / confirmations */
-  --c-success-strong: 22 66 53;    /* green darker — success hover */
-  --c-text: 51 65 85;              /* slate — body text */
-  --c-text-strong: 26 29 30;       /* near-black — titles, strong emphasis */
-  --c-text-darker: 30 41 59;       /* slate-900 — alt strong text */
-  --c-text-darkest: 11 19 43;      /* deepest navy — small accent text */
-  --c-surface: 246 244 239;        /* cream canvas */
-  --c-surface-2: 232 227 213;      /* cream surface (cards) */
-  --c-surface-3: 221 216 202;      /* cream surface hover */
-  --c-border: 194 188 176;         /* cream border */
+  --c-primary: 230 0 126;          /* neon fuchsia/pink — headings, primary buttons, key CTA */
+  --c-primary-strong: 180 0 98;    /* neon fuchsia darker — hover/active of primary */
+  --c-accent: 101 163 13;          /* vibrant lime/yellow-green — badges, deadlines, secondary info */
+  --c-accent-strong: 63 98 18;     /* lime darker — accent hover */
+  --c-success: 22 163 74;          /* logo green — whatsapp / success / confirmations, main navigation CTAs */
+  --c-success-strong: 22 101 52;   /* logo green darker — success hover */
+  --c-text: 51 65 85;              /* slate — body text for high readability */
+  --c-text-strong: 17 17 17;       /* logo charcoal black — titles, strong emphasis */
+  --c-text-darker: 26 29 30;       /* logo near-black — alt strong text */
+  --c-text-darkest: 17 17 17;      /* deepest black — small accent text */
+  --c-surface: 246 244 239;        /* cream canvas background */
+  --c-surface-2: 232 227 213;      /* cream card surface */
+  --c-surface-3: 221 216 202;      /* cream card hover state */
+  --c-border: 194 188 176;         /* cream borders */
 }
 
 html, body {
