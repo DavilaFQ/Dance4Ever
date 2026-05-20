@@ -46,7 +46,7 @@ export default function MCPage({ params }: Props) {
 
   if (notFound) {
     return (
-      <div className="h-[100dvh] bg-black flex items-center justify-center text-orange-500 font-display text-3xl tracking-widest">
+      <div className="h-[100dvh] bg-black flex items-center justify-center text-yellow-500 font-display text-3xl tracking-widest">
         EVENTO NO ENCONTRADO
       </div>
     )
@@ -54,7 +54,7 @@ export default function MCPage({ params }: Props) {
 
   if (!event) {
     return (
-      <div className="h-[100dvh] bg-black flex items-center justify-center text-orange-500 font-display text-2xl tracking-widest animate-pulse">
+      <div className="h-[100dvh] bg-black flex items-center justify-center text-yellow-500 font-display text-2xl tracking-widest animate-pulse">
         CARGANDO…
       </div>
     )
@@ -66,19 +66,19 @@ export default function MCPage({ params }: Props) {
   return (
     <div className="h-[100dvh] bg-neutral-900 text-white flex flex-col overflow-hidden select-none">
       <header className="bg-black px-3 py-2 flex items-center justify-between shrink-0">
-        <h1 className="font-display text-3xl tracking-[0.2em] text-orange-500 leading-none">PRESENTADOR</h1>
+        <h1 className="font-display text-3xl tracking-[0.2em] text-yellow-500 leading-none">PRESENTADOR</h1>
         <Image src="/logo.png" alt="Dance4ever" width={56} height={40} priority className="shrink-0" />
       </header>
 
       {event.awards_mode ? (
-        <div className="flex-1 min-h-0 flex flex-col bg-black text-orange-400 px-4">
+        <div className="flex-1 min-h-0 flex flex-col bg-black text-amber-400 px-4">
           <div className="flex-1 flex items-center justify-center text-center animate-pulse">
             <p className="font-display text-6xl leading-none uppercase tracking-wider">Premiación</p>
           </div>
         </div>
       ) : (
         <>
-          <div className="flex-[3] min-h-0 bg-orange-500 text-black flex flex-col items-center justify-center px-4 py-3 text-center overflow-hidden">
+          <div className="flex-[3] min-h-0 bg-yellow-400 text-black flex flex-col items-center justify-center px-4 py-3 text-center overflow-hidden">
             {current ? (
               <>
                 <p className="font-display text-xl tracking-[0.4em] leading-none mb-2">EN ESCENARIO</p>
@@ -100,12 +100,12 @@ export default function MCPage({ params }: Props) {
             )}
           </div>
 
-          <div className="flex-1 min-h-0 bg-neutral-900 border-t-2 border-orange-500/40 flex flex-col items-center justify-center px-4 py-2 text-center overflow-hidden">
+          <div className="flex-1 min-h-0 bg-neutral-900 border-t-2 border-yellow-500/40 flex flex-col items-center justify-center px-4 py-2 text-center overflow-hidden">
             {next ? (
               <>
-                <p className="font-display text-sm tracking-[0.4em] text-orange-500 leading-none mb-1">SIGUIENTE</p>
+                <p className="font-display text-sm tracking-[0.4em] text-yellow-500 leading-none mb-1">SIGUIENTE</p>
                 <div className="flex items-baseline gap-2 max-w-full">
-                  <span className="font-display text-3xl text-orange-500 leading-none shrink-0">#{next.position}</span>
+                  <span className="font-display text-3xl text-yellow-500 leading-none shrink-0">#{next.position}</span>
                   <p className="font-display text-2xl uppercase leading-tight truncate min-w-0">{next.name}</p>
                 </div>
                 <p className="font-display text-base uppercase opacity-70 leading-tight mt-1 truncate max-w-full">
@@ -129,7 +129,7 @@ export default function MCPage({ params }: Props) {
       {showProgram && (
         <div className="fixed inset-0 bg-neutral-900 z-50 flex flex-col">
           <div className="bg-black px-4 py-3 flex items-center justify-between shrink-0">
-            <h3 className="font-display text-2xl tracking-widest text-orange-500">PROGRAMA</h3>
+            <h3 className="font-display text-2xl tracking-widest text-yellow-500">PROGRAMA</h3>
             <button onClick={() => setShowProgram(false)} aria-label="Cerrar"><X className="w-6 h-6" /></button>
           </div>
           <SearchBar value={search} onChange={setSearch} />
@@ -141,7 +141,7 @@ export default function MCPage({ params }: Props) {
               return filtered.map(p => {
                 const isOnStage = event.current_position === p.position
                 const done = p.position < event.current_position
-                const bg = isOnStage ? 'bg-orange-500 text-black' : done ? 'bg-neutral-800/60 opacity-40' : 'bg-neutral-700'
+                const bg = isOnStage ? 'bg-yellow-400 text-black' : done ? 'bg-neutral-800/60 opacity-40' : 'bg-neutral-700'
                 return (
                   <div key={p.id} className={`w-full rounded-md px-3 py-2 flex items-center gap-3 ${bg}`}>
                     <span className="font-display text-3xl shrink-0 leading-none">#{p.position}</span>
