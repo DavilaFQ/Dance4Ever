@@ -1806,29 +1806,22 @@ function DateInput({ value, onChange, onEnter }: { value: string, onChange: (iso
   const today = new Date()
   const maxDate = today.toISOString().slice(0, 10)
   const minDate = '1990-01-01'
-  const displayLabel = value ? (() => {
-    const [y, m, d] = value.split('-')
-    return `${d}/${m}/${y}`
-  })() : 'TOCA PARA SELECCIONAR'
 
   return (
-    <div className="relative">
-      <input
-        type="date"
-        value={value}
-        onChange={e => onChange(e.target.value)}
-        onKeyDown={e => { if (e.key === 'Enter' && value && onEnter) onEnter() }}
-        min={minDate}
-        max={maxDate}
-        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-        aria-label="Fecha de nacimiento"
-      />
-      <div className={`w-full h-16 lg:h-20 rounded-2xl flex items-center justify-center pointer-events-none font-display text-2xl lg:text-3xl tracking-wider border transition-all ${
-        value ? 'bg-white border-[#1E414C] text-[#1E414C] shadow-sm' : 'bg-white border-[#C2BCB0] text-[#3D4143]/60'
-      }`}>
-        {displayLabel}
-      </div>
-    </div>
+    <input
+      type="date"
+      value={value}
+      onChange={e => onChange(e.target.value)}
+      onKeyDown={e => { if (e.key === 'Enter' && value && onEnter) onEnter() }}
+      min={minDate}
+      max={maxDate}
+      className={`w-full h-16 lg:h-20 rounded-2xl text-center outline-none font-display text-xl lg:text-3xl tracking-wider border transition-all cursor-pointer px-5 ${
+        value
+          ? 'bg-white border-[#1E414C] text-[#1E414C] focus:ring-1 focus:ring-[#1E414C] shadow-sm'
+          : 'bg-white border-[#C2BCB0] text-[#3D4143]/60 focus:border-[#1E414C] focus:ring-1 focus:ring-[#1E414C]'
+      }`}
+      aria-label="Fecha de nacimiento"
+    />
   )
 }
 
