@@ -273,7 +273,7 @@ export default function StaffPage() {
       <header className="bg-black px-3 py-2 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-3 min-w-0 shrink-0">
           <Image src="/logo.png" alt="Dance4ever" width={56} height={40} priority className="shrink-0" />
-          <h1 className="font-display text-3xl tracking-[0.2em] text-yellow-500 leading-none">STAFF</h1>
+          <h1 className="font-display text-3xl tracking-[0.2em] text-orange-500 leading-none">STAFF</h1>
         </div>
         {event ? (
           <div className="flex items-center shrink-0">
@@ -283,14 +283,14 @@ export default function StaffPage() {
                 className="mr-6 active:opacity-70"
                 aria-label="Premiación"
               >
-                <Star className={`w-6 h-6 ${event.awards_mode ? 'fill-amber-400 text-amber-400' : 'text-white'}`} />
+                <Star className={`w-6 h-6 ${event.awards_mode ? 'fill-orange-400 text-orange-400' : 'text-white'}`} />
               </button>
             )}
             <div className="flex items-center gap-4">
-              <button onClick={() => setShowProgram(true)} className="text-white active:text-yellow-500">
+              <button onClick={() => setShowProgram(true)} className="text-white active:text-orange-500">
                 <ListOrdered className="w-6 h-6" />
               </button>
-              <button onClick={() => setShowSetup(true)} className="text-white active:text-yellow-500">
+              <button onClick={() => setShowSetup(true)} className="text-white active:text-orange-500">
                 <Settings className="w-6 h-6" />
               </button>
             </div>
@@ -301,13 +301,13 @@ export default function StaffPage() {
       {event ? (
         <>
           {event.awards_mode ? (
-            <div className="flex-1 min-h-0 flex flex-col bg-black text-amber-400 px-4">
+            <div className="flex-1 min-h-0 flex flex-col bg-black text-orange-400 px-4">
               <div className="flex-1 flex items-center justify-center text-center animate-pulse">
                 <p className="font-display text-7xl leading-none uppercase tracking-wider">Premiación</p>
               </div>
               <button
                 onClick={() => setShowPerformed(true)}
-                className="shrink-0 mb-4 bg-neutral-900 border-2 border-amber-400 text-amber-400 active:bg-amber-400 active:text-black px-4 py-4 rounded-md font-display text-2xl tracking-widest"
+                className="shrink-0 mb-4 bg-neutral-900 border-2 border-orange-400 text-orange-400 active:bg-orange-400 active:text-black px-4 py-4 rounded-md font-display text-2xl tracking-widest"
               >
                 VER PRESENTADOS ({participants.filter(p => p.position < event.current_position).length})
               </button>
@@ -315,7 +315,7 @@ export default function StaffPage() {
           ) : (
             <>
               {/* EN ESCENARIO panel — arriba */}
-              <div className="bg-yellow-400 text-black px-3 py-3 shrink-0 text-center">
+              <div className="bg-orange-500 text-black px-3 py-3 shrink-0 text-center">
                 {current ? (
                   <>
                     <p className="font-display text-xs tracking-[0.4em] opacity-80 leading-none">EN ESCENARIO · #{String(event.current_position).padStart(2, '0')}</p>
@@ -382,7 +382,7 @@ export default function StaffPage() {
         <div className="flex-1 flex flex-col items-center justify-center text-gray-400 p-6 gap-4">
           <Image src="/logo.png" alt="Dance4ever" width={180} height={130} priority />
           <p className="text-center">No hay evento activo</p>
-          <button onClick={() => setShowCreate(true)} className="bg-yellow-400 text-black px-6 py-3 rounded-xl font-display text-xl tracking-widest flex items-center gap-2">
+          <button onClick={() => setShowCreate(true)} className="bg-orange-500 text-black px-6 py-3 rounded-xl font-display text-xl tracking-widest flex items-center gap-2">
             <Plus className="w-5 h-5" /> CREAR EVENTO
           </button>
         </div>
@@ -435,7 +435,7 @@ export default function StaffPage() {
       {showSetup && event && (
         <div className="fixed inset-0 bg-white text-black z-50 flex flex-col">
           <div className="bg-black px-4 py-3 flex items-center justify-between shrink-0">
-            <h3 className="font-display text-2xl tracking-widest text-yellow-500">CONFIGURACIÓN</h3>
+            <h3 className="font-display text-2xl tracking-widest text-orange-500">CONFIGURACIÓN</h3>
             <button onClick={() => setShowSetup(false)} aria-label="Cerrar"><X className="w-6 h-6 text-white" /></button>
           </div>
           <div className="flex-1 min-h-0 overflow-y-auto p-4 space-y-4">
@@ -443,7 +443,7 @@ export default function StaffPage() {
           <div className="grid grid-cols-2 gap-2">
             <button
               onClick={() => { setShowSetup(false); setShowStats(true) }}
-              className="flex items-center justify-center gap-2 bg-yellow-400 active:bg-yellow-500 text-black px-3 py-3 rounded-lg font-bold"
+              className="flex items-center justify-center gap-2 bg-orange-500 active:bg-orange-500 text-black px-3 py-3 rounded-lg font-bold"
             >
               <BarChart3 className="w-5 h-5" /> ESTADÍSTICAS
             </button>
@@ -543,7 +543,7 @@ export default function StaffPage() {
                     } finally { setExportingRegs(false) }
                   }}
                   disabled={exportingRegs || registrationCount === 0}
-                  className="w-full flex items-center justify-center gap-2 bg-purple-700 active:bg-purple-800 text-white py-3 rounded-lg font-bold disabled:opacity-50"
+                  className="w-full flex items-center justify-center gap-2 bg-red-700 active:bg-red-800 text-white py-3 rounded-lg font-bold disabled:opacity-50"
                 >
                   <FileSpreadsheet className="w-4 h-4" /> {exportingRegs ? 'GENERANDO…' : 'EXPORTAR EXCEL DE REGISTROS'}
                 </button>
@@ -584,7 +584,7 @@ export default function StaffPage() {
       {showProgram && event && (
         <div className="fixed inset-0 bg-neutral-900 z-50 flex flex-col">
           <div className="bg-black px-4 py-3 flex items-center justify-between shrink-0">
-            <h3 className="font-display text-2xl tracking-widest text-yellow-500">PROGRAMA</h3>
+            <h3 className="font-display text-2xl tracking-widest text-orange-500">PROGRAMA</h3>
             <div className="flex items-center gap-4">
               {mode === 'manager' && (
                 <button onClick={() => setEditor({ kind: 'create' })} aria-label="Agregar turno">
@@ -616,7 +616,7 @@ export default function StaffPage() {
       {showPerformed && event && (
         <div className="fixed inset-0 bg-neutral-900 z-50 flex flex-col">
           <div className="bg-black px-4 py-3 flex items-center justify-between shrink-0">
-            <h3 className="font-display text-2xl tracking-widest text-amber-400">PRESENTADOS</h3>
+            <h3 className="font-display text-2xl tracking-widest text-orange-400">PRESENTADOS</h3>
             <button onClick={() => setShowPerformed(false)} aria-label="Cerrar"><X className="w-6 h-6" /></button>
           </div>
           <SearchBar value={performedSearch} onChange={setPerformedSearch} />
@@ -663,7 +663,7 @@ export default function StaffPage() {
             </button>
             <button
               onClick={() => { toggleAwards(); setConfirmAwards(false) }}
-              className="bg-amber-400 active:bg-amber-500 text-black px-4 py-3 rounded-lg font-display text-xl tracking-widest"
+              className="bg-orange-400 active:bg-orange-500 text-black px-4 py-3 rounded-lg font-display text-xl tracking-widest"
             >
               SÍ
             </button>

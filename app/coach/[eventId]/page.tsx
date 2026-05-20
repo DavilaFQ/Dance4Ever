@@ -110,13 +110,13 @@ export default function CoachPage({ params }: Props) {
       <header className="bg-black px-3 py-2 flex items-center gap-3 shrink-0">
         {coach ? (
           <button onClick={logout} className="flex items-center gap-2 min-w-0 flex-1 shrink">
-            <ChevronLeft className="w-8 h-8 text-yellow-500 shrink-0" />
-            <h1 className="font-display text-3xl tracking-[0.2em] text-yellow-500 truncate uppercase leading-none">
+            <ChevronLeft className="w-8 h-8 text-orange-500 shrink-0" />
+            <h1 className="font-display text-3xl tracking-[0.2em] text-orange-500 truncate uppercase leading-none">
               {coach.name}
             </h1>
           </button>
         ) : (
-          <h1 className="flex-1 min-w-0 font-display text-3xl tracking-[0.2em] text-yellow-500 truncate uppercase leading-none">COACH</h1>
+          <h1 className="flex-1 min-w-0 font-display text-3xl tracking-[0.2em] text-orange-500 truncate uppercase leading-none">COACH</h1>
         )}
         <Image src="/logo.png" alt="Dance4ever" width={56} height={40} priority className="shrink-0" />
       </header>
@@ -141,7 +141,7 @@ export default function CoachPage({ params }: Props) {
       ) : (
         <>
           {showAwards ? (
-            <div className="flex-1 min-h-0 flex flex-col px-4 text-center bg-gradient-to-b from-amber-400 via-yellow-400 to-amber-400 text-black">
+            <div className="flex-1 min-h-0 flex flex-col px-4 text-center bg-gradient-to-b from-orange-400 via-orange-500 to-orange-400 text-black">
               <div className="pt-14 animate-pulse">
                 <p className="font-display text-7xl leading-none uppercase tracking-wide">Premiación</p>
                 <p className="font-display text-7xl leading-none uppercase tracking-wide mt-2">De Bloque</p>
@@ -154,7 +154,7 @@ export default function CoachPage({ params }: Props) {
           ) : (
             <>
               {/* EN ESCENARIO arriba */}
-              <div className="bg-yellow-400 text-black px-3 py-3 shrink-0 text-center">
+              <div className="bg-orange-500 text-black px-3 py-3 shrink-0 text-center">
                 {current ? (
                   <>
                     <p className="font-display text-xs tracking-[0.4em] opacity-80 leading-none">EN ESCENARIO · #{String(event.current_position).padStart(2, '0')}</p>
@@ -232,7 +232,7 @@ export default function CoachPage({ params }: Props) {
                   )
                 }
                 return (
-                  <div className="bg-yellow-400 text-black px-4 py-4 shrink-0">
+                  <div className="bg-orange-500 text-black px-4 py-4 shrink-0">
                     <p className="font-display text-sm tracking-widest leading-none opacity-80 text-center">TU PRÓXIMO TURNO</p>
                     <div className="flex items-baseline gap-3 mt-2">
                       <p className="font-display text-5xl leading-none shrink-0">#{nextMine.position}</p>
@@ -270,7 +270,7 @@ export default function CoachPage({ params }: Props) {
       {modal && event && coach && (
         <div className="fixed inset-0 bg-neutral-900 z-50 flex flex-col">
           <div className="bg-black px-4 py-3 flex items-center justify-between shrink-0">
-            <h3 className="font-display text-2xl tracking-widest text-yellow-500">
+            <h3 className="font-display text-2xl tracking-widest text-orange-500">
               {modal === 'mine' ? 'MIS TURNOS' : 'PROGRAMA'}
             </h3>
             <button onClick={() => setModal(null)}><X className="w-6 h-6" /></button>
@@ -314,9 +314,9 @@ export default function CoachPage({ params }: Props) {
 
 function Pill({ p, mine, onStage, done, grow }: { p: Participant, mine?: boolean, onStage?: boolean, done?: boolean, grow?: boolean }) {
   const bg =
-    onStage ? 'bg-yellow-400 text-black' :
+    onStage ? 'bg-orange-500 text-black' :
     done ? 'bg-neutral-800/60 opacity-40' :
-    mine ? 'bg-purple-800' :
+    mine ? 'bg-red-800' :
     'bg-neutral-700'
   return (
     <div className={`w-full rounded-md px-3 py-1.5 flex items-center gap-2 ${bg} ${grow ? 'flex-1 min-h-0' : ''}`}>
