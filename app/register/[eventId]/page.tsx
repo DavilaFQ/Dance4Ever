@@ -484,48 +484,26 @@ export default function RegisterPage({ params }: Props) {
       <p className="text-neutral-400 text-center text-lg">Verifica el enlace o ponte en contacto con los organizadores.</p>
     </Centered>
   }
-  if (isLargeScreen === false) {
-    return (
-      <Centered>
-        <div className="max-w-2xl space-y-6 text-center">
-          <Monitor className="w-24 h-24 mx-auto text-yellow-500" />
-          <h1 className="font-display text-4xl md:text-5xl tracking-widest text-yellow-500 leading-tight">
-            ABRE ESTE LINK EN UNA PC O LAPTOP
-          </h1>
-          <p className="text-neutral-300 text-lg leading-snug">
-            El registro tiene muchos datos y solo se ve bien en una pantalla grande. Por favor abre este mismo enlace en tu computadora.
-          </p>
-          {event && (
-            <div className="bg-neutral-800 rounded-xl p-4 mt-4">
-              <p className="text-xs text-neutral-400 mb-2">EVENTO</p>
-              <p className="font-display text-2xl uppercase text-yellow-500">{event.name}</p>
-              {event.date && <p className="text-sm text-neutral-400 mt-1">{formatEventDate(event.date)}</p>}
-            </div>
-          )}
-        </div>
-      </Centered>
-    )
-  }
-
   const isFirstStep = step.kind === 'coach_name'
   const canBack = !isFirstStep && step.kind !== 'confirmed'
+  const isMobile = isLargeScreen === false
 
   return (
-    <div className="h-[100dvh] bg-neutral-900 text-white flex flex-col overflow-hidden">
-      <main className="flex-1 min-h-0 px-8 pt-5 pb-4 flex flex-col overflow-hidden">
-        <div className="shrink-0 flex items-center gap-6 pb-4">
-          <div className="shrink-0 flex items-baseline gap-5">
-            <p className="font-display text-3xl md:text-4xl tracking-[0.3em] text-yellow-500 leading-none">REGISTRO PARA</p>
-            <h1 className="font-display text-3xl md:text-4xl uppercase text-white truncate leading-none">{event?.name || 'EVENTO'}</h1>
-            {event?.date && <p className="font-display text-3xl md:text-4xl uppercase text-neutral-400 leading-none">{formatEventDate(event.date)}</p>}
+    <div className="min-h-[100dvh] lg:h-[100dvh] bg-neutral-900 text-white flex flex-col lg:overflow-hidden">
+      <main className="flex-1 lg:min-h-0 px-4 lg:px-8 pt-4 lg:pt-5 pb-4 flex flex-col lg:overflow-hidden">
+        <div className="shrink-0 flex flex-wrap items-center gap-3 md:gap-6 pb-4">
+          <div className="shrink-0 flex flex-wrap items-baseline gap-x-4 gap-y-1 md:gap-5">
+            <p className="font-display text-xl md:text-3xl lg:text-4xl tracking-[0.3em] text-yellow-500 leading-none">REGISTRO PARA</p>
+            <h1 className="font-display text-xl md:text-3xl lg:text-4xl uppercase text-white truncate leading-none">{event?.name || 'EVENTO'}</h1>
+            {event?.date && <p className="font-display text-xl md:text-3xl lg:text-4xl uppercase text-neutral-400 leading-none">{formatEventDate(event.date)}</p>}
           </div>
-          <div className="flex-1" />
+          <div className="hidden lg:block flex-1" />
           {(step.kind === 'summary' || step.kind === 'confirmed') && (
-            <div className="text-right self-center shrink-0">
-              <h2 className="font-display text-3xl md:text-4xl uppercase text-yellow-500 leading-tight">
+            <div className="text-left lg:text-right self-center shrink-0 w-full lg:w-auto">
+              <h2 className="font-display text-xl md:text-3xl lg:text-4xl uppercase text-yellow-500 leading-tight">
                 {step.kind === 'confirmed' ? 'REGISTRO CONFIRMADO' : 'REVISA TU REGISTRO'}
               </h2>
-              <p className="font-display text-base md:text-lg tracking-[0.4em] text-yellow-500/70 leading-none mt-2">
+              <p className="font-display text-xs md:text-base lg:text-lg tracking-[0.4em] text-yellow-500/70 leading-none mt-1 md:mt-2">
                 {step.kind === 'confirmed' ? '¡GRACIAS!' : editMode ? 'EDITA Y VUELVE A CONFIRMAR' : 'SI TODO ES CORRECTO, CONFIRMA'}
               </p>
             </div>
@@ -535,11 +513,11 @@ export default function RegisterPage({ params }: Props) {
               MODO EDICIÓN
             </div>
           )}
-          <Image src="/logo.png" alt="Dance4ever" width={120} height={90} priority className="shrink-0" />
+          <Image src="/logo.png" alt="Dance4ever" width={120} height={90} priority className="shrink-0 ml-auto w-16 h-auto md:w-24 lg:w-[120px]" />
         </div>
 
-        <div className="flex-1 min-h-0 flex justify-center">
-          <div className={`w-full ${step.kind === 'summary' || step.kind === 'confirmed' || step.kind === 'dancer' ? '' : 'max-w-5xl'} h-full flex flex-col justify-center min-h-0`}>
+        <div className="flex-1 lg:min-h-0 flex justify-center">
+          <div className={`w-full ${step.kind === 'summary' || step.kind === 'confirmed' || step.kind === 'dancer' ? '' : 'max-w-5xl'} lg:h-full flex flex-col lg:justify-center lg:min-h-0`}>
             <StepView
               step={step}
               state={state}
@@ -1673,10 +1651,10 @@ function SummaryGrid({ state, editMode, confirmed, confirm, saving, saveErr, sta
   const total = costoTotal(state)
   const hasCosts = state.costPaquete !== null && state.costRepeticion !== null
   return (
-    <div className="h-full max-h-full min-h-0 grid grid-cols-6 grid-rows-[auto_minmax(0,1fr)] gap-4 w-full">
-      <div className="col-span-2 min-h-0">
+    <div className="lg:h-full lg:max-h-full lg:min-h-0 grid grid-cols-1 lg:grid-cols-6 lg:grid-rows-[auto_minmax(0,1fr)] gap-4 w-full">
+      <div className="lg:col-span-2 lg:min-h-0">
         <Card title="COACH">
-          <p className="text-2xl md:text-3xl font-display uppercase truncate">{state.coach.name}</p>
+          <p className="text-xl md:text-2xl lg:text-3xl font-display uppercase truncate">{state.coach.name}</p>
           <p className="text-sm md:text-base text-neutral-400 mt-2 truncate">
             {state.coach.phone}{state.coach.email ? ` · ${state.coach.email}` : ''}
           </p>
@@ -1686,16 +1664,16 @@ function SummaryGrid({ state, editMode, confirmed, confirm, saving, saveErr, sta
         </Card>
       </div>
 
-      <div className="col-span-3 min-h-0">
+      <div className="lg:col-span-3 lg:min-h-0">
         <Card title="ACADEMIA · EQUIPO">
-          <p className="text-2xl md:text-3xl font-display uppercase truncate">{state.academy}</p>
+          <p className="text-xl md:text-2xl lg:text-3xl font-display uppercase truncate">{state.academy}</p>
           <p className="text-sm md:text-base text-neutral-400 mt-2 truncate">{state.teamName}</p>
         </Card>
       </div>
 
-      <div className="col-span-1 min-h-0">
+      <div className="lg:col-span-1 lg:min-h-0">
         {hasCosts ? (
-          <div className="bg-red-500 text-black rounded-xl h-full p-3 flex flex-col items-center justify-center">
+          <div className="bg-red-500 text-black rounded-xl h-full p-4 flex flex-col items-center justify-center">
             <p className="text-base md:text-lg font-display tracking-widest opacity-90 leading-none text-center">TOTAL A PAGAR</p>
             <p className="font-display text-3xl md:text-4xl leading-none mt-2">{formatMoney(total)}</p>
           </div>
@@ -1706,10 +1684,10 @@ function SummaryGrid({ state, editMode, confirmed, confirm, saving, saveErr, sta
         )}
       </div>
 
-      <div className="col-span-4 min-h-0">
-        <Card title={`INTEGRANTES (${filledDancers.length})`} className="h-full">
-          <div className="flex-1 min-h-0 overflow-x-auto overflow-y-hidden">
-            <div className="h-full flex flex-col flex-wrap content-start gap-x-12 gap-y-2 px-1">
+      <div className="lg:col-span-4 lg:min-h-0">
+        <Card title={`INTEGRANTES (${filledDancers.length})`} className="lg:h-full">
+          <div className="max-h-[60vh] lg:max-h-none lg:flex-1 lg:min-h-0 overflow-y-auto lg:overflow-x-auto lg:overflow-y-hidden">
+            <div className="lg:h-full flex flex-col lg:flex-wrap lg:content-start gap-x-12 gap-y-2 px-1">
               {filledDancers.length === 0 ? (
                 <p className="text-neutral-500 italic text-base self-center my-auto">Sin integrantes</p>
               ) : filledDancers.map((d) => {
@@ -1717,7 +1695,7 @@ function SummaryGrid({ state, editMode, confirmed, confirm, saving, saveErr, sta
                 const n = counts.get(di) ?? 0
                 const cost = hasCosts && n > 0 ? (state.costPaquete ?? 0) + Math.max(0, n - 1) * (state.costRepeticion ?? 0) : null
                 return (
-                  <div key={di} className="font-display text-xl md:text-2xl uppercase text-green-400 whitespace-nowrap flex items-baseline gap-3">
+                  <div key={di} className="font-display text-lg md:text-xl lg:text-2xl uppercase text-green-400 whitespace-nowrap flex items-baseline gap-3">
                     <span className="opacity-60 text-sm">{di + 1}.</span>
                     <span>{d.name}</span>
                     {n > 0 && <span className="text-sm text-yellow-500/80">{n} acto{n === 1 ? '' : 's'}</span>}
@@ -1730,9 +1708,9 @@ function SummaryGrid({ state, editMode, confirmed, confirm, saving, saveErr, sta
         </Card>
       </div>
 
-      <div className="col-span-2 flex flex-col gap-3 min-h-0">
-        <Card title={`ACTOS (${state.acts.length})`} className="flex-1 min-h-0">
-          <div className="flex-1 min-h-0 overflow-y-auto pr-1 space-y-3">
+      <div className="lg:col-span-2 flex flex-col gap-3 lg:min-h-0">
+        <Card title={`ACTOS (${state.acts.length})`} className="lg:flex-1 lg:min-h-0">
+          <div className="max-h-[50vh] lg:max-h-none lg:flex-1 lg:min-h-0 overflow-y-auto pr-1 space-y-3">
             {state.acts.length === 0 ? (
               <p className="text-neutral-500 italic text-base">Sin actos</p>
             ) : state.acts.map((a, i) => {
