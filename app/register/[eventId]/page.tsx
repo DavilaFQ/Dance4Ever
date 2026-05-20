@@ -260,6 +260,7 @@ export default function RegisterPage({ params }: Props) {
   const [isLargeScreen, setIsLargeScreen] = useState<boolean | null>(null)
   const [mobileSheet, setMobileSheet] = useState<null | 'dancers'>(null)
   const [mobileSummaryTab, setMobileSummaryTab] = useState<'coach' | 'academy' | 'dancers' | 'acts'>('coach')
+  const [isKeyboardOpen, setIsKeyboardOpen] = useState(false)
 
   useEffect(() => {
     const check = () => {
@@ -336,6 +337,7 @@ export default function RegisterPage({ params }: Props) {
     if (!vv) return
     const updateHeight = () => {
       document.documentElement.style.setProperty('--viewport-height', `${vv.height}px`)
+      setIsKeyboardOpen(vv.height < window.innerHeight * 0.85)
     }
     vv.addEventListener('resize', updateHeight)
     vv.addEventListener('scroll', updateHeight)
@@ -574,10 +576,11 @@ export default function RegisterPage({ params }: Props) {
       <meta name="theme-color" content="#F6F4EF" />
 
       {/* MOBILE HEADER — sticky, minimal, con área segura arriba */}
-      <div
-        className="shrink-0 lg:hidden bg-[#F6F4EF]/90 backdrop-blur flex items-center gap-3 px-4 pb-3 border-b border-[#C2BCB0]/50"
-        style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 12px)' }}
-      >
+      {!(step.kind === 'welcome' || step.kind === 'instruction_1' || step.kind === 'instruction_2') && (
+        <div
+          className="shrink-0 lg:hidden bg-[#F6F4EF]/90 backdrop-blur flex items-center gap-3 px-4 pb-3 border-b border-[#C2BCB0]/50"
+          style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 12px)' }}
+        >
         {canBack && step.kind !== 'summary' ? (
           <button
             onClick={goBack}
@@ -605,6 +608,7 @@ export default function RegisterPage({ params }: Props) {
           <MessageCircle className="w-6 h-6 text-[#265C4B]" />
         </a>
       </div>
+      )}
 
       <main
         className="flex-1 min-h-0 px-4 lg:px-8 pt-3 lg:pt-5 flex flex-col overflow-y-auto lg:overflow-hidden"
@@ -637,11 +641,12 @@ export default function RegisterPage({ params }: Props) {
         </div>
 
         <div className="flex-1 min-h-0 flex justify-center">
-          <div className={`w-full ${step.kind === 'summary' || step.kind === 'confirmed' || step.kind === 'dancer' ? '' : 'max-w-5xl'} min-h-full lg:h-full flex flex-col justify-center min-h-0`}>
+          <div className={`w-full ${step.kind === 'summary' || step.kind === 'confirmed' || step.kind === 'dancer' ? '' : 'max-w-5xl'} min-h-full lg:h-full flex flex-col ${isKeyboardOpen ? 'justify-start pt-2' : 'justify-center'} min-h-0`}>
             <StepView
               step={step}
               state={state}
               event={event}
+              isKeyboardOpen={isKeyboardOpen}
               editMode={editMode}
               isMobile={isMobile}
               mobileSummaryTab={mobileSummaryTab}
@@ -934,6 +939,7 @@ function StepView(props: {
   step: Step
   state: State
   event: Event | null
+  isKeyboardOpen: boolean
   editMode: boolean
   isMobile: boolean
   mobileSummaryTab: 'coach' | 'academy' | 'dancers' | 'acts'
@@ -955,7 +961,7 @@ function StepView(props: {
   saving: boolean
   saveErr: string | null
 }) {
-  const { step, state, event, editMode, isMobile, mobileSummaryTab, setMobileSummaryTab, onOpenDancerSheet, onNext, goToStep, startEdit, openEditMenu, updateCoach, updateState, updateDancer, updateAct, setTeamSize, setActCount, syncDancersArray, syncActsArray, confirm, saving, saveErr } = props
+  const { step, state, event, isKeyboardOpen, editMode, isMobile, mobileSummaryTab, setMobileSummaryTab, onOpenDancerSheet, onNext, goToStep, startEdit, openEditMenu, updateCoach, updateState, updateDancer, updateAct, setTeamSize, setActCount, syncDancersArray, syncActsArray, confirm, saving, saveErr } = props
 
   switch (step.kind) {
     case 'welcome': {
@@ -1112,6 +1118,7 @@ function StepView(props: {
           onNext={onNext}
           disabled={state.coach.name.trim().length < 2}
           autoCapitalize="words"
+          isKeyboardOpen={isKeyboardOpen}
         />
       )
 
@@ -1126,6 +1133,7 @@ function StepView(props: {
           disabled={state.coach.phone.trim().length < 6}
           type="tel"
           autoCapitalize="off"
+          isKeyboardOpen={isKeyboardOpen}
         />
       )
 
@@ -1140,6 +1148,7 @@ function StepView(props: {
           disabled={false}
           type="email"
           autoCapitalize="off"
+          isKeyboardOpen={isKeyboardOpen}
         />
       )
 
@@ -1157,7 +1166,7 @@ function StepView(props: {
       const extras = state.coach.extras
       const valid = extras.length > 0 && extras.every(e => e.trim().length >= 2)
       return (
-        <Wrapper title="Nombres de los demás coaches" subtitle="Tu nombre ya está registrado">
+        <Wrapper title="Nombres de los demás coaches" subtitle="Tu nombre ya está registrado" isKeyboardOpen={isKeyboardOpen}>
           <div className="space-y-3">
             {extras.map((e, i) => (
               <div key={i} className="flex gap-2">
@@ -1198,6 +1207,7 @@ function StepView(props: {
           onNext={onNext}
           disabled={state.academy.trim().length < 2}
           autoCapitalize="words"
+          isKeyboardOpen={isKeyboardOpen}
         />
       )
 
@@ -1209,7 +1219,7 @@ function StepView(props: {
         onNext()
       }
       return (
-        <Wrapper title="¿Nombre del equipo?">
+        <Wrapper title="¿Nombre del equipo?" isKeyboardOpen={isKeyboardOpen}>
           <input
             type="text"
             value={state.teamName}
@@ -1231,7 +1241,7 @@ function StepView(props: {
     case 'team_size': {
       const v = state.teamSize
       return (
-        <Wrapper title="¿Cuántos integrantes tiene el equipo?">
+        <Wrapper title="¿Cuántos integrantes tiene el equipo?" isKeyboardOpen={isKeyboardOpen}>
           {editMode && <EditNotice text="No puedes cambiar la cantidad. Para agregar más integrantes, contacta a los organizadores." />}
           <NumberInput
             value={v}
@@ -1268,7 +1278,7 @@ function StepView(props: {
             </button>
           )}
           <div className="lg:w-[560px] shrink-0 flex flex-col justify-center min-h-0">
-            <Wrapper title={`Alumno/a ${i + 1} de ${state.teamSize}`}>
+            <Wrapper title={`Alumno/a ${i + 1} de ${state.teamSize}`} isKeyboardOpen={isKeyboardOpen}>
               <div className="space-y-5">
                 <div>
                   <label className="block text-sm font-display tracking-widest text-[#3D4143] mb-3 text-center">NOMBRE COMPLETO</label>
@@ -1333,7 +1343,7 @@ function StepView(props: {
     case 'act_count': {
       const v = state.actCount
       return (
-        <Wrapper title="¿Cuántos actos van a participar?">
+        <Wrapper title="¿Cuántos actos van a participar?" isKeyboardOpen={isKeyboardOpen}>
           {editMode && <EditNotice text="No puedes cambiar la cantidad. Para agregar más actos, contacta a los organizadores." />}
           <NumberInput
             value={v}
@@ -1681,7 +1691,7 @@ function StepView(props: {
   }
 }
 
-function FieldStep({ title, hint, notice, value, onChange, onNext, disabled, type, autoCapitalize }: {
+function FieldStep({ title, hint, notice, value, onChange, onNext, disabled, type, autoCapitalize, isKeyboardOpen }: {
   title: string
   hint?: string
   notice?: string
@@ -1691,9 +1701,10 @@ function FieldStep({ title, hint, notice, value, onChange, onNext, disabled, typ
   disabled: boolean
   type?: string
   autoCapitalize?: string
+  isKeyboardOpen?: boolean
 }) {
   return (
-    <Wrapper title={title} subtitle={hint}>
+    <Wrapper title={title} subtitle={hint} isKeyboardOpen={isKeyboardOpen}>
       <input
         type={type ?? 'text'}
         value={value}
@@ -1888,14 +1899,14 @@ function EditNotice({ text }: { text: string }) {
   )
 }
 
-function Wrapper({ title, subtitle, children }: { title: string, subtitle?: string, children: React.ReactNode }) {
+function Wrapper({ title, subtitle, children, isKeyboardOpen }: { title: string, subtitle?: string, children: React.ReactNode, isKeyboardOpen?: boolean }) {
   return (
     <div className="flex flex-col h-auto lg:h-full min-h-0">
       <div className="shrink-0 text-center space-y-2 lg:space-y-3 pt-2 lg:pt-0 pb-5 lg:pb-8">
         {subtitle && <p className="font-display text-xs tracking-[0.4em] text-[#1E414C]">{subtitle}</p>}
         <h2 className="font-display text-2xl md:text-4xl lg:text-5xl leading-tight px-2 text-[#1A1D1E]">{title}</h2>
       </div>
-      <div className="flex-1 min-h-0 flex flex-col justify-center gap-5 lg:gap-8">
+      <div className={`flex-1 min-h-0 flex flex-col ${isKeyboardOpen ? 'justify-start pt-2' : 'justify-center'} gap-5 lg:gap-8`}>
         {children}
       </div>
     </div>
