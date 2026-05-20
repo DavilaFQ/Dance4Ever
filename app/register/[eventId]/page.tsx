@@ -579,7 +579,7 @@ export default function RegisterPage({ params }: Props) {
   if (authState === 'invalid') {
     return (
       <Centered>
-        <p className="font-display text-4xl tracking-widest text-[rgb(var(--c-accent))]">LINK INVÁLIDO</p>
+        <p className="font-display text-4xl tracking-widest text-[rgb(var(--c-primary))]">LINK INVÁLIDO</p>
         <p className="text-[rgb(var(--c-text))] text-center text-lg mt-2">Verifica el enlace o ponte en contacto con los organizadores.</p>
       </Centered>
     )
@@ -657,7 +657,7 @@ export default function RegisterPage({ params }: Props) {
             </div>
           )}
           {editMode && (
-            <div className="bg-[rgb(var(--c-accent)/0.1)] border border-[rgb(var(--c-accent)/0.3)] text-[rgb(var(--c-accent))] px-3 py-1.5 rounded-xl font-display text-xs tracking-widest self-center">
+            <div className="bg-[rgb(var(--c-primary)/0.1)] border border-[rgb(var(--c-primary)/0.3)] text-[rgb(var(--c-primary))] px-3 py-1.5 rounded-xl font-display text-xs tracking-widest self-center">
               MODO EDICIÓN
             </div>
           )}
@@ -665,7 +665,7 @@ export default function RegisterPage({ params }: Props) {
         </div>
 
         <div className="flex-1 min-h-0 flex justify-center">
-          <div className={`w-full ${step.kind === 'summary' || step.kind === 'confirmed' || step.kind === 'dancer' ? '' : 'max-w-5xl'} min-h-full lg:h-full flex flex-col ${isKeyboardOpen ? 'justify-start pt-[8vh] lg:pt-3' : 'justify-center'} min-h-0`}>
+          <div className={`w-full ${step.kind === 'summary' || step.kind === 'confirmed' || step.kind === 'dancer' ? '' : 'max-w-5xl'} min-h-full lg:h-full flex flex-col justify-start lg:justify-center ${isKeyboardOpen ? 'pt-[8vh] lg:pt-3' : 'pt-2 lg:pt-0'} min-h-0`}>
             <StepView
               step={step}
               state={state}
@@ -817,7 +817,7 @@ export default function RegisterPage({ params }: Props) {
                       key={i}
                       onClick={() => { setStep({ kind: 'dancer', i }); setMobileSheet(null) }}
                       className={`w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 active:scale-[0.98] transition-all duration-150 ${
-                        isCurrent ? 'bg-[rgb(var(--c-primary))] text-white shadow-md' : complete ? 'bg-[rgb(var(--c-success)/0.1)] text-[rgb(var(--c-success))] active:bg-[rgb(var(--c-success)/0.2)]' : 'bg-[rgb(var(--c-accent)/0.1)] text-[rgb(var(--c-accent))] active:bg-[rgb(var(--c-accent)/0.2)]'
+                        isCurrent ? 'bg-[rgb(var(--c-primary))] text-white shadow-md' : complete ? 'bg-[rgb(var(--c-success)/0.1)] text-[rgb(var(--c-success))] active:bg-[rgb(var(--c-success)/0.2)]' : 'bg-[rgb(var(--c-surface-2))] text-[rgb(var(--c-text))] active:bg-[rgb(var(--c-surface-3))]'
                       }`}
                     >
                       <span className="font-display text-sm opacity-60 w-6 text-center shrink-0">{i + 1}</span>
@@ -1043,7 +1043,7 @@ function StepView(props: {
       const regDeadline = event?.date ? getRegistrationDeadline(event.date) : '15 días antes'
       const chgDeadline = event?.date ? getChangesDeadline(event.date) : '7 días antes'
       return (
-        <div className="flex flex-col items-center justify-center text-center space-y-6 max-w-xl mx-auto py-4">
+        <div className="flex flex-col items-center justify-center text-center space-y-6 max-w-xl mx-auto py-4 my-auto lg:my-0">
           <Image src="/logo.png" alt="Dance4ever" width={160} height={120} priority className="mix-blend-multiply active:scale-95 transition-all duration-150" />
           <div className="space-y-2">
             <p className="font-sans text-xs tracking-widest text-[rgb(var(--c-primary))] font-medium">SISTEMA OFICIAL DE REGISTRO</p>
@@ -1061,11 +1061,11 @@ function StepView(props: {
             <div className="h-px bg-[rgb(var(--c-border)/0.3)]" />
             <div className="space-y-0.5">
               <p className="text-xs font-sans text-[rgb(var(--c-text)/0.7)]">FECHA LÍMITE PARA CAMBIOS</p>
-              <p className="text-lg text-[rgb(var(--c-accent))] font-medium">{chgDeadline}</p>
+              <p className="text-lg text-[rgb(var(--c-primary))] font-medium">{chgDeadline}</p>
             </div>
           </div>
 
-          <div className="flex items-start gap-3 bg-[rgb(var(--c-accent)/0.1)] border border-[rgb(var(--c-accent)/0.3)] text-[rgb(var(--c-text-strong))] px-5 py-4 rounded-2xl text-left">
+          <div className="flex items-start gap-3 bg-[rgb(var(--c-primary)/0.05)] border border-[rgb(var(--c-primary)/0.2)] text-[rgb(var(--c-text-strong))] px-5 py-4 rounded-2xl text-left">
             <Info className="w-5 h-5 shrink-0 mt-0.5" />
             <p className="text-xs lg:text-sm leading-snug">
               <strong>Atención:</strong> Por favor, lee con mucho cuidado todas las instrucciones y pasos del proceso. Esto garantizará que las categorías de tus alumnos, el costo de tus paquetes y el registro de tus actos sean 100% correctos.
@@ -1084,7 +1084,7 @@ function StepView(props: {
 
     case 'instruction_1': {
       return (
-        <div className="flex flex-col w-full max-w-2xl mx-auto h-full py-2 px-0 gap-3 lg:gap-6">
+        <div className="flex flex-col w-full max-w-2xl mx-auto h-auto py-2 px-0 gap-3 lg:gap-6 my-auto lg:my-0">
           <div className="shrink-0 text-center space-y-0.5 lg:space-y-2">
             <p className="font-display text-[10px] lg:text-sm tracking-[0.4em] text-[rgb(var(--c-primary))] font-bold">PASO 1 DE 2</p>
             <h2 className="font-display text-2xl lg:text-4xl text-[rgb(var(--c-text-darkest))] font-bold">REGLAS Y CATEGORÍAS</h2>
@@ -1134,7 +1134,7 @@ function StepView(props: {
 
     case 'instruction_2': {
       return (
-        <div className="flex flex-col w-full max-w-2xl mx-auto h-full py-2 px-0 gap-3 lg:gap-6">
+        <div className="flex flex-col w-full max-w-2xl mx-auto h-auto py-2 px-0 gap-3 lg:gap-6 my-auto lg:my-0">
           <div className="shrink-0 text-center space-y-0.5 lg:space-y-2">
             <p className="font-display text-[10px] lg:text-sm tracking-[0.4em] text-[rgb(var(--c-primary))] font-bold">PASO 2 DE 2</p>
             <h2 className="font-display text-2xl lg:text-4xl text-[rgb(var(--c-text-darkest))] font-bold">ACTOS Y COSTOS</h2>
@@ -1253,7 +1253,7 @@ function StepView(props: {
                 />
                 <button
                   onClick={() => updateCoach({ extras: extras.filter((_, j) => j !== i) })}
-                  className="bg-[rgb(var(--c-accent)/0.1)] active:bg-[rgb(var(--c-accent)/0.2)] text-[rgb(var(--c-accent))] px-4 rounded-2xl shrink-0 transition-all active:scale-95 duration-150"
+                  className="bg-[rgb(var(--c-primary)/0.1)] active:bg-[rgb(var(--c-primary)/0.2)] text-[rgb(var(--c-primary))] px-4 rounded-2xl shrink-0 transition-all active:scale-95 duration-150"
                   aria-label="Quitar"
                 >
                   <Trash2 className="w-6 h-6" />
@@ -1304,7 +1304,7 @@ function StepView(props: {
             placeholder={state.academy}
             className="w-full bg-white border border-[rgb(var(--c-border))] text-[rgb(var(--c-text-strong))] text-2xl lg:text-4xl rounded-2xl px-4 py-4 lg:px-6 lg:py-6 outline-none focus:border-[rgb(var(--c-primary))] focus:ring-1 focus:ring-[rgb(var(--c-primary))] text-center placeholder:text-[rgb(var(--c-text)/0.6)] transition-all shadow-sm"
           />
-          <p className="text-[rgb(var(--c-accent))] text-base text-center italic font-medium">
+          <p className="text-[rgb(var(--c-text))] text-base text-center italic font-medium">
             Si el equipo se llama igual que la escuela/academia, deja vacío y dale a Siguiente.
           </p>
           <NextButton onClick={handleNext} disabled={false} />
@@ -1325,7 +1325,7 @@ function StepView(props: {
             disabled={editMode}
             onEnter={() => { if (v && v >= 1) { syncDancersArray(); onNext() } }}
           />
-          <p className="text-[rgb(var(--c-accent))] text-base text-center italic font-medium">
+          <p className="text-[rgb(var(--c-text))] text-base text-center italic font-medium">
             Cuenta a todos los alumnos/as del equipo, incluyendo solistas, duetos y tríos.
           </p>
           <NextButton onClick={() => { syncDancersArray(); onNext() }} disabled={!v || v < 1} />
@@ -1369,14 +1369,14 @@ function StepView(props: {
                 {effectiveCat && (
                   <div className="max-w-xs md:max-w-sm mx-auto w-full">
                     <label className="block text-sm font-display tracking-widest text-[rgb(var(--c-text))] mb-3 text-center">
-                      CATEGORÍA {d.categoryOverride && <span className="text-[rgb(var(--c-accent))]">· MODIFICADA</span>}
+                      CATEGORÍA {d.categoryOverride && <span className="text-[rgb(var(--c-primary))]">· MODIFICADA</span>}
                     </label>
                     <select
                       value={d.categoryOverride ?? ''}
                       onChange={e => updateDancer(i, { categoryOverride: (e.target.value || null) as AgeCategory | null })}
                       className={`w-full h-14 text-[rgb(var(--c-text-strong))] text-lg text-center rounded-2xl outline-none font-display appearance-none cursor-pointer px-3 transition-all border ${
                         d.categoryOverride
-                          ? 'bg-[rgb(var(--c-accent)/0.1)] border-[rgb(var(--c-accent)/0.5)] ring-1 ring-[rgb(var(--c-accent)/0.3)]'
+                          ? 'bg-[rgb(var(--c-primary)/0.05)] border-[rgb(var(--c-primary)/0.3)] ring-1 ring-[rgb(var(--c-primary)/0.2)]'
                           : 'bg-white border-[rgb(var(--c-border))] focus:border-[rgb(var(--c-primary))] focus:ring-1 focus:ring-[rgb(var(--c-primary))]'
                       }`}
                     >
@@ -1385,7 +1385,7 @@ function StepView(props: {
                         <option key={cat} value={cat}>{AGE_CATEGORY_LABELS[cat]} — {AGE_CATEGORY_HINTS[cat]}</option>
                       ))}
                     </select>
-                    <p className="text-xs text-[rgb(var(--c-accent))] mt-3 text-center leading-snug font-medium">
+                    <p className="text-xs text-[rgb(var(--c-text))] mt-3 text-center leading-snug font-medium">
                       Se asigna automáticamente por la fecha de nacimiento. Si crees que la categoría es incorrecta, da click arriba y elige la correcta.
                     </p>
                   </div>
@@ -1420,7 +1420,7 @@ function StepView(props: {
             disabled={editMode}
             onEnter={() => { if (v && v >= 1) { syncActsArray(); onNext() } }}
           />
-          <p className="text-[rgb(var(--c-accent))] text-base text-center italic font-medium">
+          <p className="text-[rgb(var(--c-text))] text-base text-center italic font-medium">
             Cada acto se anota individualmente en los siguientes pasos.
           </p>
           <NextButton onClick={() => { syncActsArray(); onNext() }} disabled={!v || v < 1} />
@@ -1470,7 +1470,7 @@ function StepView(props: {
               className="w-full flex items-center justify-between bg-white border border-[rgb(var(--c-border))] px-5 py-3.5 rounded-2xl font-display text-sm tracking-wider text-[rgb(var(--c-primary))] transition-all hover:bg-[rgb(var(--c-surface-2)/0.2)] active:scale-[0.99] shadow-sm duration-150"
             >
               <span>MOSTRAR TABLA DE CATEGORÍAS Y REGLAS</span>
-              <ChevronDown className={`w-5 h-5 transition-transform duration-300 ${showCategoriesInfo ? 'rotate-180 text-[rgb(var(--c-accent))]' : ''}`} />
+              <ChevronDown className={`w-5 h-5 transition-transform duration-300 ${showCategoriesInfo ? 'rotate-180 text-[rgb(var(--c-primary))]' : ''}`} />
             </button>
             {showCategoriesInfo && (
               <div className="bg-white border border-[rgb(var(--c-border))] rounded-2xl overflow-x-auto shadow-md w-full" style={{ animation: 'fadeIn 0.25s ease-out forwards' }}>
@@ -1683,7 +1683,7 @@ function StepView(props: {
       const valid = state.costPaquete !== null && state.costPaquete >= 0
         && state.costRepeticion !== null && state.costRepeticion >= 0
       return (
-        <div className="flex flex-col h-auto lg:h-full min-h-0">
+        <div className="flex flex-col h-auto lg:h-full min-h-0 my-auto lg:my-0">
           {!isKeyboardOpen && (
             <div className="shrink-0 text-center space-y-2 lg:space-y-3 pt-2 lg:pt-0 pb-4 lg:pb-6">
               <p className="font-display text-xs lg:text-sm tracking-[0.4em] text-[rgb(var(--c-primary))]">COSTOS</p>
@@ -1693,7 +1693,7 @@ function StepView(props: {
           <div className="flex-1 min-h-0 overflow-y-auto pb-3 -mx-1 px-1">
             <div className={`space-y-3 lg:space-y-6 max-w-3xl mx-auto ${isKeyboardOpen ? 'pt-2' : ''}`}>
               {!isKeyboardOpen && (
-                <p className="text-[rgb(var(--c-accent))] text-sm lg:text-base italic text-center leading-snug font-medium">
+                <p className="text-[rgb(var(--c-text))] text-sm lg:text-base italic text-center leading-snug font-medium">
                   Indica los costos que tu academia acordó con los organizadores. Se cobra el de paquete por la primera participación de cada alumno/a, y el de repetición por cada participación adicional.
                 </p>
               )}
@@ -1716,7 +1716,7 @@ function StepView(props: {
                 </div>
               </div>
               {valid && (
-                <div className={`text-center bg-[rgb(var(--c-accent))] text-white rounded-2xl shadow-sm transition-all duration-150 ${isKeyboardOpen ? 'p-2.5 mt-2.5' : 'p-4 mt-4'}`}>
+                <div className={`text-center bg-[rgb(var(--c-primary))] text-white rounded-2xl shadow-sm transition-all duration-150 ${isKeyboardOpen ? 'p-2.5 mt-2.5' : 'p-4 mt-4'}`}>
                   <p className={`font-display tracking-widest opacity-90 leading-none ${isKeyboardOpen ? 'text-[10px] mb-1' : 'text-xs lg:text-sm mb-1.5'}`}>TOTAL A PAGAR</p>
                   <p className={`font-display leading-none ${isKeyboardOpen ? 'text-xl' : 'text-3xl lg:text-4xl'}`}>{formatMoney(total)}</p>
                 </div>
@@ -1798,7 +1798,7 @@ function FieldStep({ title, hint, notice, value, onChange, onNext, disabled, typ
         className="w-full bg-white border border-[rgb(var(--c-border))] text-[rgb(var(--c-text-strong))] text-2xl lg:text-4xl rounded-2xl px-4 py-4 lg:px-6 lg:py-6 outline-none focus:border-[rgb(var(--c-primary))] focus:ring-1 focus:ring-[rgb(var(--c-primary))] text-center transition-all shadow-sm"
       />
       {notice && (
-        <p className="text-[rgb(var(--c-accent))] text-sm lg:text-lg text-center italic font-medium">{notice}</p>
+        <p className="text-[rgb(var(--c-primary))] text-sm lg:text-lg text-center italic font-medium">{notice}</p>
       )}
       <NextButton onClick={onNext} disabled={disabled} />
     </Wrapper>
@@ -2001,7 +2001,7 @@ function CategoryButton({ label, selected, onClick, className = '' }: { label: s
 
 function EditNotice({ text }: { text: string }) {
   return (
-    <p className="bg-[rgb(var(--c-accent)/0.1)] border border-[rgb(var(--c-accent)/0.3)] text-[rgb(var(--c-accent))] text-center text-sm px-4 py-3 rounded-xl font-medium">
+    <p className="bg-[rgb(var(--c-primary)/0.05)] border border-[rgb(var(--c-primary)/0.2)] text-[rgb(var(--c-primary))] text-center text-sm px-4 py-3 rounded-xl font-medium">
       {text}
     </p>
   )
@@ -2009,7 +2009,7 @@ function EditNotice({ text }: { text: string }) {
 
 function Wrapper({ title, subtitle, children, isKeyboardOpen }: { title: string, subtitle?: string, children: React.ReactNode, isKeyboardOpen?: boolean }) {
   return (
-    <div className="flex flex-col lg:h-full w-full">
+    <div className="flex flex-col lg:h-full w-full my-auto lg:my-0">
       {!isKeyboardOpen && (
         <Image src="/logo.png" alt="Dance4ever" width={64} height={48} priority className="mx-auto mb-3 shrink-0 mix-blend-multiply lg:hidden animate-[fadeIn_0.2s_ease-out_forwards]" />
       )}
@@ -2088,7 +2088,7 @@ function MobileSummary({ state, editMode, tab, setTab, confirmed, confirm, savin
     <div className="flex flex-col h-full max-h-full min-h-0 gap-3">
       {/* TOTAL A PAGAR siempre visible arriba */}
       {hasCosts && (
-        <div className="shrink-0 bg-[rgb(var(--c-accent))] text-white rounded-2xl py-3 px-4 text-center shadow-sm">
+        <div className="shrink-0 bg-[rgb(var(--c-primary))] text-white rounded-2xl py-3 px-4 text-center shadow-sm">
           <p className="text-xs font-display tracking-widest opacity-90 leading-none">TOTAL A PAGAR</p>
           <p className="font-display text-3xl leading-none mt-1.5">{formatMoney(total)}</p>
         </div>
@@ -2143,15 +2143,15 @@ function MobileSummary({ state, editMode, tab, setTab, confirmed, confirm, savin
         )}
         {tab === 'academy' && (
           <div className="flex-1 w-full h-full min-h-[320px] flex flex-col items-center justify-center text-center space-y-6 animate-[fadeIn_0.2s_ease-out_forwards]">
-            <div className="w-16 h-16 bg-[rgb(var(--c-accent)/0.1)] rounded-full flex items-center justify-center text-[rgb(var(--c-accent))] mb-1">
+            <div className="w-16 h-16 bg-[rgb(var(--c-primary)/0.1)] rounded-full flex items-center justify-center text-[rgb(var(--c-primary))] mb-1">
               <Check className="w-7 h-7" />
             </div>
             <div className="w-full max-w-xs">
               <p className="text-sm tracking-widest text-[rgb(var(--c-primary))] uppercase font-bold mb-1">Colegio / Academia</p>
-              <p className="text-3xl uppercase font-semibold text-[rgb(var(--c-text-strong))] break-words leading-tight">{state.academy}</p>
+              <p className="text-3xl uppercase font-semibold text-[rgb-var(--c-text-strong)] break-words leading-tight">{state.academy}</p>
             </div>
             <div className="w-full max-w-xs">
-              <p className="text-sm tracking-widest text-[rgb(var(--c-accent))] uppercase font-bold mb-1">Nombre del Equipo</p>
+              <p className="text-sm tracking-widest text-[rgb(var(--c-primary))] uppercase font-bold mb-1">Nombre del Equipo</p>
               <p className="text-2xl uppercase font-semibold text-[rgb(var(--c-success))] break-words leading-tight">{state.teamName || state.academy}</p>
             </div>
           </div>
@@ -2169,7 +2169,7 @@ function MobileSummary({ state, editMode, tab, setTab, confirmed, confirm, savin
                   <span className="font-display text-xs text-[rgb(var(--c-text)/0.5)] w-6 text-center shrink-0">{di + 1}.</span>
                   <span className="font-display text-base uppercase text-[rgb(var(--c-success))] flex-1 truncate font-semibold">{d.name}</span>
                   {n > 0 && <span className="text-xs text-[rgb(var(--c-primary))] font-bold shrink-0">{n}×</span>}
-                  {cost !== null && <span className="text-xs text-[rgb(var(--c-accent))] font-bold shrink-0">{formatMoney(cost)}</span>}
+                  {cost !== null && <span className="text-xs text-[rgb(var(--c-primary))] font-bold shrink-0">{formatMoney(cost)}</span>}
                 </div>
               )
             })}
@@ -2203,7 +2203,7 @@ function MobileSummary({ state, editMode, tab, setTab, confirmed, confirm, savin
 
       {/* BUTTONS */}
       {saveErr && (
-        <p className="shrink-0 text-[rgb(var(--c-accent))] text-xs bg-[rgb(var(--c-accent)/0.1)] border border-[rgb(var(--c-accent)/0.3)] rounded-xl px-3 py-2.5 break-words font-medium">{saveErr}</p>
+        <p className="shrink-0 text-[rgb(var(--c-primary))] text-xs bg-[rgb(var(--c-primary)/0.1)] border border-[rgb(var(--c-primary)/0.3)] rounded-xl px-3 py-2.5 break-words font-medium">{saveErr}</p>
       )}
       {confirmed ? (
         <button
@@ -2281,7 +2281,7 @@ function SummaryGrid({ state, editMode, confirmed, confirm, saving, saveErr, sta
 
       <div className="lg:col-span-1 lg:min-h-0">
         {hasCosts ? (
-          <div className="bg-[rgb(var(--c-accent))] text-white rounded-2xl h-full p-4 flex flex-col items-center justify-center shadow-sm">
+          <div className="bg-[rgb(var(--c-primary))] text-white rounded-2xl h-full p-4 flex flex-col items-center justify-center shadow-sm">
             <p className="text-base md:text-lg font-display tracking-widest opacity-90 leading-none text-center">TOTAL A PAGAR</p>
             <p className="font-display text-3xl md:text-4xl leading-none mt-2">{formatMoney(total)}</p>
           </div>
@@ -2307,7 +2307,7 @@ function SummaryGrid({ state, editMode, confirmed, confirm, saving, saveErr, sta
                     <span className="opacity-40 text-sm text-[rgb(var(--c-text))]">{di + 1}.</span>
                     <span>{d.name}</span>
                     {n > 0 && <span className="text-sm text-[rgb(var(--c-primary))] font-bold">{n} acto{n === 1 ? '' : 's'}</span>}
-                    {cost !== null && <span className="text-sm text-[rgb(var(--c-accent))] font-bold">{formatMoney(cost)}</span>}
+                    {cost !== null && <span className="text-sm text-[rgb(var(--c-primary))] font-bold">{formatMoney(cost)}</span>}
                   </div>
                 )
               })}
@@ -2367,7 +2367,7 @@ function SummaryGrid({ state, editMode, confirmed, confirm, saving, saveErr, sta
           </>
         )}
         {saveErr && (
-          <p className="shrink-0 text-[rgb(var(--c-accent))] text-sm bg-[rgb(var(--c-accent)/0.1)] border border-[rgb(var(--c-accent)/0.3)] rounded-2xl px-3 py-2 break-words font-medium">{saveErr}</p>
+          <p className="shrink-0 text-[rgb(var(--c-primary))] text-sm bg-[rgb(var(--c-primary)/0.05)] border border-[rgb(var(--c-primary)/0.2)] rounded-2xl px-3 py-2 break-words font-medium">{saveErr}</p>
         )}
       </div>
     </div>
