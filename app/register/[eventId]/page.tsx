@@ -337,14 +337,35 @@ export default function RegisterPage({ params }: Props) {
     if (!vv) return
     const updateHeight = () => {
       document.documentElement.style.setProperty('--viewport-height', `${vv.height}px`)
-      setIsKeyboardOpen(vv.height < window.innerHeight * 0.85)
+      const keyboardActive = vv.height < window.innerHeight * 0.85
+      setIsKeyboardOpen(keyboardActive)
+      if (keyboardActive && window.scrollY !== 0) {
+        window.scrollTo(0, 0)
+      }
+    }
+    const handleWindowScroll = () => {
+      const keyboardActive = vv ? vv.height < window.innerHeight * 0.85 : false
+      if (keyboardActive && window.scrollY !== 0) {
+        window.scrollTo(0, 0)
+      }
+    }
+    const handleFocusIn = () => {
+      setTimeout(() => {
+        if (window.scrollY !== 0) {
+          window.scrollTo(0, 0)
+        }
+      }, 50)
     }
     vv.addEventListener('resize', updateHeight)
     vv.addEventListener('scroll', updateHeight)
+    window.addEventListener('scroll', handleWindowScroll, { passive: true })
+    document.addEventListener('focusin', handleFocusIn)
     updateHeight()
     return () => {
       vv.removeEventListener('resize', updateHeight)
       vv.removeEventListener('scroll', updateHeight)
+      window.removeEventListener('scroll', handleWindowScroll)
+      document.removeEventListener('focusin', handleFocusIn)
     }
   }, [])
 
@@ -567,10 +588,16 @@ export default function RegisterPage({ params }: Props) {
       className="bg-[#F6F4EF] text-[#1A1D1E] flex flex-col overflow-hidden font-sans select-none w-full"
       style={{ height: 'var(--viewport-height, 100dvh)' }}
     >
-      {/* Inyección dinámica para pintar el fondo de Safari en iOS (notch y barra de gestos inferior) */}
+      {/* Inyección dinámica para pintar el fondo de Safari en iOS y bloquear por completo cualquier desplazamiento de la página principal */}
       <style dangerouslySetInnerHTML={{ __html: `
         html, body {
           background-color: #F6F4EF !important;
+          overflow: hidden !important;
+          position: fixed !important;
+          width: 100% !important;
+          height: 100% !important;
+          left: 0 !important;
+          top: 0 !important;
         }
       ` }} />
       <meta name="theme-color" content="#F6F4EF" />
