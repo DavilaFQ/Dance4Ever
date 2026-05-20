@@ -1363,36 +1363,46 @@ function StepView(props: {
       const valid = state.costPaquete !== null && state.costPaquete >= 0
         && state.costRepeticion !== null && state.costRepeticion >= 0
       return (
-        <Wrapper title="Costos acordados" subtitle="COSTOS">
-          <p className="text-amber-400 text-base md:text-lg italic text-center max-w-3xl mx-auto">
-            Indica los costos que tu academia acordó con los organizadores. Se cobra el costo de paquete por la primera participación de cada alumno/a, y el costo de repetición por cada participación adicional.
-          </p>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto">
-            <div>
-              <label className="block text-sm md:text-base font-display tracking-widest text-neutral-400 mb-3 text-center">PRIMERA PARTICIPACIÓN</label>
-              <MoneyInput
-                value={state.costPaquete}
-                onChange={n => updateState(s => ({ ...s, costPaquete: n }))}
-                onEnter={() => { if (valid) onNext() }}
-              />
-            </div>
-            <div>
-              <label className="block text-sm md:text-base font-display tracking-widest text-neutral-400 mb-3 text-center">REPETICIÓN</label>
-              <MoneyInput
-                value={state.costRepeticion}
-                onChange={n => updateState(s => ({ ...s, costRepeticion: n }))}
-                onEnter={() => { if (valid) onNext() }}
-              />
+        <div className="flex flex-col h-full min-h-0">
+          <div className="shrink-0 text-center space-y-2 lg:space-y-3 pt-2 lg:pt-0 pb-4 lg:pb-6">
+            <p className="font-display text-xs lg:text-xl tracking-[0.4em] text-yellow-500">COSTOS</p>
+            <h2 className="font-display text-2xl md:text-4xl lg:text-6xl leading-tight">Costos acordados</h2>
+          </div>
+          <div className="flex-1 min-h-0 overflow-y-auto pb-3 -mx-1 px-1">
+            <div className="space-y-5 lg:space-y-6 max-w-3xl mx-auto">
+              <p className="text-amber-400 text-sm lg:text-lg italic text-center leading-snug">
+                Indica los costos que tu academia acordó con los organizadores. Se cobra el de paquete por la primera participación de cada alumno/a, y el de repetición por cada participación adicional.
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div>
+                  <label className="block text-xs lg:text-base font-display tracking-widest text-neutral-400 mb-2 lg:mb-3 text-center">PRIMERA PARTICIPACIÓN</label>
+                  <MoneyInput
+                    value={state.costPaquete}
+                    onChange={n => updateState(s => ({ ...s, costPaquete: n }))}
+                    onEnter={() => { if (valid) onNext() }}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs lg:text-base font-display tracking-widest text-neutral-400 mb-2 lg:mb-3 text-center">REPETICIÓN</label>
+                  <MoneyInput
+                    value={state.costRepeticion}
+                    onChange={n => updateState(s => ({ ...s, costRepeticion: n }))}
+                    onEnter={() => { if (valid) onNext() }}
+                  />
+                </div>
+              </div>
+              {valid && (
+                <div className="text-center bg-red-500 text-black rounded-xl p-4 lg:p-5">
+                  <p className="text-xs lg:text-sm font-display tracking-widest opacity-80 mb-1 lg:mb-2">TOTAL A PAGAR</p>
+                  <p className="font-display text-3xl lg:text-4xl">{formatMoney(total)}</p>
+                </div>
+              )}
             </div>
           </div>
-          {valid && (
-            <div className="text-center bg-neutral-800 rounded-xl p-5 max-w-2xl mx-auto">
-              <p className="text-sm tracking-widest text-yellow-500/80 mb-2">TOTAL A PAGAR</p>
-              <p className="font-display text-4xl text-yellow-400">{formatMoney(total)}</p>
-            </div>
-          )}
-          <NextButton onClick={onNext} disabled={!valid} />
-        </Wrapper>
+          <div className="shrink-0 pt-3">
+            <NextButton onClick={onNext} disabled={!valid} />
+          </div>
+        </div>
       )
     }
 
@@ -1479,10 +1489,10 @@ function YesNoStep({ title, value, onYes, onNo }: {
 }) {
   return (
     <Wrapper title={title}>
-      <div className="grid grid-cols-2 gap-4 max-w-xl mx-auto">
+      <div className="grid grid-cols-2 gap-3 lg:gap-4 max-w-xl mx-auto w-full aspect-[2/1] lg:aspect-auto">
         <button
           onClick={onNo}
-          className={`py-10 rounded-xl font-display text-4xl tracking-widest transition-colors ${
+          className={`rounded-2xl lg:rounded-xl font-display text-3xl lg:text-4xl tracking-widest transition-colors flex items-center justify-center lg:py-10 ${
             value === false
               ? 'bg-yellow-400 text-black hover:bg-yellow-300'
               : 'bg-neutral-800 text-white hover:bg-neutral-700 active:bg-neutral-700'
@@ -1492,7 +1502,7 @@ function YesNoStep({ title, value, onYes, onNo }: {
         </button>
         <button
           onClick={onYes}
-          className={`py-10 rounded-xl font-display text-4xl tracking-widest transition-colors ${
+          className={`rounded-2xl lg:rounded-xl font-display text-3xl lg:text-4xl tracking-widest transition-colors flex items-center justify-center lg:py-10 ${
             value === true
               ? 'bg-yellow-400 text-black hover:bg-yellow-300'
               : 'bg-neutral-800 text-white hover:bg-neutral-700 active:bg-neutral-700'
@@ -1512,7 +1522,7 @@ function MoneyInput({ value, onChange, onEnter }: {
 }) {
   return (
     <div className="relative max-w-sm mx-auto">
-      <span className="absolute left-5 top-1/2 -translate-y-1/2 text-yellow-400 font-display text-3xl pointer-events-none">$</span>
+      <span className="absolute left-4 lg:left-5 top-1/2 -translate-y-1/2 text-yellow-400 font-display text-2xl lg:text-3xl pointer-events-none">$</span>
       <input
         type="text"
         inputMode="decimal"
@@ -1527,7 +1537,7 @@ function MoneyInput({ value, onChange, onEnter }: {
         }}
         onKeyDown={e => { if (e.key === 'Enter' && onEnter) onEnter() }}
         placeholder="0"
-        className="w-full bg-neutral-800 text-white text-4xl text-center rounded-xl h-20 outline-none focus:bg-neutral-700 font-display pl-12 placeholder:text-neutral-600 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+        className="w-full bg-neutral-800 text-white text-3xl lg:text-4xl text-center rounded-xl h-14 lg:h-20 outline-none focus:bg-neutral-700 font-display pl-10 lg:pl-12 placeholder:text-neutral-600 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
       />
     </div>
   )
@@ -1563,85 +1573,31 @@ function NumberInput({ value, onChange, max, disabled, onEnter }: {
   )
 }
 
-function parseISODate(iso: string): { d: string, m: string, y: string } {
-  if (!iso) return { d: '', m: '', y: '' }
-  const parts = iso.split('-')
-  if (parts.length !== 3) return { d: '', m: '', y: '' }
-  return {
-    y: parts[0] ?? '',
-    m: parts[1] ? String(parseInt(parts[1])) : '',
-    d: parts[2] ? String(parseInt(parts[2])) : '',
-  }
-}
-
 function DateInput({ value, onChange, onEnter }: { value: string, onChange: (iso: string) => void, onEnter?: () => void }) {
-  const initial = parseISODate(value)
-  const [d, setD] = useState(initial.d)
-  const [m, setM] = useState(initial.m)
-  const [y, setY] = useState(initial.y)
-
-  useEffect(() => {
-    const dN = parseInt(d)
-    const mN = parseInt(m)
-    const yN = parseInt(y)
-    if (Number.isFinite(dN) && dN >= 1 && dN <= 31 &&
-        Number.isFinite(mN) && mN >= 1 && mN <= 12 &&
-        Number.isFinite(yN) && yN >= 1900 && yN <= 9999) {
-      const iso = `${String(yN).padStart(4, '0')}-${String(mN).padStart(2, '0')}-${String(dN).padStart(2, '0')}`
-      if (iso !== value) onChange(iso)
-    } else if (value !== '') {
-      onChange('')
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [d, m, y])
-
-  function isComplete(): boolean {
-    const dN = parseInt(d), mN = parseInt(m), yN = parseInt(y)
-    return Number.isFinite(dN) && dN >= 1 && dN <= 31 &&
-      Number.isFinite(mN) && mN >= 1 && mN <= 12 &&
-      Number.isFinite(yN) && yN >= 1900 && yN <= 9999
-  }
+  const today = new Date()
+  const maxDate = today.toISOString().slice(0, 10)
+  const minDate = '1990-01-01'
+  const displayLabel = value ? (() => {
+    const [y, m, d] = value.split('-')
+    return `${d}/${m}/${y}`
+  })() : 'TOCA PARA SELECCIONAR'
 
   return (
-    <div className="grid grid-cols-3 gap-3">
-      <div>
-        <p className="text-xs text-neutral-500 mb-2 text-center font-display tracking-widest">DÍA</p>
-        <input
-          type="text"
-          inputMode="numeric"
-          maxLength={2}
-          placeholder="DD"
-          value={d}
-          onChange={e => setD(e.target.value.replace(/\D/g, '').slice(0, 2))}
-          onKeyDown={e => { if (e.key === 'Enter' && isComplete() && onEnter) onEnter() }}
-          className="w-full h-16 bg-neutral-800 text-white text-3xl text-center rounded-xl outline-none focus:bg-neutral-700 font-display placeholder:text-neutral-600"
-        />
-      </div>
-      <div>
-        <p className="text-xs text-neutral-500 mb-2 text-center font-display tracking-widest">MES</p>
-        <select
-          value={m}
-          onChange={e => setM(e.target.value)}
-          className="w-full h-16 bg-neutral-800 text-white text-xl text-center rounded-xl outline-none focus:bg-neutral-700 font-display appearance-none cursor-pointer px-2"
-        >
-          <option value="">—</option>
-          {MONTHS.map((name, idx) => (
-            <option key={idx} value={idx + 1}>{name}</option>
-          ))}
-        </select>
-      </div>
-      <div>
-        <p className="text-xs text-neutral-500 mb-2 text-center font-display tracking-widest">AÑO</p>
-        <input
-          type="text"
-          inputMode="numeric"
-          maxLength={4}
-          placeholder="AAAA"
-          value={y}
-          onChange={e => setY(e.target.value.replace(/\D/g, '').slice(0, 4))}
-          onKeyDown={e => { if (e.key === 'Enter' && isComplete() && onEnter) onEnter() }}
-          className="w-full h-16 bg-neutral-800 text-white text-3xl text-center rounded-xl outline-none focus:bg-neutral-700 font-display placeholder:text-neutral-600"
-        />
+    <div className="relative">
+      <input
+        type="date"
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        onKeyDown={e => { if (e.key === 'Enter' && value && onEnter) onEnter() }}
+        min={minDate}
+        max={maxDate}
+        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+        aria-label="Fecha de nacimiento"
+      />
+      <div className={`w-full h-16 lg:h-20 rounded-xl flex items-center justify-center pointer-events-none font-display text-2xl lg:text-3xl tracking-wider ${
+        value ? 'bg-neutral-800 text-white' : 'bg-neutral-800 text-neutral-500'
+      }`}>
+        {displayLabel}
       </div>
     </div>
   )
@@ -1712,12 +1668,14 @@ function EditNotice({ text }: { text: string }) {
 
 function Wrapper({ title, subtitle, children }: { title: string, subtitle?: string, children: React.ReactNode }) {
   return (
-    <div className="flex flex-col h-full justify-start lg:justify-center pt-6 lg:pt-0 gap-6 lg:gap-8">
-      <div className="text-center space-y-2 lg:space-y-3">
+    <div className="flex flex-col h-full min-h-0">
+      <div className="shrink-0 text-center space-y-2 lg:space-y-3 pt-2 lg:pt-0 pb-5 lg:pb-8">
         {subtitle && <p className="font-display text-xs lg:text-xl tracking-[0.4em] text-yellow-500">{subtitle}</p>}
         <h2 className="font-display text-2xl md:text-4xl lg:text-6xl leading-tight px-2">{title}</h2>
       </div>
-      <div className="flex flex-col gap-5 lg:gap-8 px-1">{children}</div>
+      <div className="flex-1 min-h-0 flex flex-col justify-start lg:justify-center gap-5 lg:gap-8">
+        {children}
+      </div>
     </div>
   )
 }
