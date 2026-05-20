@@ -282,6 +282,21 @@ export default function RegisterPage({ params }: Props) {
     try { localStorage.setItem(LS_KEY(eventId), JSON.stringify(state)) } catch { /* ignore */ }
   }, [state, eventId, authState])
 
+  useEffect(() => {
+    const vv = window.visualViewport
+    if (!vv) return
+    const updateHeight = () => {
+      document.documentElement.style.setProperty('--viewport-height', `${vv.height}px`)
+    }
+    vv.addEventListener('resize', updateHeight)
+    vv.addEventListener('scroll', updateHeight)
+    updateHeight()
+    return () => {
+      vv.removeEventListener('resize', updateHeight)
+      vv.removeEventListener('scroll', updateHeight)
+    }
+  }, [])
+
   const goNext = useCallback(() => {
     setStep(s => {
       const next = nextStep(s, state)
@@ -497,7 +512,10 @@ export default function RegisterPage({ params }: Props) {
   const isMobile = isLargeScreen === false
 
   return (
-    <div className="h-[100dvh] bg-[#F6F4EF] text-[#1A1D1E] flex flex-col overflow-hidden font-sans select-none">
+    <div
+      className="bg-[#F6F4EF] text-[#1A1D1E] flex flex-col overflow-hidden font-sans select-none w-full"
+      style={{ height: 'var(--viewport-height, 100dvh)' }}
+    >
       {/* Inyección dinámica para pintar el fondo de Safari en iOS (notch y barra de gestos inferior) */}
       <style dangerouslySetInnerHTML={{ __html: `
         html, body {
