@@ -478,29 +478,43 @@ export default function RegisterPage({ params }: Props) {
   }
 
   if (authState === 'loading') {
-    return <Centered><p className="font-display text-3xl tracking-widest text-[#487E90] animate-pulse">CARGANDO…</p></Centered>
+    return (
+      <Centered>
+        <p className="font-display text-3xl tracking-widest text-[#1E414C] animate-pulse">CARGANDO…</p>
+      </Centered>
+    )
   }
   if (authState === 'invalid') {
-    return <Centered>
-      <p className="font-display text-4xl tracking-widest text-[#C57D65]">LINK INVÁLIDO</p>
-      <p className="text-[#6B7072] text-center text-lg mt-2">Verifica el enlace o ponte en contacto con los organizadores.</p>
-    </Centered>
+    return (
+      <Centered>
+        <p className="font-display text-4xl tracking-widest text-[#9E4F36]">LINK INVÁLIDO</p>
+        <p className="text-[#3D4143] text-center text-lg mt-2">Verifica el enlace o ponte en contacto con los organizadores.</p>
+      </Centered>
+    )
   }
   const isFirstStep = step.kind === 'coach_name'
   const canBack = !isFirstStep && step.kind !== 'confirmed'
   const isMobile = isLargeScreen === false
 
   return (
-    <div className="h-[100dvh] bg-[#F6F4EF] text-[#2B2F31] flex flex-col overflow-hidden font-sans select-none">
-      {/* MOBILE HEADER — sticky, minimal, with safe-area top */}
+    <div className="h-[100dvh] bg-[#F6F4EF] text-[#1A1D1E] flex flex-col overflow-hidden font-sans select-none">
+      {/* Inyección dinámica para pintar el fondo de Safari en iOS (notch y barra de gestos inferior) */}
+      <style dangerouslySetInnerHTML={{ __html: `
+        html, body {
+          background-color: #F6F4EF !important;
+        }
+      ` }} />
+      <meta name="theme-color" content="#F6F4EF" />
+
+      {/* MOBILE HEADER — sticky, minimal, con área segura arriba */}
       <div
-        className="shrink-0 lg:hidden bg-[#F6F4EF]/90 backdrop-blur flex items-center gap-3 px-4 pb-3 border-b border-[#DFDAD0]/60"
+        className="shrink-0 lg:hidden bg-[#F6F4EF]/90 backdrop-blur flex items-center gap-3 px-4 pb-3 border-b border-[#C2BCB0]/50"
         style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 12px)' }}
       >
         {canBack && step.kind !== 'summary' ? (
           <button
             onClick={goBack}
-            className="shrink-0 inline-flex items-center justify-center text-[#487E90] active:opacity-60 h-10 w-10 -ml-2 rounded-full"
+            className="shrink-0 inline-flex items-center justify-center text-[#1E414C] active:opacity-60 h-10 w-10 -ml-2 rounded-full active:scale-95 transition-all duration-150"
             aria-label="Atrás"
           >
             <ArrowLeft className="w-6 h-6" />
@@ -509,8 +523,8 @@ export default function RegisterPage({ params }: Props) {
           <Image src="/logo.png" alt="Dance4ever" width={44} height={33} priority className="shrink-0 h-8 w-auto mix-blend-multiply" />
         )}
         <div className="min-w-0 flex-1">
-          <p className="font-display text-[10px] tracking-[0.3em] text-[#487E90] leading-none">REGISTRO PARA</p>
-          <p className="font-display text-sm uppercase text-[#2B2F31] truncate leading-tight mt-1">
+          <p className="font-display text-[10px] tracking-[0.3em] text-[#1E414C] leading-none">REGISTRO PARA</p>
+          <p className="font-display text-sm uppercase text-[#1A1D1E] truncate leading-tight mt-1">
             {event?.name || 'EVENTO'}{event?.date ? ` · ${formatEventDate(event.date)}` : ''}
           </p>
         </div>
@@ -518,10 +532,10 @@ export default function RegisterPage({ params }: Props) {
           href="https://wa.me/523337290374"
           target="_blank"
           rel="noreferrer"
-          className="shrink-0 inline-flex items-center justify-center h-10 w-10 -mr-2 rounded-full active:opacity-60"
+          className="shrink-0 inline-flex items-center justify-center h-10 w-10 -mr-2 rounded-full active:scale-95 transition-all duration-150"
           aria-label="WhatsApp ayuda"
         >
-          <MessageCircle className="w-6 h-6 text-[#4D8875]" />
+          <MessageCircle className="w-6 h-6 text-[#265C4B]" />
         </a>
       </div>
 
@@ -532,23 +546,23 @@ export default function RegisterPage({ params }: Props) {
         {/* DESKTOP HEADER */}
         <div className="shrink-0 hidden lg:flex items-center gap-6 pb-4">
           <div className="shrink-0 flex items-baseline gap-5">
-            <p className="font-display text-3xl lg:text-4xl tracking-[0.3em] text-[#487E90] leading-none">REGISTRO PARA</p>
-            <h1 className="font-display text-3xl lg:text-4xl uppercase text-[#2B2F31] truncate leading-none">{event?.name || 'EVENTO'}</h1>
-            {event?.date && <p className="font-display text-3xl lg:text-4xl uppercase text-[#6B7072] leading-none">{formatEventDate(event.date)}</p>}
+            <p className="font-display text-3xl lg:text-4xl tracking-[0.3em] text-[#1E414C] leading-none">REGISTRO PARA</p>
+            <h1 className="font-display text-3xl lg:text-4xl uppercase text-[#1A1D1E] truncate leading-none">{event?.name || 'EVENTO'}</h1>
+            {event?.date && <p className="font-display text-3xl lg:text-4xl uppercase text-[#3D4143] leading-none">{formatEventDate(event.date)}</p>}
           </div>
           <div className="flex-1" />
           {(step.kind === 'summary' || step.kind === 'confirmed') && (
             <div className="text-right self-center shrink-0">
-              <h2 className="font-display text-3xl lg:text-4xl uppercase text-[#487E90] leading-tight">
+              <h2 className="font-display text-3xl lg:text-4xl uppercase text-[#1E414C] leading-tight">
                 {step.kind === 'confirmed' ? 'REGISTRO CONFIRMADO' : 'REVISA TU REGISTRO'}
               </h2>
-              <p className="font-display text-base lg:text-lg tracking-[0.4em] text-[#487E90]/70 leading-none mt-2">
+              <p className="font-display text-base lg:text-lg tracking-[0.4em] text-[#1E414C]/70 leading-none mt-2">
                 {step.kind === 'confirmed' ? '¡GRACIAS!' : editMode ? 'EDITA Y VUELVE A CONFIRMAR' : 'SI TODO ES CORRECTO, CONFIRMA'}
               </p>
             </div>
           )}
           {editMode && (
-            <div className="bg-[#C57D65]/10 border border-[#C57D65]/30 text-[#C57D65] px-3 py-1.5 rounded-lg font-display text-xs tracking-widest self-center">
+            <div className="bg-[#9E4F36]/10 border border-[#9E4F36]/30 text-[#9E4F36] px-3 py-1.5 rounded-xl font-display text-xs tracking-widest self-center">
               MODO EDICIÓN
             </div>
           )}
@@ -592,12 +606,12 @@ export default function RegisterPage({ params }: Props) {
               href="https://wa.me/523337290374"
               target="_blank"
               rel="noreferrer"
-              className="flex items-center gap-3 text-[#6B7072] hover:text-[#487E90] transition-colors group"
+              className="flex items-center gap-3 text-[#3D4143] hover:text-[#1E414C] transition-all group active:scale-98"
             >
-              <MessageCircle className="w-5 h-5 text-[#4D8875] group-hover:text-[#3D6C5D] shrink-0" />
+              <MessageCircle className="w-5 h-5 text-[#265C4B] group-hover:text-[#164235] shrink-0" />
               <span className="text-sm md:text-base">
                 ¿Dudas o ayuda? Escríbenos por WhatsApp:{' '}
-                <span className="font-display tracking-wider text-[#487E90] group-hover:text-[#3A6372]">333 729 0374</span>
+                <span className="font-display tracking-wider text-[#1E414C] group-hover:text-[#122C34]">333 729 0374</span>
               </span>
             </a>
           </div>
@@ -607,7 +621,7 @@ export default function RegisterPage({ params }: Props) {
               {canBack && (
                 <button
                   onClick={goBack}
-                  className="inline-flex items-center gap-3 bg-[#EDEAE1] hover:bg-[#E3DED5] active:bg-[#DFDAD0] text-[#487E90] font-display text-base tracking-[0.2em] uppercase px-4 py-2 rounded-lg transition-colors border border-[#DFDAD0]/60"
+                  className="inline-flex items-center gap-3 bg-[#E8E3D5] hover:bg-[#DDD8CA] active:bg-[#C2BCB0] text-[#1E414C] font-display text-base tracking-[0.2em] uppercase px-4 py-2 rounded-xl transition-all border border-[#C2BCB0]/50 active:scale-95"
                 >
                   <ArrowLeft className="w-5 h-5" />
                   REGRESAR
@@ -618,12 +632,12 @@ export default function RegisterPage({ params }: Props) {
               href="https://wa.me/523337290374"
               target="_blank"
               rel="noreferrer"
-              className="flex items-center gap-3 text-[#6B7072] hover:text-[#487E90] transition-colors group"
+              className="flex items-center gap-3 text-[#3D4143] hover:text-[#1E414C] transition-all group active:scale-98"
             >
-              <MessageCircle className="w-5 h-5 text-[#4D8875] group-hover:text-[#3D6C5D] shrink-0" />
+              <MessageCircle className="w-5 h-5 text-[#265C4B] group-hover:text-[#164235] shrink-0" />
               <span className="text-sm md:text-base text-right">
                 ¿Dudas o ayuda? Escríbenos por WhatsApp:{' '}
-                <span className="font-display tracking-wider text-[#487E90] group-hover:text-[#3A6372]">333 729 0374</span>
+                <span className="font-display tracking-wider text-[#1E414C] group-hover:text-[#122C34]">333 729 0374</span>
               </span>
             </a>
           </div>
@@ -635,18 +649,18 @@ export default function RegisterPage({ params }: Props) {
       {mobileSheet === 'dancers' && (
         <div className="lg:hidden fixed inset-0 z-50 flex items-end" onClick={() => setMobileSheet(null)}>
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
-          <div className="relative w-full bg-[#F6F4EF] border-t-2 border-[#487E90] rounded-t-3xl max-h-[80vh] flex flex-col shadow-[0_-8px_30px_rgba(0,0,0,0.08)]" onClick={e => e.stopPropagation()}>
-            <div className="shrink-0 flex items-center justify-between px-5 py-4 border-b border-[#DFDAD0]/60">
-              <p className="font-display text-base tracking-[0.3em] text-[#487E90]">
+          <div className="relative w-full bg-[#F6F4EF] border-t-2 border-[#1E414C] rounded-t-3xl max-h-[80vh] flex flex-col shadow-[0_-8px_30px_rgba(0,0,0,0.08)]" onClick={e => e.stopPropagation()}>
+            <div className="shrink-0 flex items-center justify-between px-5 py-4 border-b border-[#C2BCB0]/40">
+              <p className="font-display text-base tracking-[0.3em] text-[#1E414C]">
                 ALUMNOS/AS · {state.dancers.filter(d => d.name.trim().length >= 2 && d.birthdate.length === 10).length}/{state.dancers.length}
               </p>
-              <button onClick={() => setMobileSheet(null)} className="text-[#6B7072] active:text-[#2B2F31]">
+              <button onClick={() => setMobileSheet(null)} className="text-[#3D4143] active:text-[#1A1D1E] active:scale-90 transition-all">
                 <X className="w-6 h-6" />
               </button>
             </div>
             <div className="flex-1 min-h-0 overflow-y-auto p-3 space-y-1">
               {state.dancers.filter(d => d.name.trim().length > 0).length === 0 ? (
-                <p className="text-[#6B7072] italic text-sm text-center py-10">Aún no has registrado alumnos/as</p>
+                <p className="text-[#3D4143] italic text-sm text-center py-10">Aún no has registrado alumnos/as</p>
               ) : (
                 state.dancers.map((d, i) => {
                   if (!d.name.trim()) return null
@@ -656,8 +670,8 @@ export default function RegisterPage({ params }: Props) {
                     <button
                       key={i}
                       onClick={() => { setStep({ kind: 'dancer', i }); setMobileSheet(null) }}
-                      className={`w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition-colors ${
-                        isCurrent ? 'bg-[#487E90] text-white shadow-md' : complete ? 'bg-[#4D8875]/10 text-[#4D8875] active:bg-[#4D8875]/20' : 'bg-[#C57D65]/10 text-[#C57D65] active:bg-[#C57D65]/20'
+                      className={`w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 active:scale-[0.98] transition-all duration-150 ${
+                        isCurrent ? 'bg-[#1E414C] text-white shadow-md' : complete ? 'bg-[#265C4B]/10 text-[#265C4B] active:bg-[#265C4B]/20' : 'bg-[#9E4F36]/10 text-[#9E4F36] active:bg-[#9E4F36]/20'
                       }`}
                     >
                       <span className="font-display text-sm opacity-60 w-6 text-center shrink-0">{i + 1}</span>
@@ -674,17 +688,17 @@ export default function RegisterPage({ params }: Props) {
 
       {editMenu && (
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-6" onClick={() => setEditMenu(null)}>
-          <div className="bg-[#F6F4EF] border border-[#DFDAD0] rounded-3xl max-w-2xl w-full max-h-full overflow-hidden flex flex-col shadow-2xl" onClick={e => e.stopPropagation()}>
-            <div className="bg-[#EDEAE1] px-6 py-4 flex items-center justify-between shrink-0 border-b border-[#DFDAD0]">
-              <h3 className="font-display text-2xl tracking-widest text-[#487E90]">
+          <div className="bg-[#F6F4EF] border border-[#C2BCB0] rounded-3xl max-w-2xl w-full max-h-full overflow-hidden flex flex-col shadow-2xl" onClick={e => e.stopPropagation()}>
+            <div className="bg-[#E8E3D5] px-6 py-4 flex items-center justify-between shrink-0 border-b border-[#C2BCB0]">
+              <h3 className="font-display text-2xl tracking-widest text-[#1E414C]">
                 {editMenu === 'main' ? '¿QUÉ DESEAS EDITAR?' : editMenu === 'pick_dancer' ? 'ELIGE EL ALUMNO/A' : 'ELIGE EL ACTO'}
               </h3>
-              <button onClick={() => setEditMenu(null)} className="text-[#6B7072] hover:text-[#2B2F31]"><X className="w-6 h-6" /></button>
+              <button onClick={() => setEditMenu(null)} className="text-[#3D4143] hover:text-[#1A1D1E] active:scale-90 transition-all"><X className="w-6 h-6" /></button>
             </div>
             <div className="flex-1 min-h-0 overflow-y-auto p-5 space-y-3">
               {editMenu === 'main' && (
                 <>
-                  <p className="text-sm text-[#6B7072] text-center mb-2">Al editar, se borrará lo capturado en esa sección para llenarlo de nuevo.</p>
+                  <p className="text-sm text-[#3D4143] text-center mb-2">Al editar, se borrará lo capturado en esa sección para llenarlo de nuevo.</p>
                   <EditMenuButton label="DATOS DEL COACH" sub={state.coach.name} onClick={() => startEditScope({ kind: 'coach' })} />
                   <EditMenuButton label="ACADEMIA · EQUIPO" sub={`${state.academy} — ${state.teamName}`} onClick={() => startEditScope({ kind: 'academy' })} />
                   <EditMenuButton label={`ALUMNO/A (${state.dancers.length})`} sub="Editar un integrante" onClick={() => setEditMenu('pick_dancer')} />
@@ -737,10 +751,10 @@ function EditMenuButton({ label, sub, onClick }: { label: string, sub?: string, 
   return (
     <button
       onClick={onClick}
-      className="w-full text-left bg-white border border-[#DFDAD0] hover:bg-[#EDEAE1] active:bg-[#EDEAE1] px-5 py-4 rounded-2xl transition-all shadow-sm"
+      className="w-full text-left bg-white border border-[#C2BCB0] hover:bg-[#E8E3D5] active:bg-[#E8E3D5] px-5 py-4 rounded-2xl transition-all shadow-sm active:scale-[0.98] duration-150"
     >
-      <div className="font-display text-xl uppercase text-[#487E90]">{label}</div>
-      {sub && <div className="text-sm text-[#6B7072] mt-1 truncate">{sub}</div>}
+      <div className="font-display text-xl uppercase text-[#1E414C]">{label}</div>
+      {sub && <div className="text-sm text-[#3D4143] mt-1 truncate">{sub}</div>}
     </button>
   )
 }
@@ -932,12 +946,12 @@ function StepView(props: {
                   value={e}
                   onChange={ev => updateCoach({ extras: extras.map((x, j) => j === i ? ev.target.value : x) })}
                   placeholder={`Coach ${i + 2}`}
-                  className="flex-1 bg-white border border-[#DFDAD0] text-[#2B2F31] text-2xl rounded-2xl px-5 py-4 outline-none focus:border-[#487E90] focus:ring-1 focus:ring-[#487E90] text-center transition-all shadow-sm"
+                  className="flex-1 bg-white border border-[#C2BCB0] text-[#1A1D1E] text-2xl rounded-2xl px-5 py-4 outline-none focus:border-[#1E414C] focus:ring-1 focus:ring-[#1E414C] text-center transition-all shadow-sm"
                   autoCapitalize="words"
                 />
                 <button
                   onClick={() => updateCoach({ extras: extras.filter((_, j) => j !== i) })}
-                  className="bg-[#C57D65]/10 active:bg-[#C57D65]/20 text-[#C57D65] px-4 rounded-2xl shrink-0 transition-colors"
+                  className="bg-[#9E4F36]/10 active:bg-[#9E4F36]/20 text-[#9E4F36] px-4 rounded-2xl shrink-0 transition-all active:scale-95 duration-150"
                   aria-label="Quitar"
                 >
                   <Trash2 className="w-6 h-6" />
@@ -946,7 +960,7 @@ function StepView(props: {
             ))}
             <button
               onClick={() => updateCoach({ extras: [...extras, ''] })}
-              className="w-full flex items-center justify-center gap-2 bg-[#EDEAE1] active:bg-[#DFDAD0] text-[#487E90] py-4 rounded-2xl font-display text-lg tracking-wider transition-colors border border-[#DFDAD0]/40"
+              className="w-full flex items-center justify-center gap-2 bg-[#E8E3D5] active:bg-[#C2BCB0] text-[#1E414C] py-4 rounded-2xl font-display text-lg tracking-wider transition-all border border-[#C2BCB0]/40 active:scale-[0.98] duration-150"
             >
               <Plus className="w-6 h-6" /> AGREGAR OTRO COACH
             </button>
@@ -985,10 +999,10 @@ function StepView(props: {
             autoCapitalize="words"
             autoCorrect="off"
             placeholder={state.academy}
-            className="w-full bg-white border border-[#DFDAD0] text-[#2B2F31] text-3xl rounded-2xl px-6 py-5 outline-none focus:border-[#487E90] focus:ring-1 focus:ring-[#487E90] text-center placeholder:text-[#6B7072]/50 transition-all shadow-sm"
+            className="w-full bg-white border border-[#C2BCB0] text-[#1A1D1E] text-3xl rounded-2xl px-6 py-5 outline-none focus:border-[#1E414C] focus:ring-1 focus:ring-[#1E414C] text-center placeholder:text-[#3D4143]/60 transition-all shadow-sm"
             autoFocus
           />
-          <p className="text-[#C57D65] text-base text-center italic font-medium">
+          <p className="text-[#9E4F36] text-base text-center italic font-medium">
             Si el equipo se llama igual que la escuela/academia, deja vacío y dale a Siguiente.
           </p>
           <NextButton onClick={handleNext} disabled={false} />
@@ -1009,7 +1023,7 @@ function StepView(props: {
             disabled={editMode}
             onEnter={() => { if (v && v >= 1) { syncDancersArray(); onNext() } }}
           />
-          <p className="text-[#C57D65] text-base text-center italic font-medium">
+          <p className="text-[#9E4F36] text-base text-center italic font-medium">
             Cuenta a todos los alumnos/as del equipo, incluyendo solistas, duetos y tríos.
           </p>
           <NextButton onClick={() => { syncDancersArray(); onNext() }} disabled={!v || v < 1} />
@@ -1029,9 +1043,9 @@ function StepView(props: {
           {isMobile && (
             <button
               onClick={onOpenDancerSheet}
-              className="shrink-0 self-end inline-flex items-center gap-2 bg-white text-[#487E90] border border-[#DFDAD0] px-4 py-2 rounded-full font-display text-xs tracking-wider shadow-sm"
+              className="shrink-0 self-end inline-flex items-center gap-2 bg-white text-[#1E414C] border border-[#C2BCB0] px-4 py-2 rounded-full font-display text-xs tracking-wider shadow-sm active:scale-95 transition-all duration-150"
             >
-              <Check className="w-4 h-4 text-[#4D8875]" />
+              <Check className="w-4 h-4 text-[#265C4B]" />
               <span>{completedDancers}/{state.teamSize ?? 0} REGISTRADOS</span>
             </button>
           )}
@@ -1039,20 +1053,20 @@ function StepView(props: {
             <Wrapper title={`Alumno/a ${i + 1} de ${state.teamSize}`}>
               <div className="space-y-5">
                 <div>
-                  <label className="block text-sm font-display tracking-widest text-[#6B7072] mb-3 text-center">NOMBRE COMPLETO</label>
+                  <label className="block text-sm font-display tracking-widest text-[#3D4143] mb-3 text-center">NOMBRE COMPLETO</label>
                   <input
                     key={`name-${i}`}
                     value={d.name}
                     onChange={e => updateDancer(i, { name: e.target.value })}
                     onKeyDown={e => { if (e.key === 'Enter' && valid) onNext() }}
                     placeholder="Nombre y apellidos"
-                    className="w-full bg-white border border-[#DFDAD0] text-[#2B2F31] text-xl rounded-2xl px-5 h-16 outline-none focus:border-[#487E90] focus:ring-1 focus:ring-[#487E90] text-center placeholder:text-[#6B7072]/50 transition-all shadow-sm"
+                    className="w-full bg-white border border-[#C2BCB0] text-[#1A1D1E] text-xl rounded-2xl px-5 h-16 outline-none focus:border-[#1E414C] focus:ring-1 focus:ring-[#1E414C] text-center placeholder:text-[#3D4143]/60 transition-all shadow-sm"
                     autoCapitalize="words"
                     autoFocus
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-display tracking-widest text-[#6B7072] mb-3 text-center">FECHA DE NACIMIENTO</label>
+                  <label className="block text-sm font-display tracking-widest text-[#3D4143] mb-3 text-center">FECHA DE NACIMIENTO</label>
                   <DateInput
                     key={i}
                     value={d.birthdate}
@@ -1062,16 +1076,16 @@ function StepView(props: {
                 </div>
                 {effectiveCat && (
                   <div>
-                    <label className="block text-sm font-display tracking-widest text-[#6B7072] mb-3 text-center">
-                      CATEGORÍA {d.categoryOverride && <span className="text-[#C57D65]">· MODIFICADA</span>}
+                    <label className="block text-sm font-display tracking-widest text-[#3D4143] mb-3 text-center">
+                      CATEGORÍA {d.categoryOverride && <span className="text-[#9E4F36]">· MODIFICADA</span>}
                     </label>
                     <select
                       value={d.categoryOverride ?? ''}
                       onChange={e => updateDancer(i, { categoryOverride: (e.target.value || null) as AgeCategory | null })}
-                      className={`w-full h-14 text-[#2B2F31] text-lg text-center rounded-2xl outline-none font-display appearance-none cursor-pointer px-3 transition-all border ${
+                      className={`w-full h-14 text-[#1A1D1E] text-lg text-center rounded-2xl outline-none font-display appearance-none cursor-pointer px-3 transition-all border ${
                         d.categoryOverride
-                          ? 'bg-[#C57D65]/10 border-[#C57D65]/50 ring-1 ring-[#C57D65]/30'
-                          : 'bg-white border-[#DFDAD0] focus:border-[#487E90] focus:ring-1 focus:ring-[#487E90]'
+                          ? 'bg-[#9E4F36]/10 border-[#9E4F36]/50 ring-1 ring-[#9E4F36]/30'
+                          : 'bg-white border-[#C2BCB0] focus:border-[#1E414C] focus:ring-1 focus:ring-[#1E414C]'
                       }`}
                     >
                       <option value="">Auto: {computedCat ? AGE_CATEGORY_LABELS[computedCat] : '—'}</option>
@@ -1079,7 +1093,7 @@ function StepView(props: {
                         <option key={cat} value={cat}>{AGE_CATEGORY_LABELS[cat]} — {AGE_CATEGORY_HINTS[cat]}</option>
                       ))}
                     </select>
-                    <p className="text-xs text-[#C57D65] mt-3 text-center leading-snug font-medium">
+                    <p className="text-xs text-[#9E4F36] mt-3 text-center leading-snug font-medium">
                       Se asigna automáticamente por la fecha de nacimiento. Si crees que la categoría es incorrecta, da click arriba y elige la correcta.
                     </p>
                   </div>
@@ -1112,7 +1126,7 @@ function StepView(props: {
             disabled={editMode}
             onEnter={() => { if (v && v >= 1) { syncActsArray(); onNext() } }}
           />
-          <p className="text-[#C57D65] text-base text-center italic font-medium">
+          <p className="text-[#9E4F36] text-base text-center italic font-medium">
             Cada acto se anota individualmente en los siguientes pasos.
           </p>
           <NextButton onClick={() => { syncActsArray(); onNext() }} disabled={!v || v < 1} />
@@ -1145,7 +1159,7 @@ function StepView(props: {
             ))}
           </div>
           {firstAct && (
-            <div className="flex items-start gap-3 bg-[#487E90]/10 border border-[#487E90]/30 text-[#487E90] px-5 py-4 rounded-2xl">
+            <div className="flex items-start gap-3 bg-[#1E414C]/10 border border-[#1E414C]/30 text-[#1E414C] px-5 py-4 rounded-2xl">
               <Info className="w-6 h-6 shrink-0 mt-0.5" />
               <p className="text-base md:text-lg leading-snug">
                 <strong>Importante:</strong> registra los actos en orden, de la categoría más joven a la más alta
@@ -1153,13 +1167,13 @@ function StepView(props: {
               </p>
             </div>
           )}
-          <p className="text-center text-xs text-[#6B7072] italic">
+          <p className="text-center text-xs text-[#3D4143] italic">
             En Solistas, Duetos y Tríos no existe la sub-categoría Básico — siempre son Avanzado.
           </p>
-          <div className="max-w-3xl mx-auto bg-white border border-[#DFDAD0] rounded-2xl overflow-hidden shadow-sm">
+          <div className="max-w-3xl mx-auto bg-white border border-[#C2BCB0] rounded-2xl overflow-hidden shadow-sm">
             <table className="w-full text-left">
               <thead>
-                <tr className="bg-[#EDEAE1] text-[#487E90] font-display text-xs tracking-widest border-b border-[#DFDAD0]">
+                <tr className="bg-[#E8E3D5] text-[#1E414C] font-display text-xs tracking-widest border-b border-[#C2BCB0]">
                   <th className="px-4 py-2.5">CATEGORÍA</th>
                   <th className="px-4 py-2.5">NIVEL ESCOLAR</th>
                   <th className="px-4 py-2.5 text-center">SUB-CATEGORÍAS</th>
@@ -1167,10 +1181,10 @@ function StepView(props: {
               </thead>
               <tbody>
                 {AGE_CATEGORY_ORDER.map(cat => (
-                  <tr key={cat} className="border-t border-[#DFDAD0]/50">
-                    <td className="px-4 py-2 font-display text-base text-[#2B2F31] uppercase">{AGE_CATEGORY_LABELS[cat]}</td>
-                    <td className="px-4 py-2 text-sm text-[#6B7072]">{AGE_CATEGORY_HINTS[cat]}</td>
-                    <td className="px-4 py-2 text-sm text-[#6B7072] text-center">Básico · Avanzado</td>
+                  <tr key={cat} className="border-t border-[#C2BCB0]/40">
+                    <td className="px-4 py-2 font-display text-base text-[#1A1D1E] uppercase">{AGE_CATEGORY_LABELS[cat]}</td>
+                    <td className="px-4 py-2 text-sm text-[#3D4143]">{AGE_CATEGORY_HINTS[cat]}</td>
+                    <td className="px-4 py-2 text-sm text-[#3D4143] text-center">Básico · Avanzado</td>
                   </tr>
                 ))}
               </tbody>
@@ -1188,8 +1202,8 @@ function StepView(props: {
       return (
         <Wrapper title={`Acto ${i + 1} · ${a.modality ? modalityLabel(a.modality) : ''}`} subtitle="CATEGORÍA">
           {avgCat && (
-            <p className="text-center text-[#6B7072] text-base">
-              Categoría sugerida por edad promedio del equipo: <span className="text-[#487E90] font-display">{AGE_CATEGORY_LABELS[avgCat].toUpperCase()}</span>
+            <p className="text-center text-[#3D4143] text-base">
+              Categoría sugerida por edad promedio del equipo: <span className="text-[#1E414C] font-display">{AGE_CATEGORY_LABELS[avgCat].toUpperCase()}</span>
             </p>
           )}
           <div className={`grid gap-4 ${options.length === 2 ? 'grid-cols-2' : 'grid-cols-3'} max-w-3xl mx-auto`}>
@@ -1197,12 +1211,12 @@ function StepView(props: {
               <button
                 key={cat}
                 onClick={() => { updateAct(i, { ageCategory: cat }); onNext() }}
-                className={`py-7 px-3 rounded-2xl font-display tracking-wider transition-all flex flex-col items-center justify-center gap-1 border ${
+                className={`py-7 px-3 rounded-2xl font-display tracking-wider transition-all flex flex-col items-center justify-center gap-1 border active:scale-[0.98] duration-150 ${
                   a.ageCategory === cat
-                    ? 'bg-[#487E90] border-[#487E90] text-white shadow-md'
+                    ? 'bg-[#1E414C] border-[#1E414C] text-white shadow-md'
                     : cat === avgCat
-                      ? 'bg-white text-[#2B2F31] border-2 border-[#487E90] hover:bg-[#EDEAE1]'
-                      : 'bg-white border-[#DFDAD0] text-[#2B2F31] active:bg-[#EDEAE1] hover:bg-[#EDEAE1]'
+                      ? 'bg-white text-[#1A1D1E] border-2 border-[#1E414C] hover:bg-[#E8E3D5]'
+                      : 'bg-white border-[#C2BCB0] text-[#1A1D1E] active:bg-[#E8E3D5] hover:bg-[#E8E3D5]'
                 }`}
               >
                 <span className="text-2xl">{AGE_CATEGORY_LABELS[cat].toUpperCase()}</span>
@@ -1297,15 +1311,15 @@ function StepView(props: {
       return (
         <div className="flex flex-col h-full max-h-full min-h-0">
           <div className="text-center space-y-3 shrink-0 mb-5">
-            <p className="font-display text-xs md:text-sm tracking-[0.4em] text-[#487E90]">
+            <p className="font-display text-xs md:text-sm tracking-[0.4em] text-[#1E414C]">
               {`SELECCIONA ${needs} ${needs === 1 ? 'ALUMNO/A' : 'ALUMNOS/AS'}`}
               {lockedCategory && ` · ${AGE_CATEGORY_LABELS[lockedCategory].toUpperCase()}`}
             </p>
-            <h2 className="font-display text-3xl md:text-4xl leading-tight text-[#2B2F31]">{`Acto ${i + 1} · ${a.modality ? modalityLabel(a.modality) : ''}`}</h2>
+            <h2 className="font-display text-3xl md:text-4xl leading-tight text-[#1A1D1E]">{`Acto ${i + 1} · ${a.modality ? modalityLabel(a.modality) : ''}`}</h2>
           </div>
           {sortedCats.length === 0 ? (
             <div className="flex-1 min-h-0 flex items-center justify-center">
-              <p className="text-[#6B7072] text-center text-base italic">
+              <p className="text-[#3D4143] text-center text-base italic">
                 No hay integrantes con fecha de nacimiento válida en el equipo.<br />
                 Regresa y verifica los datos de los alumnos/as.
               </p>
@@ -1317,7 +1331,7 @@ function StepView(props: {
                 const disabled = lockedCategory !== null && cat !== lockedCategory
                 return (
                   <div key={cat} className={disabled ? 'opacity-30' : ''}>
-                    <p className="font-display text-xs tracking-[0.4em] text-[#487E90] mb-2 sticky top-0 bg-[#F6F4EF] py-1.5 z-10">
+                    <p className="font-display text-xs tracking-[0.4em] text-[#1E414C] mb-2 sticky top-0 bg-[#F6F4EF] py-1.5 z-10">
                       {AGE_CATEGORY_LABELS[cat].toUpperCase()} · {AGE_CATEGORY_HINTS[cat]}
                     </p>
                     <div className={`grid ${list.length > 6 ? 'grid-cols-2' : 'grid-cols-1'} gap-2`}>
@@ -1328,12 +1342,12 @@ function StepView(props: {
                             key={di}
                             onClick={() => toggle(di)}
                             disabled={disabled}
-                            className={`text-left px-4 py-3 rounded-2xl flex items-center gap-3 border transition-all ${
+                            className={`text-left px-4 py-3 rounded-2xl flex items-center gap-3 border transition-all active:scale-[0.98] duration-150 ${
                               isSel
-                                ? 'bg-[#487E90] border-[#487E90] text-white shadow-sm'
+                                ? 'bg-[#1E414C] border-[#1E414C] text-white shadow-sm'
                                 : disabled
-                                  ? 'bg-[#EDEAE1] text-[#6B7072]/40 border-[#DFDAD0]/50 cursor-not-allowed opacity-55'
-                                  : 'bg-white border-[#DFDAD0] text-[#2B2F31] active:bg-[#EDEAE1] hover:bg-[#EDEAE1]'
+                                  ? 'bg-[#E8E3D5] text-[#3D4143]/40 border-[#C2BCB0]/50 cursor-not-allowed opacity-55'
+                                  : 'bg-white border-[#C2BCB0] text-[#1A1D1E] active:bg-[#E8E3D5] hover:bg-[#E8E3D5]'
                             }`}
                           >
                             <span className="font-display text-base opacity-50 w-7 text-center shrink-0">{di + 1}</span>
@@ -1349,7 +1363,7 @@ function StepView(props: {
             </div>
           )}
           <div className="shrink-0 pt-5 space-y-4">
-            <p className="text-center text-[#2B2F31] font-display text-2xl tracking-wider">
+            <p className="text-center text-[#1A1D1E] font-display text-2xl tracking-wider">
               {selected} / {needs}
             </p>
             <NextButton onClick={onNext} disabled={!valid} />
@@ -1365,17 +1379,17 @@ function StepView(props: {
       return (
         <div className="flex flex-col h-full min-h-0">
           <div className="shrink-0 text-center space-y-2 lg:space-y-3 pt-2 lg:pt-0 pb-4 lg:pb-6">
-            <p className="font-display text-xs lg:text-sm tracking-[0.4em] text-[#487E90]">COSTOS</p>
-            <h2 className="font-display text-2xl md:text-4xl lg:text-6xl leading-tight text-[#2B2F31]">Costos acordados</h2>
+            <p className="font-display text-xs lg:text-sm tracking-[0.4em] text-[#1E414C]">COSTOS</p>
+            <h2 className="font-display text-2xl md:text-4xl lg:text-6xl leading-tight text-[#1A1D1E]">Costos acordados</h2>
           </div>
           <div className="flex-1 min-h-0 overflow-y-auto pb-3 -mx-1 px-1">
             <div className="space-y-5 lg:space-y-6 max-w-3xl mx-auto">
-              <p className="text-[#C57D65] text-sm lg:text-base italic text-center leading-snug font-medium">
+              <p className="text-[#9E4F36] text-sm lg:text-base italic text-center leading-snug font-medium">
                 Indica los costos que tu academia acordó con los organizadores. Se cobra el de paquete por la primera participación de cada alumno/a, y el de repetición por cada participación adicional.
               </p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div>
-                  <label className="block text-xs font-display tracking-widest text-[#6B7072] mb-2 text-center">PRIMERA PARTICIPACIÓN</label>
+                  <label className="block text-xs font-display tracking-widest text-[#3D4143] mb-2 text-center">PRIMERA PARTICIPACIÓN</label>
                   <MoneyInput
                     value={state.costPaquete}
                     onChange={n => updateState(s => ({ ...s, costPaquete: n }))}
@@ -1383,7 +1397,7 @@ function StepView(props: {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-display tracking-widest text-[#6B7072] mb-2 text-center">REPETICIÓN</label>
+                  <label className="block text-xs font-display tracking-widest text-[#3D4143] mb-2 text-center">REPETICIÓN</label>
                   <MoneyInput
                     value={state.costRepeticion}
                     onChange={n => updateState(s => ({ ...s, costRepeticion: n }))}
@@ -1392,7 +1406,7 @@ function StepView(props: {
                 </div>
               </div>
               {valid && (
-                <div className="text-center bg-[#C57D65] text-white rounded-2xl p-4 shadow-sm">
+                <div className="text-center bg-[#9E4F36] text-white rounded-2xl p-4 shadow-sm">
                   <p className="text-xs lg:text-sm font-display tracking-widest opacity-90 mb-1 lg:mb-2">TOTAL A PAGAR</p>
                   <p className="font-display text-3xl lg:text-4xl">{formatMoney(total)}</p>
                 </div>
@@ -1470,11 +1484,11 @@ function FieldStep({ title, hint, notice, value, onChange, onNext, disabled, typ
         onKeyDown={e => { if (e.key === 'Enter' && !disabled) onNext() }}
         autoCapitalize={autoCapitalize ?? 'words'}
         autoCorrect="off"
-        className="w-full bg-white border border-[#DFDAD0] text-[#2B2F31] text-2xl lg:text-4xl rounded-2xl px-4 py-4 lg:px-6 lg:py-6 outline-none focus:border-[#487E90] focus:ring-1 focus:ring-[#487E90] text-center transition-all shadow-sm"
+        className="w-full bg-white border border-[#C2BCB0] text-[#1A1D1E] text-2xl lg:text-4xl rounded-2xl px-4 py-4 lg:px-6 lg:py-6 outline-none focus:border-[#1E414C] focus:ring-1 focus:ring-[#1E414C] text-center transition-all shadow-sm"
         autoFocus
       />
       {notice && (
-        <p className="text-[#C57D65] text-sm lg:text-lg text-center italic font-medium">{notice}</p>
+        <p className="text-[#9E4F36] text-sm lg:text-lg text-center italic font-medium">{notice}</p>
       )}
       <NextButton onClick={onNext} disabled={disabled} />
     </Wrapper>
@@ -1492,20 +1506,20 @@ function YesNoStep({ title, value, onYes, onNo }: {
       <div className="grid grid-cols-2 gap-3 lg:gap-4 max-w-xl mx-auto w-full aspect-[2/1] lg:aspect-auto">
         <button
           onClick={onNo}
-          className={`rounded-2xl font-display text-3xl lg:text-4xl tracking-widest transition-all flex items-center justify-center lg:py-10 ${
+          className={`rounded-2xl font-display text-3xl lg:text-4xl tracking-widest transition-all flex items-center justify-center lg:py-10 active:scale-95 duration-150 ${
             value === false
-              ? 'bg-[#487E90] text-white hover:bg-[#3C6B7B] shadow-md'
-              : 'bg-white border border-[#DFDAD0] text-[#2B2F31] hover:bg-[#EDEAE1] active:bg-[#EDEAE1]'
+              ? 'bg-[#1E414C] text-white hover:bg-[#122C34] shadow-md'
+              : 'bg-white border border-[#C2BCB0] text-[#1A1D1E] hover:bg-[#E8E3D5] active:bg-[#E8E3D5]'
           }`}
         >
           NO
         </button>
         <button
           onClick={onYes}
-          className={`rounded-2xl font-display text-3xl lg:text-4xl tracking-widest transition-all flex items-center justify-center lg:py-10 ${
+          className={`rounded-2xl font-display text-3xl lg:text-4xl tracking-widest transition-all flex items-center justify-center lg:py-10 active:scale-95 duration-150 ${
             value === true
-              ? 'bg-[#487E90] text-white hover:bg-[#3C6B7B] shadow-md'
-              : 'bg-white border border-[#DFDAD0] text-[#2B2F31] hover:bg-[#EDEAE1] active:bg-[#EDEAE1]'
+              ? 'bg-[#1E414C] text-white hover:bg-[#122C34] shadow-md'
+              : 'bg-white border border-[#C2BCB0] text-[#1A1D1E] hover:bg-[#E8E3D5] active:bg-[#E8E3D5]'
           }`}
         >
           SÍ
@@ -1522,7 +1536,7 @@ function MoneyInput({ value, onChange, onEnter }: {
 }) {
   return (
     <div className="relative max-w-sm mx-auto">
-      <span className="absolute left-4 lg:left-5 top-1/2 -translate-y-1/2 text-[#487E90] font-display text-2xl lg:text-3xl pointer-events-none">$</span>
+      <span className="absolute left-4 lg:left-5 top-1/2 -translate-y-1/2 text-[#1E414C] font-display text-2xl lg:text-3xl pointer-events-none">$</span>
       <input
         type="text"
         inputMode="decimal"
@@ -1537,7 +1551,7 @@ function MoneyInput({ value, onChange, onEnter }: {
         }}
         onKeyDown={e => { if (e.key === 'Enter' && onEnter) onEnter() }}
         placeholder="0"
-        className="w-full bg-white border border-[#DFDAD0] text-[#2B2F31] text-3xl lg:text-4xl text-center rounded-2xl h-14 lg:h-20 outline-none focus:border-[#487E90] focus:ring-1 focus:ring-[#487E90] font-display pl-10 lg:pl-12 placeholder:text-[#6B7072]/50 transition-all shadow-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+        className="w-full bg-white border border-[#C2BCB0] text-[#1A1D1E] text-3xl lg:text-4xl text-center rounded-2xl h-14 lg:h-20 outline-none focus:border-[#1E414C] focus:ring-1 focus:ring-[#1E414C] font-display pl-10 lg:pl-12 placeholder:text-[#3D4143]/60 transition-all shadow-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
       />
     </div>
   )
@@ -1567,7 +1581,7 @@ function NumberInput({ value, onChange, max, disabled, onEnter }: {
       }}
       onKeyDown={e => { if (e.key === 'Enter' && onEnter) onEnter() }}
       disabled={disabled}
-      className="w-full max-w-xs mx-auto block bg-white border border-[#DFDAD0] text-[#2B2F31] text-5xl text-center rounded-2xl h-20 outline-none focus:border-[#487E90] focus:ring-1 focus:ring-[#487E90] font-display disabled:opacity-60 transition-all shadow-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+      className="w-full max-w-xs mx-auto block bg-white border border-[#C2BCB0] text-[#1A1D1E] text-5xl text-center rounded-2xl h-20 outline-none focus:border-[#1E414C] focus:ring-1 focus:ring-[#1E414C] font-display disabled:opacity-60 transition-all shadow-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
       autoFocus
     />
   )
@@ -1595,7 +1609,7 @@ function DateInput({ value, onChange, onEnter }: { value: string, onChange: (iso
         aria-label="Fecha de nacimiento"
       />
       <div className={`w-full h-16 lg:h-20 rounded-2xl flex items-center justify-center pointer-events-none font-display text-2xl lg:text-3xl tracking-wider border transition-all ${
-        value ? 'bg-white border-[#487E90] text-[#487E90] shadow-sm' : 'bg-white border-[#DFDAD0] text-[#6B7072]/55'
+        value ? 'bg-white border-[#1E414C] text-[#1E414C] shadow-sm' : 'bg-white border-[#C2BCB0] text-[#3D4143]/60'
       }`}>
         {displayLabel}
       </div>
@@ -1615,13 +1629,13 @@ function DancerList({ dancers, currentIndex, onSelect }: {
 
   return (
     <div className="h-full w-full flex flex-col min-h-0">
-      <p className="text-xs font-display tracking-[0.4em] text-[#487E90] mb-4 shrink-0 text-center">
+      <p className="text-xs font-display tracking-[0.4em] text-[#1E414C] mb-4 shrink-0 text-center">
         ALUMNOS/AS · {completeCount}/{dancers.length}
       </p>
       <div className="flex-1 min-h-0 overflow-x-auto overflow-y-hidden">
         <div className="h-full flex flex-col flex-wrap content-center gap-x-12 gap-y-2 px-2">
           {filled.length === 0 && (
-            <p className="text-[#6B7072]/50 italic text-base self-center my-auto">Los nombres aparecerán aquí</p>
+            <p className="text-[#3D4143]/60 italic text-base self-center my-auto">Los nombres aparecerán aquí</p>
           )}
           {filled.map(({ d, i }) => {
             const isCurrent = i === currentIndex
@@ -1629,8 +1643,8 @@ function DancerList({ dancers, currentIndex, onSelect }: {
               <button
                 key={i}
                 onClick={() => onSelect(i)}
-                className={`text-center font-display text-2xl uppercase tracking-wide transition-colors whitespace-nowrap hover:text-[#487E90] ${
-                  isCurrent ? 'text-[#487E90] underline underline-offset-4' : 'text-[#4D8875]'
+                className={`text-center font-display text-2xl uppercase tracking-wide transition-all whitespace-nowrap hover:text-[#1E414C] active:scale-95 duration-150 ${
+                  isCurrent ? 'text-[#1E414C] underline underline-offset-4 font-semibold' : 'text-[#265C4B]'
                 }`}
               >
                 {d.name}
@@ -1647,10 +1661,10 @@ function CategoryButton({ label, selected, onClick }: { label: string, selected:
   return (
     <button
       onClick={onClick}
-      className={`py-7 px-4 rounded-2xl font-display text-2xl tracking-wider transition-all border ${
+      className={`py-7 px-4 rounded-2xl font-display text-2xl tracking-wider transition-all border active:scale-95 duration-150 ${
         selected
-          ? 'bg-[#487E90] border-[#487E90] text-white shadow-md'
-          : 'bg-white border-[#DFDAD0] text-[#2B2F31] active:bg-[#EDEAE1] hover:bg-[#EDEAE1]'
+          ? 'bg-[#1E414C] border-[#1E414C] text-white shadow-md'
+          : 'bg-white border-[#C2BCB0] text-[#1A1D1E] active:bg-[#E8E3D5] hover:bg-[#E8E3D5]'
       }`}
     >
       {label}
@@ -1660,7 +1674,7 @@ function CategoryButton({ label, selected, onClick }: { label: string, selected:
 
 function EditNotice({ text }: { text: string }) {
   return (
-    <p className="bg-[#C57D65]/10 border border-[#C57D65]/30 text-[#C57D65] text-center text-sm px-4 py-3 rounded-xl font-medium">
+    <p className="bg-[#9E4F36]/10 border border-[#9E4F36]/30 text-[#9E4F36] text-center text-sm px-4 py-3 rounded-xl font-medium">
       {text}
     </p>
   )
@@ -1670,8 +1684,8 @@ function Wrapper({ title, subtitle, children }: { title: string, subtitle?: stri
   return (
     <div className="flex flex-col h-full min-h-0">
       <div className="shrink-0 text-center space-y-2 lg:space-y-3 pt-2 lg:pt-0 pb-5 lg:pb-8">
-        {subtitle && <p className="font-display text-xs tracking-[0.4em] text-[#487E90]">{subtitle}</p>}
-        <h2 className="font-display text-2xl md:text-4xl lg:text-5xl leading-tight px-2 text-[#2B2F31]">{title}</h2>
+        {subtitle && <p className="font-display text-xs tracking-[0.4em] text-[#1E414C]">{subtitle}</p>}
+        <h2 className="font-display text-2xl md:text-4xl lg:text-5xl leading-tight px-2 text-[#1A1D1E]">{title}</h2>
       </div>
       <div className="flex-1 min-h-0 flex flex-col justify-start lg:justify-center gap-5 lg:gap-8">
         {children}
@@ -1685,7 +1699,7 @@ function NextButton({ onClick, disabled, label }: { onClick: () => void, disable
     <button
       onClick={onClick}
       disabled={disabled}
-      className="w-full bg-[#487E90] active:bg-[#3C6B7B] hover:bg-[#3C6B7B] text-white font-display text-xl lg:text-2xl tracking-widest py-4 lg:py-5 rounded-2xl disabled:opacity-40 transition-all shadow-md"
+      className="w-full bg-[#1E414C] active:bg-[#122C34] hover:bg-[#122C34] text-white font-display text-xl lg:text-2xl tracking-widest py-4 lg:py-5 rounded-2xl disabled:opacity-40 transition-all shadow-md active:scale-[0.98] duration-150"
     >
       {label ?? 'SIGUIENTE'}
     </button>
@@ -1694,7 +1708,7 @@ function NextButton({ onClick, disabled, label }: { onClick: () => void, disable
 
 function Centered({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-[100dvh] bg-[#F6F4EF] text-[#2B2F31] flex flex-col font-sans">
+    <div className="min-h-[100dvh] bg-[#F6F4EF] text-[#1A1D1E] flex flex-col font-sans">
       <div className="flex-1 flex flex-col items-center justify-center p-6 gap-4">
         {children}
       </div>
@@ -1703,12 +1717,12 @@ function Centered({ children }: { children: React.ReactNode }) {
           href="https://wa.me/523337290374"
           target="_blank"
           rel="noreferrer"
-          className="flex items-center gap-3 text-[#6B7072] hover:text-[#487E90] transition-colors group"
+          className="flex items-center gap-3 text-[#3D4143] hover:text-[#1E414C] transition-all group active:scale-98"
         >
-          <MessageCircle className="w-5 h-5 text-[#4D8875] shrink-0" />
+          <MessageCircle className="w-5 h-5 text-[#265C4B] shrink-0" />
           <span className="text-sm md:text-base">
             ¿Dudas o ayuda? Escríbenos por WhatsApp:{' '}
-            <span className="font-display tracking-wider text-[#487E90]">333 729 0374</span>
+            <span className="font-display tracking-wider text-[#1E414C]">333 729 0374</span>
           </span>
         </a>
       </div>
@@ -1744,22 +1758,22 @@ function MobileSummary({ state, editMode, tab, setTab, confirmed, confirm, savin
     <div className="flex flex-col h-full max-h-full min-h-0 gap-3">
       {/* TOTAL A PAGAR siempre visible arriba */}
       {hasCosts && (
-        <div className="shrink-0 bg-[#C57D65] text-white rounded-2xl py-3 px-4 text-center shadow-sm">
+        <div className="shrink-0 bg-[#9E4F36] text-white rounded-2xl py-3 px-4 text-center shadow-sm">
           <p className="text-xs font-display tracking-widest opacity-90 leading-none">TOTAL A PAGAR</p>
           <p className="font-display text-3xl leading-none mt-1.5">{formatMoney(total)}</p>
         </div>
       )}
 
-      {/* TABS */}
-      <div className="shrink-0 grid grid-cols-4 gap-1 bg-[#EDEAE1] border border-[#DFDAD0]/50 p-1 rounded-2xl">
+      {/* TABS - Estilo de cápsula iOS Segmented Control */}
+      <div className="shrink-0 grid grid-cols-4 gap-1 bg-[#E8E3D5] border border-[#C2BCB0]/40 p-1 rounded-2xl">
         {tabs.map(t => (
           <button
             key={t.id}
             onClick={() => setTab(t.id)}
-            className={`py-2.5 rounded-xl font-display text-[10px] tracking-widest flex flex-col items-center justify-center gap-0.5 transition-all ${
+            className={`py-2.5 rounded-xl font-display text-[10px] tracking-widest flex flex-col items-center justify-center gap-0.5 transition-all active:scale-[0.96] duration-150 ${
               tab === t.id
-                ? 'bg-white text-[#487E90] border border-[#DFDAD0] shadow-sm'
-                : 'text-[#6B7072] active:bg-[#EDEAE1]'
+                ? 'bg-white text-[#1E414C] border border-[#C2BCB0]/30 shadow-sm'
+                : 'text-[#3D4143] hover:text-[#1E414C] active:bg-[#E8E3D5]/50'
             }`}
           >
             <span>{t.label}</span>
@@ -1769,18 +1783,18 @@ function MobileSummary({ state, editMode, tab, setTab, confirmed, confirm, savin
       </div>
 
       {/* TAB CONTENT */}
-      <div className="flex-1 min-h-0 overflow-y-auto bg-white border border-[#DFDAD0] rounded-2xl p-4 shadow-sm text-[#2B2F31]">
+      <div className="flex-1 min-h-0 overflow-y-auto bg-white border border-[#C2BCB0] rounded-2xl p-4 shadow-sm text-[#1A1D1E]">
         {tab === 'coach' && (
           <div className="space-y-3">
-            <p className="font-display text-2xl uppercase text-[#2B2F31] break-words">{state.coach.name}</p>
-            <div className="space-y-1 text-sm text-[#6B7072]">
+            <p className="font-display text-2xl uppercase text-[#1A1D1E] break-words">{state.coach.name}</p>
+            <div className="space-y-1 text-sm text-[#3D4143]">
               <p>📱 {state.coach.phone}</p>
               {state.coach.email && <p>✉️ {state.coach.email}</p>}
             </div>
             {state.coach.extras.filter(e => e.trim()).length > 0 && (
               <div>
-                <p className="text-xs tracking-widest text-[#487E90] mb-1">OTROS COACHES</p>
-                <p className="text-sm text-[#6B7072]">{state.coach.extras.filter(e => e.trim()).join(', ')}</p>
+                <p className="text-xs tracking-widest text-[#1E414C] mb-1">OTROS COACHES</p>
+                <p className="text-sm text-[#3D4143]">{state.coach.extras.filter(e => e.trim()).join(', ')}</p>
               </div>
             )}
           </div>
@@ -1788,29 +1802,29 @@ function MobileSummary({ state, editMode, tab, setTab, confirmed, confirm, savin
         {tab === 'academy' && (
           <div className="space-y-3">
             <div>
-              <p className="text-xs tracking-widest text-[#487E90] mb-1">ACADEMIA</p>
-              <p className="font-display text-2xl uppercase text-[#2B2F31] break-words">{state.academy}</p>
+              <p className="text-xs tracking-widest text-[#1E414C] mb-1">ACADEMIA</p>
+              <p className="font-display text-2xl uppercase text-[#1A1D1E] break-words">{state.academy}</p>
             </div>
             <div>
-              <p className="text-xs tracking-widest text-[#487E90] mb-1">EQUIPO</p>
-              <p className="font-display text-xl uppercase text-[#6B7072] break-words">{state.teamName}</p>
+              <p className="text-xs tracking-widest text-[#1E414C] mb-1">EQUIPO</p>
+              <p className="font-display text-xl uppercase text-[#3D4143] break-words">{state.teamName}</p>
             </div>
           </div>
         )}
         {tab === 'dancers' && (
           <div className="space-y-1.5">
             {filledDancers.length === 0 ? (
-              <p className="text-[#6B7072]/50 italic text-sm">Sin integrantes</p>
+              <p className="text-[#3D4143]/50 italic text-sm">Sin integrantes</p>
             ) : filledDancers.map(d => {
               const di = state.dancers.indexOf(d)
               const n = counts.get(di) ?? 0
               const cost = hasCosts && n > 0 ? (state.costPaquete ?? 0) + Math.max(0, n - 1) * (state.costRepeticion ?? 0) : null
               return (
-                <div key={di} className="flex items-baseline gap-2 py-1.5 border-b border-[#DFDAD0]/50 last:border-0">
-                  <span className="font-display text-xs text-[#6B7072]/50 w-6 text-center shrink-0">{di + 1}.</span>
-                  <span className="font-display text-base uppercase text-[#4D8875] flex-1 truncate">{d.name}</span>
-                  {n > 0 && <span className="text-xs text-[#487E90] font-bold shrink-0">{n}×</span>}
-                  {cost !== null && <span className="text-xs text-[#C57D65] font-bold shrink-0">{formatMoney(cost)}</span>}
+                <div key={di} className="flex items-baseline gap-2 py-1.5 border-b border-[#C2BCB0]/30 last:border-0">
+                  <span className="font-display text-xs text-[#3D4143]/50 w-6 text-center shrink-0">{di + 1}.</span>
+                  <span className="font-display text-base uppercase text-[#265C4B] flex-1 truncate">{d.name}</span>
+                  {n > 0 && <span className="text-xs text-[#1E414C] font-bold shrink-0">{n}×</span>}
+                  {cost !== null && <span className="text-xs text-[#9E4F36] font-bold shrink-0">{formatMoney(cost)}</span>}
                 </div>
               )
             })}
@@ -1819,19 +1833,19 @@ function MobileSummary({ state, editMode, tab, setTab, confirmed, confirm, savin
         {tab === 'acts' && (
           <div className="space-y-3">
             {state.acts.length === 0 ? (
-              <p className="text-[#6B7072]/50 italic text-sm">Sin actos</p>
+              <p className="text-[#3D4143]/50 italic text-sm">Sin actos</p>
             ) : state.acts.map((a, i) => {
               const cat = a.ageCategory ? AGE_CATEGORY_LABELS[a.ageCategory] : '—'
               const mod = a.modality ? modalityLabel(a.modality) : '—'
               const lvl = a.modality === 'grupal' ? (a.level === 'basico' ? ' BÁSICO' : a.level === 'avanzado' ? ' AVANZADO' : '') : ''
               return (
-                <div key={i} className="border-b border-[#DFDAD0]/50 last:border-0 pb-2 last:pb-0">
-                  <div className="font-display text-base text-[#2B2F31]">
-                    <span className="text-[#487E90]">#{i + 1}</span> {cat.toUpperCase()} · {mod}{lvl}
+                <div key={i} className="border-b border-[#C2BCB0]/30 last:border-0 pb-2 last:pb-0">
+                  <div className="font-display text-base text-[#1A1D1E]">
+                    <span className="text-[#1E414C]">#{i + 1}</span> {cat.toUpperCase()} · {mod}{lvl}
                   </div>
-                  <div className="text-xs text-[#6B7072] mt-0.5">{a.style ?? '—'}</div>
+                  <div className="text-xs text-[#3D4143] mt-0.5">{a.style ?? '—'}</div>
                   {a.dancerIndices.length > 0 && (
-                    <div className="text-[11px] text-[#6B7072]/80 mt-0.5">
+                    <div className="text-[11px] text-[#3D4143]/80 mt-0.5">
                       {a.dancerIndices.map(di => state.dancers[di]?.name).filter(Boolean).join(' · ')}
                     </div>
                   )}
@@ -1844,27 +1858,27 @@ function MobileSummary({ state, editMode, tab, setTab, confirmed, confirm, savin
 
       {/* BUTTONS */}
       {saveErr && (
-        <p className="shrink-0 text-[#C57D65] text-xs bg-[#C57D65]/10 border border-[#C57D65]/30 rounded-xl px-3 py-2.5 break-words font-medium">{saveErr}</p>
+        <p className="shrink-0 text-[#9E4F36] text-xs bg-[#9E4F36]/10 border border-[#9E4F36]/30 rounded-xl px-3 py-2.5 break-words font-medium">{saveErr}</p>
       )}
       {confirmed ? (
         <button
           onClick={startEdit}
-          className="shrink-0 h-14 flex items-center justify-center gap-2 bg-white border border-[#DFDAD0] hover:bg-[#EDEAE1] text-[#2B2F31] font-display text-lg tracking-widest rounded-2xl transition-all shadow-sm"
+          className="shrink-0 h-14 flex items-center justify-center gap-2 bg-white border border-[#C2BCB0] hover:bg-[#E8E3D5] text-[#1A1D1E] font-display text-lg tracking-widest rounded-2xl transition-all shadow-sm active:scale-[0.98] duration-150"
         >
-          <Pencil className="w-5 h-5 text-[#487E90]" /> EDITAR REGISTRO
+          <Pencil className="w-5 h-5 text-[#1E414C]" /> EDITAR REGISTRO
         </button>
       ) : (
         <div className="shrink-0 grid grid-cols-2 gap-2">
           <button
             onClick={onEditRequest}
-            className="h-14 flex items-center justify-center gap-2 bg-white border border-[#DFDAD0] hover:bg-[#EDEAE1] text-[#2B2F31] font-display text-base tracking-widest rounded-2xl transition-all shadow-sm"
+            className="h-14 flex items-center justify-center gap-2 bg-white border border-[#C2BCB0] hover:bg-[#E8E3D5] text-[#1A1D1E] font-display text-base tracking-widest rounded-2xl transition-all shadow-sm active:scale-[0.98] duration-150"
           >
-            <Pencil className="w-5 h-5 text-[#487E90]" /> EDITAR
+            <Pencil className="w-5 h-5 text-[#1E414C]" /> EDITAR
           </button>
           <button
             onClick={confirm}
             disabled={saving}
-            className="h-14 bg-[#487E90] hover:bg-[#3C6B7B] active:bg-[#3C6B7B] text-white font-display text-base tracking-widest rounded-2xl disabled:opacity-50 transition-all shadow-md"
+            className="h-14 bg-[#1E414C] hover:bg-[#122C34] active:bg-[#122C34] text-white font-display text-base tracking-widest rounded-2xl disabled:opacity-50 transition-all shadow-md active:scale-[0.98] duration-150"
           >
             {saving ? 'GUARDANDO…' : editMode ? 'GUARDAR' : 'CONFIRMAR'}
           </button>
@@ -1892,32 +1906,32 @@ function SummaryGrid({ state, editMode, confirmed, confirm, saving, saveErr, sta
     <div className="lg:h-full lg:max-h-full lg:min-h-0 grid grid-cols-1 lg:grid-cols-6 lg:grid-rows-[auto_minmax(0,1fr)] gap-4 w-full">
       <div className="lg:col-span-2 lg:min-h-0">
         <Card title="COACH">
-          <p className="text-xl md:text-2xl lg:text-3xl font-display uppercase truncate text-[#2B2F31]">{state.coach.name}</p>
-          <p className="text-sm md:text-base text-[#6B7072] mt-2 truncate">
+          <p className="text-xl md:text-2xl lg:text-3xl font-display uppercase truncate text-[#1A1D1E]">{state.coach.name}</p>
+          <p className="text-sm md:text-base text-[#3D4143] mt-2 truncate">
             {state.coach.phone}{state.coach.email ? ` · ${state.coach.email}` : ''}
           </p>
           {state.coach.extras.filter(e => e.trim()).length > 0 && (
-            <p className="text-sm text-[#6B7072] mt-1 truncate">Otros: {state.coach.extras.filter(e => e.trim()).join(', ')}</p>
+            <p className="text-sm text-[#3D4143] mt-1 truncate">Otros: {state.coach.extras.filter(e => e.trim()).join(', ')}</p>
           )}
         </Card>
       </div>
 
       <div className="lg:col-span-3 lg:min-h-0">
         <Card title="ACADEMIA · EQUIPO">
-          <p className="text-xl md:text-2xl lg:text-3xl font-display uppercase truncate text-[#2B2F31]">{state.academy}</p>
-          <p className="text-sm md:text-base text-[#6B7072] mt-2 truncate">{state.teamName}</p>
+          <p className="text-xl md:text-2xl lg:text-3xl font-display uppercase truncate text-[#1A1D1E]">{state.academy}</p>
+          <p className="text-sm md:text-base text-[#3D4143] mt-2 truncate">{state.teamName}</p>
         </Card>
       </div>
 
       <div className="lg:col-span-1 lg:min-h-0">
         {hasCosts ? (
-          <div className="bg-[#C57D65] text-white rounded-2xl h-full p-4 flex flex-col items-center justify-center shadow-sm">
+          <div className="bg-[#9E4F36] text-white rounded-2xl h-full p-4 flex flex-col items-center justify-center shadow-sm">
             <p className="text-base md:text-lg font-display tracking-widest opacity-90 leading-none text-center">TOTAL A PAGAR</p>
             <p className="font-display text-3xl md:text-4xl leading-none mt-2">{formatMoney(total)}</p>
           </div>
         ) : (
-          <div className="bg-white border border-[#DFDAD0] rounded-2xl h-full p-3 flex items-center justify-center shadow-sm">
-            <p className="text-[#6B7072]/50 italic text-sm text-center">Sin costos</p>
+          <div className="bg-white border border-[#C2BCB0] rounded-2xl h-full p-3 flex items-center justify-center shadow-sm">
+            <p className="text-[#3D4143]/50 italic text-sm text-center">Sin costos</p>
           </div>
         )}
       </div>
@@ -1927,17 +1941,17 @@ function SummaryGrid({ state, editMode, confirmed, confirm, saving, saveErr, sta
           <div className="max-h-[60vh] lg:max-h-none lg:flex-1 lg:min-h-0 overflow-y-auto lg:overflow-x-auto lg:overflow-y-hidden">
             <div className="lg:h-full flex flex-col lg:flex-wrap lg:content-start gap-x-12 gap-y-2 px-1">
               {filledDancers.length === 0 ? (
-                <p className="text-[#6B7072]/50 italic text-base self-center my-auto">Sin integrantes</p>
+                <p className="text-[#3D4143]/50 italic text-base self-center my-auto">Sin integrantes</p>
               ) : filledDancers.map((d) => {
                 const di = state.dancers.indexOf(d)
                 const n = counts.get(di) ?? 0
                 const cost = hasCosts && n > 0 ? (state.costPaquete ?? 0) + Math.max(0, n - 1) * (state.costRepeticion ?? 0) : null
                 return (
-                  <div key={di} className="font-display text-lg md:text-xl lg:text-2xl uppercase text-[#4D8875] whitespace-nowrap flex items-baseline gap-3">
-                    <span className="opacity-40 text-sm text-[#6B7072]">{di + 1}.</span>
+                  <div key={di} className="font-display text-lg md:text-xl lg:text-2xl uppercase text-[#265C4B] whitespace-nowrap flex items-baseline gap-3">
+                    <span className="opacity-40 text-sm text-[#3D4143]">{di + 1}.</span>
                     <span>{d.name}</span>
-                    {n > 0 && <span className="text-sm text-[#487E90] font-bold">{n} acto{n === 1 ? '' : 's'}</span>}
-                    {cost !== null && <span className="text-sm text-[#C57D65] font-bold">{formatMoney(cost)}</span>}
+                    {n > 0 && <span className="text-sm text-[#1E414C] font-bold">{n} acto{n === 1 ? '' : 's'}</span>}
+                    {cost !== null && <span className="text-sm text-[#9E4F36] font-bold">{formatMoney(cost)}</span>}
                   </div>
                 )
               })}
@@ -1950,20 +1964,20 @@ function SummaryGrid({ state, editMode, confirmed, confirm, saving, saveErr, sta
         <Card title={`ACTOS (${state.acts.length})`} className="lg:flex-1 lg:min-h-0">
           <div className="max-h-[50vh] lg:max-h-none lg:flex-1 lg:min-h-0 overflow-y-auto pr-1 space-y-3">
             {state.acts.length === 0 ? (
-              <p className="text-[#6B7072]/50 italic text-base">Sin actos</p>
+              <p className="text-[#3D4143]/50 italic text-base">Sin actos</p>
             ) : state.acts.map((a, i) => {
               const cat = a.ageCategory ? AGE_CATEGORY_LABELS[a.ageCategory] : '—'
               const mod = a.modality ? modalityLabel(a.modality) : '—'
               const lvl = a.modality === 'grupal' ? (a.level === 'basico' ? ' BÁSICO' : a.level === 'avanzado' ? ' AVANZADO' : '') : ''
               return (
-                <div key={i} className="border-b border-[#DFDAD0]/50 last:border-0 pb-3 last:pb-0">
-                  <div className="font-display text-lg text-[#2B2F31]">
-                    <span className="text-[#487E90]">#{i + 1}</span>{' '}
+                <div key={i} className="border-b border-[#C2BCB0]/30 last:border-0 pb-3 last:pb-0">
+                  <div className="font-display text-lg text-[#1A1D1E]">
+                    <span className="text-[#1E414C]">#{i + 1}</span>{' '}
                     {cat.toUpperCase()} · {mod}{lvl}
                   </div>
-                  <div className="text-base text-[#6B7072] mt-1">{a.style ?? '—'}</div>
+                  <div className="text-base text-[#3D4143] mt-1">{a.style ?? '—'}</div>
                   {a.dancerIndices.length > 0 && (
-                    <div className="text-xs text-[#6B7072]/70 mt-1">
+                    <div className="text-xs text-[#3D4143]/70 mt-1">
                       {a.dancerIndices.map(di => state.dancers[di]?.name).filter(Boolean).join(' · ')}
                     </div>
                   )}
@@ -1975,29 +1989,29 @@ function SummaryGrid({ state, editMode, confirmed, confirm, saving, saveErr, sta
         {confirmed ? (
           <button
             onClick={startEdit}
-            className="shrink-0 h-28 flex items-center justify-center gap-2 bg-white border border-[#DFDAD0] hover:bg-[#EDEAE1] text-[#2B2F31] font-display text-2xl tracking-widest rounded-2xl transition-all shadow-sm"
+            className="shrink-0 h-28 flex items-center justify-center gap-2 bg-white border border-[#C2BCB0] hover:bg-[#E8E3D5] text-[#1A1D1E] font-display text-2xl tracking-widest rounded-2xl transition-all shadow-sm active:scale-[0.98] duration-150"
           >
-            <Pencil className="w-6 h-6 text-[#487E90]" /> EDITAR REGISTRO
+            <Pencil className="w-6 h-6 text-[#1E414C]" /> EDITAR REGISTRO
           </button>
         ) : (
           <>
             <button
               onClick={onEditRequest}
-              className="shrink-0 h-14 flex items-center justify-center gap-2 bg-white border border-[#DFDAD0] hover:bg-[#EDEAE1] text-[#2B2F31] font-display text-lg tracking-widest rounded-2xl transition-all shadow-sm"
+              className="shrink-0 h-14 flex items-center justify-center gap-2 bg-white border border-[#C2BCB0] hover:bg-[#E8E3D5] text-[#1A1D1E] font-display text-lg tracking-widest rounded-2xl transition-all shadow-sm active:scale-[0.98] duration-150"
             >
-              <Pencil className="w-5 h-5 text-[#487E90]" /> EDITAR
+              <Pencil className="w-5 h-5 text-[#1E414C]" /> EDITAR
             </button>
             <button
               onClick={confirm}
               disabled={saving}
-              className="shrink-0 h-28 bg-[#487E90] hover:bg-[#3C6B7B] active:bg-[#3C6B7B] text-white font-display text-2xl tracking-widest rounded-2xl disabled:opacity-50 transition-all shadow-md"
+              className="shrink-0 h-28 bg-[#1E414C] hover:bg-[#122C34] active:bg-[#122C34] text-white font-display text-2xl tracking-widest rounded-2xl disabled:opacity-50 transition-all shadow-md active:scale-[0.98] duration-150"
             >
               {saving ? 'GUARDANDO…' : editMode ? 'GUARDAR CAMBIOS' : 'CONFIRMAR REGISTRO'}
             </button>
           </>
         )}
         {saveErr && (
-          <p className="shrink-0 text-[#C57D65] text-sm bg-[#C57D65]/10 border border-[#C57D65]/30 rounded-2xl px-3 py-2 break-words font-medium">{saveErr}</p>
+          <p className="shrink-0 text-[#9E4F36] text-sm bg-[#9E4F36]/10 border border-[#9E4F36]/30 rounded-2xl px-3 py-2 break-words font-medium">{saveErr}</p>
         )}
       </div>
     </div>
@@ -2006,8 +2020,8 @@ function SummaryGrid({ state, editMode, confirmed, confirm, saving, saveErr, sta
 
 function Card({ title, children, className }: { title: string, children: React.ReactNode, className?: string }) {
   return (
-    <div className={`bg-white border border-[#DFDAD0] rounded-2xl p-5 flex flex-col min-h-0 shadow-sm text-[#2B2F31] ${className ?? ''}`}>
-      <p className="text-xs font-display tracking-widest text-[#487E90] mb-3 shrink-0">{title}</p>
+    <div className={`bg-white border border-[#C2BCB0] rounded-2xl p-5 flex flex-col min-h-0 shadow-sm text-[#1A1D1E] ${className ?? ''}`}>
+      <p className="text-xs font-display tracking-widest text-[#1E414C] mb-3 shrink-0">{title}</p>
       <div className="flex-1 min-h-0 flex flex-col">{children}</div>
     </div>
   )
@@ -2017,24 +2031,24 @@ function Summary({ state, compact }: { state: State, compact?: boolean }) {
   return (
     <div className="space-y-3 text-left">
       <SummaryBlock label="COACH">
-        <div className="text-2xl font-display text-[#2B2F31]">{state.coach.name}</div>
-        <div className="text-base text-[#6B7072] mt-1">{state.coach.phone}{state.coach.email ? ` · ${state.coach.email}` : ''}</div>
+        <div className="text-2xl font-display text-[#1A1D1E]">{state.coach.name}</div>
+        <div className="text-base text-[#3D4143] mt-1">{state.coach.phone}{state.coach.email ? ` · ${state.coach.email}` : ''}</div>
         {state.coach.extras.filter(e => e.trim()).length > 0 && (
-          <div className="text-sm text-[#6B7072] mt-1">Otros coaches: {state.coach.extras.filter(e => e.trim()).join(', ')}</div>
+          <div className="text-sm text-[#3D4143] mt-1">Otros coaches: {state.coach.extras.filter(e => e.trim()).join(', ')}</div>
         )}
       </SummaryBlock>
 
       <SummaryBlock label="ACADEMIA · EQUIPO">
-        <div className="text-2xl font-display text-[#2B2F31]">{state.academy}</div>
-        <div className="text-base text-[#6B7072] mt-1">{state.teamName}</div>
+        <div className="text-2xl font-display text-[#1A1D1E]">{state.academy}</div>
+        <div className="text-base text-[#3D4143] mt-1">{state.teamName}</div>
       </SummaryBlock>
 
       <SummaryBlock label={`ALUMNOS/AS (${state.dancers.length})`}>
         <div className={`grid ${compact ? 'grid-cols-2' : 'grid-cols-1 md:grid-cols-2'} gap-x-6 gap-y-1`}>
           {state.dancers.map((d, i) => (
-            <div key={i} className="flex justify-between text-base border-b border-[#DFDAD0]/50 last:border-0 py-1 text-[#2B2F31]">
+            <div key={i} className="flex justify-between text-base border-b border-[#C2BCB0]/30 last:border-0 py-1 text-[#1A1D1E]">
               <span className="truncate">{d.name}</span>
-              <span className="text-[#6B7072] ml-2 shrink-0">{formatBirthdate(d.birthdate)}</span>
+              <span className="text-[#3D4143] ml-2 shrink-0">{formatBirthdate(d.birthdate)}</span>
             </div>
           ))}
         </div>
@@ -2047,13 +2061,13 @@ function Summary({ state, compact }: { state: State, compact?: boolean }) {
             const mod = a.modality ? modalityLabel(a.modality) : '—'
             const lvl = a.modality === 'grupal' ? (a.level === 'basico' ? ' BÁSICO' : a.level === 'avanzado' ? ' AVANZADO' : '') : ''
             return (
-            <div key={i} className="border-b border-[#DFDAD0]/50 last:border-0 py-2 text-[#2B2F31]">
+            <div key={i} className="border-b border-[#C2BCB0]/30 last:border-0 py-2 text-[#1A1D1E]">
               <div className="font-display text-lg">
-                <span className="text-[#487E90]">#{i + 1}</span>{' '}
+                <span className="text-[#1E414C]">#{i + 1}</span>{' '}
                 {cat.toUpperCase()} · {mod}{lvl} · {a.style ?? '—'}
               </div>
               {a.dancerIndices.length > 0 && (
-                <div className="text-sm text-[#6B7072] mt-1">
+                <div className="text-sm text-[#3D4143] mt-1">
                   {a.dancerIndices.map(di => state.dancers[di]?.name).filter(Boolean).join(' · ')}
                 </div>
               )}
@@ -2068,8 +2082,8 @@ function Summary({ state, compact }: { state: State, compact?: boolean }) {
 
 function SummaryBlock({ label, children }: { label: string, children: React.ReactNode }) {
   return (
-    <div className="bg-white border border-[#DFDAD0] rounded-2xl p-4 shadow-sm">
-      <div className="text-xs font-display tracking-widest text-[#487E90] mb-2">{label}</div>
+    <div className="bg-white border border-[#C2BCB0] rounded-2xl p-4 shadow-sm">
+      <div className="text-xs font-display tracking-widest text-[#1E414C] mb-2">{label}</div>
       {children}
     </div>
   )
