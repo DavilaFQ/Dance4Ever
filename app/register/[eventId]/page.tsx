@@ -43,6 +43,9 @@ type State = {
 }
 
 type Step =
+  | { kind: 'welcome' }
+  | { kind: 'instruction_1' }
+  | { kind: 'instruction_2' }
   | { kind: 'coach_name' }
   | { kind: 'coach_phone' }
   | { kind: 'coach_email' }
@@ -212,6 +215,26 @@ function formatEventDate(iso: string): string {
   } catch { return iso }
 }
 
+function getRegistrationDeadline(eventDateIso: string): string {
+  try {
+    const d = new Date(eventDateIso + 'T00:00:00')
+    d.setDate(d.getDate() - 15)
+    return d.toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' })
+  } catch {
+    return '15 días antes del evento'
+  }
+}
+
+function getChangesDeadline(eventDateIso: string): string {
+  try {
+    const d = new Date(eventDateIso + 'T00:00:00')
+    d.setDate(d.getDate() - 7)
+    return d.toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' })
+  } catch {
+    return '7 días antes del evento'
+  }
+}
+
 function formatBirthdate(iso: string): string {
   if (!iso) return ''
   const [y, m, d] = iso.split('-')
@@ -228,7 +251,7 @@ export default function RegisterPage({ params }: Props) {
   const [event, setEvent] = useState<Event | null>(null)
   const [authState, setAuthState] = useState<'loading' | 'ok' | 'invalid'>('loading')
   const [state, setState] = useState<State>(initialState)
-  const [step, setStep] = useState<Step>({ kind: 'coach_name' })
+  const [step, setStep] = useState<Step>({ kind: 'welcome' })
   const [editMode, setEditMode] = useState(false)
   const [editScope, setEditScope] = useState<EditScope | null>(null)
   const [editMenu, setEditMenu] = useState<null | 'main' | 'pick_dancer' | 'pick_act'>(null)
@@ -533,7 +556,7 @@ export default function RegisterPage({ params }: Props) {
       </Centered>
     )
   }
-  const isFirstStep = step.kind === 'coach_name'
+  const isFirstStep = step.kind === 'welcome'
   const canBack = !isFirstStep && step.kind !== 'confirmed'
   const isMobile = isLargeScreen === false
 
@@ -618,6 +641,7 @@ export default function RegisterPage({ params }: Props) {
             <StepView
               step={step}
               state={state}
+              event={event}
               editMode={editMode}
               isMobile={isMobile}
               mobileSummaryTab={mobileSummaryTab}
@@ -805,6 +829,9 @@ function EditMenuButton({ label, sub, onClick }: { label: string, sub?: string, 
 
 function nextStep(current: Step, state: State): Step {
   switch (current.kind) {
+    case 'welcome': return { kind: 'instruction_1' }
+    case 'instruction_1': return { kind: 'instruction_2' }
+    case 'instruction_2': return { kind: 'coach_name' }
     case 'coach_name': return { kind: 'coach_phone' }
     case 'coach_phone': return { kind: 'coach_email' }
     case 'coach_email': return { kind: 'coach_multi_q' }
@@ -847,7 +874,10 @@ function nextStep(current: Step, state: State): Step {
 
 function prevStep(current: Step, state: State): Step | null {
   switch (current.kind) {
-    case 'coach_name': return null
+    case 'welcome': return null
+    case 'instruction_1': return { kind: 'welcome' }
+    case 'instruction_2': return { kind: 'instruction_1' }
+    case 'coach_name': return { kind: 'instruction_2' }
     case 'coach_phone': return { kind: 'coach_name' }
     case 'coach_email': return { kind: 'coach_phone' }
     case 'coach_multi_q': return { kind: 'coach_email' }
@@ -903,6 +933,7 @@ function extractErrorMessage(e: unknown): string {
 function StepView(props: {
   step: Step
   state: State
+  event: Event | null
   editMode: boolean
   isMobile: boolean
   mobileSummaryTab: 'coach' | 'academy' | 'dancers' | 'acts'
@@ -924,9 +955,153 @@ function StepView(props: {
   saving: boolean
   saveErr: string | null
 }) {
-  const { step, state, editMode, isMobile, mobileSummaryTab, setMobileSummaryTab, onOpenDancerSheet, onNext, goToStep, startEdit, openEditMenu, updateCoach, updateState, updateDancer, updateAct, setTeamSize, setActCount, syncDancersArray, syncActsArray, confirm, saving, saveErr } = props
+  const { step, state, event, editMode, isMobile, mobileSummaryTab, setMobileSummaryTab, onOpenDancerSheet, onNext, goToStep, startEdit, openEditMenu, updateCoach, updateState, updateDancer, updateAct, setTeamSize, setActCount, syncDancersArray, syncActsArray, confirm, saving, saveErr } = props
 
   switch (step.kind) {
+    case 'welcome': {
+      const eventCity = event?.name?.replace(/dance4ever/gi, '').replace(/\d{4}/g, '').trim() || 'Guadalajara'
+      const regDeadline = event?.date ? getRegistrationDeadline(event.date) : '15 días antes'
+      const chgDeadline = event?.date ? getChangesDeadline(event.date) : '7 días antes'
+      return (
+        <div className="flex flex-col items-center justify-center text-center space-y-6 max-w-xl mx-auto py-4">
+          <Image src="/logo.png" alt="Dance4ever" width={160} height={120} priority className="mix-blend-multiply active:scale-95 transition-all duration-150" />
+          <div className="space-y-2">
+            <p className="font-display text-xs tracking-[0.4em] text-[#1E414C]">SISTEMA OFICIAL DE REGISTRO</p>
+            <h2 className="font-display text-4xl lg:text-5xl uppercase text-[#1A1D1E] tracking-tight">{event?.name || 'EVENTO'}</h2>
+            {event?.date && (
+              <p className="font-display text-lg tracking-widest text-[#3D4143] uppercase">{eventCity} · {formatEventDate(event.date)}</p>
+            )}
+          </div>
+
+          <div className="w-full bg-[#E8E3D5]/40 border border-[#C2BCB0]/50 rounded-2xl p-5 space-y-4 text-left shadow-sm">
+            <div className="space-y-1">
+              <p className="text-[10px] font-display tracking-wider text-[#3D4143]/70 uppercase">FECHA LÍMITE DE REGISTRO</p>
+              <p className="text-base text-[#1E414C] font-semibold">{regDeadline}</p>
+            </div>
+            <div className="h-px bg-[#C2BCB0]/30" />
+            <div className="space-y-1">
+              <p className="text-[10px] font-display tracking-wider text-[#3D4143]/70 uppercase">FECHA LÍMITE PARA CAMBIOS</p>
+              <p className="text-base text-[#9E4F36] font-semibold">{chgDeadline}</p>
+            </div>
+          </div>
+
+          <div className="flex items-start gap-3 bg-[#9E4F36]/10 border border-[#9E4F36]/30 text-[#9E4F36] px-5 py-4 rounded-2xl text-left">
+            <Info className="w-5 h-5 shrink-0 mt-0.5" />
+            <p className="text-xs lg:text-sm leading-snug">
+              <strong>Atención:</strong> Por favor, lee con mucho cuidado todas las instrucciones y pasos del proceso. Esto garantizará que las categorías de tus alumnos, el costo de tus paquetes y el registro de tus actos sean 100% correctos.
+            </p>
+          </div>
+
+          <button
+            onClick={onNext}
+            className="w-full bg-[#1E414C] active:bg-[#122C34] hover:bg-[#122C34] text-white font-display text-xl tracking-widest py-4 rounded-2xl transition-all shadow-md active:scale-[0.98] duration-150"
+          >
+            ENTENDIDO, LEER INSTRUCCIONES
+          </button>
+        </div>
+      )
+    }
+
+    case 'instruction_1': {
+      return (
+        <div className="flex flex-col justify-center max-w-xl mx-auto py-4 space-y-6">
+          <div className="text-center space-y-2">
+            <p className="font-display text-xs tracking-[0.4em] text-[#1E414C]">PASO 1 DE 2</p>
+            <h2 className="font-display text-3xl lg:text-4xl text-[#1A1D1E]">REGLAS Y CATEGORÍAS</h2>
+          </div>
+
+          <div className="space-y-4">
+            <div className="bg-white border border-[#C2BCB0] rounded-2xl p-5 shadow-sm space-y-3 flex items-start gap-4 active:scale-[0.99] transition-all duration-150">
+              <span className="shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-[#1E414C] text-white font-display font-bold">1</span>
+              <div className="space-y-1">
+                <h4 className="font-display text-base text-[#1E414C] tracking-wider uppercase">Categorías de Edad</h4>
+                <p className="text-sm text-[#3D4143] leading-relaxed">
+                  Se calculan automáticamente según la fecha de nacimiento de cada participante. Si la categoría automática no coincide, puedes cambiarla manualmente antes de finalizar.
+                </p>
+              </div>
+            </div>
+
+            <div className="bg-white border border-[#C2BCB0] rounded-2xl p-5 shadow-sm space-y-3 flex items-start gap-4 active:scale-[0.99] transition-all duration-150">
+              <span className="shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-[#1E414C] text-white font-display font-bold">2</span>
+              <div className="space-y-1">
+                <h4 className="font-display text-base text-[#1E414C] tracking-wider uppercase">Integrantes del Equipo</h4>
+                <p className="text-sm text-[#3D4143] leading-relaxed">
+                  Registra a todos tus alumnos/as primero. Debes contar a todos los que bailarán, incluyendo solistas, duetos, tríos y grupales.
+                </p>
+              </div>
+            </div>
+
+            <div className="bg-white border border-[#C2BCB0] rounded-2xl p-5 shadow-sm space-y-3 flex items-start gap-4 active:scale-[0.99] transition-all duration-150">
+              <span className="shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-[#1E414C] text-white font-display font-bold">3</span>
+              <div className="space-y-1">
+                <h4 className="font-display text-base text-[#1E414C] tracking-wider uppercase">Nombre de Equipo</h4>
+                <p className="text-sm text-[#3D4143] leading-relaxed">
+                  Si el nombre de tu equipo coincide con el de tu academia o escuela, puedes dejar el campo vacío y presionar "Siguiente".
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <button
+            onClick={onNext}
+            className="w-full bg-[#1E414C] active:bg-[#122C34] hover:bg-[#122C34] text-white font-display text-xl tracking-widest py-4 rounded-2xl transition-all shadow-md active:scale-[0.98] duration-150"
+          >
+            ENTENDIDO, SIGUIENTE PASO
+          </button>
+        </div>
+      )
+    }
+
+    case 'instruction_2': {
+      return (
+        <div className="flex flex-col justify-center max-w-xl mx-auto py-4 space-y-6">
+          <div className="text-center space-y-2">
+            <p className="font-display text-xs tracking-[0.4em] text-[#1E414C]">PASO 2 DE 2</p>
+            <h2 className="font-display text-3xl lg:text-4xl text-[#1A1D1E]">ACTOS Y COSTOS</h2>
+          </div>
+
+          <div className="space-y-4">
+            <div className="bg-white border border-[#C2BCB0] rounded-2xl p-5 shadow-sm space-y-3 flex items-start gap-4 active:scale-[0.99] transition-all duration-150">
+              <span className="shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-[#1E414C] text-white font-display font-bold">4</span>
+              <div className="space-y-1">
+                <h4 className="font-display text-base text-[#1E414C] tracking-wider uppercase">Registro de Actos</h4>
+                <p className="text-sm text-[#3D4143] leading-relaxed">
+                  Registra tus actos en orden, de la categoría de edad más joven a la más alta (por ejemplo: Tiny → Mini → Elementary → Junior → Senior → College → Open).
+                </p>
+              </div>
+            </div>
+
+            <div className="bg-white border border-[#C2BCB0] rounded-2xl p-5 shadow-sm space-y-3 flex items-start gap-4 active:scale-[0.99] transition-all duration-150">
+              <span className="shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-[#1E414C] text-white font-display font-bold">5</span>
+              <div className="space-y-1">
+                <h4 className="font-display text-base text-[#1E414C] tracking-wider uppercase">Cálculo de Costos</h4>
+                <p className="text-sm text-[#3D4143] leading-relaxed">
+                  El sistema calculará automáticamente el costo de la primera participación (paquete inicial) y el costo de las repeticiones o grupales correspondientes.
+                </p>
+              </div>
+            </div>
+
+            <div className="bg-white border border-[#C2BCB0] rounded-2xl p-5 shadow-sm space-y-3 flex items-start gap-4 active:scale-[0.99] transition-all duration-150">
+              <span className="shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-[#1E414C] text-white font-display font-bold">6</span>
+              <div className="space-y-1">
+                <h4 className="font-display text-base text-[#1E414C] tracking-wider uppercase">Revisión Final</h4>
+                <p className="text-sm text-[#3D4143] leading-relaxed">
+                  Al final del flujo tendrás una pantalla de resumen completa donde podrás editar cualquier dato antes de confirmar de forma definitiva tu registro.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <button
+            onClick={onNext}
+            className="w-full bg-[#9E4F36] active:bg-[#7D3D2A] hover:bg-[#7D3D2A] text-white font-display text-xl tracking-widest py-4 rounded-2xl transition-all shadow-md active:scale-[0.98] duration-150"
+          >
+            COMENZAR REGISTRO
+          </button>
+        </div>
+      )
+    }
+
     case 'coach_name':
       return (
         <FieldStep
@@ -1722,7 +1897,7 @@ function EditNotice({ text }: { text: string }) {
 
 function Wrapper({ title, subtitle, children }: { title: string, subtitle?: string, children: React.ReactNode }) {
   return (
-    <div className="flex flex-col h-full min-h-0">
+    <div className="flex flex-col h-auto lg:h-full min-h-0">
       <div className="shrink-0 text-center space-y-2 lg:space-y-3 pt-2 lg:pt-0 pb-5 lg:pb-8">
         {subtitle && <p className="font-display text-xs tracking-[0.4em] text-[#1E414C]">{subtitle}</p>}
         <h2 className="font-display text-2xl md:text-4xl lg:text-5xl leading-tight px-2 text-[#1A1D1E]">{title}</h2>
