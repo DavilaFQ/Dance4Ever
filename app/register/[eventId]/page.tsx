@@ -283,6 +283,32 @@ export default function RegisterPage({ params }: Props) {
   }, [state, eventId, authState])
 
   useEffect(() => {
+    try {
+      let metaStatus = document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]')
+      if (!metaStatus) {
+        metaStatus = document.createElement('meta')
+        metaStatus.setAttribute('name', 'apple-mobile-web-app-status-bar-style')
+        document.head.appendChild(metaStatus)
+      }
+      metaStatus.setAttribute('content', 'default')
+
+      let metaTheme = document.querySelector('meta[name="theme-color"]')
+      if (!metaTheme) {
+        metaTheme = document.createElement('meta')
+        metaTheme.setAttribute('name', 'theme-color')
+        document.head.appendChild(metaTheme)
+      }
+      metaTheme.setAttribute('content', '#F6F4EF')
+
+      let metaCapable = document.querySelector('meta[name="apple-mobile-web-app-capable"]')
+      if (!metaCapable) {
+        metaCapable = document.createElement('meta')
+        metaCapable.setAttribute('name', 'apple-mobile-web-app-capable')
+        document.head.appendChild(metaCapable)
+      }
+      metaCapable.setAttribute('content', 'yes')
+    } catch { /* ignore document reference errors on SSR */ }
+
     const vv = window.visualViewport
     if (!vv) return
     const updateHeight = () => {
@@ -541,7 +567,7 @@ export default function RegisterPage({ params }: Props) {
           <Image src="/logo.png" alt="Dance4ever" width={44} height={33} priority className="shrink-0 h-8 w-auto mix-blend-multiply" />
         )}
         <div className="min-w-0 flex-1">
-          <p className="font-display text-[10px] tracking-[0.3em] text-[#1E414C] leading-none">REGISTRO PARA</p>
+          <p className="font-display text-xs tracking-[0.3em] text-[#1E414C] leading-none">REGISTRO PARA</p>
           <p className="font-display text-sm uppercase text-[#1A1D1E] truncate leading-tight mt-1">
             {event?.name || 'EVENTO'}{event?.date ? ` · ${formatEventDate(event.date)}` : ''}
           </p>
@@ -1186,8 +1212,8 @@ function StepView(props: {
           <p className="text-center text-xs text-[#3D4143] italic">
             En Solistas, Duetos y Tríos no existe la sub-categoría Básico — siempre son Avanzado.
           </p>
-          <div className="max-w-3xl mx-auto bg-white border border-[#C2BCB0] rounded-2xl overflow-hidden shadow-sm">
-            <table className="w-full text-left">
+          <div className="max-w-3xl mx-auto bg-white border border-[#C2BCB0] rounded-2xl overflow-x-auto shadow-sm w-full">
+            <table className="w-full text-left min-w-[500px]">
               <thead>
                 <tr className="bg-[#E8E3D5] text-[#1E414C] font-display text-xs tracking-widest border-b border-[#C2BCB0]">
                   <th className="px-4 py-2.5">CATEGORÍA</th>
@@ -1784,7 +1810,7 @@ function MobileSummary({ state, editMode, tab, setTab, confirmed, confirm, savin
           <button
             key={t.id}
             onClick={() => setTab(t.id)}
-            className={`py-2.5 rounded-xl font-display text-[10px] tracking-widest flex flex-col items-center justify-center gap-0.5 transition-all active:scale-[0.96] duration-150 ${
+            className={`py-2.5 rounded-xl font-display text-xs tracking-widest flex flex-col items-center justify-center gap-0.5 transition-all active:scale-[0.96] duration-150 ${
               tab === t.id
                 ? 'bg-white text-[#1E414C] border border-[#C2BCB0]/30 shadow-sm'
                 : 'text-[#3D4143] hover:text-[#1E414C] active:bg-[#E8E3D5]/50'
