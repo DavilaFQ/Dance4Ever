@@ -235,6 +235,8 @@ export default function RegisterPage({ params }: Props) {
   const [saving, setSaving] = useState(false)
   const [saveErr, setSaveErr] = useState<string | null>(null)
   const [isLargeScreen, setIsLargeScreen] = useState<boolean | null>(null)
+  const [mobileSheet, setMobileSheet] = useState<null | 'dancers'>(null)
+  const [mobileSummaryTab, setMobileSummaryTab] = useState<'coach' | 'academy' | 'dancers' | 'acts'>('coach')
 
   useEffect(() => {
     const check = () => {
@@ -489,39 +491,58 @@ export default function RegisterPage({ params }: Props) {
   const isMobile = isLargeScreen === false
 
   return (
-    <div className="min-h-[100dvh] lg:h-[100dvh] bg-neutral-900 text-white flex flex-col lg:overflow-hidden">
-      <main className="flex-1 lg:min-h-0 px-4 lg:px-8 pt-4 lg:pt-5 pb-4 flex flex-col lg:overflow-hidden">
-        <div className="shrink-0 flex flex-wrap items-center gap-3 md:gap-6 pb-4">
-          <div className="shrink-0 flex flex-wrap items-baseline gap-x-4 gap-y-1 md:gap-5">
-            <p className="font-display text-xl md:text-3xl lg:text-4xl tracking-[0.3em] text-yellow-500 leading-none">REGISTRO PARA</p>
-            <h1 className="font-display text-xl md:text-3xl lg:text-4xl uppercase text-white truncate leading-none">{event?.name || 'EVENTO'}</h1>
-            {event?.date && <p className="font-display text-xl md:text-3xl lg:text-4xl uppercase text-neutral-400 leading-none">{formatEventDate(event.date)}</p>}
+    <div className="h-[100dvh] bg-neutral-900 text-white flex flex-col overflow-hidden">
+      <main className="flex-1 min-h-0 px-4 lg:px-8 pt-3 lg:pt-5 pb-2 lg:pb-4 flex flex-col overflow-hidden">
+        {/* MOBILE COMPACT HEADER */}
+        <div className="shrink-0 flex items-center gap-3 pb-2 lg:hidden">
+          <Image src="/logo.png" alt="Dance4ever" width={48} height={36} priority className="shrink-0 h-9 w-auto" />
+          <div className="min-w-0 flex-1">
+            <p className="font-display text-[10px] tracking-[0.3em] text-yellow-500 leading-none">REGISTRO PARA</p>
+            <p className="font-display text-base uppercase text-white truncate leading-tight mt-0.5">
+              {event?.name || 'EVENTO'}{event?.date ? ` · ${formatEventDate(event.date)}` : ''}
+            </p>
           </div>
-          <div className="hidden lg:block flex-1" />
+          {editMode && (
+            <span className="shrink-0 bg-yellow-400/15 border border-yellow-400/40 text-yellow-400 px-2 py-0.5 rounded text-[10px] font-display tracking-wider">EDITANDO</span>
+          )}
+        </div>
+
+        {/* DESKTOP HEADER */}
+        <div className="shrink-0 hidden lg:flex items-center gap-6 pb-4">
+          <div className="shrink-0 flex items-baseline gap-5">
+            <p className="font-display text-3xl lg:text-4xl tracking-[0.3em] text-yellow-500 leading-none">REGISTRO PARA</p>
+            <h1 className="font-display text-3xl lg:text-4xl uppercase text-white truncate leading-none">{event?.name || 'EVENTO'}</h1>
+            {event?.date && <p className="font-display text-3xl lg:text-4xl uppercase text-neutral-400 leading-none">{formatEventDate(event.date)}</p>}
+          </div>
+          <div className="flex-1" />
           {(step.kind === 'summary' || step.kind === 'confirmed') && (
-            <div className="text-left lg:text-right self-center shrink-0 w-full lg:w-auto">
-              <h2 className="font-display text-xl md:text-3xl lg:text-4xl uppercase text-yellow-500 leading-tight">
+            <div className="text-right self-center shrink-0">
+              <h2 className="font-display text-3xl lg:text-4xl uppercase text-yellow-500 leading-tight">
                 {step.kind === 'confirmed' ? 'REGISTRO CONFIRMADO' : 'REVISA TU REGISTRO'}
               </h2>
-              <p className="font-display text-xs md:text-base lg:text-lg tracking-[0.4em] text-yellow-500/70 leading-none mt-1 md:mt-2">
+              <p className="font-display text-base lg:text-lg tracking-[0.4em] text-yellow-500/70 leading-none mt-2">
                 {step.kind === 'confirmed' ? '¡GRACIAS!' : editMode ? 'EDITA Y VUELVE A CONFIRMAR' : 'SI TODO ES CORRECTO, CONFIRMA'}
               </p>
             </div>
           )}
           {editMode && (
-            <div className="hidden md:block bg-yellow-400/10 border border-yellow-400/40 text-yellow-400 px-3 py-1.5 rounded-lg font-display text-xs tracking-widest self-center">
+            <div className="bg-yellow-400/10 border border-yellow-400/40 text-yellow-400 px-3 py-1.5 rounded-lg font-display text-xs tracking-widest self-center">
               MODO EDICIÓN
             </div>
           )}
-          <Image src="/logo.png" alt="Dance4ever" width={120} height={90} priority className="shrink-0 ml-auto w-16 h-auto md:w-24 lg:w-[120px]" />
+          <Image src="/logo.png" alt="Dance4ever" width={120} height={90} priority className="shrink-0" />
         </div>
 
-        <div className="flex-1 lg:min-h-0 flex justify-center">
-          <div className={`w-full ${step.kind === 'summary' || step.kind === 'confirmed' || step.kind === 'dancer' ? '' : 'max-w-5xl'} lg:h-full flex flex-col lg:justify-center lg:min-h-0`}>
+        <div className="flex-1 min-h-0 flex justify-center">
+          <div className={`w-full ${step.kind === 'summary' || step.kind === 'confirmed' || step.kind === 'dancer' ? '' : 'max-w-5xl'} h-full flex flex-col justify-center min-h-0`}>
             <StepView
               step={step}
               state={state}
               editMode={editMode}
+              isMobile={isMobile}
+              mobileSummaryTab={mobileSummaryTab}
+              setMobileSummaryTab={setMobileSummaryTab}
+              onOpenDancerSheet={() => setMobileSheet('dancers')}
               onNext={goNext}
               goToStep={setStep}
               startEdit={startEdit}
@@ -541,46 +562,113 @@ export default function RegisterPage({ params }: Props) {
           </div>
         </div>
       </main>
-      {step.kind === 'summary' ? (
-        <div className="px-6 pt-3 pb-4 shrink-0 flex items-center justify-center">
-          <a
-            href="https://wa.me/523337290374"
-            target="_blank"
-            rel="noreferrer"
-            className="flex items-center gap-3 text-neutral-400 hover:text-yellow-400 transition-colors group"
-          >
-            <MessageCircle className="w-5 h-5 text-green-500 group-hover:text-green-400 shrink-0" />
-            <span className="text-sm md:text-base">
-              ¿Dudas o ayuda? Escríbenos por WhatsApp:{' '}
-              <span className="font-display tracking-wider text-yellow-500 group-hover:text-yellow-400">333 729 0374</span>
-            </span>
-          </a>
-        </div>
-      ) : (
-        <div className="px-6 pt-3 pb-6 shrink-0 flex items-center gap-4">
-          <div className="min-w-0 flex-1 flex justify-start">
-            {canBack && (
-              <button
-                onClick={goBack}
-                className="inline-flex items-center gap-3 bg-neutral-800 hover:bg-neutral-700 active:bg-neutral-700 text-yellow-500 font-display text-base tracking-[0.2em] uppercase px-4 py-2 rounded-lg transition-colors border border-yellow-500/40"
-              >
-                <ArrowLeft className="w-5 h-5" />
-                REGRESAR
-              </button>
-            )}
+      {/* DESKTOP BOTTOM BAR */}
+      <div className="hidden lg:block">
+        {step.kind === 'summary' ? (
+          <div className="px-6 pt-3 pb-4 shrink-0 flex items-center justify-center">
+            <a
+              href="https://wa.me/523337290374"
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center gap-3 text-neutral-400 hover:text-yellow-400 transition-colors group"
+            >
+              <MessageCircle className="w-5 h-5 text-green-500 group-hover:text-green-400 shrink-0" />
+              <span className="text-sm md:text-base">
+                ¿Dudas o ayuda? Escríbenos por WhatsApp:{' '}
+                <span className="font-display tracking-wider text-yellow-500 group-hover:text-yellow-400">333 729 0374</span>
+              </span>
+            </a>
           </div>
-          <a
-            href="https://wa.me/523337290374"
-            target="_blank"
-            rel="noreferrer"
-            className="flex items-center gap-3 text-neutral-400 hover:text-yellow-400 transition-colors group"
+        ) : (
+          <div className="px-6 pt-3 pb-6 shrink-0 flex items-center gap-4">
+            <div className="min-w-0 flex-1 flex justify-start">
+              {canBack && (
+                <button
+                  onClick={goBack}
+                  className="inline-flex items-center gap-3 bg-neutral-800 hover:bg-neutral-700 active:bg-neutral-700 text-yellow-500 font-display text-base tracking-[0.2em] uppercase px-4 py-2 rounded-lg transition-colors border border-yellow-500/40"
+                >
+                  <ArrowLeft className="w-5 h-5" />
+                  REGRESAR
+                </button>
+              )}
+            </div>
+            <a
+              href="https://wa.me/523337290374"
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center gap-3 text-neutral-400 hover:text-yellow-400 transition-colors group"
+            >
+              <MessageCircle className="w-5 h-5 text-green-500 group-hover:text-green-400 shrink-0" />
+              <span className="text-sm md:text-base text-right">
+                ¿Dudas o ayuda? Escríbenos por WhatsApp:{' '}
+                <span className="font-display tracking-wider text-yellow-500 group-hover:text-yellow-400">333 729 0374</span>
+              </span>
+            </a>
+          </div>
+        )}
+      </div>
+
+      {/* MOBILE BOTTOM BAR */}
+      <div className="lg:hidden shrink-0 bg-black border-t border-neutral-800 px-3 py-2 flex items-center gap-2">
+        {canBack && step.kind !== 'summary' && (
+          <button
+            onClick={goBack}
+            className="shrink-0 inline-flex items-center justify-center bg-neutral-800 active:bg-neutral-700 text-yellow-500 h-12 w-12 rounded-lg border border-yellow-500/40"
+            aria-label="Atrás"
           >
-            <MessageCircle className="w-5 h-5 text-green-500 group-hover:text-green-400 shrink-0" />
-            <span className="text-sm md:text-base text-right">
-              ¿Dudas o ayuda? Escríbenos por WhatsApp:{' '}
-              <span className="font-display tracking-wider text-yellow-500 group-hover:text-yellow-400">333 729 0374</span>
-            </span>
-          </a>
+            <ArrowLeft className="w-5 h-5" />
+          </button>
+        )}
+        <a
+          href="https://wa.me/523337290374"
+          target="_blank"
+          rel="noreferrer"
+          className="flex items-center justify-center gap-2 bg-neutral-800 active:bg-neutral-700 text-neutral-300 h-12 w-12 rounded-lg shrink-0"
+          aria-label="WhatsApp"
+        >
+          <MessageCircle className="w-5 h-5 text-green-500" />
+        </a>
+        <div className="flex-1" />
+      </div>
+
+      {/* MOBILE BOTTOM SHEET: Lista de integrantes */}
+      {mobileSheet === 'dancers' && (
+        <div className="lg:hidden fixed inset-0 z-50 flex items-end" onClick={() => setMobileSheet(null)}>
+          <div className="absolute inset-0 bg-black/60" />
+          <div className="relative w-full bg-neutral-900 border-t-2 border-yellow-500 rounded-t-2xl max-h-[80vh] flex flex-col" onClick={e => e.stopPropagation()}>
+            <div className="shrink-0 flex items-center justify-between px-5 py-4 border-b border-neutral-800">
+              <p className="font-display text-base tracking-[0.3em] text-yellow-500">
+                ALUMNOS/AS · {state.dancers.filter(d => d.name.trim().length >= 2 && d.birthdate.length === 10).length}/{state.dancers.length}
+              </p>
+              <button onClick={() => setMobileSheet(null)} className="text-neutral-400 active:text-white">
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            <div className="flex-1 min-h-0 overflow-y-auto p-3 space-y-1">
+              {state.dancers.filter(d => d.name.trim().length > 0).length === 0 ? (
+                <p className="text-neutral-500 italic text-sm text-center py-10">Aún no has registrado alumnos/as</p>
+              ) : (
+                state.dancers.map((d, i) => {
+                  if (!d.name.trim()) return null
+                  const complete = d.name.trim().length >= 2 && d.birthdate.length === 10
+                  const isCurrent = step.kind === 'dancer' && step.i === i
+                  return (
+                    <button
+                      key={i}
+                      onClick={() => { setStep({ kind: 'dancer', i }); setMobileSheet(null) }}
+                      className={`w-full text-left px-4 py-3 rounded-lg flex items-center gap-3 transition-colors ${
+                        isCurrent ? 'bg-yellow-400 text-black' : complete ? 'bg-green-900/40 text-green-300 active:bg-green-900/60' : 'bg-orange-900/30 text-orange-300 active:bg-orange-900/50'
+                      }`}
+                    >
+                      <span className="font-display text-sm opacity-60 w-6 text-center shrink-0">{i + 1}</span>
+                      <span className="font-display flex-1 truncate uppercase">{d.name}</span>
+                      {complete && <Check className="w-5 h-5 shrink-0" />}
+                    </button>
+                  )
+                })
+              )}
+            </div>
+          </div>
         </div>
       )}
 
@@ -758,6 +846,10 @@ function StepView(props: {
   step: Step
   state: State
   editMode: boolean
+  isMobile: boolean
+  mobileSummaryTab: 'coach' | 'academy' | 'dancers' | 'acts'
+  setMobileSummaryTab: (t: 'coach' | 'academy' | 'dancers' | 'acts') => void
+  onOpenDancerSheet: () => void
   onNext: () => void
   goToStep: (s: Step) => void
   startEdit: () => void
@@ -774,7 +866,7 @@ function StepView(props: {
   saving: boolean
   saveErr: string | null
 }) {
-  const { step, state, editMode, onNext, goToStep, startEdit, openEditMenu, updateCoach, updateState, updateDancer, updateAct, setTeamSize, setActCount, syncDancersArray, syncActsArray, confirm, saving, saveErr } = props
+  const { step, state, editMode, isMobile, mobileSummaryTab, setMobileSummaryTab, onOpenDancerSheet, onNext, goToStep, startEdit, openEditMenu, updateCoach, updateState, updateDancer, updateAct, setTeamSize, setActCount, syncDancersArray, syncActsArray, confirm, saving, saveErr } = props
 
   switch (step.kind) {
     case 'coach_name':
@@ -931,8 +1023,18 @@ function StepView(props: {
       const valid = d.name.trim().length >= 2 && d.birthdate.length === 10
       const computedCat = categoryFromBirthdate(d.birthdate)
       const effectiveCat = d.categoryOverride ?? computedCat
+      const completedDancers = state.dancers.filter(x => x.name.trim().length >= 2 && x.birthdate.length === 10).length
       return (
-        <div className="flex flex-col lg:flex-row gap-10 h-full max-h-full min-h-0">
+        <div className="flex flex-col lg:flex-row gap-6 lg:gap-10 h-full max-h-full min-h-0">
+          {isMobile && (
+            <button
+              onClick={onOpenDancerSheet}
+              className="shrink-0 self-end inline-flex items-center gap-2 bg-neutral-800 active:bg-neutral-700 text-yellow-500 border border-yellow-500/40 px-3 py-2 rounded-full font-display text-sm tracking-wider"
+            >
+              <Check className="w-4 h-4 text-green-400" />
+              <span>{completedDancers}/{state.teamSize ?? 0} REGISTRADOS</span>
+            </button>
+          )}
           <div className="lg:w-[560px] shrink-0 flex flex-col justify-center min-h-0">
             <Wrapper title={`Alumno/a ${i + 1} de ${state.teamSize}`}>
               <div className="space-y-5">
@@ -1295,7 +1397,18 @@ function StepView(props: {
     }
 
     case 'summary':
-      return (
+      return isMobile ? (
+        <MobileSummary
+          state={state}
+          editMode={editMode}
+          tab={mobileSummaryTab}
+          setTab={setMobileSummaryTab}
+          confirm={confirm}
+          saving={saving}
+          saveErr={saveErr}
+          onEditRequest={openEditMenu}
+        />
+      ) : (
         <SummaryGrid
           state={state}
           editMode={editMode}
@@ -1307,7 +1420,16 @@ function StepView(props: {
       )
 
     case 'confirmed':
-      return (
+      return isMobile ? (
+        <MobileSummary
+          state={state}
+          editMode={false}
+          tab={mobileSummaryTab}
+          setTab={setMobileSummaryTab}
+          confirmed
+          startEdit={startEdit}
+        />
+      ) : (
         <SummaryGrid
           state={state}
           editMode={false}
@@ -1338,11 +1460,11 @@ function FieldStep({ title, hint, notice, value, onChange, onNext, disabled, typ
         onKeyDown={e => { if (e.key === 'Enter' && !disabled) onNext() }}
         autoCapitalize={autoCapitalize ?? 'words'}
         autoCorrect="off"
-        className="w-full bg-neutral-800 text-white text-4xl rounded-xl px-6 py-6 outline-none focus:bg-neutral-700 text-center"
+        className="w-full bg-neutral-800 text-white text-2xl lg:text-4xl rounded-xl px-4 py-4 lg:px-6 lg:py-6 outline-none focus:bg-neutral-700 text-center"
         autoFocus
       />
       {notice && (
-        <p className="text-amber-400 text-base md:text-lg text-center italic">{notice}</p>
+        <p className="text-amber-400 text-sm lg:text-lg text-center italic">{notice}</p>
       )}
       <NextButton onClick={onNext} disabled={disabled} />
     </Wrapper>
@@ -1590,10 +1712,10 @@ function EditNotice({ text }: { text: string }) {
 
 function Wrapper({ title, subtitle, children }: { title: string, subtitle?: string, children: React.ReactNode }) {
   return (
-    <div className="space-y-8">
-      <div className="text-center space-y-3">
-        {subtitle && <p className="font-display text-base md:text-xl tracking-[0.4em] text-yellow-500">{subtitle}</p>}
-        <h2 className="font-display text-5xl md:text-6xl leading-tight">{title}</h2>
+    <div className="space-y-5 lg:space-y-8">
+      <div className="text-center space-y-2 lg:space-y-3">
+        {subtitle && <p className="font-display text-sm lg:text-xl tracking-[0.4em] text-yellow-500">{subtitle}</p>}
+        <h2 className="font-display text-2xl md:text-4xl lg:text-6xl leading-tight">{title}</h2>
       </div>
       {children}
     </div>
@@ -1605,7 +1727,7 @@ function NextButton({ onClick, disabled, label }: { onClick: () => void, disable
     <button
       onClick={onClick}
       disabled={disabled}
-      className="w-full bg-yellow-400 active:bg-yellow-500 hover:bg-yellow-300 text-black font-display text-3xl tracking-widest py-6 rounded-xl disabled:opacity-40 transition-colors"
+      className="w-full bg-yellow-400 active:bg-yellow-500 hover:bg-yellow-300 text-black font-display text-xl lg:text-3xl tracking-widest py-4 lg:py-6 rounded-xl disabled:opacity-40 transition-colors"
     >
       {label ?? 'SIGUIENTE'}
     </button>
@@ -1632,6 +1754,162 @@ function Centered({ children }: { children: React.ReactNode }) {
           </span>
         </a>
       </div>
+    </div>
+  )
+}
+
+function MobileSummary({ state, editMode, tab, setTab, confirmed, confirm, saving, saveErr, startEdit, onEditRequest }: {
+  state: State
+  editMode: boolean
+  tab: 'coach' | 'academy' | 'dancers' | 'acts'
+  setTab: (t: 'coach' | 'academy' | 'dancers' | 'acts') => void
+  confirmed?: boolean
+  confirm?: () => Promise<void>
+  saving?: boolean
+  saveErr?: string | null
+  startEdit?: () => void
+  onEditRequest?: () => void
+}) {
+  const filledDancers = state.dancers.filter(d => d.name.trim().length > 0)
+  const counts = participacionesPorAlumno(state)
+  const total = costoTotal(state)
+  const hasCosts = state.costPaquete !== null && state.costRepeticion !== null
+
+  const tabs: { id: 'coach' | 'academy' | 'dancers' | 'acts', label: string, badge?: string }[] = [
+    { id: 'coach', label: 'COACH' },
+    { id: 'academy', label: 'EQUIPO' },
+    { id: 'dancers', label: 'ALUMNOS/AS', badge: String(filledDancers.length) },
+    { id: 'acts', label: 'ACTOS', badge: String(state.acts.length) },
+  ]
+
+  return (
+    <div className="flex flex-col h-full max-h-full min-h-0 gap-3">
+      {/* TOTAL A PAGAR siempre visible arriba */}
+      {hasCosts && (
+        <div className="shrink-0 bg-red-500 text-black rounded-xl py-3 px-4 text-center">
+          <p className="text-xs font-display tracking-widest opacity-80 leading-none">TOTAL A PAGAR</p>
+          <p className="font-display text-3xl leading-none mt-1.5">{formatMoney(total)}</p>
+        </div>
+      )}
+
+      {/* TABS */}
+      <div className="shrink-0 grid grid-cols-4 gap-1 bg-neutral-800/60 p-1 rounded-xl">
+        {tabs.map(t => (
+          <button
+            key={t.id}
+            onClick={() => setTab(t.id)}
+            className={`py-2.5 rounded-lg font-display text-[10px] tracking-widest flex flex-col items-center justify-center gap-0.5 transition-colors ${
+              tab === t.id ? 'bg-yellow-400 text-black' : 'text-neutral-400 active:bg-neutral-700'
+            }`}
+          >
+            <span>{t.label}</span>
+            {t.badge && <span className="text-base font-bold leading-none">{t.badge}</span>}
+          </button>
+        ))}
+      </div>
+
+      {/* TAB CONTENT */}
+      <div className="flex-1 min-h-0 overflow-y-auto bg-neutral-800/40 rounded-xl p-4">
+        {tab === 'coach' && (
+          <div className="space-y-3">
+            <p className="font-display text-2xl uppercase text-white break-words">{state.coach.name}</p>
+            <div className="space-y-1 text-sm text-neutral-400">
+              <p>📱 {state.coach.phone}</p>
+              {state.coach.email && <p>✉️ {state.coach.email}</p>}
+            </div>
+            {state.coach.extras.filter(e => e.trim()).length > 0 && (
+              <div>
+                <p className="text-xs tracking-widest text-yellow-500 mb-1">OTROS COACHES</p>
+                <p className="text-sm text-neutral-300">{state.coach.extras.filter(e => e.trim()).join(', ')}</p>
+              </div>
+            )}
+          </div>
+        )}
+        {tab === 'academy' && (
+          <div className="space-y-3">
+            <div>
+              <p className="text-xs tracking-widest text-yellow-500 mb-1">ACADEMIA</p>
+              <p className="font-display text-2xl uppercase text-white break-words">{state.academy}</p>
+            </div>
+            <div>
+              <p className="text-xs tracking-widest text-yellow-500 mb-1">EQUIPO</p>
+              <p className="font-display text-xl uppercase text-neutral-300 break-words">{state.teamName}</p>
+            </div>
+          </div>
+        )}
+        {tab === 'dancers' && (
+          <div className="space-y-1.5">
+            {filledDancers.length === 0 ? (
+              <p className="text-neutral-500 italic text-sm">Sin integrantes</p>
+            ) : filledDancers.map(d => {
+              const di = state.dancers.indexOf(d)
+              const n = counts.get(di) ?? 0
+              const cost = hasCosts && n > 0 ? (state.costPaquete ?? 0) + Math.max(0, n - 1) * (state.costRepeticion ?? 0) : null
+              return (
+                <div key={di} className="flex items-baseline gap-2 py-1.5 border-b border-neutral-700/30 last:border-0">
+                  <span className="font-display text-xs text-neutral-500 w-6 text-center shrink-0">{di + 1}.</span>
+                  <span className="font-display text-base uppercase text-green-400 flex-1 truncate">{d.name}</span>
+                  {n > 0 && <span className="text-xs text-yellow-500 shrink-0">{n}×</span>}
+                  {cost !== null && <span className="text-xs text-amber-400 shrink-0">{formatMoney(cost)}</span>}
+                </div>
+              )
+            })}
+          </div>
+        )}
+        {tab === 'acts' && (
+          <div className="space-y-3">
+            {state.acts.length === 0 ? (
+              <p className="text-neutral-500 italic text-sm">Sin actos</p>
+            ) : state.acts.map((a, i) => {
+              const cat = a.ageCategory ? AGE_CATEGORY_LABELS[a.ageCategory] : '—'
+              const mod = a.modality ? modalityLabel(a.modality) : '—'
+              const lvl = a.modality === 'grupal' ? (a.level === 'basico' ? ' BÁSICO' : a.level === 'avanzado' ? ' AVANZADO' : '') : ''
+              return (
+                <div key={i} className="border-b border-neutral-700/30 last:border-0 pb-2 last:pb-0">
+                  <div className="font-display text-base">
+                    <span className="text-yellow-400">#{i + 1}</span> {cat.toUpperCase()} · {mod}{lvl}
+                  </div>
+                  <div className="text-xs text-neutral-400 mt-0.5">{a.style ?? '—'}</div>
+                  {a.dancerIndices.length > 0 && (
+                    <div className="text-[11px] text-neutral-500 mt-0.5">
+                      {a.dancerIndices.map(di => state.dancers[di]?.name).filter(Boolean).join(' · ')}
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* BUTTONS */}
+      {saveErr && (
+        <p className="shrink-0 text-red-400 text-xs bg-red-950/40 border border-red-900 rounded-md px-3 py-2 break-words">{saveErr}</p>
+      )}
+      {confirmed ? (
+        <button
+          onClick={startEdit}
+          className="shrink-0 h-14 flex items-center justify-center gap-2 bg-orange-500 active:bg-orange-600 text-black font-display text-lg tracking-widest rounded-xl"
+        >
+          <Pencil className="w-5 h-5" /> EDITAR REGISTRO
+        </button>
+      ) : (
+        <div className="shrink-0 grid grid-cols-2 gap-2">
+          <button
+            onClick={onEditRequest}
+            className="h-14 flex items-center justify-center gap-2 bg-orange-500 active:bg-orange-600 text-black font-display text-base tracking-widest rounded-xl"
+          >
+            <Pencil className="w-5 h-5" /> EDITAR
+          </button>
+          <button
+            onClick={confirm}
+            disabled={saving}
+            className="h-14 bg-green-500 active:bg-green-600 text-black font-display text-base tracking-widest rounded-xl disabled:opacity-50"
+          >
+            {saving ? 'GUARDANDO…' : editMode ? 'GUARDAR' : 'CONFIRMAR'}
+          </button>
+        </div>
+      )}
     </div>
   )
 }
