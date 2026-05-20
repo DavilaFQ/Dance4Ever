@@ -665,7 +665,7 @@ export default function RegisterPage({ params }: Props) {
         </div>
 
         <div className="flex-1 min-h-0 flex justify-center">
-          <div className={`w-full ${step.kind === 'summary' || step.kind === 'confirmed' || step.kind === 'dancer' ? '' : 'max-w-5xl'} min-h-full lg:h-full flex flex-col ${isKeyboardOpen ? 'justify-start pt-3' : 'justify-center'} min-h-0`}>
+          <div className={`w-full ${step.kind === 'summary' || step.kind === 'confirmed' || step.kind === 'dancer' ? '' : 'max-w-5xl'} min-h-full lg:h-full flex flex-col ${isKeyboardOpen ? 'justify-start pt-[8vh] lg:pt-3' : 'justify-center'} min-h-0`}>
             <StepView
               step={step}
               state={state}
@@ -1065,7 +1065,7 @@ function StepView(props: {
             </div>
           </div>
 
-          <div className="flex items-start gap-3 bg-[rgb(var(--c-accent)/0.1)] border border-[rgb(var(--c-accent)/0.3)] text-[rgb(var(--c-accent))] px-5 py-4 rounded-2xl text-left">
+          <div className="flex items-start gap-3 bg-[rgb(var(--c-accent)/0.1)] border border-[rgb(var(--c-accent)/0.3)] text-[rgb(var(--c-text-strong))] px-5 py-4 rounded-2xl text-left">
             <Info className="w-5 h-5 shrink-0 mt-0.5" />
             <p className="text-xs lg:text-sm leading-snug">
               <strong>Atención:</strong> Por favor, lee con mucho cuidado todas las instrucciones y pasos del proceso. Esto garantizará que las categorías de tus alumnos, el costo de tus paquetes y el registro de tus actos sean 100% correctos.
@@ -1084,13 +1084,13 @@ function StepView(props: {
 
     case 'instruction_1': {
       return (
-        <div className="flex flex-col justify-center w-full max-w-2xl mx-auto py-1 px-0 space-y-3 lg:space-y-6">
-          <div className="text-center space-y-0.5 lg:space-y-2">
+        <div className="flex flex-col w-full max-w-2xl mx-auto h-full py-2 px-0 gap-3 lg:gap-6">
+          <div className="shrink-0 text-center space-y-0.5 lg:space-y-2">
             <p className="font-display text-[10px] lg:text-sm tracking-[0.4em] text-[rgb(var(--c-primary))] font-bold">PASO 1 DE 2</p>
             <h2 className="font-display text-2xl lg:text-4xl text-[rgb(var(--c-text-darkest))] font-bold">REGLAS Y CATEGORÍAS</h2>
           </div>
 
-          <div className="space-y-2 lg:space-y-4">
+          <div className="flex-1 flex flex-col gap-2 lg:gap-4 min-h-0 [&>div]:flex-1">
             <div className="bg-white border border-[rgb(var(--c-border))] rounded-xl p-3 lg:p-6 shadow-sm flex items-start gap-2.5 lg:gap-4 active:scale-[0.99] transition-all duration-150">
               <span className="shrink-0 flex items-center justify-center w-6 h-6 lg:w-9 lg:h-9 rounded-full bg-[rgb(var(--c-primary))] text-white font-display text-xs lg:text-base font-bold">1</span>
               <div className="space-y-0.5">
@@ -1134,13 +1134,13 @@ function StepView(props: {
 
     case 'instruction_2': {
       return (
-        <div className="flex flex-col justify-center w-full max-w-2xl mx-auto py-1 px-0 space-y-3 lg:space-y-6">
-          <div className="text-center space-y-0.5 lg:space-y-2">
+        <div className="flex flex-col w-full max-w-2xl mx-auto h-full py-2 px-0 gap-3 lg:gap-6">
+          <div className="shrink-0 text-center space-y-0.5 lg:space-y-2">
             <p className="font-display text-[10px] lg:text-sm tracking-[0.4em] text-[rgb(var(--c-primary))] font-bold">PASO 2 DE 2</p>
             <h2 className="font-display text-2xl lg:text-4xl text-[rgb(var(--c-text-darkest))] font-bold">ACTOS Y COSTOS</h2>
           </div>
 
-          <div className="space-y-2 lg:space-y-4">
+          <div className="flex-1 flex flex-col gap-2 lg:gap-4 min-h-0 [&>div]:flex-1">
             <div className="bg-white border border-[rgb(var(--c-border))] rounded-xl p-3 lg:p-6 shadow-sm flex items-start gap-2.5 lg:gap-4 active:scale-[0.99] transition-all duration-150">
               <span className="shrink-0 flex items-center justify-center w-6 h-6 lg:w-9 lg:h-9 rounded-full bg-[rgb(var(--c-primary))] text-white font-display text-xs lg:text-base font-bold">4</span>
               <div className="space-y-0.5">
@@ -1174,7 +1174,7 @@ function StepView(props: {
 
           <button
             onClick={onNext}
-            className="w-full bg-[rgb(var(--c-accent))] active:bg-[rgb(var(--c-accent-strong))] hover:bg-[rgb(var(--c-accent-strong))] text-white font-display text-lg lg:text-xl tracking-widest py-4 rounded-2xl transition-all shadow-md active:scale-[0.98] duration-150 font-bold animate-[pulse_2s_infinite]"
+            className="w-full bg-[rgb(var(--c-success))] active:bg-[rgb(var(--c-success-strong))] hover:bg-[rgb(var(--c-success-strong))] text-white font-display text-lg lg:text-xl tracking-widest py-4 rounded-2xl transition-all shadow-md active:scale-[0.98] duration-150 font-bold animate-[pulse_2s_infinite]"
           >
             COMENZAR REGISTRO
           </button>
@@ -2029,7 +2029,7 @@ function NextButton({ onClick, disabled, label }: { onClick: () => void, disable
     <button
       onClick={onClick}
       disabled={disabled}
-      className="w-full bg-[rgb(var(--c-primary))] active:bg-[rgb(var(--c-primary-strong))] hover:bg-[rgb(var(--c-primary-strong))] text-white font-display text-xl lg:text-2xl tracking-widest py-4 lg:py-5 rounded-2xl disabled:opacity-40 transition-all shadow-md active:scale-[0.98] duration-150"
+      className="w-full bg-[rgb(var(--c-success))] active:bg-[rgb(var(--c-success-strong))] hover:bg-[rgb(var(--c-success-strong))] text-white font-display text-xl lg:text-2xl tracking-widest py-4 lg:py-5 rounded-2xl disabled:opacity-40 transition-all shadow-md active:scale-[0.98] duration-150"
     >
       {label ?? 'SIGUIENTE'}
     </button>
