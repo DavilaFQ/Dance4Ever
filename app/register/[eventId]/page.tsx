@@ -1267,7 +1267,7 @@ function StepView(props: {
       const effectiveCat = d.categoryOverride ?? computedCat
       const completedDancers = state.dancers.filter(x => x.name.trim().length >= 2 && x.birthdate.length === 10).length
       return (
-        <div className="flex flex-col lg:flex-row gap-6 lg:gap-10 h-full max-h-full min-h-0">
+        <div className="flex flex-col lg:flex-row gap-6 lg:gap-10 h-auto lg:h-full max-h-full min-h-0">
           {isMobile && (
             <button
               onClick={onOpenDancerSheet}
@@ -1536,7 +1536,7 @@ function StepView(props: {
       }
 
       return (
-        <div className="flex flex-col h-full max-h-full min-h-0">
+        <div className="flex flex-col h-auto lg:h-full max-h-full min-h-0">
           <div className="text-center space-y-3 shrink-0 mb-5">
             <p className="font-display text-xs md:text-sm tracking-[0.4em] text-[#1E414C]">
               {`SELECCIONA ${needs} ${needs === 1 ? 'ALUMNO/A' : 'ALUMNOS/AS'}`}
@@ -1604,7 +1604,7 @@ function StepView(props: {
       const valid = state.costPaquete !== null && state.costPaquete >= 0
         && state.costRepeticion !== null && state.costRepeticion >= 0
       return (
-        <div className="flex flex-col h-full min-h-0">
+        <div className="flex flex-col h-auto lg:h-full min-h-0">
           <div className="shrink-0 text-center space-y-2 lg:space-y-3 pt-2 lg:pt-0 pb-4 lg:pb-6">
             <p className="font-display text-xs lg:text-sm tracking-[0.4em] text-[#1E414C]">COSTOS</p>
             <h2 className="font-display text-2xl md:text-4xl lg:text-6xl leading-tight text-[#1A1D1E]">Costos acordados</h2>
