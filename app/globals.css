@@ -7,16 +7,16 @@
 
 :root {
   /* Brand palette — channel values so Tailwind opacity modifiers work via rgb(var(--c-x)/<alpha>) */
-  --c-primary: 230 0 126;          /* neon fuchsia/pink — headings, primary buttons, key CTA */
-  --c-primary-strong: 180 0 98;    /* neon fuchsia darker — hover/active of primary */
-  --c-accent: 101 163 13;          /* vibrant lime/yellow-green — badges, deadlines, secondary info */
-  --c-accent-strong: 63 98 18;     /* lime darker — accent hover */
-  --c-success: 22 163 74;          /* logo green — whatsapp / success / confirmations, main navigation CTAs */
-  --c-success-strong: 22 101 52;   /* logo green darker — success hover */
-  --c-text: 51 65 85;              /* slate — body text for high readability */
-  --c-text-strong: 17 17 17;       /* logo charcoal black — titles, strong emphasis */
-  --c-text-darker: 26 29 30;       /* logo near-black — alt strong text */
-  --c-text-darkest: 17 17 17;      /* deepest black — small accent text */
+  --c-primary: 252 3 161;          /* exact logo fuchsia #fc03a1 */
+  --c-primary-strong: 190 0 110;   /* exact logo fuchsia darker */
+  --c-accent: 130 246 6;           /* exact logo lime #82f606 */
+  --c-accent-strong: 101 190 4;    /* exact logo lime darker */
+  --c-success: 22 163 74;          /* logo green */
+  --c-success-strong: 22 101 52;   /* logo green darker */
+  --c-text: 51 65 85;              /* slate */
+  --c-text-strong: 0 0 0;          /* exact logo pure black */
+  --c-text-darker: 0 0 0;          /* logo near-black */
+  --c-text-darkest: 0 0 0;         /* deepest black */
   --c-surface: 246 244 239;        /* cream canvas background */
   --c-surface-2: 232 227 213;      /* cream card surface */
   --c-surface-3: 221 216 202;      /* cream card hover state */

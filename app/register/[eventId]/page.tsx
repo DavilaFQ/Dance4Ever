@@ -336,16 +336,21 @@ export default function RegisterPage({ params }: Props) {
 
     const vv = window.visualViewport
     if (!vv) return
+    let initialHeight = window.innerHeight
+    const checkKeyboard = () => {
+      if (window.innerHeight > initialHeight) initialHeight = window.innerHeight
+      return vv.height < window.screen.height * 0.75 || vv.height < initialHeight * 0.85
+    }
     const updateHeight = () => {
       document.documentElement.style.setProperty('--viewport-height', `${vv.height}px`)
-      const keyboardActive = vv.height < window.innerHeight * 0.85
+      const keyboardActive = checkKeyboard()
       setIsKeyboardOpen(keyboardActive)
       if (keyboardActive && window.scrollY !== 0) {
         window.scrollTo(0, 0)
       }
     }
     const handleWindowScroll = () => {
-      const keyboardActive = vv ? vv.height < window.innerHeight * 0.85 : false
+      const keyboardActive = checkKeyboard()
       if (keyboardActive && window.scrollY !== 0) {
         window.scrollTo(0, 0)
       }
@@ -1046,22 +1051,22 @@ function StepView(props: {
         <div className="flex flex-col items-center justify-center text-center space-y-6 max-w-xl mx-auto py-4 my-auto lg:my-0">
           <Image src="/logo.png" alt="Dance4ever" width={160} height={120} priority className="mix-blend-multiply active:scale-95 transition-all duration-150" />
           <div className="space-y-2">
-            <p className="font-sans text-xs tracking-widest text-[rgb(var(--c-primary))] font-medium">SISTEMA OFICIAL DE REGISTRO</p>
-            <h2 className="font-sans text-3xl lg:text-4xl text-[rgb(var(--c-text-strong))] font-semibold tracking-tight">{event?.name || 'EVENTO'}</h2>
+            <p className="font-sans text-xs tracking-widest text-[rgb(var(--c-primary))] font-normal">SISTEMA OFICIAL DE REGISTRO</p>
+            <h2 className="font-sans text-3xl lg:text-4xl text-[rgb(var(--c-text-strong))] font-normal tracking-tight">{event?.name || 'EVENTO'}</h2>
             {event?.date && (
-              <p className="font-sans text-base lg:text-lg text-[rgb(var(--c-text))] font-normal">{eventCity} · {formatEventDate(event.date)}</p>
+              <p className="font-sans text-lg lg:text-xl text-[rgb(var(--c-text-strong))] font-normal">{eventCity} · {formatEventDate(event.date)}</p>
             )}
           </div>
 
           <div className="w-full bg-[rgb(var(--c-surface-2)/0.4)] border border-[rgb(var(--c-border)/0.5)] rounded-2xl p-5 space-y-4 text-left shadow-sm">
             <div className="space-y-0.5">
               <p className="text-xs font-sans text-[rgb(var(--c-text)/0.7)]">FECHA LÍMITE DE REGISTRO</p>
-              <p className="text-lg text-[rgb(var(--c-primary))] font-medium">{regDeadline}</p>
+              <p className="text-lg text-[rgb(var(--c-primary))] font-normal">{regDeadline}</p>
             </div>
             <div className="h-px bg-[rgb(var(--c-border)/0.3)]" />
             <div className="space-y-0.5">
               <p className="text-xs font-sans text-[rgb(var(--c-text)/0.7)]">FECHA LÍMITE PARA CAMBIOS</p>
-              <p className="text-lg text-[rgb(var(--c-primary))] font-medium">{chgDeadline}</p>
+              <p className="text-lg text-[rgb(var(--c-primary))] font-normal">{chgDeadline}</p>
             </div>
           </div>
 
@@ -1084,14 +1089,14 @@ function StepView(props: {
 
     case 'instruction_1': {
       return (
-        <div className="flex flex-col w-full max-w-2xl mx-auto h-auto py-2 px-0 gap-3 lg:gap-6 my-auto lg:my-0">
+        <div className="flex flex-col w-full max-w-2xl mx-auto h-auto py-2 px-0 gap-2 lg:gap-4 my-auto lg:my-0">
           <div className="shrink-0 text-center space-y-0.5 lg:space-y-2">
             <p className="font-display text-[10px] lg:text-sm tracking-[0.4em] text-[rgb(var(--c-primary))] font-bold">PASO 1 DE 2</p>
             <h2 className="font-display text-2xl lg:text-4xl text-[rgb(var(--c-text-darkest))] font-bold">REGLAS Y CATEGORÍAS</h2>
           </div>
 
           <div className="flex-1 flex flex-col gap-2 lg:gap-4 min-h-0 [&>div]:flex-1">
-            <div className="bg-white border border-[rgb(var(--c-border))] rounded-xl p-3 lg:p-6 shadow-sm flex items-start gap-2.5 lg:gap-4 active:scale-[0.99] transition-all duration-150">
+            <div className="bg-white border border-[rgb(var(--c-border))] rounded-xl p-2.5 lg:p-4 shadow-sm flex items-start gap-2 lg:gap-3 active:scale-[0.99] transition-all duration-150">
               <span className="shrink-0 flex items-center justify-center w-6 h-6 lg:w-9 lg:h-9 rounded-full bg-[rgb(var(--c-primary))] text-white font-display text-xs lg:text-base font-bold">1</span>
               <div className="space-y-0.5">
                 <h4 className="font-display text-xs lg:text-lg text-[rgb(var(--c-primary))] tracking-wider uppercase font-bold">Categorías de Edad</h4>
@@ -1101,7 +1106,7 @@ function StepView(props: {
               </div>
             </div>
 
-            <div className="bg-white border border-[rgb(var(--c-border))] rounded-xl p-3 lg:p-6 shadow-sm flex items-start gap-2.5 lg:gap-4 active:scale-[0.99] transition-all duration-150">
+            <div className="bg-white border border-[rgb(var(--c-border))] rounded-xl p-2.5 lg:p-4 shadow-sm flex items-start gap-2 lg:gap-3 active:scale-[0.99] transition-all duration-150">
               <span className="shrink-0 flex items-center justify-center w-6 h-6 lg:w-9 lg:h-9 rounded-full bg-[rgb(var(--c-primary))] text-white font-display text-xs lg:text-base font-bold">2</span>
               <div className="space-y-0.5">
                 <h4 className="font-display text-xs lg:text-lg text-[rgb(var(--c-primary))] tracking-wider uppercase font-bold">Integrantes del Equipo</h4>
@@ -1111,7 +1116,7 @@ function StepView(props: {
               </div>
             </div>
 
-            <div className="bg-white border border-[rgb(var(--c-border))] rounded-xl p-3 lg:p-6 shadow-sm flex items-start gap-2.5 lg:gap-4 active:scale-[0.99] transition-all duration-150">
+            <div className="bg-white border border-[rgb(var(--c-border))] rounded-xl p-2.5 lg:p-4 shadow-sm flex items-start gap-2 lg:gap-3 active:scale-[0.99] transition-all duration-150">
               <span className="shrink-0 flex items-center justify-center w-6 h-6 lg:w-9 lg:h-9 rounded-full bg-[rgb(var(--c-primary))] text-white font-display text-xs lg:text-base font-bold">3</span>
               <div className="space-y-0.5">
                 <h4 className="font-display text-xs lg:text-lg text-[rgb(var(--c-primary))] tracking-wider uppercase font-bold">Nombre de Equipo</h4>
@@ -1134,14 +1139,14 @@ function StepView(props: {
 
     case 'instruction_2': {
       return (
-        <div className="flex flex-col w-full max-w-2xl mx-auto h-auto py-2 px-0 gap-3 lg:gap-6 my-auto lg:my-0">
+        <div className="flex flex-col w-full max-w-2xl mx-auto h-auto py-2 px-0 gap-2 lg:gap-4 my-auto lg:my-0">
           <div className="shrink-0 text-center space-y-0.5 lg:space-y-2">
             <p className="font-display text-[10px] lg:text-sm tracking-[0.4em] text-[rgb(var(--c-primary))] font-bold">PASO 2 DE 2</p>
             <h2 className="font-display text-2xl lg:text-4xl text-[rgb(var(--c-text-darkest))] font-bold">ACTOS Y COSTOS</h2>
           </div>
 
           <div className="flex-1 flex flex-col gap-2 lg:gap-4 min-h-0 [&>div]:flex-1">
-            <div className="bg-white border border-[rgb(var(--c-border))] rounded-xl p-3 lg:p-6 shadow-sm flex items-start gap-2.5 lg:gap-4 active:scale-[0.99] transition-all duration-150">
+            <div className="bg-white border border-[rgb(var(--c-border))] rounded-xl p-2.5 lg:p-4 shadow-sm flex items-start gap-2 lg:gap-3 active:scale-[0.99] transition-all duration-150">
               <span className="shrink-0 flex items-center justify-center w-6 h-6 lg:w-9 lg:h-9 rounded-full bg-[rgb(var(--c-primary))] text-white font-display text-xs lg:text-base font-bold">4</span>
               <div className="space-y-0.5">
                 <h4 className="font-display text-xs lg:text-lg text-[rgb(var(--c-primary))] tracking-wider uppercase font-bold">Registro de Actos</h4>
@@ -1151,7 +1156,7 @@ function StepView(props: {
               </div>
             </div>
 
-            <div className="bg-white border border-[rgb(var(--c-border))] rounded-xl p-3 lg:p-6 shadow-sm flex items-start gap-2.5 lg:gap-4 active:scale-[0.99] transition-all duration-150">
+            <div className="bg-white border border-[rgb(var(--c-border))] rounded-xl p-2.5 lg:p-4 shadow-sm flex items-start gap-2 lg:gap-3 active:scale-[0.99] transition-all duration-150">
               <span className="shrink-0 flex items-center justify-center w-6 h-6 lg:w-9 lg:h-9 rounded-full bg-[rgb(var(--c-primary))] text-white font-display text-xs lg:text-base font-bold">5</span>
               <div className="space-y-0.5">
                 <h4 className="font-display text-xs lg:text-lg text-[rgb(var(--c-primary))] tracking-wider uppercase font-bold">Cálculo de Costos</h4>
@@ -1161,7 +1166,7 @@ function StepView(props: {
               </div>
             </div>
 
-            <div className="bg-white border border-[rgb(var(--c-border))] rounded-xl p-3 lg:p-6 shadow-sm flex items-start gap-2.5 lg:gap-4 active:scale-[0.99] transition-all duration-150">
+            <div className="bg-white border border-[rgb(var(--c-border))] rounded-xl p-2.5 lg:p-4 shadow-sm flex items-start gap-2 lg:gap-3 active:scale-[0.99] transition-all duration-150">
               <span className="shrink-0 flex items-center justify-center w-6 h-6 lg:w-9 lg:h-9 rounded-full bg-[rgb(var(--c-primary))] text-white font-display text-xs lg:text-base font-bold">6</span>
               <div className="space-y-0.5">
                 <h4 className="font-display text-xs lg:text-lg text-[rgb(var(--c-primary))] tracking-wider uppercase font-bold">Revisión Final</h4>
@@ -1174,7 +1179,7 @@ function StepView(props: {
 
           <button
             onClick={onNext}
-            className="w-full bg-[rgb(var(--c-success))] active:bg-[rgb(var(--c-success-strong))] hover:bg-[rgb(var(--c-success-strong))] text-white font-display text-lg lg:text-xl tracking-widest py-4 rounded-2xl transition-all shadow-md active:scale-[0.98] duration-150 font-bold animate-[pulse_2s_infinite]"
+            className="w-full bg-gradient-to-r from-[#16A34A] via-[#82f606] to-[#fff200] hover:brightness-105 active:brightness-95 text-[rgb(var(--c-text-strong))] font-display text-lg lg:text-xl tracking-widest py-4 rounded-2xl transition-all shadow-md active:scale-[0.98] duration-150 font-bold animate-[pulse_2s_infinite]"
           >
             COMENZAR REGISTRO
           </button>
@@ -1267,7 +1272,7 @@ function StepView(props: {
               <Plus className="w-6 h-6" /> AGREGAR OTRO COACH
             </button>
           </div>
-          <NextButton onClick={onNext} disabled={!valid} />
+          <NextButton isKeyboardOpen={isKeyboardOpen} onClick={onNext} disabled={!valid} />
         </Wrapper>
       )
     }
@@ -1307,7 +1312,7 @@ function StepView(props: {
           <p className="text-[rgb(var(--c-text))] text-base text-center italic font-medium">
             Si el equipo se llama igual que la escuela/academia, deja vacío y dale a Siguiente.
           </p>
-          <NextButton onClick={handleNext} disabled={false} />
+          <NextButton isKeyboardOpen={isKeyboardOpen} onClick={handleNext} disabled={false} />
         </Wrapper>
       )
     }
@@ -1328,7 +1333,7 @@ function StepView(props: {
           <p className="text-[rgb(var(--c-text))] text-base text-center italic font-medium">
             Cuenta a todos los alumnos/as del equipo, incluyendo solistas, duetos y tríos.
           </p>
-          <NextButton onClick={() => { syncDancersArray(); onNext() }} disabled={!v || v < 1} />
+          <NextButton isKeyboardOpen={isKeyboardOpen} onClick={() => { syncDancersArray(); onNext() }} disabled={!v || v < 1} />
         </Wrapper>
       )
     }
@@ -1344,37 +1349,40 @@ function StepView(props: {
         <div className="flex flex-col lg:flex-row gap-6 lg:gap-10 h-auto lg:h-full max-h-full min-h-0 overflow-x-hidden">
           <div className="w-full max-w-md mx-auto lg:w-[560px] shrink-0 flex flex-col justify-center min-h-0 px-2 lg:px-0">
             <Wrapper title={`Alumno/a ${i + 1} de ${state.teamSize}`} isKeyboardOpen={isKeyboardOpen}>
-              <div className="space-y-5 w-full">
+              <div className={`w-full ${isKeyboardOpen ? 'space-y-2.5' : 'space-y-5'}`}>
                 <div className="max-w-xs md:max-w-sm mx-auto w-full">
-                  <label className="block text-sm font-display tracking-widest text-[rgb(var(--c-text))] mb-3 text-center">NOMBRE COMPLETO</label>
+                  <label className={`block font-display tracking-widest text-[rgb(var(--c-text))] text-center ${isKeyboardOpen ? 'text-xs mb-1' : 'text-sm mb-3'}`}>NOMBRE COMPLETO</label>
                   <input
                     key={`name-${i}`}
                     value={d.name}
                     onChange={e => updateDancer(i, { name: e.target.value })}
                     onKeyDown={e => { if (e.key === 'Enter' && valid) onNext() }}
                     placeholder="Nombre y apellidos"
-                    className="w-full bg-white border border-[rgb(var(--c-border))] text-[rgb(var(--c-text-strong))] text-xl rounded-2xl px-5 h-16 outline-none focus:border-[rgb(var(--c-primary))] focus:ring-1 focus:ring-[rgb(var(--c-primary))] text-center placeholder:text-[rgb(var(--c-text)/0.6)] transition-all shadow-sm animate-none"
+                    className={`w-full bg-white border border-[rgb(var(--c-border))] text-[rgb(var(--c-text-strong))] text-center placeholder:text-[rgb(var(--c-text)/0.6)] transition-all shadow-sm animate-none outline-none focus:border-[rgb(var(--c-primary))] focus:ring-1 focus:ring-[rgb(var(--c-primary))] ${isKeyboardOpen ? 'h-12 text-lg rounded-xl px-4' : 'h-16 text-xl rounded-2xl px-5'}`}
                     autoCapitalize="words"
                   />
                 </div>
                 <div className="max-w-xs md:max-w-sm mx-auto w-full">
-                  <label className="block text-sm font-display tracking-widest text-[rgb(var(--c-text))] mb-3 text-center">FECHA DE NACIMIENTO</label>
+                  <label className={`block font-display tracking-widest text-[rgb(var(--c-text))] text-center ${isKeyboardOpen ? 'text-xs mb-1' : 'text-sm mb-3'}`}>FECHA DE NACIMIENTO</label>
                   <DateInput
                     key={i}
                     value={d.birthdate}
                     onChange={v => updateDancer(i, { birthdate: v })}
                     onEnter={() => { if (d.name.trim().length >= 2) onNext() }}
+                    isKeyboardOpen={isKeyboardOpen}
                   />
                 </div>
                 {effectiveCat && (
                   <div className="max-w-xs md:max-w-sm mx-auto w-full">
-                    <label className="block text-sm font-display tracking-widest text-[rgb(var(--c-text))] mb-3 text-center">
+                    <label className={`block font-display tracking-widest text-[rgb(var(--c-text))] text-center ${isKeyboardOpen ? 'text-xs mb-1' : 'text-sm mb-3'}`}>
                       CATEGORÍA {d.categoryOverride && <span className="text-[rgb(var(--c-primary))]">· MODIFICADA</span>}
                     </label>
                     <select
                       value={d.categoryOverride ?? ''}
                       onChange={e => updateDancer(i, { categoryOverride: (e.target.value || null) as AgeCategory | null })}
-                      className={`w-full h-14 text-[rgb(var(--c-text-strong))] text-lg text-center rounded-2xl outline-none font-display appearance-none cursor-pointer px-3 transition-all border ${
+                      className={`w-full text-[rgb(var(--c-text-strong))] text-center rounded-2xl outline-none font-display appearance-none cursor-pointer px-3 transition-all border ${
+                        isKeyboardOpen ? 'h-11 text-base rounded-xl' : 'h-14 text-lg rounded-2xl'
+                      } ${
                         d.categoryOverride
                           ? 'bg-[rgb(var(--c-primary)/0.05)] border-[rgb(var(--c-primary)/0.3)] ring-1 ring-[rgb(var(--c-primary)/0.2)]'
                           : 'bg-white border-[rgb(var(--c-border))] focus:border-[rgb(var(--c-primary))] focus:ring-1 focus:ring-[rgb(var(--c-primary))]'
@@ -1385,14 +1393,16 @@ function StepView(props: {
                         <option key={cat} value={cat}>{AGE_CATEGORY_LABELS[cat]} — {AGE_CATEGORY_HINTS[cat]}</option>
                       ))}
                     </select>
-                    <p className="text-xs text-[rgb(var(--c-text))] mt-3 text-center leading-snug font-medium">
-                      Se asigna automáticamente por la fecha de nacimiento. Si crees que la categoría es incorrecta, da click arriba y elige la correcta.
-                    </p>
+                    {!isKeyboardOpen && (
+                      <p className="text-xs text-[rgb(var(--c-text))] mt-3 text-center leading-snug font-medium">
+                        Se asigna automáticamente por la fecha de nacimiento. Si crees que la categoría es incorrecta, da click arriba y elige la correcta.
+                      </p>
+                    )}
                   </div>
                 )}
               </div>
               <div className="max-w-xs md:max-w-sm mx-auto w-full shrink-0">
-                <NextButton onClick={onNext} disabled={!valid} />
+                <NextButton isKeyboardOpen={isKeyboardOpen} onClick={onNext} disabled={!valid} />
               </div>
             </Wrapper>
           </div>
@@ -1423,7 +1433,7 @@ function StepView(props: {
           <p className="text-[rgb(var(--c-text))] text-base text-center italic font-medium">
             Cada acto se anota individualmente en los siguientes pasos.
           </p>
-          <NextButton onClick={() => { syncActsArray(); onNext() }} disabled={!v || v < 1} />
+          <NextButton isKeyboardOpen={isKeyboardOpen} onClick={() => { syncActsArray(); onNext() }} disabled={!v || v < 1} />
         </Wrapper>
       )
     }
@@ -1672,7 +1682,7 @@ function StepView(props: {
             <p className="text-center text-[rgb(var(--c-text-strong))] font-display text-2xl tracking-wider">
               {selected} / {needs}
             </p>
-            <NextButton onClick={onNext} disabled={!valid} />
+            <NextButton isKeyboardOpen={isKeyboardOpen} onClick={onNext} disabled={!valid} />
           </div>
         </div>
       )
@@ -1716,15 +1726,15 @@ function StepView(props: {
                 </div>
               </div>
               {valid && (
-                <div className={`text-center bg-[rgb(var(--c-primary))] text-white rounded-2xl shadow-sm transition-all duration-150 ${isKeyboardOpen ? 'p-2.5 mt-2.5' : 'p-4 mt-4'}`}>
-                  <p className={`font-display tracking-widest opacity-90 leading-none ${isKeyboardOpen ? 'text-[10px] mb-1' : 'text-xs lg:text-sm mb-1.5'}`}>TOTAL A PAGAR</p>
-                  <p className={`font-display leading-none ${isKeyboardOpen ? 'text-xl' : 'text-3xl lg:text-4xl'}`}>{formatMoney(total)}</p>
+                <div className={`text-center bg-gradient-to-r from-[#16A34A] via-[#82f606] to-[#fff200] text-[rgb(var(--c-text-strong))] shadow-sm transition-all duration-150 flex ${isKeyboardOpen ? 'rounded-xl p-1.5 mt-1.5 flex-row justify-center items-center gap-2' : 'rounded-2xl p-4 mt-4 flex-col'}`}>
+                  <p className={`font-display tracking-widest opacity-90 leading-none ${isKeyboardOpen ? 'text-[11px]' : 'text-xs lg:text-sm mb-1.5'}`}>TOTAL A PAGAR</p>
+                  <p className={`font-display leading-none ${isKeyboardOpen ? 'text-lg' : 'text-3xl lg:text-4xl'}`}>{formatMoney(total)}</p>
                 </div>
               )}
             </div>
           </div>
           <div className="shrink-0 pt-2 lg:pt-3">
-            <NextButton onClick={onNext} disabled={!valid} />
+            <NextButton isKeyboardOpen={isKeyboardOpen} onClick={onNext} disabled={!valid} />
           </div>
         </div>
       )
@@ -1795,12 +1805,16 @@ function FieldStep({ title, hint, notice, value, onChange, onNext, disabled, typ
         onKeyDown={e => { if (e.key === 'Enter' && !disabled) onNext() }}
         autoCapitalize={autoCapitalize ?? 'words'}
         autoCorrect="off"
-        className="w-full bg-white border border-[rgb(var(--c-border))] text-[rgb(var(--c-text-strong))] text-2xl lg:text-4xl rounded-2xl px-4 py-4 lg:px-6 lg:py-6 outline-none focus:border-[rgb(var(--c-primary))] focus:ring-1 focus:ring-[rgb(var(--c-primary))] text-center transition-all shadow-sm"
+        className={`w-full bg-white border border-[rgb(var(--c-border))] text-[rgb(var(--c-text-strong))] rounded-2xl outline-none focus:border-[rgb(var(--c-primary))] focus:ring-1 focus:ring-[rgb(var(--c-primary))] text-center transition-all shadow-sm ${
+          isKeyboardOpen
+            ? 'text-xl py-2.5 px-4 rounded-xl'
+            : 'text-2xl lg:text-4xl px-4 py-4 lg:px-6 lg:py-6'
+        }`}
       />
       {notice && (
         <p className="text-[rgb(var(--c-primary))] text-sm lg:text-lg text-center italic font-medium">{notice}</p>
       )}
-      <NextButton onClick={onNext} disabled={disabled} />
+      <NextButton isKeyboardOpen={isKeyboardOpen} onClick={onNext} disabled={disabled} />
     </Wrapper>
   )
 }
@@ -1896,7 +1910,7 @@ function NumberInput({ value, onChange, max, disabled, onEnter }: {
   )
 }
 
-function DateInput({ value, onChange, onEnter }: { value: string, onChange: (iso: string) => void, onEnter?: () => void }) {
+function DateInput({ value, onChange, onEnter, isKeyboardOpen }: { value: string, onChange: (iso: string) => void, onEnter?: () => void, isKeyboardOpen?: boolean }) {
   const today = new Date()
   const maxDate = today.toISOString().slice(0, 10)
   const minDate = '1990-01-01'
@@ -1910,7 +1924,9 @@ function DateInput({ value, onChange, onEnter }: { value: string, onChange: (iso
         onKeyDown={e => { if (e.key === 'Enter' && value && onEnter) onEnter() }}
         min={minDate}
         max={maxDate}
-        className={`w-full h-14 rounded-2xl text-center outline-none font-display text-lg tracking-wider border transition-all cursor-pointer ${
+        className={`w-full rounded-2xl text-center outline-none font-display tracking-wider border transition-all cursor-pointer ${
+          isKeyboardOpen ? 'h-12 rounded-xl text-base' : 'h-14 rounded-2xl text-lg'
+        } ${
           value
             ? 'bg-white border-[rgb(var(--c-primary))] text-[rgb(var(--c-primary))] focus:ring-1 focus:ring-[rgb(var(--c-primary))] shadow-sm font-semibold'
             : 'bg-white border-[rgb(var(--c-border))] text-[rgb(var(--c-text)/0.6)] focus:border-[rgb(var(--c-primary))] focus:ring-1 focus:ring-[rgb(var(--c-primary))]'
@@ -2013,23 +2029,25 @@ function Wrapper({ title, subtitle, children, isKeyboardOpen }: { title: string,
       {!isKeyboardOpen && (
         <Image src="/logo.png" alt="Dance4ever" width={64} height={48} priority className="mx-auto mb-3 shrink-0 mix-blend-multiply lg:hidden animate-[fadeIn_0.2s_ease-out_forwards]" />
       )}
-      <div className="shrink-0 text-center space-y-1.5 lg:space-y-3 pt-0 pb-3 lg:pb-6">
+      <div className={`shrink-0 text-center space-y-1.5 lg:space-y-3 pt-0 ${isKeyboardOpen ? 'pb-1.5' : 'pb-3 lg:pb-6'}`}>
         {!isKeyboardOpen && subtitle && <p className="font-display text-xs tracking-[0.4em] text-[rgb(var(--c-primary))] font-bold">{subtitle}</p>}
-        <h2 className="font-display text-2xl md:text-4xl lg:text-5xl leading-tight px-2 text-[rgb(var(--c-text-strong))] font-semibold">{title}</h2>
+        <h2 className={`font-display leading-tight px-2 text-[rgb(var(--c-text-strong))] font-semibold ${isKeyboardOpen ? 'text-xl' : 'text-2xl md:text-4xl lg:text-5xl'}`}>{title}</h2>
       </div>
-      <div className="flex-1 flex flex-col justify-start lg:justify-center gap-4 lg:gap-8">
+      <div className={`flex-1 flex flex-col justify-start lg:justify-center ${isKeyboardOpen ? 'gap-2.5' : 'gap-4 lg:gap-8'}`}>
         {children}
       </div>
     </div>
   )
 }
 
-function NextButton({ onClick, disabled, label }: { onClick: () => void, disabled: boolean, label?: string }) {
+function NextButton({ onClick, disabled, label, isKeyboardOpen }: { onClick: () => void, disabled?: boolean, label?: string, isKeyboardOpen?: boolean }) {
   return (
     <button
       onClick={onClick}
       disabled={disabled}
-      className="w-full bg-[rgb(var(--c-success))] active:bg-[rgb(var(--c-success-strong))] hover:bg-[rgb(var(--c-success-strong))] text-white font-display text-xl lg:text-2xl tracking-widest py-4 lg:py-5 rounded-2xl disabled:opacity-40 transition-all shadow-md active:scale-[0.98] duration-150"
+      className={`w-full bg-gradient-to-r from-[#16A34A] via-[#82f606] to-[#fff200] hover:brightness-105 active:brightness-95 text-[rgb(var(--c-text-strong))] font-display tracking-widest rounded-2xl disabled:opacity-40 disabled:pointer-events-none transition-all shadow-md active:scale-[0.98] duration-150 ${
+        isKeyboardOpen ? 'hidden lg:block py-3 text-lg' : 'py-4 lg:py-5 text-xl lg:text-2xl'
+      }`}
     >
       {label ?? 'SIGUIENTE'}
     </button>
@@ -2044,7 +2062,7 @@ function Centered({ children }: { children: React.ReactNode }) {
       </div>
       <div className="px-6 py-3 shrink-0 flex justify-end">
         <a
-          href="https://wa.me/523337290374"
+          href="https://wa.me/525645415263"
           target="_blank"
           rel="noreferrer"
           className="flex items-center gap-3 text-[rgb(var(--c-text))] hover:text-[rgb(var(--c-primary))] transition-all group active:scale-98"
@@ -2052,7 +2070,7 @@ function Centered({ children }: { children: React.ReactNode }) {
           <MessageCircle className="w-5 h-5 text-[rgb(var(--c-success))] shrink-0" />
           <span className="text-sm md:text-base">
             ¿Dudas o ayuda? Escríbenos por WhatsApp:{' '}
-            <span className="font-display tracking-wider text-[rgb(var(--c-primary))]">333 729 0374</span>
+            <span className="font-display tracking-wider text-[rgb(var(--c-primary))]">564 541 5263</span>
           </span>
         </a>
       </div>
@@ -2088,7 +2106,7 @@ function MobileSummary({ state, editMode, tab, setTab, confirmed, confirm, savin
     <div className="flex flex-col h-full max-h-full min-h-0 gap-3">
       {/* TOTAL A PAGAR siempre visible arriba */}
       {hasCosts && (
-        <div className="shrink-0 bg-[rgb(var(--c-primary))] text-white rounded-2xl py-3 px-4 text-center shadow-sm">
+        <div className="shrink-0 bg-gradient-to-r from-[#16A34A] via-[#82f606] to-[#fff200] text-[rgb(var(--c-text-strong))] rounded-2xl py-3 px-4 text-center shadow-sm">
           <p className="text-xs font-display tracking-widest opacity-90 leading-none">TOTAL A PAGAR</p>
           <p className="font-display text-3xl leading-none mt-1.5">{formatMoney(total)}</p>
         </div>
@@ -2228,7 +2246,7 @@ function MobileSummary({ state, editMode, tab, setTab, confirmed, confirm, savin
               else if (confirm) confirm()
             }}
             disabled={saving}
-            className="h-14 bg-[rgb(var(--c-primary))] hover:bg-[rgb(var(--c-primary-strong))] active:bg-[rgb(var(--c-primary-strong))] text-white font-display text-base tracking-widest rounded-2xl disabled:opacity-50 transition-all shadow-md active:scale-[0.98] duration-150"
+            className="h-14 bg-gradient-to-r from-[#16A34A] via-[#82f606] to-[#fff200] hover:brightness-105 active:brightness-95 text-[rgb(var(--c-text-strong))] font-display text-base tracking-widest rounded-2xl disabled:opacity-50 disabled:pointer-events-none transition-all shadow-md active:scale-[0.98] duration-150"
           >
             {tab !== 'acts'
               ? 'SIGUIENTE'
@@ -2281,7 +2299,7 @@ function SummaryGrid({ state, editMode, confirmed, confirm, saving, saveErr, sta
 
       <div className="lg:col-span-1 lg:min-h-0">
         {hasCosts ? (
-          <div className="bg-[rgb(var(--c-primary))] text-white rounded-2xl h-full p-4 flex flex-col items-center justify-center shadow-sm">
+          <div className="bg-gradient-to-r from-[#16A34A] via-[#82f606] to-[#fff200] text-[rgb(var(--c-text-strong))] rounded-2xl h-full p-4 flex flex-col items-center justify-center shadow-sm">
             <p className="text-base md:text-lg font-display tracking-widest opacity-90 leading-none text-center">TOTAL A PAGAR</p>
             <p className="font-display text-3xl md:text-4xl leading-none mt-2">{formatMoney(total)}</p>
           </div>
@@ -2360,7 +2378,7 @@ function SummaryGrid({ state, editMode, confirmed, confirm, saving, saveErr, sta
             <button
               onClick={confirm}
               disabled={saving}
-              className="shrink-0 h-28 bg-[rgb(var(--c-primary))] hover:bg-[rgb(var(--c-primary-strong))] active:bg-[rgb(var(--c-primary-strong))] text-white font-display text-2xl tracking-widest rounded-2xl disabled:opacity-50 transition-all shadow-md active:scale-[0.98] duration-150"
+              className="shrink-0 h-28 bg-gradient-to-r from-[#16A34A] via-[#82f606] to-[#fff200] hover:brightness-105 active:brightness-95 text-[rgb(var(--c-text-strong))] font-display text-2xl tracking-widest rounded-2xl disabled:opacity-50 disabled:pointer-events-none transition-all shadow-md active:scale-[0.98] duration-150"
             >
               {saving ? 'GUARDANDO…' : editMode ? 'GUARDAR CAMBIOS' : 'CONFIRMAR REGISTRO'}
             </button>
