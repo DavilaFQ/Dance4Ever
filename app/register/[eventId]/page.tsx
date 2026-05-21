@@ -104,8 +104,8 @@ function initialState(): State {
     dancers: [],
     actCount: 0,
     acts: [],
-    costPaquete: null,
-    costRepeticion: null,
+    costPaquete: 1000,
+    costRepeticion: 300,
     confirmedRegistrationId: null,
   }
 }
@@ -128,8 +128,8 @@ function participacionesPorAlumno(state: State): Map<number, number> {
 }
 
 function costoTotal(state: State): number {
-  const paq = state.costPaquete ?? 0
-  const rep = state.costRepeticion ?? 0
+  const paq = state.costPaquete ?? 1000
+  const rep = state.costRepeticion ?? 300
   const counts = participacionesPorAlumno(state)
   let total = 0
   counts.forEach(n => {
@@ -282,6 +282,12 @@ export default function RegisterPage({ params }: Props) {
           if (saved.coach && !saved.coach.assistants) {
             saved.coach.assistants = []
           }
+          if (saved.costPaquete === null) {
+            saved.costPaquete = 1000
+          }
+          if (saved.costRepeticion === null) {
+            saved.costRepeticion = 300
+          }
           setState(saved)
           if (saved.confirmedRegistrationId) setStep({ kind: 'confirmed' })
         }
@@ -322,44 +328,104 @@ export default function RegisterPage({ params }: Props) {
       metaCapable.setAttribute('content', 'yes')
     } catch { /* ignore document reference errors on SSR */ }
 
-    const vv = window.visualViewport
-    if (!vv) return
-    let initialHeight = window.innerHeight
+    let initialHeight = typeof window !== 'undefined' ? window.innerHeight : 800
+    const vv = typeof window !== 'undefined' ? window.visualViewport : null
+
     const checkKeyboard = () => {
-      if (window.innerHeight > initialHeight) initialHeight = window.innerHeight
-      return vv.height < window.screen.height * 0.75 || vv.height < initialHeight * 0.85
+      if (typeof document === 'undefined') return false
+      const activeEl = document.activeElement
+      if (activeEl) {
+        const tagName = activeEl.tagName.toLowerCase()
+        const type = (activeEl as HTMLInputElement).type?.toLowerCase()
+        const isTextInput =
+          tagName === 'textarea' ||
+          (tagName === 'input' &&
+            [
+              'text',
+              'number',
+              'email',
+              'tel',
+              'url',
+              'search',
+              'password',
+              'date',
+              'datetime-local',
+              'month',
+              'week',
+              'time'
+            ].includes(type))
+        if (isTextInput) {
+          return true
+        }
+      }
+      if (typeof window !== 'undefined') {
+        if (window.innerHeight > initialHeight) initialHeight = window.innerHeight
+        if (vv) {
+          return vv.height < window.screen.height * 0.75 || vv.height < initialHeight * 0.85
+        }
+      }
+      return false
     }
+
     const updateHeight = () => {
-      document.documentElement.style.setProperty('--viewport-height', `${vv.height}px`)
+      if (vv && typeof window !== 'undefined') {
+        document.documentElement.style.setProperty('--viewport-height', `${vv.height}px`)
+      }
       const keyboardActive = checkKeyboard()
       setIsKeyboardOpen(keyboardActive)
-      if (keyboardActive && window.scrollY !== 0) {
+      if (keyboardActive && typeof window !== 'undefined' && window.scrollY !== 0) {
         window.scrollTo(0, 0)
       }
     }
+
     const handleWindowScroll = () => {
       const keyboardActive = checkKeyboard()
-      if (keyboardActive && window.scrollY !== 0) {
+      if (keyboardActive && typeof window !== 'undefined' && window.scrollY !== 0) {
         window.scrollTo(0, 0)
       }
     }
+
     const handleFocusIn = () => {
+      updateHeight()
       setTimeout(() => {
-        if (window.scrollY !== 0) {
+        if (typeof window !== 'undefined' && window.scrollY !== 0) {
           window.scrollTo(0, 0)
         }
       }, 50)
     }
-    vv.addEventListener('resize', updateHeight)
-    vv.addEventListener('scroll', updateHeight)
-    window.addEventListener('scroll', handleWindowScroll, { passive: true })
-    document.addEventListener('focusin', handleFocusIn)
+
+    const handleFocusOut = () => {
+      setTimeout(() => {
+        updateHeight()
+      }, 50)
+    }
+
+    if (vv) {
+      vv.addEventListener('resize', updateHeight)
+      vv.addEventListener('scroll', updateHeight)
+    }
+    if (typeof window !== 'undefined') {
+      window.addEventListener('scroll', handleWindowScroll, { passive: true })
+    }
+    if (typeof document !== 'undefined') {
+      document.addEventListener('focusin', handleFocusIn)
+      document.addEventListener('focusout', handleFocusOut)
+    }
+
     updateHeight()
+
     return () => {
-      vv.removeEventListener('resize', updateHeight)
-      vv.removeEventListener('scroll', updateHeight)
-      window.removeEventListener('scroll', handleWindowScroll)
-      document.removeEventListener('focusin', handleFocusIn)
+      if (vv) {
+        vv.removeEventListener('resize', updateHeight)
+        vv.removeEventListener('scroll', updateHeight)
+      }
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('scroll', handleWindowScroll)
+      }
+      if (typeof document !== 'undefined') {
+        document.removeEventListener('focusin', handleFocusIn)
+        document.removeEventListener('focusout', handleFocusOut)
+      }
     }
   }, [])
 
@@ -613,10 +679,10 @@ export default function RegisterPage({ params }: Props) {
       <meta name="theme-color" content="#F6F4EF" />
 
       <main
-        className="flex-1 min-h-0 px-4 lg:px-8 flex flex-col overflow-y-auto lg:overflow-hidden"
+        className="flex-1 min-h-0 px-0 sm:px-4 lg:px-8 flex flex-col overflow-y-auto lg:overflow-hidden"
         style={{
-          paddingTop: 'calc(env(safe-area-inset-top, 0px) + 6px)',
-          paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 16px)'
+          paddingTop: 'calc(env(safe-area-inset-top, 0px) + 2px)',
+          paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 8px)'
         }}
       >
         {/* DESKTOP HEADER */}
@@ -636,8 +702,8 @@ export default function RegisterPage({ params }: Props) {
         </div>
 
         {/* STEP STATUS INDICATOR (iOS Tab Style) */}
-        {!isFirstStep && step.kind !== 'confirmed' && (
-          <div className="shrink-0 flex justify-center py-3">
+        {!isKeyboardOpen && !isFirstStep && step.kind !== 'confirmed' && (
+          <div className="shrink-0 flex justify-center pt-1.5 pb-2.5 sm:py-3 px-4 sm:px-0">
             <div className="bg-[rgb(var(--c-surface-2))] p-1 rounded-2xl flex gap-1 w-full max-w-xl shadow-inner border border-[rgb(var(--c-border)/0.3)]">
               {[
                 { label: 'COACH', kind: 'setup' },
@@ -665,7 +731,7 @@ export default function RegisterPage({ params }: Props) {
         )}
 
         <div className="flex-1 min-h-0 flex justify-center">
-          <div className={`w-full ${step.kind === 'summary' || step.kind === 'confirmed' || step.kind === 'dancers' ? 'max-w-6xl' : 'max-w-3xl'} min-h-full lg:h-full flex flex-col justify-start lg:justify-center ${isKeyboardOpen ? 'pt-[2vh] lg:pt-3' : 'pt-2 lg:pt-0'} min-h-0`}>
+          <div className={`w-full ${step.kind === 'summary' || step.kind === 'confirmed' || step.kind === 'dancers' ? 'max-w-6xl' : 'max-w-3xl'} min-h-full lg:h-full flex flex-col justify-start lg:justify-center ${isKeyboardOpen ? 'pt-[1vh] lg:pt-3' : 'pt-1.5 sm:pt-2 lg:pt-0'} min-h-0`}>
             <StepView
               step={step}
               state={state}
@@ -710,14 +776,17 @@ export default function RegisterPage({ params }: Props) {
 
           {/* Dynamic indicators in the bar */}
           <div className="text-center">
-            {step.kind === 'dancers' && (
-              <span className="text-xs font-display text-[rgb(var(--c-success))] font-bold bg-[rgb(var(--c-success)/0.1)] border border-[rgb(var(--c-success)/0.2)] px-3 py-1 rounded-full">
-                {state.dancers.filter(d => d.name.trim().length >= 2 && d.birthdate.length === 10).length} Alumnos
-              </span>
-            )}
+            {step.kind === 'dancers' && (() => {
+              const count = state.dancers.filter(d => d.name.trim().length >= 2 && d.birthdate.length === 10).length
+              return (
+                <span className="text-xs font-display text-[rgb(var(--c-success))] font-bold bg-[rgb(var(--c-success)/0.1)] border border-[rgb(var(--c-success)/0.2)] px-3 py-1 rounded-full">
+                  {count} {count === 1 ? 'Alumno' : 'Alumnos'}
+                </span>
+              )
+            })()}
             {step.kind === 'acts' && (
               <span className="text-xs font-display text-[rgb(var(--c-primary))] font-bold bg-[rgb(var(--c-primary)/0.1)] border border-[rgb(var(--c-primary)/0.2)] px-3 py-1 rounded-full">
-                {state.acts.length} Actos
+                {state.acts.length} {state.acts.length === 1 ? 'Acto' : 'Actos'}
               </span>
             )}
             {step.kind === 'summary' && (
@@ -891,15 +960,15 @@ function StepView(props: {
       const isValid = isCoachValid && isAcademyValid
 
       return (
-        <div className="space-y-5 py-2 overflow-y-auto max-h-[80vh] px-1" style={{ animation: 'fadeIn 0.3s ease-out' }}>
-          <div className="text-center lg:text-left space-y-1">
+        <div className="space-y-5 py-2 overflow-y-auto max-h-[80vh] px-0 sm:px-1" style={{ animation: 'fadeIn 0.3s ease-out' }}>
+          <div className="text-center lg:text-left space-y-1 px-4 sm:px-0">
             <h2 className="font-display text-3xl lg:text-4xl text-[rgb(var(--c-text-strong))]">Paso 1: Coach y Academia</h2>
             <p className="text-sm text-[rgb(var(--c-text))]">Completa tu información organizativa general</p>
           </div>
 
           <div className="grid lg:grid-cols-2 gap-5">
             {/* COACH CARD */}
-            <div className="bg-white border border-[rgb(var(--c-border)/0.5)] rounded-3xl p-6 shadow-sm space-y-4">
+            <div className="bg-white border-y sm:border border-[rgb(var(--c-border)/0.4)] rounded-none sm:rounded-3xl p-4 sm:p-6 shadow-none sm:shadow-sm space-y-4">
               <h3 className="font-display text-xl text-[rgb(var(--c-primary))] flex items-center gap-2 border-b border-[rgb(var(--c-border)/0.2)] pb-2">
                 <Users className="w-5 h-5" /> COACH PRINCIPAL
               </h3>
@@ -943,7 +1012,7 @@ function StepView(props: {
             </div>
 
             {/* ACADEMY CARD */}
-            <div className="bg-white border border-[rgb(var(--c-border)/0.5)] rounded-3xl p-6 shadow-sm space-y-4">
+            <div className="bg-white border-y sm:border border-[rgb(var(--c-border)/0.4)] rounded-none sm:rounded-3xl p-4 sm:p-6 shadow-none sm:shadow-sm space-y-4">
               <h3 className="font-display text-xl text-[rgb(var(--c-primary))] flex items-center gap-2 border-b border-[rgb(var(--c-border)/0.2)] pb-2">
                 <HeartHandshake className="w-5 h-5" /> ACADEMIA Y EQUIPO
               </h3>
@@ -986,7 +1055,7 @@ function StepView(props: {
           </div>
 
           {/* DYNAMIC STAFF CARD (EXTRA COACHES & ASSISTANTS) */}
-          <div className="bg-white border border-[rgb(var(--c-border)/0.5)] rounded-3xl p-6 shadow-sm space-y-5">
+          <div className="bg-white border-y sm:border border-[rgb(var(--c-border)/0.4)] rounded-none sm:rounded-3xl p-4 sm:p-6 shadow-none sm:shadow-sm space-y-5">
             <h3 className="font-display text-xl text-[rgb(var(--c-primary))] border-b border-[rgb(var(--c-border)/0.2)] pb-2 flex items-center gap-2">
               <Users className="w-5 h-5 text-[rgb(var(--c-primary))]" /> STAFF ADICIONAL (COACHES Y ASISTENTES)
             </h3>
@@ -1091,8 +1160,8 @@ function StepView(props: {
       const isAllValid = state.dancers.length > 0 && state.dancers.every(d => d.name.trim().length >= 2 && d.birthdate.length === 10)
 
       return (
-        <div className="space-y-4 py-2 overflow-y-auto max-h-[82vh] px-1 flex flex-col h-full min-h-0" style={{ animation: 'fadeIn 0.3s ease-out' }}>
-          <div className="shrink-0 flex flex-col md:flex-row md:items-center justify-between gap-3">
+        <div className="space-y-4 py-2 overflow-y-auto max-h-[82vh] px-0 sm:px-1 flex flex-col h-full min-h-0" style={{ animation: 'fadeIn 0.3s ease-out' }}>
+          <div className="shrink-0 flex flex-col md:flex-row md:items-center justify-between gap-3 px-4 sm:px-0">
             <div className="text-center md:text-left space-y-0.5">
               <h2 className="font-display text-3xl text-[rgb(var(--c-text-strong))]">Paso 2: Registro de Alumnos</h2>
               <p className="text-xs text-[rgb(var(--c-text))]">Ingresa los bailarines. La edad y categoría se calculan automáticamente.</p>
@@ -1116,7 +1185,7 @@ function StepView(props: {
             </div>
           </div>
 
-          <div className="flex-1 min-h-0 overflow-y-auto bg-white border border-[rgb(var(--c-border)/0.5)] rounded-3xl shadow-sm p-4 md:p-6">
+          <div className="flex-1 min-h-0 overflow-y-auto bg-white border-y sm:border border-[rgb(var(--c-border)/0.4)] rounded-none sm:rounded-3xl shadow-none sm:shadow-sm p-3 sm:p-6">
             {state.dancers.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-16 text-center space-y-4">
                 <div className="p-4 bg-[rgb(var(--c-primary)/0.05)] rounded-full text-[rgb(var(--c-primary))]">
@@ -1170,9 +1239,12 @@ function StepView(props: {
                       {/* Date input */}
                       <div className="shrink-0 w-full md:w-[150px]">
                         <input
-                          type="date"
+                          type={d.birthdate ? "date" : "text"}
                           value={d.birthdate}
                           onChange={e => updateDancer(i, { birthdate: e.target.value })}
+                          placeholder="Fecha de nacimiento"
+                          onFocus={e => (e.target.type = "date")}
+                          onBlur={e => { if (!d.birthdate) e.target.type = "text" }}
                           className="w-full bg-white border border-[rgb(var(--c-border)/0.5)] text-[rgb(var(--c-text-strong))] rounded-xl px-3 py-2.5 text-xs outline-none focus:border-[rgb(var(--c-primary))] transition-all font-semibold text-center"
                         />
                       </div>
@@ -1233,8 +1305,8 @@ function StepView(props: {
       const isAllValid = state.acts.length > 0 && state.acts.every(a => a.modality && a.style && a.dancerIndices.length >= minDancers(a.modality))
 
       return (
-        <div className="space-y-4 py-2 overflow-y-auto max-h-[82vh] px-1 flex flex-col h-full min-h-0" style={{ animation: 'fadeIn 0.3s ease-out' }}>
-          <div className="shrink-0 flex items-center justify-between">
+        <div className="space-y-4 py-2 overflow-y-auto max-h-[82vh] px-0 sm:px-1 flex flex-col h-full min-h-0" style={{ animation: 'fadeIn 0.3s ease-out' }}>
+          <div className="shrink-0 flex items-center justify-between px-4 sm:px-0">
             <div className="text-center lg:text-left space-y-0.5">
               <h2 className="font-display text-3xl text-[rgb(var(--c-text-strong))]">Paso 3: Constructor de Actos</h2>
               <p className="text-xs text-[rgb(var(--c-text))]">Registra tus coreografías, modalidades y selecciona a sus integrantes.</p>
@@ -1251,7 +1323,7 @@ function StepView(props: {
 
           <div className="flex-1 min-h-0 overflow-y-auto space-y-3">
             {state.acts.length === 0 ? (
-              <div className="bg-white border border-[rgb(var(--c-border)/0.5)] rounded-3xl p-16 text-center space-y-4 shadow-sm">
+              <div className="bg-white border border-[rgb(var(--c-border)/0.5)] rounded-3xl p-16 text-center space-y-4 shadow-sm mx-4 sm:mx-0">
                 <div className="p-4 bg-[rgb(var(--c-primary)/0.05)] rounded-full text-[rgb(var(--c-primary))] inline-block">
                   <Sparkles className="w-12 h-12" />
                 </div>
@@ -1272,11 +1344,18 @@ function StepView(props: {
                 const limitDancers = maxDancers(act.modality)
                 const isActValid = act.modality && act.style && actDancersCount >= reqDancers && actDancersCount <= limitDancers
 
+                // Dynamic numbering sequence
+                let stepNum = 1
+                const modalityNum = stepNum++
+                const levelNum = act.modality === 'grupal' ? stepNum++ : null
+                const styleNum = stepNum++
+                const dancersNum = act.modality ? stepNum++ : null
+
                 return (
                   <div
                     key={`act-${i}`}
-                    className={`bg-white border rounded-3xl shadow-sm overflow-hidden transition-all duration-200 ${
-                      isOpen ? 'ring-1 ring-[rgb(var(--c-primary))] border-[rgb(var(--c-primary))]' : 'border-[rgb(var(--c-border)/0.5)] hover:border-[rgb(var(--c-border))]'
+                    className={`bg-white border-y sm:border rounded-none sm:rounded-3xl shadow-none sm:shadow-sm overflow-hidden transition-all duration-200 ${
+                      isOpen ? 'ring-1 ring-[rgb(var(--c-primary))] border-[rgb(var(--c-primary))]' : 'border-y border-[rgb(var(--c-border)/0.4)] sm:border-[rgb(var(--c-border)/0.5)] hover:border-[rgb(var(--c-border))]'
                     }`}
                   >
                     {/* Header Acordeón */}
@@ -1317,10 +1396,10 @@ function StepView(props: {
 
                     {/* Body Acordeón */}
                     {isOpen && (
-                      <div className="p-5 border-t border-[rgb(var(--c-border)/0.25)] bg-[rgb(var(--c-surface)/0.15)] space-y-5 animate-[fadeIn_0.25s_ease-out_forwards]">
+                      <div className="p-4 sm:p-5 border-t border-[rgb(var(--c-border)/0.25)] bg-[rgb(var(--c-surface)/0.15)] space-y-5 animate-[fadeIn_0.25s_ease-out_forwards]">
                         {/* 1. Modalidad */}
                         <div className="space-y-1.5">
-                          <label className="block text-[10px] font-bold tracking-widest text-[rgb(var(--c-text)/0.7)] uppercase">1. Selecciona la Modalidad</label>
+                          <label className="block text-[10px] font-bold tracking-widest text-[rgb(var(--c-text)/0.7)] uppercase">{modalityNum}. Selecciona la Modalidad</label>
                           <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5">
                             {MODALITY_OPTIONS.map(opt => {
                               const isSelected = act.modality === opt.value
@@ -1352,7 +1431,7 @@ function StepView(props: {
                         {/* 2. Nivel (Solo si es Grupal) */}
                         {act.modality === 'grupal' && (
                           <div className="space-y-1.5 animate-[fadeIn_0.2s_ease-out_forwards]">
-                            <label className="block text-[10px] font-bold tracking-widest text-[rgb(var(--c-text)/0.7)] uppercase">2. Nivel Escolar de la Categoría</label>
+                            <label className="block text-[10px] font-bold tracking-widest text-[rgb(var(--c-text)/0.7)] uppercase">{levelNum}. Nivel Escolar de la Categoría</label>
                             <div className="grid grid-cols-2 gap-2.5 max-w-sm">
                               {[
                                 { val: 'basico', label: 'BÁSICO' },
@@ -1380,7 +1459,7 @@ function StepView(props: {
 
                         {/* 3. Estilo */}
                         <div className="space-y-1.5">
-                          <label className="block text-[10px] font-bold tracking-widest text-[rgb(var(--c-text)/0.7)] uppercase">3. Estilo Coreográfico</label>
+                          <label className="block text-[10px] font-bold tracking-widest text-[rgb(var(--c-text)/0.7)] uppercase">{styleNum}. Estilo Coreográfico</label>
                           <div className="flex flex-wrap gap-2">
                             {STYLES.map(style => {
                               const isSelected = act.style === style
@@ -1407,7 +1486,7 @@ function StepView(props: {
                           <div className="space-y-2 animate-[fadeIn_0.2s_ease-out_forwards]">
                             <div className="flex justify-between items-center">
                               <label className="block text-[10px] font-bold tracking-widest text-[rgb(var(--c-text)/0.7)] uppercase">
-                                4. Selecciona Integrantes ({actDancersCount} de {limitDancers === 100 ? '4 o más' : limitDancers})
+                                {dancersNum}. Selecciona Integrantes ({actDancersCount} de {limitDancers === 100 ? '4 o más' : limitDancers})
                               </label>
                               
                               {act.ageCategory && (
@@ -1422,7 +1501,7 @@ function StepView(props: {
                                 Regresa al Paso anterior y registra alumnos primero
                               </p>
                             ) : (
-                              <div className="bg-white border border-[rgb(var(--c-border)/0.4)] rounded-2xl p-4 max-h-[220px] overflow-y-auto space-y-3.5">
+                              <div className="bg-white border border-[rgb(var(--c-border)/0.4)] rounded-2xl p-3 sm:p-4 max-h-[220px] overflow-y-auto space-y-3.5">
                                 {/* Group Dancers by calculated ageCategory */}
                                 {AGE_CATEGORY_ORDER.map(cat => {
                                   const groupDancers = state.dancers
@@ -1507,7 +1586,7 @@ function StepView(props: {
               disabled={!isAllValid}
               className="w-full bg-gradient-to-r from-[#16A34A] via-[#82f606] to-[#fff200] hover:brightness-105 active:brightness-95 text-[rgb(var(--c-text-strong))] font-display text-xl tracking-widest py-4 rounded-2xl transition-all shadow-md active:scale-[0.98] duration-150 font-bold disabled:opacity-40 disabled:pointer-events-none"
             >
-              CONTINUAR A LA REVISIÓN FINAL ({state.acts.length} Actos)
+              CONTINUAR A LA REVISIÓN FINAL ({state.acts.length} {state.acts.length === 1 ? 'Acto' : 'Actos'})
             </button>
           </div>
         </div>
@@ -1612,16 +1691,16 @@ function FullSummary({ state, editMode, confirmed, confirm, saving, saveErr, sta
   return (
     <div className="w-full flex flex-col h-full overflow-hidden" style={{ animation: 'fadeIn 0.3s ease-out' }}>
       {confirmed && (
-        <div className="shrink-0 bg-[rgb(var(--c-success))] text-white text-center py-4 px-4 shadow-md z-10 rounded-2xl mb-4">
+        <div className="shrink-0 bg-[rgb(var(--c-success))] text-white text-center py-4 px-4 shadow-md z-10 rounded-none sm:rounded-2xl mb-4">
           <p className="font-display text-xl md:text-2xl tracking-widest font-bold">¡REGISTRO CONFIRMADO EXITOSAMENTE!</p>
           <p className="text-sm opacity-90 mt-1">Tu información ha sido guardada en nuestro sistema.</p>
         </div>
       )}
       
-      <div className="flex-1 overflow-y-auto px-2 md:px-4 lg:px-6 py-4 pb-32 space-y-6 bg-[rgb(var(--c-surface-2)/0.35)] rounded-3xl max-h-[75vh]">
+      <div className="flex-1 overflow-y-auto px-0 sm:px-4 lg:px-6 py-2 sm:py-4 pb-32 space-y-6 bg-transparent sm:bg-[rgb(var(--c-surface-2)/0.35)] rounded-none sm:rounded-3xl max-h-[75vh]">
         
         {/* COACH, ACADEMY & STAFF */}
-        <div className="bg-white rounded-3xl border border-[rgb(var(--c-border)/0.5)] p-5 md:p-6 shadow-sm relative">
+        <div className="bg-white rounded-none sm:rounded-3xl border-y sm:border border-[rgb(var(--c-border)/0.4)] p-4 sm:p-6 shadow-none sm:shadow-sm relative">
           <h3 className="font-display text-lg tracking-widest text-[rgb(var(--c-primary))] mb-4 border-b border-[rgb(var(--c-border)/0.25)] pb-2 flex justify-between items-center">
             <span>COACH Y ACADEMIA</span>
             {!confirmed && (
@@ -1661,7 +1740,7 @@ function FullSummary({ state, editMode, confirmed, confirm, saving, saveErr, sta
         </div>
 
         {/* INTERACTIVE COSTS SETTING CARD */}
-        <div className="bg-white border border-[rgb(var(--c-border)/0.5)] rounded-3xl p-5 md:p-6 shadow-sm">
+        <div className="bg-white rounded-none sm:rounded-3xl border-y sm:border border-[rgb(var(--c-border)/0.4)] p-4 sm:p-6 shadow-none sm:shadow-sm">
           <h3 className="font-display text-lg tracking-widest text-[rgb(var(--c-primary))] mb-4 border-b border-[rgb(var(--c-border)/0.25)] pb-2 uppercase">COSTOS ACORDADOS Y TOTAL</h3>
           
           <div className="grid md:grid-cols-3 gap-5 items-center">
@@ -1708,7 +1787,7 @@ function FullSummary({ state, editMode, confirmed, confirm, saving, saveErr, sta
         </div>
 
         {/* DANCERS SUMMARY */}
-        <div className="bg-white rounded-3xl border border-[rgb(var(--c-border)/0.5)] p-5 md:p-6 shadow-sm">
+        <div className="bg-white rounded-none sm:rounded-3xl border-y sm:border border-[rgb(var(--c-border)/0.4)] p-4 sm:p-6 shadow-none sm:shadow-sm">
           <h3 className="font-display text-lg tracking-widest text-[rgb(var(--c-primary))] mb-4 border-b border-[rgb(var(--c-border)/0.25)] pb-2 flex justify-between items-center">
             <span>ALUMNOS/AS REGISTRADOS</span>
             <div className="flex items-center gap-3">
@@ -1725,7 +1804,7 @@ function FullSummary({ state, editMode, confirmed, confirm, saving, saveErr, sta
               <p className="text-[rgb(var(--c-text)/0.5)] italic text-sm col-span-full">Sin alumnos</p>
             ) : filledDancers.map((d, di) => {
               const n = counts.get(di) ?? 0
-              const cost = hasCosts && n > 0 ? (state.costPaquete ?? 0) + Math.max(0, n - 1) * (state.costRepeticion ?? 0) : null
+              const cost = hasCosts && n > 0 ? (state.costPaquete ?? 1000) + Math.max(0, n - 1) * (state.costRepeticion ?? 300) : null
               return (
                 <div key={di} className="flex items-center gap-3 border-b border-[rgb(var(--c-border)/0.2)] pb-2 text-xs">
                   <span className="font-display text-sm text-[rgb(var(--c-text)/0.4)] w-5 text-right shrink-0">{di + 1}.</span>
@@ -1748,11 +1827,11 @@ function FullSummary({ state, editMode, confirmed, confirm, saving, saveErr, sta
         </div>
 
         {/* ACTS SUMMARY */}
-        <div className="bg-white rounded-3xl border border-[rgb(var(--c-border)/0.5)] p-5 md:p-6 shadow-sm">
+        <div className="bg-white rounded-none sm:rounded-3xl border-y sm:border border-[rgb(var(--c-border)/0.4)] p-4 sm:p-6 shadow-none sm:shadow-sm">
           <h3 className="font-display text-lg tracking-widest text-[rgb(var(--c-primary))] mb-4 border-b border-[rgb(var(--c-border)/0.25)] pb-2 flex justify-between items-center">
             <span>ACTOS REGISTRADOS</span>
             <div className="flex items-center gap-3">
-              <span className="text-[rgb(var(--c-text))] opacity-60 text-xs font-semibold">{state.acts.length} Coreografías</span>
+              <span className="text-[rgb(var(--c-text))] opacity-60 text-xs font-semibold">{state.acts.length} {state.acts.length === 1 ? 'Coreografía' : 'Coreografías'}</span>
               {!confirmed && (
                 <button onClick={() => goToStep({ kind: 'acts' })} className="text-xs text-[rgb(var(--c-primary))] hover:underline flex items-center gap-1">
                   <Pencil className="w-3.5 h-3.5" /> Editar
@@ -1768,7 +1847,7 @@ function FullSummary({ state, editMode, confirmed, confirm, saving, saveErr, sta
               const mod = a.modality ? modalityLabel(a.modality) : '—'
               const lvl = a.modality === 'grupal' ? (a.level === 'basico' ? ' BÁSICO' : a.level === 'avanzado' ? ' AVANZADO' : '') : ''
               return (
-                <div key={idx} className="border border-[rgb(var(--c-border)/0.4)] rounded-2xl p-4 bg-[rgb(var(--c-surface-2)/0.2)] flex flex-col justify-between space-y-3 animate-[fadeIn_0.2s_ease-out_forwards]">
+                <div key={idx} className="border border-[rgb(var(--c-border)/0.4)] rounded-xl sm:rounded-2xl p-3 sm:p-4 bg-[rgb(var(--c-surface-2)/0.2)] flex flex-col justify-between space-y-3 animate-[fadeIn_0.2s_ease-out_forwards]">
                   <div className="flex items-start gap-3">
                     <div className="font-display text-2xl text-[rgb(var(--c-primary))] shrink-0 font-bold">#{idx + 1}</div>
                     <div className="flex-1 min-w-0">
@@ -1801,7 +1880,10 @@ function FullSummary({ state, editMode, confirmed, confirm, saving, saveErr, sta
       </div>
 
       {/* FLOATING ACTION BAR FOR CONFIRM / SAVE */}
-      <div className="shrink-0 bg-white border-t border-[rgb(var(--c-border)/0.7)] p-4 md:p-5 shadow-[0_-10px_40px_rgba(0,0,0,0.05)] z-20 rounded-t-3xl mt-4">
+      <div 
+        className="shrink-0 bg-white border-t border-[rgb(var(--c-border)/0.7)] p-4 md:p-5 shadow-[0_-10px_40px_rgba(0,0,0,0.05)] z-20 rounded-t-3xl mt-4"
+        style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 8px)' }}
+      >
         <div className="max-w-4xl mx-auto w-full">
           {saveErr && (
             <p className="text-[rgb(var(--c-primary))] text-xs bg-[rgb(var(--c-primary)/0.05)] border border-[rgb(var(--c-primary)/0.2)] rounded-xl px-4 py-2.5 mb-3 text-center font-bold">{saveErr}</p>
