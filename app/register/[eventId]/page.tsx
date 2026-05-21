@@ -857,7 +857,7 @@ export default function RegisterPage({ params }: Props) {
             <div className="flex justify-between items-center shrink-0">
               <div className="flex items-center gap-2">
                 <Sparkles className="w-5 h-5 text-[rgb(var(--c-primary))]" />
-                <h3 className="font-display text-xl text-[rgb(var(--c-text-strong))]">PEGADO INTELIGENTE</h3>
+                <h3 className="font-display text-xl text-[rgb(var(--c-text-strong))] font-semibold">PEGADO INTELIGENTE</h3>
               </div>
               <button onClick={() => setIsPasteModalOpen(false)} className="text-[rgb(var(--c-text)/0.6)] active:scale-95 p-1 rounded-full hover:bg-[rgb(var(--c-surface-2))]">
                 <X className="w-6 h-6" />
@@ -878,17 +878,17 @@ export default function RegisterPage({ params }: Props) {
             <button
               type="button"
               onClick={handleClipboardPaste}
-              className="w-full inline-flex items-center justify-center gap-2 bg-[rgb(var(--c-primary)/0.08)] hover:bg-[rgb(var(--c-primary)/0.12)] text-[rgb(var(--c-primary))] border border-[rgb(var(--c-primary)/0.25)] py-3 px-4 rounded-2xl font-display text-sm tracking-wider font-bold shadow-sm active:scale-95 transition-all duration-150 shrink-0"
+              className="w-full inline-flex items-center justify-center gap-2.5 bg-gradient-to-r from-[#16A34A] via-[#82f606] to-[#fff200] text-[rgb(var(--c-text-strong))] py-3.5 px-4 rounded-2xl font-display text-base tracking-wider font-bold shadow-md hover:brightness-105 active:scale-95 transition-all duration-150 shrink-0"
             >
-              <Clipboard className="w-4 h-4" /> PEGAR DESDE EL PORTAPAPELES
+              <Clipboard className="w-5 h-5 text-[rgb(var(--c-text-strong))]" strokeWidth={2.5} /> PEGAR DESDE EL PORTAPAPELES
             </button>
 
-            <div className="relative shrink-0 flex items-center justify-center py-1">
+            <div className="relative shrink-0 flex items-center justify-center py-1 hidden md:flex">
               <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-[rgb(var(--c-border)/0.4)]" /></div>
               <span className="relative bg-[rgb(var(--c-surface))] px-3 text-[10px] text-[rgb(var(--c-text)/0.5)] font-semibold uppercase tracking-wider">o pega manualmente abajo</span>
             </div>
 
-            <div className="flex-1 min-h-0 flex flex-col">
+            <div className="flex-1 min-h-0 flex flex-col hidden md:flex">
               <textarea
                 value={pasteText}
                 onChange={e => setPasteText(e.target.value)}
@@ -897,17 +897,20 @@ export default function RegisterPage({ params }: Props) {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-3 shrink-0 pt-2">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 shrink-0 pt-2">
               <button
+                type="button"
                 onClick={() => setIsPasteModalOpen(false)}
                 className="py-3 bg-white border border-[rgb(var(--c-border))] text-[rgb(var(--c-text-strong))] font-display text-base tracking-widest rounded-2xl active:scale-95 duration-150 transition-all font-semibold"
               >
-                CANCELAR
+                <span className="md:hidden">CERRAR</span>
+                <span className="hidden md:inline">CANCELAR</span>
               </button>
               <button
+                type="button"
                 onClick={() => handleSmartPaste(pasteText)}
                 disabled={pasteText.trim().length === 0}
-                className="py-3 bg-gradient-to-r from-[#16A34A] via-[#82f606] to-[#fff200] text-[rgb(var(--c-text-strong))] font-display text-base tracking-widest rounded-2xl active:scale-95 duration-150 transition-all disabled:opacity-40 font-bold"
+                className="py-3 bg-gradient-to-r from-[#16A34A] via-[#82f606] to-[#fff200] text-[rgb(var(--c-text-strong))] font-display text-base tracking-widest rounded-2xl active:scale-95 duration-150 transition-all disabled:opacity-40 font-bold hidden md:block"
               >
                 ANALIZAR Y CARGAR
               </button>
