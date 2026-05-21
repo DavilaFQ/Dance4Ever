@@ -9,8 +9,8 @@
   /* Brand palette — channel values so Tailwind opacity modifiers work via rgb(var(--c-x)/<alpha>) */
   --c-primary: 252 3 161;          /* exact logo fuchsia #fc03a1 */
   --c-primary-strong: 190 0 110;   /* exact logo fuchsia darker */
-  --c-accent: 130 246 6;           /* exact logo lime #82f606 */
-  --c-accent-strong: 101 190 4;    /* exact logo lime darker */
+  --c-accent: 234 88 12;           /* readable orange (replaces fluorescent lime) */
+  --c-accent-strong: 154 52 18;    /* orange darker */
   --c-success: 22 163 74;          /* logo green */
   --c-success-strong: 22 101 52;   /* logo green darker */
   --c-text: 51 65 85;              /* slate */
