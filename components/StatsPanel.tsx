@@ -48,14 +48,14 @@ export default function StatsPanel({ event, participants, onClose }: {
   return (
     <div className="fixed inset-0 bg-neutral-900 z-50 flex flex-col">
       <div className="bg-black px-4 py-3 flex items-center justify-between shrink-0">
-        <h3 className="font-display text-2xl tracking-widest text-yellow-500">ESTADÍSTICAS</h3>
+        <h3 className="font-display text-2xl tracking-widest text-fuchsia-500">ESTADÍSTICAS</h3>
         <button onClick={onClose} aria-label="Cerrar"><X className="w-6 h-6" /></button>
       </div>
 
       <div className="flex-1 min-h-0 p-3 flex flex-col gap-3 text-white">
         <StatCard label="AVANCE" value={`#${currentPos} / ${total}`} sub={`${percent}%`}>
           <div className="h-3 bg-neutral-800 rounded-full overflow-hidden mt-3">
-            <div className="h-full bg-yellow-400 transition-all" style={{ width: `${percent}%` }} />
+            <div className="h-full bg-fuchsia-500 transition-all" style={{ width: `${percent}%` }} />
           </div>
         </StatCard>
 
@@ -67,7 +67,7 @@ export default function StatsPanel({ event, participants, onClose }: {
         {!startedAt && (
           <button
             onClick={markStartNow}
-            className="shrink-0 bg-yellow-400 active:bg-yellow-500 text-black font-display text-lg tracking-widest py-3 rounded-lg flex items-center justify-center gap-2"
+            className="shrink-0 bg-fuchsia-500 active:bg-fuchsia-500 text-white font-display text-lg tracking-widest py-3 rounded-lg flex items-center justify-center gap-2"
           >
             <Play className="w-5 h-5" /> MARCAR INICIO AHORA
           </button>
@@ -108,7 +108,7 @@ function StatCard({ label, value, sub, children }: {
   return (
     <div className="bg-neutral-800 rounded-lg p-4 flex-1 min-h-0 flex flex-col justify-center">
       <p className="text-xs font-display tracking-widest text-neutral-400 leading-none">{label}</p>
-      <p className="font-display text-5xl leading-none mt-3 text-yellow-400 truncate">{value}</p>
+      <p className="font-display text-5xl leading-none mt-3 text-fuchsia-500 truncate">{value}</p>
       {sub && <p className="text-sm text-neutral-300 mt-2">{sub}</p>}
       {children}
     </div>

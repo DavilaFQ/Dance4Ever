@@ -98,7 +98,7 @@ export default function ParticipantEditor({
   return (
     <div className="fixed inset-0 bg-neutral-900 z-[60] flex flex-col">
       <div className="bg-black px-4 py-3 flex items-center justify-between shrink-0">
-        <h3 className="font-display text-2xl tracking-widest text-yellow-500 truncate">
+        <h3 className="font-display text-2xl tracking-widest text-fuchsia-500 truncate">
           {isEdit && p ? `EDITAR #${p.position}` : 'NUEVO TURNO'}
         </h3>
         <button onClick={onClose} aria-label="Cerrar"><X className="w-6 h-6" /></button>
