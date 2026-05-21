@@ -2,7 +2,7 @@
 import { useEffect, useState, use, useCallback } from 'react'
 import Image from 'next/image'
 import { useSearchParams } from 'next/navigation'
-import { ArrowLeft, Check, Plus, Trash2, Pencil, MessageCircle, Info, X, ChevronDown, Sparkles, Users, Clipboard, HeartHandshake } from 'lucide-react'
+import { ArrowLeft, Check, Plus, Trash2, Pencil, MessageCircle, Info, X, ChevronDown, Sparkles, Users, Clipboard, HeartHandshake, School } from 'lucide-react'
 import { supabase, Modality, AgeCategory, Level, Event, AGE_CATEGORY_ORDER, AGE_CATEGORY_LABELS, AGE_CATEGORY_HINTS, categoryFromBirthdate } from '@/lib/supabase'
 
 type Props = { params: Promise<{ eventId: string }> }
@@ -175,6 +175,22 @@ function formatBirthdate(iso: string): string {
   const [y, m, d] = iso.split('-')
   return `${d}/${m}/${y}`
 }
+
+function getDancerDisplayName(dancer: Dancer, index: number, allDancers: Dancer[]): string {
+  const parts = dancer.name.trim().split(/\s+/).filter(Boolean)
+  if (parts.length === 0) return 'SIN NOMBRE'
+  const firstName = parts[0]
+  const hasDuplicate = allDancers.some((other, idx) => {
+    if (idx === index) return false
+    const otherParts = other.name.trim().split(/\s+/).filter(Boolean)
+    return otherParts.length > 0 && otherParts[0].toLowerCase() === firstName.toLowerCase()
+  })
+  if (hasDuplicate && parts.length > 1) {
+    return `${firstName} ${parts[1]}`.toUpperCase()
+  }
+  return firstName.toUpperCase()
+}
+
 
 function parseSmartList(text: string): Dancer[] {
   const lines = text.split('\n').map(l => l.trim()).filter(Boolean)
@@ -498,6 +514,20 @@ export default function RegisterPage({ params }: Props) {
     setPasteText('')
   }
 
+  async function handleClipboardPaste() {
+    try {
+      const text = await navigator.clipboard.readText()
+      if (text && text.trim()) {
+        handleSmartPaste(text)
+      } else {
+        alert("El portapapeles está vacío o no contiene texto legible.")
+      }
+    } catch (err) {
+      console.error("Error al leer el portapapeles:", err)
+      alert("No se pudo acceder al portapapeles de forma automática. Por favor, concede los permisos correspondientes o copia y pega el contenido manualmente en el cuadro de texto.")
+    }
+  }
+
   function updateAct(i: number, patch: Partial<Act>) {
     setState(s => {
       const acts = [...s.acts]
@@ -681,7 +711,7 @@ export default function RegisterPage({ params }: Props) {
       <main
         className="flex-1 min-h-0 px-0 sm:px-4 lg:px-8 flex flex-col overflow-y-auto lg:overflow-hidden"
         style={{
-          paddingTop: 'calc(env(safe-area-inset-top, 0px) + 2px)',
+          paddingTop: 'env(safe-area-inset-top, 0px)',
           paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 8px)'
         }}
       >
@@ -703,7 +733,7 @@ export default function RegisterPage({ params }: Props) {
 
         {/* STEP STATUS INDICATOR (iOS Tab Style) */}
         {!isKeyboardOpen && !isFirstStep && step.kind !== 'confirmed' && (
-          <div className="shrink-0 flex justify-center pt-1.5 pb-2.5 sm:py-3 px-4 sm:px-0">
+          <div className="shrink-0 flex justify-center pt-0.5 pb-2 sm:py-3 px-4 sm:px-0">
             <div className="bg-[rgb(var(--c-surface-2))] p-1 rounded-2xl flex gap-1 w-full max-w-xl shadow-inner border border-[rgb(var(--c-border)/0.3)]">
               {[
                 { label: 'COACH', kind: 'setup' },
@@ -731,7 +761,7 @@ export default function RegisterPage({ params }: Props) {
         )}
 
         <div className="flex-1 min-h-0 flex justify-center">
-          <div className={`w-full ${step.kind === 'summary' || step.kind === 'confirmed' || step.kind === 'dancers' ? 'max-w-6xl' : 'max-w-3xl'} min-h-full lg:h-full flex flex-col justify-start lg:justify-center ${isKeyboardOpen ? 'pt-[1vh] lg:pt-3' : 'pt-1.5 sm:pt-2 lg:pt-0'} min-h-0`}>
+          <div className={`w-full ${step.kind === 'summary' || step.kind === 'confirmed' || step.kind === 'dancers' ? 'max-w-6xl' : 'max-w-3xl'} min-h-full lg:h-full flex flex-col justify-start lg:justify-center ${isKeyboardOpen ? 'pt-[1vh] lg:pt-3' : 'pt-0 sm:pt-2 lg:pt-0'} min-h-0`}>
             <StepView
               step={step}
               state={state}
@@ -790,8 +820,8 @@ export default function RegisterPage({ params }: Props) {
               </span>
             )}
             {step.kind === 'summary' && (
-              <span className="text-xs font-display text-[rgb(var(--c-success-strong))] font-bold">
-                Total: {formatMoney(costoTotal(state))}
+              <span className="text-xs font-display text-[rgb(var(--c-primary))] font-bold bg-[rgb(var(--c-primary)/0.1)] border border-[rgb(var(--c-primary)/0.2)] px-3 py-1 rounded-full">
+                {state.dancers.length} Alum. / {state.acts.length} {state.acts.length === 1 ? 'Acto' : 'Actos'}
               </span>
             )}
           </div>
@@ -842,6 +872,20 @@ export default function RegisterPage({ params }: Props) {
               <p>• Juan Pérez, 15/04/2012</p>
               <p>• Sofía Gómez 22-10-2015</p>
               <p>• 2010/05/18 Alejandro Ruiz</p>
+            </div>
+
+            {/* DIRECT PASTE BUTTON FROM CLIPBOARD */}
+            <button
+              type="button"
+              onClick={handleClipboardPaste}
+              className="w-full inline-flex items-center justify-center gap-2 bg-[rgb(var(--c-primary)/0.08)] hover:bg-[rgb(var(--c-primary)/0.12)] text-[rgb(var(--c-primary))] border border-[rgb(var(--c-primary)/0.25)] py-3 px-4 rounded-2xl font-display text-sm tracking-wider font-bold shadow-sm active:scale-95 transition-all duration-150 shrink-0"
+            >
+              <Clipboard className="w-4 h-4" /> PEGAR DESDE EL PORTAPAPELES
+            </button>
+
+            <div className="relative shrink-0 flex items-center justify-center py-1">
+              <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-[rgb(var(--c-border)/0.4)]" /></div>
+              <span className="relative bg-[rgb(var(--c-surface))] px-3 text-[10px] text-[rgb(var(--c-text)/0.5)] font-semibold uppercase tracking-wider">o pega manualmente abajo</span>
             </div>
 
             <div className="flex-1 min-h-0 flex flex-col">
@@ -940,7 +984,7 @@ function StepView(props: {
           <div className="flex items-start gap-3 bg-[rgb(var(--c-primary)/0.05)] border border-[rgb(var(--c-primary)/0.2)] text-[rgb(var(--c-text-strong))] px-5 py-4 rounded-2xl text-left">
             <Info className="w-5 h-5 shrink-0 mt-0.5 text-[rgb(var(--c-primary))]" />
             <p className="text-xs lg:text-sm leading-snug">
-              <strong>Atención:</strong> Por favor, ingresa los datos correspondientes. Al finalizar, podrás definir los costos acordados y confirmar el registro.
+              <strong>Atención:</strong> Por favor, ingresa los datos correspondientes. Al finalizar, podrás revisar los datos y confirmar el registro.
             </p>
           </div>
 
@@ -960,15 +1004,15 @@ function StepView(props: {
       const isValid = isCoachValid && isAcademyValid
 
       return (
-        <div className="space-y-5 py-2 overflow-y-auto max-h-[80vh] px-0 sm:px-1" style={{ animation: 'fadeIn 0.3s ease-out' }}>
+        <div className="space-y-3.5 py-1 sm:space-y-5 sm:py-2 overflow-y-auto max-h-[80vh] px-0 sm:px-1" style={{ animation: 'fadeIn 0.3s ease-out' }}>
           <div className="text-center lg:text-left space-y-1 px-4 sm:px-0">
             <h2 className="font-display text-3xl lg:text-4xl text-[rgb(var(--c-text-strong))]">Paso 1: Coach y Academia</h2>
             <p className="text-sm text-[rgb(var(--c-text))]">Completa tu información organizativa general</p>
           </div>
 
-          <div className="grid lg:grid-cols-2 gap-5">
+          <div className="grid lg:grid-cols-2 gap-3.5 sm:gap-5">
             {/* COACH CARD */}
-            <div className="bg-white border-y sm:border border-[rgb(var(--c-border)/0.4)] rounded-none sm:rounded-3xl p-4 sm:p-6 shadow-none sm:shadow-sm space-y-4">
+            <div className="bg-white border-y sm:border border-[rgb(var(--c-border)/0.4)] rounded-none sm:rounded-3xl p-3.5 sm:p-6 shadow-none sm:shadow-sm space-y-3">
               <h3 className="font-display text-xl text-[rgb(var(--c-primary))] flex items-center gap-2 border-b border-[rgb(var(--c-border)/0.2)] pb-2">
                 <Users className="w-5 h-5" /> COACH PRINCIPAL
               </h3>
@@ -1012,11 +1056,11 @@ function StepView(props: {
             </div>
 
             {/* ACADEMY CARD */}
-            <div className="bg-white border-y sm:border border-[rgb(var(--c-border)/0.4)] rounded-none sm:rounded-3xl p-4 sm:p-6 shadow-none sm:shadow-sm space-y-4">
+            <div className="bg-white border-y sm:border border-[rgb(var(--c-border)/0.4)] rounded-none sm:rounded-3xl p-3.5 sm:p-6 shadow-none sm:shadow-sm space-y-3">
               <h3 className="font-display text-xl text-[rgb(var(--c-primary))] flex items-center gap-2 border-b border-[rgb(var(--c-border)/0.2)] pb-2">
-                <HeartHandshake className="w-5 h-5" /> ACADEMIA Y EQUIPO
+                <School className="w-5 h-5" /> ACADEMIA Y EQUIPO
               </h3>
-              <div className="space-y-3.5">
+              <div className="space-y-3">
                 <div>
                   <label className="block text-[10px] font-bold tracking-widest text-[rgb(var(--c-text)/0.7)] mb-1">NOMBRE DE LA ACADEMIA / COLEGIO</label>
                   <input
@@ -1055,7 +1099,7 @@ function StepView(props: {
           </div>
 
           {/* DYNAMIC STAFF CARD (EXTRA COACHES & ASSISTANTS) */}
-          <div className="bg-white border-y sm:border border-[rgb(var(--c-border)/0.4)] rounded-none sm:rounded-3xl p-4 sm:p-6 shadow-none sm:shadow-sm space-y-5">
+          <div className="bg-white border-y sm:border border-[rgb(var(--c-border)/0.4)] rounded-none sm:rounded-3xl p-3.5 sm:p-6 shadow-none sm:shadow-sm space-y-3.5 sm:space-y-5">
             <h3 className="font-display text-xl text-[rgb(var(--c-primary))] border-b border-[rgb(var(--c-border)/0.2)] pb-2 flex items-center gap-2">
               <Users className="w-5 h-5 text-[rgb(var(--c-primary))]" /> STAFF ADICIONAL (COACHES Y ASISTENTES)
             </h3>
@@ -1160,7 +1204,7 @@ function StepView(props: {
       const isAllValid = state.dancers.length > 0 && state.dancers.every(d => d.name.trim().length >= 2 && d.birthdate.length === 10)
 
       return (
-        <div className="space-y-4 py-2 overflow-y-auto max-h-[82vh] px-0 sm:px-1 flex flex-col h-full min-h-0" style={{ animation: 'fadeIn 0.3s ease-out' }}>
+        <div className="space-y-3 py-1 sm:space-y-4 overflow-y-auto max-h-[82vh] px-0 sm:px-1 flex flex-col h-full min-h-0" style={{ animation: 'fadeIn 0.3s ease-out' }}>
           <div className="shrink-0 flex flex-col md:flex-row md:items-center justify-between gap-3 px-4 sm:px-0">
             <div className="text-center md:text-left space-y-0.5">
               <h2 className="font-display text-3xl text-[rgb(var(--c-text-strong))]">Paso 2: Registro de Alumnos</h2>
@@ -1199,7 +1243,7 @@ function StepView(props: {
                 </div>
               </div>
             ) : (
-              <div className="space-y-3.5">
+              <div className="space-y-2">
                 {state.dancers.map((d, i) => {
                   const compCat = categoryFromBirthdate(d.birthdate)
                   const age = ageFromBirthdate(d.birthdate)
@@ -1208,7 +1252,7 @@ function StepView(props: {
                   return (
                     <div
                       key={`dancer-${i}`}
-                      className={`border rounded-2xl p-3.5 md:py-3.5 md:px-5 flex flex-col md:flex-row items-stretch md:items-center gap-3 md:gap-4 transition-all duration-200 animate-[fadeIn_0.2s_ease-out_forwards] ${
+                      className={`border rounded-2xl p-2.5 md:py-3 md:px-5 flex flex-col md:flex-row items-stretch md:items-center gap-3 md:gap-4 transition-all duration-200 animate-[fadeIn_0.2s_ease-out_forwards] ${
                         isDancerValid ? 'bg-[rgb(var(--c-surface)/0.25)] border-[rgb(var(--c-border)/0.3)]' : 'bg-[rgb(var(--c-primary)/0.02)] border-[rgb(var(--c-primary)/0.15)]'
                       }`}
                     >
@@ -1237,7 +1281,7 @@ function StepView(props: {
                       </div>
 
                       {/* Date input */}
-                      <div className="shrink-0 w-full md:w-[150px]">
+                      <div className="shrink-0 w-full min-w-0 md:w-[150px]">
                         <input
                           type={d.birthdate ? "date" : "text"}
                           value={d.birthdate}
@@ -1245,17 +1289,17 @@ function StepView(props: {
                           placeholder="Fecha de nacimiento"
                           onFocus={e => (e.target.type = "date")}
                           onBlur={e => { if (!d.birthdate) e.target.type = "text" }}
-                          className="w-full bg-white border border-[rgb(var(--c-border)/0.5)] text-[rgb(var(--c-text-strong))] rounded-xl px-3 py-2.5 text-xs outline-none focus:border-[rgb(var(--c-primary))] transition-all font-semibold text-center"
+                          className="w-full min-w-0 bg-white border border-[rgb(var(--c-border)/0.5)] text-[rgb(var(--c-text-strong))] rounded-xl px-3 py-2.5 text-xs outline-none focus:border-[rgb(var(--c-primary))] transition-all font-semibold text-center [appearance:none] [-webkit-appearance:none]"
                         />
                       </div>
 
                       {/* Category in vivo feedback */}
-                      <div className="shrink-0 w-full md:w-[180px] flex items-center justify-between md:justify-start gap-2">
-                        <div className="flex-1">
+                      <div className="shrink-0 w-full min-w-0 md:w-[180px] flex items-center justify-between md:justify-start gap-2">
+                        <div className="flex-1 min-w-0">
                           <select
                             value={d.categoryOverride ?? ''}
                             onChange={e => updateDancer(i, { categoryOverride: (e.target.value || null) as AgeCategory | null })}
-                            className={`w-full bg-white border border-[rgb(var(--c-border)/0.5)] text-[rgb(var(--c-text-strong))] rounded-xl px-2 py-2.5 text-xs outline-none font-display font-bold text-center ${
+                            className={`w-full min-w-0 bg-white border border-[rgb(var(--c-border)/0.5)] text-[rgb(var(--c-text-strong))] rounded-xl px-2 py-2.5 text-xs outline-none font-display font-bold text-center [appearance:none] [-webkit-appearance:none] ${
                               d.categoryOverride ? 'text-[rgb(var(--c-primary))] bg-[rgb(var(--c-primary)/0.03)] border-[rgb(var(--c-primary)/0.3)]' : ''
                             }`}
                           >
@@ -1304,6 +1348,11 @@ function StepView(props: {
     case 'acts': {
       const isAllValid = state.acts.length > 0 && state.acts.every(a => a.modality && a.style && a.dancerIndices.length >= minDancers(a.modality))
 
+      const handleCreateAct = () => {
+        addAct()
+        setActiveActIndex(state.acts.length)
+      }
+
       return (
         <div className="space-y-4 py-2 overflow-y-auto max-h-[82vh] px-0 sm:px-1 flex flex-col h-full min-h-0" style={{ animation: 'fadeIn 0.3s ease-out' }}>
           <div className="shrink-0 flex items-center justify-between px-4 sm:px-0">
@@ -1314,7 +1363,7 @@ function StepView(props: {
             
             <button
               type="button"
-              onClick={addAct}
+              onClick={handleCreateAct}
               className="inline-flex items-center gap-1 bg-[rgb(var(--c-primary))] hover:bg-[rgb(var(--c-primary-strong))] text-white px-4 py-2.5 rounded-2xl font-display text-sm tracking-wider font-bold shadow-sm active:scale-95 transition-all duration-150 shrink-0"
             >
               <Plus className="w-4 h-4" /> CREAR ACTO
@@ -1558,7 +1607,7 @@ function StepView(props: {
                                             >
                                               {isSel && <Check className="w-3 h-3 text-white" strokeWidth={3} />}
                                               <span className="opacity-60 font-sans font-bold text-[9px]">{di + 1}</span>
-                                              <span>{d.name.split(' ')[0].toUpperCase()}</span>
+                                              <span>{getDancerDisplayName(d, di, state.dancers)}</span>
                                             </button>
                                           )
                                         })}
@@ -1697,7 +1746,7 @@ function FullSummary({ state, editMode, confirmed, confirm, saving, saveErr, sta
         </div>
       )}
       
-      <div className="flex-1 overflow-y-auto px-0 sm:px-4 lg:px-6 py-2 sm:py-4 pb-32 space-y-6 bg-transparent sm:bg-[rgb(var(--c-surface-2)/0.35)] rounded-none sm:rounded-3xl max-h-[75vh]">
+      <div className="flex-1 overflow-y-auto px-0 sm:px-4 lg:px-6 py-2 sm:py-4 pb-6 sm:pb-28 space-y-6 bg-transparent sm:bg-[rgb(var(--c-surface-2)/0.35)] rounded-none sm:rounded-3xl max-h-[75vh]">
         
         {/* COACH, ACADEMY & STAFF */}
         <div className="bg-white rounded-none sm:rounded-3xl border-y sm:border border-[rgb(var(--c-border)/0.4)] p-4 sm:p-6 shadow-none sm:shadow-sm relative">
@@ -1739,53 +1788,6 @@ function FullSummary({ state, editMode, confirmed, confirm, saving, saveErr, sta
           </div>
         </div>
 
-        {/* INTERACTIVE COSTS SETTING CARD */}
-        <div className="bg-white rounded-none sm:rounded-3xl border-y sm:border border-[rgb(var(--c-border)/0.4)] p-4 sm:p-6 shadow-none sm:shadow-sm">
-          <h3 className="font-display text-lg tracking-widest text-[rgb(var(--c-primary))] mb-4 border-b border-[rgb(var(--c-border)/0.25)] pb-2 uppercase">COSTOS ACORDADOS Y TOTAL</h3>
-          
-          <div className="grid md:grid-cols-3 gap-5 items-center">
-            {confirmed ? (
-              <div className="md:col-span-2 flex gap-8">
-                <div>
-                  <p className="text-[10px] tracking-[0.2em] text-[rgb(var(--c-text)/0.6)] font-bold mb-1">1ª PARTICIPACIÓN</p>
-                  <p className="font-display text-xl text-[rgb(var(--c-text-strong))]">{formatMoney(state.costPaquete ?? 0)}</p>
-                </div>
-                <div>
-                  <p className="text-[10px] tracking-[0.2em] text-[rgb(var(--c-text)/0.6)] font-bold mb-1">REPETICIÓN</p>
-                  <p className="font-display text-xl text-[rgb(var(--c-text-strong))]">{formatMoney(state.costRepeticion ?? 0)}</p>
-                </div>
-              </div>
-            ) : (
-              <div className="md:col-span-2 grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-[9px] font-bold tracking-widest text-[rgb(var(--c-text)/0.65)] mb-1 text-center uppercase">COSTO 1ª PARTICIPACIÓN</label>
-                  <MoneyInput
-                    value={state.costPaquete}
-                    onChange={n => updateState(s => ({ ...s, costPaquete: n }))}
-                  />
-                </div>
-                <div>
-                  <label className="block text-[9px] font-bold tracking-widest text-[rgb(var(--c-text)/0.65)] mb-1 text-center uppercase">COSTO REPETICIÓN</label>
-                  <MoneyInput
-                    value={state.costRepeticion}
-                    onChange={n => updateState(s => ({ ...s, costRepeticion: n }))}
-                  />
-                </div>
-              </div>
-            )}
-
-            <div className="w-full bg-gradient-to-r from-[#16A34A] via-[#82f606] to-[#fff200] rounded-2xl p-4 text-[rgb(var(--c-text-strong))] text-right shadow-inner">
-              <p className="text-[10px] tracking-[0.2em] font-bold opacity-90 mb-0.5">TOTAL CALCULADO</p>
-              <p className="font-display text-3xl md:text-4xl lg:text-5xl leading-none">{formatMoney(total)}</p>
-            </div>
-          </div>
-          {!hasCosts && !confirmed && (
-            <p className="text-[10px] text-[rgb(var(--c-primary))] font-bold mt-3 text-center">
-              ⚠️ Ingresa el costo acordado para ver el desglose final de pagos
-            </p>
-          )}
-        </div>
-
         {/* DANCERS SUMMARY */}
         <div className="bg-white rounded-none sm:rounded-3xl border-y sm:border border-[rgb(var(--c-border)/0.4)] p-4 sm:p-6 shadow-none sm:shadow-sm">
           <h3 className="font-display text-lg tracking-widest text-[rgb(var(--c-primary))] mb-4 border-b border-[rgb(var(--c-border)/0.25)] pb-2 flex justify-between items-center">
@@ -1804,7 +1806,6 @@ function FullSummary({ state, editMode, confirmed, confirm, saving, saveErr, sta
               <p className="text-[rgb(var(--c-text)/0.5)] italic text-sm col-span-full">Sin alumnos</p>
             ) : filledDancers.map((d, di) => {
               const n = counts.get(di) ?? 0
-              const cost = hasCosts && n > 0 ? (state.costPaquete ?? 1000) + Math.max(0, n - 1) * (state.costRepeticion ?? 300) : null
               return (
                 <div key={di} className="flex items-center gap-3 border-b border-[rgb(var(--c-border)/0.2)] pb-2 text-xs">
                   <span className="font-display text-sm text-[rgb(var(--c-text)/0.4)] w-5 text-right shrink-0">{di + 1}.</span>
@@ -1818,7 +1819,6 @@ function FullSummary({ state, editMode, confirmed, confirm, saving, saveErr, sta
                     ) : (
                       <span className="block text-[9px] text-[rgb(var(--c-text)/0.4)] italic">Sin acto</span>
                     )}
-                    {cost !== null && <span className="block text-[11px] text-[rgb(var(--c-text-strong))] font-bold mt-1 opacity-90">{formatMoney(cost)}</span>}
                   </div>
                 </div>
               )
@@ -1864,7 +1864,7 @@ function FullSummary({ state, editMode, confirmed, confirm, saving, saveErr, sta
                           if (!d) return null
                           return (
                             <span key={di} className="inline-block bg-[rgb(var(--c-surface-2))] text-[rgb(var(--c-text-strong))] text-[10px] px-2 py-0.5 rounded-md font-semibold border border-[rgb(var(--c-border)/0.3)]">
-                              {d.name.split(' ')[0]}
+                              {getDancerDisplayName(d, di, state.dancers)}
                             </span>
                           )
                         })}
@@ -1881,8 +1881,14 @@ function FullSummary({ state, editMode, confirmed, confirm, saving, saveErr, sta
 
       {/* FLOATING ACTION BAR FOR CONFIRM / SAVE */}
       <div 
-        className="shrink-0 bg-white border-t border-[rgb(var(--c-border)/0.7)] p-4 md:p-5 shadow-[0_-10px_40px_rgba(0,0,0,0.05)] z-20 rounded-t-3xl mt-4"
-        style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 8px)' }}
+        className={`shrink-0 bg-white border-t border-[rgb(var(--c-border)/0.7)] shadow-[0_-10px_40px_rgba(0,0,0,0.05)] z-20 rounded-t-3xl mt-2 ${
+          confirmed ? 'p-3 pb-1 md:p-5' : 'p-4 md:p-5 hidden lg:block'
+        }`}
+        style={{ 
+          paddingBottom: confirmed 
+            ? 'calc(env(safe-area-inset-bottom, 0px) + 2px)' 
+            : 'calc(env(safe-area-inset-bottom, 0px) + 8px)' 
+        }}
       >
         <div className="max-w-4xl mx-auto w-full">
           {saveErr && (
@@ -1891,9 +1897,9 @@ function FullSummary({ state, editMode, confirmed, confirm, saving, saveErr, sta
           {confirmed ? (
             <button
               onClick={startEdit}
-              className="w-full h-14 md:h-16 flex items-center justify-center gap-3 bg-white border-2 border-[rgb(var(--c-border))] hover:bg-[rgb(var(--c-surface-2))] text-[rgb(var(--c-text-strong))] font-display text-lg tracking-widest rounded-2xl transition-all shadow-sm active:scale-[0.98] duration-150 font-bold"
+              className="w-full h-12 md:h-14 flex items-center justify-center gap-3 bg-white border-2 border-[rgb(var(--c-border))] hover:bg-[rgb(var(--c-surface-2))] text-[rgb(var(--c-text-strong))] font-display text-base tracking-widest rounded-2xl transition-all shadow-sm active:scale-[0.98] duration-150 font-bold"
             >
-              <Pencil className="w-5 h-5 text-[rgb(var(--c-primary))]" /> MODIFICAR REGISTRO
+              <Pencil className="w-4 h-4 text-[rgb(var(--c-primary))]" /> MODIFICAR REGISTRO
             </button>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -1905,7 +1911,7 @@ function FullSummary({ state, editMode, confirmed, confirm, saving, saveErr, sta
               </button>
               <button
                 onClick={confirm}
-                disabled={saving || !hasCosts}
+                disabled={saving}
                 className="w-full h-14 md:h-16 bg-gradient-to-r from-[#16A34A] via-[#82f606] to-[#fff200] hover:brightness-105 active:brightness-95 text-[rgb(var(--c-text-strong))] font-display text-lg tracking-widest rounded-2xl disabled:opacity-50 disabled:pointer-events-none transition-all shadow-lg active:scale-[0.98] duration-150 md:col-span-2 font-bold"
               >
                 {saving ? 'GUARDANDO…' : editMode ? 'GUARDAR CAMBIOS' : 'CONFIRMAR REGISTRO'}
