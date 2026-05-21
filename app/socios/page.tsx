@@ -18,6 +18,7 @@ import {
 import {
   Activity,
   AlertTriangle,
+  Award,
   BarChart3,
   Building2,
   Calendar,
@@ -28,6 +29,7 @@ import {
   Download,
   Edit3,
   Home,
+  ListOrdered,
   Lock,
   Megaphone,
   MessageCircle,
@@ -270,6 +272,24 @@ export default function SociosPage() {
     at: r.confirmed_at ?? r.submitted_at,
   })).sort((a, b) => (b.at ?? '').localeCompare(a.at ?? '')).slice(0, 15), [enriched])
 
+  const autoProgram = useMemo(() => {
+    type Item = { act: RegistrationAct; reg: EnrichedRegistration }
+    const items: Item[] = []
+    enriched.forEach(r => r.acts.forEach(a => items.push({ act: a, reg: r })))
+    const modOrder: Modality[] = ['solista', 'dueto', 'trio', 'grupal']
+    items.sort((a, b) => {
+      const ca = a.act.age_category ? AGE_CATEGORY_ORDER.indexOf(a.act.age_category) : 999
+      const cb = b.act.age_category ? AGE_CATEGORY_ORDER.indexOf(b.act.age_category) : 999
+      if (ca !== cb) return ca - cb
+      const ma = modOrder.indexOf(a.act.modality)
+      const mb = modOrder.indexOf(b.act.modality)
+      if (ma !== mb) return ma - mb
+      return (a.reg.submitted_at ?? '').localeCompare(b.reg.submitted_at ?? '')
+    })
+    const mid = Math.ceil(items.length / 2)
+    return { block1: items.slice(0, mid), block2: items.slice(mid), total: items.length, mid }
+  }, [enriched])
+
   const [query, setQuery] = useState('')
   const filteredRegs = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -399,6 +419,23 @@ export default function SociosPage() {
 
         {tab === 'datos' && (
           <>
+            <Section icon={ListOrdered} title="Programa borrador (auto)" subtitle={`${autoProgram.total} actos · se ajusta en vivo`}>
+              {autoProgram.total === 0 ? <Empty>Aún no hay actos registrados.</Empty> : (
+                <div className="-mx-1">
+                  <BlockBanner number={1} count={autoProgram.block1.length} />
+                  <ol className="divide-y divide-[rgb(var(--c-border)/0.4)] mt-1">
+                    {autoProgram.block1.map((it, i) => <ProgItem key={it.act.id} idx={i + 1} item={it} />)}
+                  </ol>
+                  <CeremonyBanner label="PRIMERA PREMIACIÓN" />
+                  <BlockBanner number={2} count={autoProgram.block2.length} />
+                  <ol className="divide-y divide-[rgb(var(--c-border)/0.4)] mt-1">
+                    {autoProgram.block2.map((it, i) => <ProgItem key={it.act.id} idx={autoProgram.mid + i + 1} item={it} />)}
+                  </ol>
+                  <CeremonyBanner label="PREMIACIÓN FINAL" final />
+                </div>
+              )}
+            </Section>
+
             <Section icon={BarChart3} title="Heatmap categoría × modalidad">
               <div className="overflow-x-auto -mx-3 px-3">
                 <table className="w-full text-sm">
@@ -789,6 +826,55 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
       <span className="text-[rgb(var(--c-text)/0.6)] w-20 shrink-0">{label}:</span>
       <span className="flex-1 font-medium flex items-center gap-2 min-w-0">{children}</span>
     </div>
+  )
+}
+
+function BlockBanner({ number, count }: { number: 1 | 2; count: number }) {
+  return (
+    <div className="bg-[rgb(var(--c-text-strong))] text-white rounded-xl px-4 py-3 flex items-center justify-between">
+      <div className="flex items-center gap-2.5">
+        <span className="font-display text-2xl tracking-widest">BLOQUE {number}</span>
+      </div>
+      <span className="text-sm tracking-wider opacity-80">{count} {count === 1 ? 'acto' : 'actos'}</span>
+    </div>
+  )
+}
+
+function CeremonyBanner({ label, final }: { label: string; final?: boolean }) {
+  return (
+    <div className={`my-2 rounded-xl px-4 py-3.5 flex items-center justify-center gap-2.5 ${final ? 'bg-[rgb(var(--c-primary))] text-white' : 'bg-[rgb(var(--c-accent))] text-white'}`}>
+      <Award className="w-5 h-5" />
+      <span className="font-display text-lg tracking-[0.25em]">{label}</span>
+      <Award className="w-5 h-5" />
+    </div>
+  )
+}
+
+function ProgItem({ idx, item }: { idx: number; item: { act: RegistrationAct; reg: EnrichedRegistration } }) {
+  const { act, reg } = item
+  const cat = act.age_category ? AGE_CATEGORY_LABELS[act.age_category].toUpperCase() : '—'
+  const mod = MODALITY_LABELS[act.modality].toUpperCase()
+  const dancers = act.modality === 'grupal' ? reg.dancers : reg.dancers.filter(d => act.dancer_ids.includes(d.id))
+  const names = dancers.map(d => d.name.split(' ').slice(0, 2).join(' ')).join(', ')
+  const meta = [act.level, act.style].filter(Boolean).join(' · ')
+  const isConfirmed = !!reg.confirmed_at
+  return (
+    <li className="py-2.5 px-2 flex items-start gap-3">
+      <div className="shrink-0 text-right">
+        <span className="font-display text-2xl text-[rgb(var(--c-primary))] tabular-nums leading-none">#{idx.toString().padStart(2, '0')}</span>
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="font-display text-sm tracking-wider text-[rgb(var(--c-text-strong))]">{mod}</span>
+          <span className="text-[10px] tracking-widest text-[rgb(var(--c-text)/0.6)]">·</span>
+          <span className="font-display text-sm tracking-wider text-[rgb(var(--c-accent))]">{cat}</span>
+          {!isConfirmed && <span className="text-[10px] uppercase tracking-widest bg-[rgb(var(--c-accent)/0.15)] text-[rgb(var(--c-accent))] px-1.5 py-0.5 rounded">borrador</span>}
+        </div>
+        <p className="text-base font-medium truncate mt-0.5">{reg.academy}{reg.team_name ? ` — ${reg.team_name}` : ''}</p>
+        {names && <p className="text-sm text-[rgb(var(--c-text)/0.75)] truncate">{names}</p>}
+        {meta && <p className="text-xs text-[rgb(var(--c-text)/0.55)] uppercase tracking-wider mt-0.5">{meta}</p>}
+      </div>
+    </li>
   )
 }
 
