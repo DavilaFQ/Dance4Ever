@@ -57,7 +57,6 @@ type Step =
   | { kind: 'dancer'; i: number }
   | { kind: 'act_count' }
   | { kind: 'act_modality'; i: number }
-  | { kind: 'act_grupal_category'; i: number }
   | { kind: 'act_level'; i: number }
   | { kind: 'act_style'; i: number }
   | { kind: 'act_dancers'; i: number }
@@ -76,11 +75,20 @@ const MODALITY_OPTIONS: { value: Modality; label: string }[] = [
 
 const MONTHS = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
 
-function requiredDancers(m: Modality | null): number | null {
+function minDancers(m: Modality | null): number {
   if (m === 'solista') return 1
   if (m === 'dueto') return 2
   if (m === 'trio') return 3
-  return null
+  if (m === 'grupal') return 4
+  return 0
+}
+
+function maxDancers(m: Modality | null): number {
+  if (m === 'solista') return 1
+  if (m === 'dueto') return 2
+  if (m === 'trio') return 3
+  if (m === 'grupal') return 100
+  return 0
 }
 
 function modalityLabel(m: Modality): string {
@@ -186,7 +194,7 @@ type EditScope =
 
 const COACH_STEP_KINDS = ['coach_name', 'coach_phone', 'coach_email', 'coach_multi_q', 'coach_extras']
 const ACADEMY_STEP_KINDS = ['academy', 'team_name']
-const ACT_STEP_KINDS = ['act_modality', 'act_grupal_category', 'act_level', 'act_style', 'act_dancers']
+const ACT_STEP_KINDS = ['act_modality', 'act_level', 'act_style', 'act_dancers']
 
 function isOutsideEdit(step: Step, scope: EditScope): boolean {
   switch (scope.kind) {
@@ -199,7 +207,7 @@ function isOutsideEdit(step: Step, scope: EditScope): boolean {
       return step.i !== scope.i
     case 'act':
       if (!ACT_STEP_KINDS.includes(step.kind)) return true
-      if (step.kind === 'act_modality' || step.kind === 'act_grupal_category' || step.kind === 'act_level' || step.kind === 'act_style' || step.kind === 'act_dancers') {
+      if (step.kind === 'act_modality' || step.kind === 'act_level' || step.kind === 'act_style' || step.kind === 'act_dancers') {
         return step.i !== scope.i
       }
       return true
@@ -931,18 +939,12 @@ function nextStep(current: Step, state: State): Step {
     case 'act_count': return { kind: 'act_modality', i: 0 }
     case 'act_modality': {
       const act = state.acts[current.i]
-      if (act.modality === 'grupal') return { kind: 'act_grupal_category', i: current.i }
+      if (act.modality === 'grupal') return { kind: 'act_level', i: current.i }
       return { kind: 'act_style', i: current.i }
     }
-    case 'act_grupal_category': return { kind: 'act_level', i: current.i }
     case 'act_level': return { kind: 'act_style', i: current.i }
     case 'act_style': {
-      const act = state.acts[current.i]
-      const needs = requiredDancers(act.modality)
-      if (needs !== null) return { kind: 'act_dancers', i: current.i }
-      const ni = current.i + 1
-      if (ni < (state.actCount ?? 0)) return { kind: 'act_modality', i: ni }
-      return { kind: 'costs' }
+      return { kind: 'act_dancers', i: current.i }
     }
     case 'act_dancers': {
       const ni = current.i + 1
@@ -976,13 +978,9 @@ function prevStep(current: Step, state: State): Step | null {
     case 'act_modality': {
       if (current.i === 0) return { kind: 'act_count' }
       const prev = current.i - 1
-      const prevAct = state.acts[prev]
-      const needs = requiredDancers(prevAct.modality)
-      if (needs !== null) return { kind: 'act_dancers', i: prev }
-      return { kind: 'act_style', i: prev }
+      return { kind: 'act_dancers', i: prev }
     }
-    case 'act_grupal_category': return { kind: 'act_modality', i: current.i }
-    case 'act_level': return { kind: 'act_grupal_category', i: current.i }
+    case 'act_level': return { kind: 'act_modality', i: current.i }
     case 'act_style': {
       const act = state.acts[current.i]
       if (act.modality === 'grupal') return { kind: 'act_level', i: current.i }
@@ -991,10 +989,7 @@ function prevStep(current: Step, state: State): Step | null {
     case 'act_dancers': return { kind: 'act_style', i: current.i }
     case 'costs': {
       const last = (state.actCount ?? 1) - 1
-      const lastAct = state.acts[last]
-      const needs = requiredDancers(lastAct.modality)
-      if (needs !== null) return { kind: 'act_dancers', i: last }
-      return { kind: 'act_style', i: last }
+      return { kind: 'act_dancers', i: last }
     }
     case 'summary': return { kind: 'costs' }
     case 'confirmed': return null
@@ -1453,7 +1448,7 @@ function StepView(props: {
                 label={opt.label}
                 selected={a.modality === opt.value}
                 onClick={() => {
-                  const dancerIndices = requiredDancers(opt.value) !== null ? a.dancerIndices : []
+                  const dancerIndices = a.dancerIndices.slice(0, maxDancers(opt.value))
                   const level = opt.value === 'grupal' ? a.level : null
                   const ageCategory = opt.value === 'grupal' ? a.ageCategory : null
                   updateAct(i, { modality: opt.value, dancerIndices, level, ageCategory })
@@ -1509,40 +1504,6 @@ function StepView(props: {
       )
     }
 
-    case 'act_grupal_category': {
-      const i = step.i
-      const a = state.acts[i]
-      const avgCat = teamAvgCategory(state.dancers)
-      const options = avgCat ? neighborCategories(avgCat) : AGE_CATEGORY_ORDER
-      return (
-        <Wrapper title={`Acto ${i + 1} · ${a.modality ? modalityLabel(a.modality) : ''}`} subtitle="CATEGORÍA" isKeyboardOpen={isKeyboardOpen}>
-          {avgCat && (
-            <p className="text-center text-[rgb(var(--c-text))] text-base">
-              Categoría sugerida por edad promedio del equipo: <span className="text-[rgb(var(--c-primary))] font-display">{AGE_CATEGORY_LABELS[avgCat].toUpperCase()}</span>
-            </p>
-          )}
-          <div className={`grid gap-4 ${options.length === 2 ? 'grid-cols-2' : 'grid-cols-3'} max-w-3xl mx-auto`}>
-            {options.map(cat => (
-              <button
-                key={cat}
-                onClick={() => { updateAct(i, { ageCategory: cat }); onNext() }}
-                className={`py-7 px-3 rounded-2xl font-display tracking-wider transition-all flex flex-col items-center justify-center gap-1 border active:scale-[0.98] duration-150 ${
-                  a.ageCategory === cat
-                    ? 'bg-[rgb(var(--c-primary))] border-[rgb(var(--c-primary))] text-white shadow-md'
-                    : cat === avgCat
-                      ? 'bg-white text-[rgb(var(--c-text-strong))] border-2 border-[rgb(var(--c-primary))] hover:bg-[rgb(var(--c-surface-2))]'
-                      : 'bg-white border-[rgb(var(--c-border))] text-[rgb(var(--c-text-strong))] active:bg-[rgb(var(--c-surface-2))] hover:bg-[rgb(var(--c-surface-2))]'
-                }`}
-              >
-                <span className="text-2xl">{AGE_CATEGORY_LABELS[cat].toUpperCase()}</span>
-                <span className={`text-xs ${a.ageCategory === cat ? 'opacity-80' : 'opacity-65'}`}>{AGE_CATEGORY_HINTS[cat]}</span>
-              </button>
-            ))}
-          </div>
-        </Wrapper>
-      )
-    }
-
     case 'act_level': {
       const i = step.i
       const a = state.acts[i]
@@ -1587,9 +1548,10 @@ function StepView(props: {
     case 'act_dancers': {
       const i = step.i
       const a = state.acts[i]
-      const needs = requiredDancers(a.modality) ?? 0
+      const minN = minDancers(a.modality)
+      const maxN = maxDancers(a.modality)
       const selected = a.dancerIndices.length
-      const valid = selected === needs
+      const valid = selected >= minN && selected <= maxN
 
       // Group all team dancers by category, sort groups lowest first
       const grouped = new Map<AgeCategory, { d: Dancer, di: number }[]>()
@@ -1601,37 +1563,40 @@ function StepView(props: {
       })
       const sortedCats = AGE_CATEGORY_ORDER.filter(c => grouped.has(c))
 
-      // Lock category: if any selected, use that one's category
-      const firstSelected = a.dancerIndices[0]
-      const lockedCategory: AgeCategory | null = firstSelected !== undefined
-        ? effectiveCategory(state.dancers[firstSelected])
-        : null
-
       function toggle(di: number) {
-        const d = state.dancers[di]
-        const dCat = effectiveCategory(d)
         const cur = a.dancerIndices
+        let next: number[]
         if (cur.includes(di)) {
-          const next = cur.filter(x => x !== di)
-          // Update act ageCategory if list becomes empty
-          updateAct(i, { dancerIndices: next, ageCategory: next.length > 0 ? a.ageCategory : null })
-          return
+          next = cur.filter(x => x !== di)
+        } else {
+          if (cur.length >= maxN) return
+          next = [...cur, di]
         }
-        // Adding: must match locked category
-        if (lockedCategory && dCat !== lockedCategory) return
-        if (cur.length >= needs) return
-        const next = [...cur, di]
-        updateAct(i, { dancerIndices: next, ageCategory: dCat })
+        
+        // Auto-calculate the highest category among selected dancers
+        const selectedCategories = next.map(idx => effectiveCategory(state.dancers[idx])).filter(Boolean) as AgeCategory[]
+        let highestCategory: AgeCategory | null = null
+        if (selectedCategories.length > 0) {
+          const maxIndex = Math.max(...selectedCategories.map(c => AGE_CATEGORY_ORDER.indexOf(c)))
+          highestCategory = AGE_CATEGORY_ORDER[maxIndex]
+        }
+        
+        updateAct(i, { dancerIndices: next, ageCategory: highestCategory })
       }
 
       return (
         <div className="flex flex-col h-auto lg:h-full max-h-full min-h-0">
           <div className="text-center space-y-3 shrink-0 mb-5">
             <p className="font-display text-xs md:text-sm tracking-[0.4em] text-[rgb(var(--c-primary))]">
-              {`SELECCIONA ${needs} ${needs === 1 ? 'ALUMNO/A' : 'ALUMNOS/AS'}`}
-              {lockedCategory && ` · ${AGE_CATEGORY_LABELS[lockedCategory].toUpperCase()}`}
+              {a.modality === 'grupal' ? `SELECCIONA DE 4 A 100 ALUMNOS/AS` : `SELECCIONA ${minN} ${minN === 1 ? 'ALUMNO/A' : 'ALUMNOS/AS'}`}
             </p>
             <h2 className="font-display text-3xl md:text-4xl leading-tight text-[rgb(var(--c-text-strong))]">{`Acto ${i + 1} · ${a.modality ? modalityLabel(a.modality) : ''}`}</h2>
+            <div className="flex flex-col items-center justify-center gap-1">
+              <span className="text-[rgb(var(--c-text))] text-sm">Categoría del acto (Calculada):</span>
+              <span className={`font-display text-lg px-3 py-1 rounded-lg ${a.ageCategory ? 'bg-[rgb(var(--c-primary))] text-white' : 'bg-[rgb(var(--c-surface-2))] text-[rgb(var(--c-text)/0.5)]'}`}>
+                {a.ageCategory ? AGE_CATEGORY_LABELS[a.ageCategory].toUpperCase() : 'SELECCIONA ALUMNOS'}
+              </span>
+            </div>
           </div>
           {sortedCats.length === 0 ? (
             <div className="flex-1 min-h-0 flex items-center justify-center">
@@ -1644,9 +1609,8 @@ function StepView(props: {
             <div className="flex-1 min-h-0 overflow-y-auto pr-1 space-y-5">
               {sortedCats.map(cat => {
                 const list = grouped.get(cat)!
-                const disabled = lockedCategory !== null && cat !== lockedCategory
                 return (
-                  <div key={cat} className={disabled ? 'opacity-30' : ''}>
+                  <div key={cat}>
                     <p className="font-display text-xs tracking-[0.4em] text-[rgb(var(--c-primary))] mb-2 sticky top-0 bg-[rgb(var(--c-surface))] py-1.5 z-10">
                       {AGE_CATEGORY_LABELS[cat].toUpperCase()} · {AGE_CATEGORY_HINTS[cat]}
                     </p>
@@ -1657,13 +1621,10 @@ function StepView(props: {
                           <button
                             key={di}
                             onClick={() => toggle(di)}
-                            disabled={disabled}
                             className={`text-left px-4 py-3 rounded-2xl flex items-center gap-3 border transition-all active:scale-[0.98] duration-150 ${
                               isSel
                                 ? 'bg-[rgb(var(--c-primary))] border-[rgb(var(--c-primary))] text-white shadow-sm'
-                                : disabled
-                                  ? 'bg-[rgb(var(--c-surface-2))] text-[rgb(var(--c-text)/0.4)] border-[rgb(var(--c-border)/0.5)] cursor-not-allowed opacity-55'
-                                  : 'bg-white border-[rgb(var(--c-border))] text-[rgb(var(--c-text-strong))] active:bg-[rgb(var(--c-surface-2))] hover:bg-[rgb(var(--c-surface-2))]'
+                                : 'bg-white border-[rgb(var(--c-border))] text-[rgb(var(--c-text-strong))] active:bg-[rgb(var(--c-surface-2))] hover:bg-[rgb(var(--c-surface-2))]'
                             }`}
                           >
                             <span className="font-display text-base opacity-50 w-7 text-center shrink-0">{di + 1}</span>
@@ -1680,9 +1641,9 @@ function StepView(props: {
           )}
           <div className="shrink-0 pt-5 space-y-4">
             <p className="text-center text-[rgb(var(--c-text-strong))] font-display text-2xl tracking-wider">
-              {selected} / {needs}
+              {selected} / {maxN}
             </p>
-            <NextButton isKeyboardOpen={isKeyboardOpen} onClick={onNext} disabled={!valid} />
+            <NextButton isKeyboardOpen={isKeyboardOpen} onClick={() => { syncActsArray(); onNext() }} disabled={!valid} />
           </div>
         </div>
       )
@@ -1741,19 +1702,8 @@ function StepView(props: {
     }
 
     case 'summary':
-      return isMobile ? (
-        <MobileSummary
-          state={state}
-          editMode={editMode}
-          tab={mobileSummaryTab}
-          setTab={setMobileSummaryTab}
-          confirm={confirm}
-          saving={saving}
-          saveErr={saveErr}
-          onEditRequest={openEditMenu}
-        />
-      ) : (
-        <SummaryGrid
+      return (
+        <FullSummary
           state={state}
           editMode={editMode}
           confirm={confirm}
@@ -1764,17 +1714,8 @@ function StepView(props: {
       )
 
     case 'confirmed':
-      return isMobile ? (
-        <MobileSummary
-          state={state}
-          editMode={false}
-          tab={mobileSummaryTab}
-          setTab={setMobileSummaryTab}
-          confirmed
-          startEdit={startEdit}
-        />
-      ) : (
-        <SummaryGrid
+      return (
+        <FullSummary
           state={state}
           editMode={false}
           confirmed
@@ -2078,11 +2019,9 @@ function Centered({ children }: { children: React.ReactNode }) {
   )
 }
 
-function MobileSummary({ state, editMode, tab, setTab, confirmed, confirm, saving, saveErr, startEdit, onEditRequest }: {
+function FullSummary({ state, editMode, confirmed, confirm, saving, saveErr, startEdit, onEditRequest }: {
   state: State
   editMode: boolean
-  tab: 'coach' | 'academy' | 'dancers' | 'acts'
-  setTab: (t: 'coach' | 'academy' | 'dancers' | 'acts') => void
   confirmed?: boolean
   confirm?: () => Promise<void>
   saving?: boolean
@@ -2095,370 +2034,170 @@ function MobileSummary({ state, editMode, tab, setTab, confirmed, confirm, savin
   const total = costoTotal(state)
   const hasCosts = state.costPaquete !== null && state.costRepeticion !== null
 
-  const tabs: { id: 'coach' | 'academy' | 'dancers' | 'acts', label: string, badge?: string }[] = [
-    { id: 'coach', label: 'COACH' },
-    { id: 'academy', label: 'EQUIPO' },
-    { id: 'dancers', label: 'ALUMNOS/AS', badge: String(filledDancers.length) },
-    { id: 'acts', label: 'ACTOS', badge: String(state.acts.length) },
-  ]
-
   return (
-    <div className="flex flex-col h-full max-h-full min-h-0 gap-3">
-      {/* TOTAL A PAGAR siempre visible arriba */}
-      {hasCosts && (
-        <div className="shrink-0 bg-gradient-to-r from-[#16A34A] via-[#82f606] to-[#fff200] text-[rgb(var(--c-text-strong))] rounded-2xl py-3 px-4 text-center shadow-sm">
-          <p className="text-xs font-display tracking-widest opacity-90 leading-none">TOTAL A PAGAR</p>
-          <p className="font-display text-3xl leading-none mt-1.5">{formatMoney(total)}</p>
+    <div className="w-full flex flex-col h-full overflow-hidden">
+      {confirmed && (
+        <div className="shrink-0 bg-[#16A34A] text-white text-center py-4 px-4 shadow-md z-10">
+          <p className="font-display text-xl md:text-2xl tracking-widest font-bold">¡REGISTRO CONFIRMADO EXITOSAMENTE!</p>
+          <p className="text-sm opacity-90 mt-1">Tu información ha sido guardada en nuestro sistema.</p>
         </div>
       )}
-
-      {/* TABS - Estilo de cápsula iOS Segmented Control */}
-      <div className="shrink-0 grid grid-cols-4 gap-1 bg-[rgb(var(--c-surface-2))] border border-[rgb(var(--c-border)/0.4)] p-1 rounded-2xl">
-        {tabs.map(t => (
-          <button
-            key={t.id}
-            onClick={() => setTab(t.id)}
-            className={`py-2.5 rounded-xl font-display text-xs tracking-widest flex flex-col items-center justify-center gap-0.5 transition-all active:scale-[0.96] duration-150 ${
-              tab === t.id
-                ? 'bg-white text-[rgb(var(--c-primary))] border border-[rgb(var(--c-border)/0.3)] shadow-sm'
-                : 'text-[rgb(var(--c-text))] hover:text-[rgb(var(--c-primary))] active:bg-[rgb(var(--c-surface-2)/0.5)]'
-            }`}
-          >
-            <span>{t.label}</span>
-            {t.badge && <span className="text-base font-bold leading-none">{t.badge}</span>}
-          </button>
-        ))}
-      </div>
-
-      {/* TAB CONTENT */}
-      <div className="flex-1 min-h-0 overflow-y-auto bg-white border border-[rgb(var(--c-border))] rounded-2xl p-4 shadow-sm text-[rgb(var(--c-text-strong))]">
-        {tab === 'coach' && (
-          <div className="flex-1 w-full h-full min-h-[320px] flex flex-col items-center justify-center text-center space-y-5 animate-[fadeIn_0.2s_ease-out_forwards]">
-            <div className="w-16 h-16 bg-[rgb(var(--c-primary)/0.1)] rounded-full flex items-center justify-center text-[rgb(var(--c-primary))] mb-1">
-              <Pencil className="w-7 h-7" />
-            </div>
+      
+      <div className="flex-1 overflow-y-auto px-2 md:px-4 lg:px-8 py-6 pb-32 space-y-8 bg-[rgb(var(--c-surface-2)/0.3)]">
+        
+        {/* COACH & ACADEMY */}
+        <div className="bg-white rounded-3xl border border-[rgb(var(--c-border))] p-6 md:p-8 shadow-sm">
+          <h3 className="font-display text-lg tracking-widest text-[rgb(var(--c-primary))] mb-4 border-b border-[rgb(var(--c-border)/0.5)] pb-2">COACH Y ACADEMIA</h3>
+          <div className="grid md:grid-cols-2 gap-6">
             <div>
-              <p className="text-sm tracking-widest text-[rgb(var(--c-primary))] uppercase font-bold mb-1">Nombre del Coach</p>
-              <p className="text-3xl uppercase font-semibold text-[rgb(var(--c-text-strong))] break-words max-w-xs">{state.coach.name}</p>
-            </div>
-            <div className="space-y-2 text-base text-[rgb(var(--c-text))]">
-              <p className="flex items-center justify-center gap-2">
-                <span>📱</span> <span className="font-semibold text-lg">{state.coach.phone}</span>
-              </p>
-              {state.coach.email && (
-                <p className="flex items-center justify-center gap-2 text-base text-[rgb(var(--c-text))] break-all max-w-xs">
-                  <span>✉️</span> <span>{state.coach.email}</span>
-                </p>
+              <p className="text-xs tracking-[0.2em] text-[rgb(var(--c-text)/0.6)] font-bold mb-1">COACH PRINCIPAL</p>
+              <p className="font-display text-2xl md:text-3xl text-[rgb(var(--c-text-strong))] uppercase leading-tight">{state.coach.name}</p>
+              <p className="text-base text-[rgb(var(--c-text))] mt-2 flex items-center gap-2"><span className="opacity-70">📱</span> {state.coach.phone}</p>
+              {state.coach.email && <p className="text-base text-[rgb(var(--c-text))] mt-1 flex items-center gap-2"><span className="opacity-70">✉️</span> {state.coach.email}</p>}
+              {state.coach.extras.filter(e => e.trim()).length > 0 && (
+                <p className="text-sm text-[rgb(var(--c-text))] mt-3"><span className="font-bold">Otros coaches:</span> {state.coach.extras.filter(e => e.trim()).join(', ')}</p>
               )}
             </div>
-            {state.coach.extras.filter(e => e.trim()).length > 0 && (
-              <div className="pt-2 border-t border-[rgb(var(--c-border)/0.2)] w-full max-w-xs">
-                <p className="text-xs tracking-widest text-[rgb(var(--c-primary))] mb-1 font-bold">OTROS COACHES</p>
-                <p className="text-sm text-[rgb(var(--c-text))]">{state.coach.extras.filter(e => e.trim()).join(', ')}</p>
+            <div>
+              <p className="text-xs tracking-[0.2em] text-[rgb(var(--c-text)/0.6)] font-bold mb-1">COLEGIO / ACADEMIA</p>
+              <p className="font-display text-2xl md:text-3xl text-[rgb(var(--c-text-strong))] uppercase leading-tight">{state.academy}</p>
+              <p className="text-xs tracking-[0.2em] text-[rgb(var(--c-text)/0.6)] font-bold mb-1 mt-4">NOMBRE DEL EQUIPO</p>
+              <p className="font-display text-2xl md:text-3xl text-[rgb(var(--c-success))] uppercase leading-tight">{state.teamName || state.academy}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* COSTS */}
+        {hasCosts && (
+          <div className="bg-gradient-to-r from-[#16A34A] via-[#82f606] to-[#fff200] rounded-3xl p-6 md:p-8 shadow-md text-[rgb(var(--c-text-strong))]">
+            <h3 className="font-display text-lg tracking-widest opacity-90 mb-4 border-b border-black/10 pb-2">COSTOS ACORDADOS</h3>
+            <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+              <div className="flex gap-8 w-full md:w-auto">
+                <div>
+                  <p className="text-xs tracking-[0.2em] opacity-80 font-bold mb-1">1ª PARTICIPACIÓN</p>
+                  <p className="font-display text-2xl">{formatMoney(state.costPaquete ?? 0)}</p>
+                </div>
+                <div>
+                  <p className="text-xs tracking-[0.2em] opacity-80 font-bold mb-1">REPETICIÓN</p>
+                  <p className="font-display text-2xl">{formatMoney(state.costRepeticion ?? 0)}</p>
+                </div>
               </div>
-            )}
-          </div>
-        )}
-        {tab === 'academy' && (
-          <div className="flex-1 w-full h-full min-h-[320px] flex flex-col items-center justify-center text-center space-y-6 animate-[fadeIn_0.2s_ease-out_forwards]">
-            <div className="w-16 h-16 bg-[rgb(var(--c-primary)/0.1)] rounded-full flex items-center justify-center text-[rgb(var(--c-primary))] mb-1">
-              <Check className="w-7 h-7" />
-            </div>
-            <div className="w-full max-w-xs">
-              <p className="text-sm tracking-widest text-[rgb(var(--c-primary))] uppercase font-bold mb-1">Colegio / Academia</p>
-              <p className="text-3xl uppercase font-semibold text-[rgb-var(--c-text-strong)] break-words leading-tight">{state.academy}</p>
-            </div>
-            <div className="w-full max-w-xs">
-              <p className="text-sm tracking-widest text-[rgb(var(--c-primary))] uppercase font-bold mb-1">Nombre del Equipo</p>
-              <p className="text-2xl uppercase font-semibold text-[rgb(var(--c-success))] break-words leading-tight">{state.teamName || state.academy}</p>
+              <div className="w-full md:w-auto text-left md:text-right bg-white/30 rounded-2xl p-4 md:px-8">
+                <p className="text-sm tracking-[0.2em] font-bold opacity-90 mb-1">TOTAL A PAGAR</p>
+                <p className="font-display text-4xl md:text-6xl">{formatMoney(total)}</p>
+              </div>
             </div>
           </div>
         )}
-        {tab === 'dancers' && (
-          <div className="space-y-1.5">
+
+        {/* DANCERS */}
+        <div className="bg-white rounded-3xl border border-[rgb(var(--c-border))] p-6 md:p-8 shadow-sm">
+          <h3 className="font-display text-lg tracking-widest text-[rgb(var(--c-primary))] mb-4 border-b border-[rgb(var(--c-border)/0.5)] pb-2 flex justify-between">
+            <span>ALUMNOS/AS REGISTRADOS</span>
+            <span className="text-[rgb(var(--c-text))] opacity-60">{filledDancers.length}</span>
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-4">
             {filledDancers.length === 0 ? (
-              <p className="text-[rgb(var(--c-text)/0.5)] italic text-sm text-center">Sin integrantes</p>
-            ) : filledDancers.map(d => {
+              <p className="text-[rgb(var(--c-text)/0.5)] italic text-lg col-span-full">Sin integrantes</p>
+            ) : filledDancers.map((d) => {
               const di = state.dancers.indexOf(d)
               const n = counts.get(di) ?? 0
               const cost = hasCosts && n > 0 ? (state.costPaquete ?? 0) + Math.max(0, n - 1) * (state.costRepeticion ?? 0) : null
               return (
-                <div key={di} className="flex items-baseline gap-2 py-1.5 border-b border-[rgb(var(--c-border)/0.3)] last:border-0">
-                  <span className="font-display text-xs text-[rgb(var(--c-text)/0.5)] w-6 text-center shrink-0">{di + 1}.</span>
-                  <span className="font-display text-base uppercase text-[rgb(var(--c-success))] flex-1 truncate font-semibold">{d.name}</span>
-                  {n > 0 && <span className="text-xs text-[rgb(var(--c-primary))] font-bold shrink-0">{n}×</span>}
-                  {cost !== null && <span className="text-xs text-[rgb(var(--c-primary))] font-bold shrink-0">{formatMoney(cost)}</span>}
+                <div key={di} className="flex items-center gap-3 border-b border-[rgb(var(--c-border)/0.3)] pb-2">
+                  <span className="font-display text-xl text-[rgb(var(--c-text)/0.4)] w-6 text-right shrink-0">{di + 1}.</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-display text-lg uppercase text-[rgb(var(--c-text-strong))] truncate leading-tight">{d.name}</p>
+                    <p className="text-xs text-[rgb(var(--c-text)/0.7)] mt-0.5">{formatBirthdate(d.birthdate)}</p>
+                  </div>
+                  <div className="text-right shrink-0">
+                    {n > 0 && <span className="block text-sm text-[rgb(var(--c-primary))] font-bold">{n} acto{n === 1 ? '' : 's'}</span>}
+                    {cost !== null && <span className="block text-sm text-[rgb(var(--c-text-strong))] font-bold opacity-80">{formatMoney(cost)}</span>}
+                  </div>
                 </div>
               )
             })}
           </div>
-        )}
-        {tab === 'acts' && (
-          <div className="space-y-3">
+        </div>
+
+        {/* ACTS */}
+        <div className="bg-white rounded-3xl border border-[rgb(var(--c-border))] p-6 md:p-8 shadow-sm">
+          <h3 className="font-display text-lg tracking-widest text-[rgb(var(--c-primary))] mb-4 border-b border-[rgb(var(--c-border)/0.5)] pb-2 flex justify-between">
+            <span>ACTOS</span>
+            <span className="text-[rgb(var(--c-text))] opacity-60">{state.acts.length}</span>
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
             {state.acts.length === 0 ? (
-              <p className="text-[rgb(var(--c-text)/0.5)] italic text-sm text-center">Sin actos</p>
+              <p className="text-[rgb(var(--c-text)/0.5)] italic text-lg col-span-full">Sin actos</p>
             ) : state.acts.map((a, i) => {
               const cat = a.ageCategory ? AGE_CATEGORY_LABELS[a.ageCategory] : '—'
               const mod = a.modality ? modalityLabel(a.modality) : '—'
               const lvl = a.modality === 'grupal' ? (a.level === 'basico' ? ' BÁSICO' : a.level === 'avanzado' ? ' AVANZADO' : '') : ''
               return (
-                <div key={i} className="border-b border-[rgb(var(--c-border)/0.3)] last:border-0 pb-2 last:pb-0">
-                  <div className="font-display text-base text-[rgb(var(--c-text-strong))] font-semibold">
-                    <span className="text-[rgb(var(--c-primary))]">#{i + 1}</span> {cat.toUpperCase()} · {mod}{lvl}
+                <div key={i} className="border border-[rgb(var(--c-border)/0.5)] rounded-2xl p-4 bg-[rgb(var(--c-surface-2)/0.2)]">
+                  <div className="flex items-start gap-3 mb-3">
+                    <div className="font-display text-2xl text-[rgb(var(--c-primary))] shrink-0">#{i + 1}</div>
+                    <div className="flex-1">
+                      <p className="font-display text-xl text-[rgb(var(--c-text-strong))] leading-tight">{cat.toUpperCase()}</p>
+                      <p className="font-display text-base text-[rgb(var(--c-text))] mt-0.5">{mod}{lvl} · {a.style ?? '—'}</p>
+                    </div>
                   </div>
-                  <div className="text-xs text-[rgb(var(--c-text))] mt-0.5">{a.style ?? '—'}</div>
                   {a.dancerIndices.length > 0 && (
-                    <div className="text-[11px] text-[rgb(var(--c-text)/0.8)] mt-0.5 font-medium">
-                      {a.dancerIndices.map(di => state.dancers[di]?.name).filter(Boolean).join(' · ')}
+                    <div className="bg-white border border-[rgb(var(--c-border)/0.3)] rounded-xl p-3">
+                      <p className="text-xs font-bold tracking-widest text-[rgb(var(--c-text)/0.5)] mb-2">INTEGRANTES ({a.dancerIndices.length})</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {a.dancerIndices.map(di => {
+                          const d = state.dancers[di]
+                          if (!d) return null
+                          return (
+                            <span key={di} className="inline-block bg-[rgb(var(--c-surface-2))] text-[rgb(var(--c-text-strong))] text-xs px-2.5 py-1 rounded-md font-medium border border-[rgb(var(--c-border)/0.5)]">
+                              {d.name || `Alumno/a ${di + 1}`}
+                            </span>
+                          )
+                        })}
+                      </div>
                     </div>
                   )}
                 </div>
               )
             })}
           </div>
-        )}
+        </div>
+
       </div>
 
-      {/* BUTTONS */}
-      {saveErr && (
-        <p className="shrink-0 text-[rgb(var(--c-primary))] text-xs bg-[rgb(var(--c-primary)/0.1)] border border-[rgb(var(--c-primary)/0.3)] rounded-xl px-3 py-2.5 break-words font-medium">{saveErr}</p>
-      )}
-      {confirmed ? (
-        <button
-          onClick={startEdit}
-          className="shrink-0 h-14 flex items-center justify-center gap-2 bg-white border border-[rgb(var(--c-border))] hover:bg-[rgb(var(--c-surface-2))] text-[rgb(var(--c-text-strong))] font-display text-lg tracking-widest rounded-2xl transition-all shadow-sm active:scale-[0.98] duration-150"
-        >
-          <Pencil className="w-5 h-5 text-[rgb(var(--c-primary))]" /> EDITAR REGISTRO
-        </button>
-      ) : (
-        <div className="shrink-0 grid grid-cols-2 gap-2">
-          <button
-            onClick={onEditRequest}
-            className="h-14 flex items-center justify-center gap-2 bg-white border border-[rgb(var(--c-border))] hover:bg-[rgb(var(--c-surface-2))] text-[rgb(var(--c-text-strong))] font-display text-base tracking-widest rounded-2xl transition-all shadow-sm active:scale-[0.98] duration-150"
-          >
-            <Pencil className="w-5 h-5 text-[rgb(var(--c-primary))]" /> EDITAR
-          </button>
-          <button
-            onClick={() => {
-              if (tab === 'coach') setTab('academy')
-              else if (tab === 'academy') setTab('dancers')
-              else if (tab === 'dancers') setTab('acts')
-              else if (confirm) confirm()
-            }}
-            disabled={saving}
-            className="h-14 bg-gradient-to-r from-[#16A34A] via-[#82f606] to-[#fff200] hover:brightness-105 active:brightness-95 text-[rgb(var(--c-text-strong))] font-display text-base tracking-widest rounded-2xl disabled:opacity-50 disabled:pointer-events-none transition-all shadow-md active:scale-[0.98] duration-150"
-          >
-            {tab !== 'acts'
-              ? 'SIGUIENTE'
-              : saving
-              ? 'GUARDANDO…'
-              : editMode
-              ? 'GUARDAR'
-              : 'CONFIRMAR'}
-          </button>
-        </div>
-      )}
-    </div>
-  )
-}
-
-function SummaryGrid({ state, editMode, confirmed, confirm, saving, saveErr, startEdit, onEditRequest }: {
-  state: State
-  editMode: boolean
-  confirmed?: boolean
-  confirm?: () => Promise<void>
-  saving?: boolean
-  saveErr?: string | null
-  startEdit?: () => void
-  onEditRequest?: () => void
-}) {
-  const filledDancers = state.dancers.filter(d => d.name.trim().length > 0)
-  const counts = participacionesPorAlumno(state)
-  const total = costoTotal(state)
-  const hasCosts = state.costPaquete !== null && state.costRepeticion !== null
-  return (
-    <div className="lg:h-full lg:max-h-full lg:min-h-0 grid grid-cols-1 lg:grid-cols-6 lg:grid-rows-[auto_minmax(0,1fr)] gap-4 w-full">
-      <div className="lg:col-span-2 lg:min-h-0">
-        <Card title="COACH">
-          <p className="text-xl md:text-2xl lg:text-3xl font-display uppercase truncate text-[rgb(var(--c-text-strong))]">{state.coach.name}</p>
-          <p className="text-sm md:text-base text-[rgb(var(--c-text))] mt-2 truncate">
-            {state.coach.phone}{state.coach.email ? ` · ${state.coach.email}` : ''}
-          </p>
-          {state.coach.extras.filter(e => e.trim()).length > 0 && (
-            <p className="text-sm text-[rgb(var(--c-text))] mt-1 truncate">Otros: {state.coach.extras.filter(e => e.trim()).join(', ')}</p>
+      {/* FLOATING ACTION BAR */}
+      <div className="shrink-0 bg-white border-t border-[rgb(var(--c-border))] p-4 md:p-6 shadow-[0_-10px_40px_rgba(0,0,0,0.05)] z-20">
+        <div className="max-w-4xl mx-auto w-full">
+          {saveErr && (
+            <p className="text-[rgb(var(--c-primary))] text-sm bg-[rgb(var(--c-primary)/0.05)] border border-[rgb(var(--c-primary)/0.2)] rounded-xl px-4 py-3 mb-4 text-center font-medium">{saveErr}</p>
           )}
-        </Card>
-      </div>
-
-      <div className="lg:col-span-3 lg:min-h-0">
-        <Card title="ACADEMIA · EQUIPO">
-          <p className="text-xl md:text-2xl lg:text-3xl font-display uppercase truncate text-[rgb(var(--c-text-strong))]">{state.academy}</p>
-          <p className="text-sm md:text-base text-[rgb(var(--c-text))] mt-2 truncate">{state.teamName}</p>
-        </Card>
-      </div>
-
-      <div className="lg:col-span-1 lg:min-h-0">
-        {hasCosts ? (
-          <div className="bg-gradient-to-r from-[#16A34A] via-[#82f606] to-[#fff200] text-[rgb(var(--c-text-strong))] rounded-2xl h-full p-4 flex flex-col items-center justify-center shadow-sm">
-            <p className="text-base md:text-lg font-display tracking-widest opacity-90 leading-none text-center">TOTAL A PAGAR</p>
-            <p className="font-display text-3xl md:text-4xl leading-none mt-2">{formatMoney(total)}</p>
-          </div>
-        ) : (
-          <div className="bg-white border border-[rgb(var(--c-border))] rounded-2xl h-full p-3 flex items-center justify-center shadow-sm">
-            <p className="text-[rgb(var(--c-text)/0.5)] italic text-sm text-center">Sin costos</p>
-          </div>
-        )}
-      </div>
-
-      <div className="lg:col-span-4 lg:min-h-0">
-        <Card title={`INTEGRANTES (${filledDancers.length})`} className="lg:h-full">
-          <div className="max-h-[60vh] lg:max-h-none lg:flex-1 lg:min-h-0 overflow-y-auto lg:overflow-x-auto lg:overflow-y-hidden">
-            <div className="lg:h-full flex flex-col lg:flex-wrap lg:content-start gap-x-12 gap-y-2 px-1">
-              {filledDancers.length === 0 ? (
-                <p className="text-[rgb(var(--c-text)/0.5)] italic text-base self-center my-auto">Sin integrantes</p>
-              ) : filledDancers.map((d) => {
-                const di = state.dancers.indexOf(d)
-                const n = counts.get(di) ?? 0
-                const cost = hasCosts && n > 0 ? (state.costPaquete ?? 0) + Math.max(0, n - 1) * (state.costRepeticion ?? 0) : null
-                return (
-                  <div key={di} className="font-display text-lg md:text-xl lg:text-2xl uppercase text-[rgb(var(--c-success))] whitespace-nowrap flex items-baseline gap-3">
-                    <span className="opacity-40 text-sm text-[rgb(var(--c-text))]">{di + 1}.</span>
-                    <span>{d.name}</span>
-                    {n > 0 && <span className="text-sm text-[rgb(var(--c-primary))] font-bold">{n} acto{n === 1 ? '' : 's'}</span>}
-                    {cost !== null && <span className="text-sm text-[rgb(var(--c-primary))] font-bold">{formatMoney(cost)}</span>}
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-        </Card>
-      </div>
-
-      <div className="lg:col-span-2 flex flex-col gap-3 lg:min-h-0">
-        <Card title={`ACTOS (${state.acts.length})`} className="lg:flex-1 lg:min-h-0">
-          <div className="max-h-[50vh] lg:max-h-none lg:flex-1 lg:min-h-0 overflow-y-auto pr-1 space-y-3">
-            {state.acts.length === 0 ? (
-              <p className="text-[rgb(var(--c-text)/0.5)] italic text-base">Sin actos</p>
-            ) : state.acts.map((a, i) => {
-              const cat = a.ageCategory ? AGE_CATEGORY_LABELS[a.ageCategory] : '—'
-              const mod = a.modality ? modalityLabel(a.modality) : '—'
-              const lvl = a.modality === 'grupal' ? (a.level === 'basico' ? ' BÁSICO' : a.level === 'avanzado' ? ' AVANZADO' : '') : ''
-              return (
-                <div key={i} className="border-b border-[rgb(var(--c-border)/0.3)] last:border-0 pb-3 last:pb-0">
-                  <div className="font-display text-lg text-[rgb(var(--c-text-strong))]">
-                    <span className="text-[rgb(var(--c-primary))]">#{i + 1}</span>{' '}
-                    {cat.toUpperCase()} · {mod}{lvl}
-                  </div>
-                  <div className="text-base text-[rgb(var(--c-text))] mt-1">{a.style ?? '—'}</div>
-                  {a.dancerIndices.length > 0 && (
-                    <div className="text-xs text-[rgb(var(--c-text)/0.7)] mt-1">
-                      {a.dancerIndices.map(di => state.dancers[di]?.name).filter(Boolean).join(' · ')}
-                    </div>
-                  )}
-                </div>
-              )
-            })}
-          </div>
-        </Card>
-        {confirmed ? (
-          <button
-            onClick={startEdit}
-            className="shrink-0 h-28 flex items-center justify-center gap-2 bg-white border border-[rgb(var(--c-border))] hover:bg-[rgb(var(--c-surface-2))] text-[rgb(var(--c-text-strong))] font-display text-2xl tracking-widest rounded-2xl transition-all shadow-sm active:scale-[0.98] duration-150"
-          >
-            <Pencil className="w-6 h-6 text-[rgb(var(--c-primary))]" /> EDITAR REGISTRO
-          </button>
-        ) : (
-          <>
+          {confirmed ? (
             <button
-              onClick={onEditRequest}
-              className="shrink-0 h-14 flex items-center justify-center gap-2 bg-white border border-[rgb(var(--c-border))] hover:bg-[rgb(var(--c-surface-2))] text-[rgb(var(--c-text-strong))] font-display text-lg tracking-widest rounded-2xl transition-all shadow-sm active:scale-[0.98] duration-150"
+              onClick={startEdit}
+              className="w-full h-16 md:h-20 flex items-center justify-center gap-3 bg-white border-2 border-[rgb(var(--c-border))] hover:bg-[rgb(var(--c-surface-2))] text-[rgb(var(--c-text-strong))] font-display text-xl md:text-2xl tracking-widest rounded-2xl transition-all shadow-sm active:scale-[0.98] duration-150"
             >
-              <Pencil className="w-5 h-5 text-[rgb(var(--c-primary))]" /> EDITAR
+              <Pencil className="w-6 h-6 text-[rgb(var(--c-primary))]" /> MODIFICAR REGISTRO
             </button>
-            <button
-              onClick={confirm}
-              disabled={saving}
-              className="shrink-0 h-28 bg-gradient-to-r from-[#16A34A] via-[#82f606] to-[#fff200] hover:brightness-105 active:brightness-95 text-[rgb(var(--c-text-strong))] font-display text-2xl tracking-widest rounded-2xl disabled:opacity-50 disabled:pointer-events-none transition-all shadow-md active:scale-[0.98] duration-150"
-            >
-              {saving ? 'GUARDANDO…' : editMode ? 'GUARDAR CAMBIOS' : 'CONFIRMAR REGISTRO'}
-            </button>
-          </>
-        )}
-        {saveErr && (
-          <p className="shrink-0 text-[rgb(var(--c-primary))] text-sm bg-[rgb(var(--c-primary)/0.05)] border border-[rgb(var(--c-primary)/0.2)] rounded-2xl px-3 py-2 break-words font-medium">{saveErr}</p>
-        )}
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
+              <button
+                onClick={onEditRequest}
+                className="w-full h-16 flex items-center justify-center gap-2 bg-white border-2 border-[rgb(var(--c-border))] hover:bg-[rgb(var(--c-surface-2))] text-[rgb(var(--c-text-strong))] font-display text-lg tracking-widest rounded-2xl transition-all active:scale-[0.98] duration-150 md:col-span-1"
+              >
+                <Pencil className="w-5 h-5 text-[rgb(var(--c-primary))]" /> EDITAR
+              </button>
+              <button
+                onClick={confirm}
+                disabled={saving}
+                className="w-full h-16 md:h-20 bg-gradient-to-r from-[#16A34A] via-[#82f606] to-[#fff200] hover:brightness-105 active:brightness-95 text-[rgb(var(--c-text-strong))] font-display text-xl md:text-2xl tracking-widest rounded-2xl disabled:opacity-50 disabled:pointer-events-none transition-all shadow-lg active:scale-[0.98] duration-150 md:col-span-2 md:-mt-2"
+              >
+                {saving ? 'GUARDANDO…' : editMode ? 'GUARDAR CAMBIOS' : 'CONFIRMAR REGISTRO'}
+              </button>
+            </div>
+          )}
+        </div>
       </div>
-    </div>
-  )
-}
-
-function Card({ title, children, className }: { title: string, children: React.ReactNode, className?: string }) {
-  return (
-    <div className={`bg-white border border-[rgb(var(--c-border))] rounded-2xl p-5 flex flex-col min-h-0 shadow-sm text-[rgb(var(--c-text-strong))] ${className ?? ''}`}>
-      <p className="text-xs font-display tracking-widest text-[rgb(var(--c-primary))] mb-3 shrink-0">{title}</p>
-      <div className="flex-1 min-h-0 flex flex-col">{children}</div>
-    </div>
-  )
-}
-
-function Summary({ state, compact }: { state: State, compact?: boolean }) {
-  return (
-    <div className="space-y-3 text-left">
-      <SummaryBlock label="COACH">
-        <div className="text-2xl font-display text-[rgb(var(--c-text-strong))]">{state.coach.name}</div>
-        <div className="text-base text-[rgb(var(--c-text))] mt-1">{state.coach.phone}{state.coach.email ? ` · ${state.coach.email}` : ''}</div>
-        {state.coach.extras.filter(e => e.trim()).length > 0 && (
-          <div className="text-sm text-[rgb(var(--c-text))] mt-1">Otros coaches: {state.coach.extras.filter(e => e.trim()).join(', ')}</div>
-        )}
-      </SummaryBlock>
-
-      <SummaryBlock label="ACADEMIA · EQUIPO">
-        <div className="text-2xl font-display text-[rgb(var(--c-text-strong))]">{state.academy}</div>
-        <div className="text-base text-[rgb(var(--c-text))] mt-1">{state.teamName}</div>
-      </SummaryBlock>
-
-      <SummaryBlock label={`ALUMNOS/AS (${state.dancers.length})`}>
-        <div className={`grid ${compact ? 'grid-cols-2' : 'grid-cols-1 md:grid-cols-2'} gap-x-6 gap-y-1`}>
-          {state.dancers.map((d, i) => (
-            <div key={i} className="flex justify-between text-base border-b border-[rgb(var(--c-border)/0.3)] last:border-0 py-1 text-[rgb(var(--c-text-strong))]">
-              <span className="truncate">{d.name}</span>
-              <span className="text-[rgb(var(--c-text))] ml-2 shrink-0">{formatBirthdate(d.birthdate)}</span>
-            </div>
-          ))}
-        </div>
-      </SummaryBlock>
-
-      <SummaryBlock label={`ACTOS (${state.acts.length})`}>
-        <div className="space-y-2">
-          {state.acts.map((a, i) => {
-            const cat = a.ageCategory ? AGE_CATEGORY_LABELS[a.ageCategory] : '—'
-            const mod = a.modality ? modalityLabel(a.modality) : '—'
-            const lvl = a.modality === 'grupal' ? (a.level === 'basico' ? ' BÁSICO' : a.level === 'avanzado' ? ' AVANZADO' : '') : ''
-            return (
-            <div key={i} className="border-b border-[rgb(var(--c-border)/0.3)] last:border-0 py-2 text-[rgb(var(--c-text-strong))]">
-              <div className="font-display text-lg">
-                <span className="text-[rgb(var(--c-primary))]">#{i + 1}</span>{' '}
-                {cat.toUpperCase()} · {mod}{lvl} · {a.style ?? '—'}
-              </div>
-              {a.dancerIndices.length > 0 && (
-                <div className="text-sm text-[rgb(var(--c-text))] mt-1">
-                  {a.dancerIndices.map(di => state.dancers[di]?.name).filter(Boolean).join(' · ')}
-                </div>
-              )}
-            </div>
-            )
-          })}
-        </div>
-      </SummaryBlock>
-    </div>
-  )
-}
-
-function SummaryBlock({ label, children }: { label: string, children: React.ReactNode }) {
-  return (
-    <div className="bg-white border border-[rgb(var(--c-border))] rounded-2xl p-4 shadow-sm">
-      <div className="text-xs font-display tracking-widest text-[rgb(var(--c-primary))] mb-2">{label}</div>
-      {children}
     </div>
   )
 }
