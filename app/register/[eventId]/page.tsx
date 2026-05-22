@@ -2,7 +2,7 @@
 import { useEffect, useState, use, useCallback } from 'react'
 import Image from 'next/image'
 import { useSearchParams } from 'next/navigation'
-import { ArrowLeft, Check, Plus, Trash2, Pencil, MessageCircle, Info, X, ChevronDown, Sparkles, Users, Clipboard, HeartHandshake, School, Clock, Calendar, Ticket } from 'lucide-react'
+import { ArrowLeft, Check, Plus, Trash2, Pencil, MessageCircle, Info, X, ChevronDown, Sparkles, Users, Clipboard, HeartHandshake, School, Clock, Calendar, Ticket, Download } from 'lucide-react'
 import { supabase, Modality, AgeCategory, Level, Event, AGE_CATEGORY_ORDER, AGE_CATEGORY_LABELS, AGE_CATEGORY_HINTS, categoryFromBirthdate } from '@/lib/supabase'
 
 type Props = { params: Promise<{ eventId: string }> }
@@ -2139,6 +2139,20 @@ function FullSummary({ state, editMode, confirmed, confirm, saving, saveErr, sta
   const hasCosts = state.costPaquete !== null && state.costPaquete >= 0 && state.costRepeticion !== null && state.costRepeticion >= 0
   const chgDeadline = event?.date ? getChangesDeadline(event.date) : '7 días antes del evento'
 
+  const [generatingPDF, setGeneratingPDF] = useState(false)
+  
+  const handleDownloadPDF = async () => {
+    try {
+      setGeneratingPDF(true)
+      await generateReceiptPDF(state, event)
+    } catch (err) {
+      console.error('Error generating PDF:', err)
+      alert('Hubo un error al generar tu comprobante PDF. Por favor, vuelve a intentarlo.')
+    } finally {
+      setGeneratingPDF(false)
+    }
+  }
+
   return (
     <div className="w-full flex flex-col min-h-0 md:h-full overflow-visible md:overflow-hidden" style={{ animation: 'fadeIn 0.3s ease-out' }}>
       {confirmed && (
@@ -2428,12 +2442,28 @@ function FullSummary({ state, editMode, confirmed, confirm, saving, saveErr, sta
             <p className="text-[rgb(var(--c-primary))] text-xs bg-[rgb(var(--c-primary)/0.05)] border border-[rgb(var(--c-primary)/0.2)] rounded-xl px-4 py-2.5 mb-3 text-center font-bold">{saveErr}</p>
           )}
           {confirmed ? (
-            <div className="space-y-3">
+            <div className="flex flex-col gap-3">
+              <button
+                onClick={handleDownloadPDF}
+                disabled={generatingPDF}
+                className="w-full h-14 bg-gradient-to-r from-fuchsia-600 via-pink-600 to-rose-600 hover:brightness-105 active:scale-[0.98] disabled:opacity-50 text-white font-display text-base tracking-widest rounded-2xl transition-all shadow-lg hover:shadow-fuchsia-500/20 duration-150 font-bold flex items-center justify-center gap-3 cursor-pointer"
+              >
+                {generatingPDF ? (
+                  <>
+                    <Clock className="w-5 h-5 animate-spin" /> GENERANDO COMPROBANTE…
+                  </>
+                ) : (
+                  <>
+                    <Download className="w-5 h-5 text-white" /> DESCARGAR COMPROBANTE PDF
+                  </>
+                )}
+              </button>
+              
               <button
                 onClick={startEdit}
-                className="w-full h-12 md:h-14 flex items-center justify-center gap-3 bg-[rgb(var(--c-surface))] border-2 border-[rgb(var(--c-border))] hover:bg-[rgb(var(--c-surface-2))] text-[rgb(var(--c-text-strong))] font-display text-base tracking-widest rounded-2xl transition-all shadow-sm active:scale-[0.98] duration-150 font-bold"
+                className="w-full h-12 flex items-center justify-center gap-3 bg-[rgb(var(--c-surface))] border border-[rgb(var(--c-border)/0.5)] hover:bg-[rgb(var(--c-surface-2))] text-[rgb(var(--c-text-strong))] font-display text-xs tracking-widest rounded-2xl transition-all shadow-sm active:scale-[0.98] duration-150 font-bold cursor-pointer"
               >
-                <Pencil className="w-4 h-4 text-[rgb(var(--c-primary))]" /> MODIFICAR REGISTRO
+                <Pencil className="w-3.5 h-3.5 text-[rgb(var(--c-primary))]" /> MODIFICAR REGISTRO
               </button>
             </div>
           ) : (
@@ -2469,4 +2499,425 @@ function extractErrorMessage(e: unknown): string {
     try { return JSON.stringify(e) } catch { /* ignore */ }
   }
   return String(e ?? 'Error desconocido')
+}
+
+async function generateReceiptPDF(state: State, event: Event | null) {
+  const jsPDF = (await import('jspdf')).default
+  const autoTable = (await import('jspdf-autotable')).default
+
+  const doc = new jsPDF('p', 'mm', 'a4')
+  const filledDancers = state.dancers.filter(d => d.name.trim().length > 0)
+
+  // Header Background
+  doc.setFillColor(18, 18, 18) // Slate dark `#121212`
+  doc.rect(0, 0, 210, 42, 'F')
+
+  // Accent line
+  doc.setFillColor(217, 70, 239) // Fuchsia `#D946EF`
+  doc.rect(0, 42, 210, 2.5, 'F')
+
+  // Logo / Brand Name
+  doc.setTextColor(255, 255, 255)
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(26)
+  doc.text('DANCE4EVER', 15, 18)
+  
+  doc.setTextColor(234, 179, 8) // Gold
+  doc.setFontSize(10)
+  doc.setFont('helvetica', 'bold')
+  doc.text('COMPROBANTE DE REGISTRO', 15, 24)
+
+  // Event name and date on the right side
+  doc.setTextColor(255, 255, 255)
+  doc.setFontSize(11)
+  doc.setFont('helvetica', 'bold')
+  const eventName = event?.name?.toUpperCase() || 'EVENTO NACIONAL DANCE4EVER'
+  doc.text(eventName, 195, 18, { align: 'right' })
+  
+  doc.setTextColor(200, 200, 200)
+  doc.setFontSize(9)
+  doc.setFont('helvetica', 'normal')
+  const eventDate = event?.date ? formatEventDate(event.date) : 'Temporada 2026'
+  doc.text(eventDate, 195, 24, { align: 'right' })
+  
+  // Confirmed badge on right
+  doc.setFillColor(22, 163, 74) // Success Green
+  doc.rect(155, 29, 40, 6, 'F')
+  doc.setTextColor(255, 255, 255)
+  doc.setFontSize(8)
+  doc.setFont('helvetica', 'bold')
+  doc.text('REGISTRO CONFIRMADO', 175, 33, { align: 'center' })
+
+  let y = 52
+
+  // Section title: DATOS DE LA ACADEMIA Y COACH
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(10)
+  doc.setTextColor(17, 17, 17)
+  doc.text('INFORMACIÓN DE LA ACADEMIA Y COACH', 15, y)
+  y += 4
+
+  // Underline fuchsia accent for the section
+  doc.setDrawColor(217, 70, 239)
+  doc.setLineWidth(0.5)
+  doc.line(15, y, 195, y)
+  y += 5
+
+  // Info blocks in columns
+  // Col 1
+  doc.setFontSize(8.5)
+  doc.setTextColor(100, 100, 100)
+  doc.setFont('helvetica', 'bold')
+  doc.text('ACADEMIA / COLEGIO:', 15, y)
+  doc.setTextColor(17, 17, 17)
+  doc.setFont('helvetica', 'normal')
+  doc.text(state.academy.toUpperCase() || 'SIN ACADEMIA', 52, y)
+
+  // Col 2
+  doc.setTextColor(100, 100, 100)
+  doc.setFont('helvetica', 'bold')
+  doc.text('FOLIO REGISTRO:', 120, y)
+  doc.setTextColor(217, 70, 239) // Fuchsia for emphasis
+  doc.setFont('helvetica', 'bold')
+  doc.text(`#D4E-${state.confirmedRegistrationId || 'TEMP'}`, 150, y)
+
+  y += 5
+
+  // Row 2
+  doc.setTextColor(100, 100, 100)
+  doc.setFont('helvetica', 'bold')
+  doc.text('COACH PRINCIPAL:', 15, y)
+  doc.setTextColor(17, 17, 17)
+  doc.setFont('helvetica', 'normal')
+  doc.text(state.coach.name.toUpperCase() || 'SIN NOMBRE', 52, y)
+
+  doc.setTextColor(100, 100, 100)
+  doc.setFont('helvetica', 'bold')
+  doc.text('CIUDAD / SEDE:', 120, y)
+  doc.setTextColor(17, 17, 17)
+  doc.setFont('helvetica', 'normal')
+  doc.text(state.city.toUpperCase() || 'SIN CIUDAD', 150, y)
+
+  y += 5
+
+  // Row 3
+  doc.setTextColor(100, 100, 100)
+  doc.setFont('helvetica', 'bold')
+  doc.text('WHATSAPP / TEL:', 15, y)
+  doc.setTextColor(17, 17, 17)
+  doc.setFont('helvetica', 'normal')
+  doc.text(state.coach.phone || 'SIN WHATSAPP', 52, y)
+
+  doc.setTextColor(100, 100, 100)
+  doc.setFont('helvetica', 'bold')
+  doc.text('NOMBRE DEL EQUIPO:', 120, y)
+  doc.setTextColor(22, 163, 74) // Green
+  doc.setFont('helvetica', 'bold')
+  doc.text((state.teamName || state.academy || 'SIN EQUIPO').toUpperCase(), 150, y)
+
+  y += 5
+
+  // Row 4
+  if (state.coach.email || state.coach.extras.filter(e => e.trim()).length > 0) {
+    doc.setTextColor(100, 100, 100)
+    doc.setFont('helvetica', 'bold')
+    doc.text('EMAIL / CORREO:', 15, y)
+    doc.setTextColor(17, 17, 17)
+    doc.setFont('helvetica', 'normal')
+    doc.text(state.coach.email || 'SIN EMAIL', 52, y)
+    
+    const otherCoaches = state.coach.extras.filter(e => e.trim()).join(', ')
+    if (otherCoaches) {
+      doc.setTextColor(100, 100, 100)
+      doc.setFont('helvetica', 'bold')
+      doc.text('OTROS COACHES:', 120, y)
+      doc.setTextColor(17, 17, 17)
+      doc.setFont('helvetica', 'normal')
+      doc.text(otherCoaches.toUpperCase(), 150, y, { maxWidth: 45 })
+    }
+    y += 5
+  }
+
+  const assistants = state.coach.assistants.filter(a => a.trim()).join(', ')
+  if (assistants) {
+    doc.setTextColor(100, 100, 100)
+    doc.setFont('helvetica', 'bold')
+    doc.text('ASISTENTES DE STAFF:', 15, y)
+    doc.setTextColor(17, 17, 17)
+    doc.setFont('helvetica', 'normal')
+    doc.text(assistants.toUpperCase(), 52, y, { maxWidth: 140 })
+    y += 5
+  }
+
+  y += 3
+
+  // Section: Acts
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(10)
+  doc.setTextColor(17, 17, 17)
+  doc.text(`COREOGRAFÍAS REGISTRADAS (${state.acts.length})`, 15, y)
+  y += 4
+
+  doc.setDrawColor(217, 70, 239)
+  doc.setLineWidth(0.5)
+  doc.line(15, y, 195, y)
+  y += 4
+
+  const actRows = state.acts.map((act, idx) => {
+    const cat = act.ageCategory ? AGE_CATEGORY_LABELS[act.ageCategory] : '—'
+    const mod = act.modality ? modalityLabel(act.modality) : '—'
+    const lvl = act.modality === 'grupal' ? (act.level === 'basico' ? 'BÁSICO' : act.level === 'avanzado' ? 'AVANZADO' : '') : ''
+    const style = act.style ?? '—'
+    const dancersCount = act.dancerIndices.length
+    return [
+      `#${idx + 1}`,
+      cat.toUpperCase(),
+      `${mod.toUpperCase()}${lvl ? ' - ' + lvl : ''}`,
+      style.toUpperCase(),
+      `${dancersCount} Alumno${dancersCount === 1 ? '' : 's'}`
+    ]
+  })
+
+  autoTable(doc, {
+    startY: y,
+    head: [['ID', 'CATEGORÍA', 'MODALIDAD', 'ESTILO', 'INTEGRANTES']],
+    body: actRows,
+    theme: 'striped',
+    styles: { fontSize: 8.5, font: 'helvetica', cellPadding: 2.5 },
+    headStyles: { fillColor: [17, 17, 17], textColor: [255, 255, 255], fontStyle: 'bold' },
+    alternateRowStyles: { fillColor: [250, 245, 255] }, // Soft purple tint
+    margin: { left: 15, right: 15 }
+  })
+
+  let finalY = (doc as any).lastAutoTable.finalY || (y + 10)
+  
+  // Section: Dancers
+  let dancersY = finalY + 8
+  
+  // Quick sanity check for overflow
+  if (dancersY > 235) {
+    doc.addPage()
+    dancersY = 20
+  }
+
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(10)
+  doc.setTextColor(17, 17, 17)
+  doc.text(`INTEGRANTES REGISTRADOS (${filledDancers.length})`, 15, dancersY)
+  dancersY += 4
+
+  doc.setDrawColor(217, 70, 239)
+  doc.setLineWidth(0.5)
+  doc.line(15, dancersY, 195, dancersY)
+  dancersY += 5
+
+  doc.setFontSize(8)
+  doc.setTextColor(50, 50, 50)
+
+  const numCols = 3
+  const colWidth = 60
+  const startX = 15
+  let colIdx = 0
+  let rowY = dancersY
+
+  filledDancers.forEach((dancer, di) => {
+    const compCat = effectiveCategory(dancer)
+    const categoryStr = compCat ? AGE_CATEGORY_LABELS[compCat] : '—'
+    
+    const posX = startX + colIdx * colWidth
+    doc.setFont('helvetica', 'bold')
+    doc.text(`${di + 1}.`, posX, rowY)
+    doc.setFont('helvetica', 'normal')
+    
+    // truncate name if too long
+    const displayName = dancer.name.length > 20 ? dancer.name.substring(0, 18) + '...' : dancer.name
+    doc.text(`${displayName.toUpperCase()}`, posX + 4, rowY)
+    
+    colIdx++
+    if (colIdx >= numCols) {
+      colIdx = 0
+      rowY += 4.5
+    }
+  })
+
+  if (colIdx > 0) {
+    rowY += 4.5
+  }
+  let dancersEndY = rowY + 3
+
+  // Costs Breakdown & QR Code section
+  let costY = dancersEndY + 5
+  
+  // If costY is > 220, it might overflow the bottom margin. Paging support:
+  if (costY > 220) {
+    doc.addPage()
+    costY = 20
+    
+    // Add page 2 header
+    doc.setFillColor(18, 18, 18)
+    doc.rect(0, 0, 210, 15, 'F')
+    doc.setFillColor(217, 70, 239)
+    doc.rect(0, 15, 210, 1, 'F')
+    
+    doc.setTextColor(255, 255, 255)
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(10)
+    doc.text('DANCE4EVER - DETALLES Y COSTOS DE REGISTRO', 15, 10)
+    costY = 25
+  }
+
+  // Cost items calculation
+  const countsMap = participacionesPorAlumno(state)
+  const freeEntries = Math.floor(filledDancers.length / DANCERS_POR_ENTRADA_GRATIS)
+  const assistantsList = state.coach.assistants.filter(a => a.trim())
+  const paidAssistants = Math.max(0, assistantsList.length - freeEntries)
+  let participaciones = 0, repeticiones = 0
+  countsMap.forEach(n => { if (n >= 1) { participaciones++; repeticiones += n - 1 } })
+  const totalDancers = participaciones * PRECIO_PARTICIPACION + repeticiones * PRECIO_REPETICION
+  const totalCoach = PRECIO_ASISTENTE
+  const totalAsistentes = paidAssistants * PRECIO_ASISTENTE
+  const totalEntradas = (state.ticketsCount ?? 0) * PRECIO_ENTRADA
+  const total = totalDancers + totalCoach + totalAsistentes + totalEntradas
+
+  // Card details
+  const cardWidth = 110
+  const cardHeight = 50
+  const cardX = 15
+  const cardY = costY
+
+  // Draw light purple background card
+  doc.setFillColor(248, 245, 255)
+  doc.setDrawColor(217, 70, 239)
+  doc.setLineWidth(0.4)
+  doc.rect(cardX, cardY, cardWidth, cardHeight, 'FD')
+
+  // Title inside card
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(9)
+  doc.setTextColor(17, 17, 17)
+  doc.text('DESGLOSE DE COSTOS (MXN)', cardX + 5, cardY + 6)
+
+  // Divider
+  doc.setDrawColor(217, 70, 239, 0.3)
+  doc.line(cardX + 5, cardY + 9, cardX + cardWidth - 5, cardY + 9)
+
+  let itemY = cardY + 14
+  doc.setFontSize(8)
+  doc.setFont('helvetica', 'normal')
+
+  // 1. Coach Entry
+  doc.setTextColor(80, 80, 80)
+  doc.text('Coach (entrada):', cardX + 5, itemY)
+  doc.setFont('helvetica', 'bold')
+  doc.setTextColor(17, 17, 17)
+  doc.text(`$${PRECIO_ASISTENTE.toLocaleString('es-MX')}`, cardX + cardWidth - 5, itemY, { align: 'right' })
+  doc.setFont('helvetica', 'normal')
+  itemY += 5
+
+  // 2. Participaciones
+  doc.setTextColor(80, 80, 80)
+  doc.text('Participaciones:', cardX + 5, itemY)
+  doc.setTextColor(17, 17, 17)
+  doc.text(`(${participaciones} x $${PRECIO_PARTICIPACION})`, cardX + 30, itemY)
+  doc.setFont('helvetica', 'bold')
+  doc.text(`$${(participaciones * PRECIO_PARTICIPACION).toLocaleString('es-MX')}`, cardX + cardWidth - 5, itemY, { align: 'right' })
+  doc.setFont('helvetica', 'normal')
+  itemY += 5
+
+  // 3. Repeticiones
+  if (repeticiones > 0) {
+    doc.setTextColor(80, 80, 80)
+    doc.text('Repeticiones:', cardX + 5, itemY)
+    doc.setTextColor(17, 17, 17)
+    doc.text(`(${repeticiones} x $${PRECIO_REPETICION})`, cardX + 30, itemY)
+    doc.setFont('helvetica', 'bold')
+    doc.text(`$${(repeticiones * PRECIO_REPETICION).toLocaleString('es-MX')}`, cardX + cardWidth - 5, itemY, { align: 'right' })
+    doc.setFont('helvetica', 'normal')
+    itemY += 5
+  }
+
+  // 4. Asistentes
+  if (assistantsList.length > 0) {
+    doc.setTextColor(80, 80, 80)
+    doc.text('Asistentes:', cardX + 5, itemY)
+    doc.setTextColor(17, 17, 17)
+    doc.text(`(${paidAssistants} x $${PRECIO_ASISTENTE}${freeEntries > 0 ? `, ${freeEntries} gratis` : ''})`, cardX + 30, itemY)
+    doc.setFont('helvetica', 'bold')
+    doc.text(`$${(totalAsistentes).toLocaleString('es-MX')}`, cardX + cardWidth - 5, itemY, { align: 'right' })
+    doc.setFont('helvetica', 'normal')
+    itemY += 5
+  }
+
+  // 5. Entradas acompañantes
+  if (state.ticketsCount > 0) {
+    doc.setTextColor(80, 80, 80)
+    doc.text('Entradas Familia:', cardX + 5, itemY)
+    doc.setTextColor(17, 17, 17)
+    doc.text(`(${state.ticketsCount} x $${PRECIO_ENTRADA})`, cardX + 30, itemY)
+    doc.setFont('helvetica', 'bold')
+    doc.text(`$${(totalEntradas).toLocaleString('es-MX')}`, cardX + cardWidth - 5, itemY, { align: 'right' })
+    doc.setFont('helvetica', 'normal')
+    itemY += 5
+  }
+
+  // Final Divider
+  doc.setDrawColor(217, 70, 239, 0.5)
+  doc.line(cardX + 5, cardY + cardHeight - 10, cardX + cardWidth - 5, cardY + cardHeight - 10)
+
+  // TOTAL ESTIMADO
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(10)
+  doc.setTextColor(217, 70, 239)
+  doc.text('TOTAL ESTIMADO:', cardX + 5, cardY + cardHeight - 4.5)
+  doc.setFontSize(11)
+  doc.text(`$${total.toLocaleString('es-MX')} MXN`, cardX + cardWidth - 5, cardY + cardHeight - 4.5, { align: 'right' })
+
+  // QR Code on right side
+  const qrX = 145
+  const qrY = costY
+  const qrSize = 40
+
+  // Draw frame
+  doc.setFillColor(250, 250, 250)
+  doc.setDrawColor(200, 200, 200)
+  doc.setLineWidth(0.3)
+  doc.rect(qrX, qrY, qrSize, qrSize, 'FD')
+
+  try {
+    const qrString = `D4E-EVENT-${event?.id || 'EVENT'}-REG-${state.confirmedRegistrationId || 'TEMP'}-TOTAL-${total}`
+    const QRCode = (await import('qrcode')).default
+    const qrDataUrl = await QRCode.toDataURL(qrString, {
+      margin: 1,
+      color: {
+        dark: '#111111',
+        light: '#FAFAFA'
+      }
+    })
+    doc.addImage(qrDataUrl, 'PNG', qrX + 2, qrY + 2, qrSize - 4, qrSize - 4)
+  } catch (e) {
+    doc.setTextColor(150, 150, 150)
+    doc.setFontSize(7)
+    doc.text('[ CÓDIGO QR ]', qrX + qrSize/2, qrY + qrSize/2, { align: 'center' })
+  }
+
+  // Label under the QR Code
+  doc.setTextColor(120, 120, 120)
+  doc.setFontSize(7.5)
+  doc.setFont('helvetica', 'normal')
+  doc.text('ESCANEAR PARA VALIDACIÓN', qrX + qrSize/2, qrY + qrSize + 4, { align: 'center' })
+
+  // Footer line
+  const footerY = 285
+  doc.setDrawColor(217, 70, 239, 0.4)
+  doc.setLineWidth(0.5)
+  doc.line(15, footerY - 5, 195, footerY - 5)
+
+  doc.setTextColor(120, 120, 120)
+  doc.setFontSize(7.5)
+  doc.setFont('helvetica', 'italic')
+  doc.text('Dance4ever Nacional · Todos los derechos reservados · www.dance4ever.mx', 105, footerY, { align: 'center' })
+
+  // Output / Download
+  const filename = `Comprobante_Registro_${state.academy.replace(/\s+/g, '_') || 'Dance4ever'}.pdf`
+  doc.save(filename)
 }
