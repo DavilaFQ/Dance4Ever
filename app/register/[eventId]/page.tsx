@@ -134,15 +134,9 @@ function participacionesPorAlumno(state: State): Map<number, number> {
   const counts = new Map<number, number>()
   state.acts.forEach(a => {
     if (!a.modality) return
-    if (a.modality === 'grupal') {
-      state.dancers.forEach((_, di) => {
-        counts.set(di, (counts.get(di) ?? 0) + 1)
-      })
-    } else {
-      a.dancerIndices.forEach(di => {
-        counts.set(di, (counts.get(di) ?? 0) + 1)
-      })
-    }
+    a.dancerIndices.forEach(di => {
+      counts.set(di, (counts.get(di) ?? 0) + 1)
+    })
   })
   return counts
 }
@@ -671,11 +665,8 @@ export default function RegisterPage({ params }: Props) {
       const isUpdate = state.confirmedRegistrationId != null
       let registrationId: number
 
-      // Merge assistants into extra_coaches with Asistente prefix
       const extrasMerged = [
-        ...state.coach.extras.map(e => e.trim()).filter(Boolean),
         ...state.coach.assistants.map(a => `Asistente: ${a.trim()}`).filter(a => a !== 'Asistente:'),
-        ...(state.ticketsCount ? [`Entradas: ${state.ticketsCount}`] : [])
       ]
 
       const regPayload = {
@@ -685,7 +676,7 @@ export default function RegisterPage({ params }: Props) {
         coach_email: state.coach.email.trim() || null,
         extra_coaches: extrasMerged,
         academy: state.city.trim() ? `${state.academy.trim()} (${state.city.trim()})` : state.academy.trim(),
-        team_name: state.teamName.trim() || state.academy.trim(),
+        team_name: state.academy.trim(),
         cost_paquete: state.costPaquete,
         cost_repeticion: state.costRepeticion,
         confirmed_at: new Date().toISOString(),
@@ -1379,7 +1370,7 @@ function StepView(props: {
               {/* COACH CARD */}
               <div className="p-3 sm:p-5 space-y-2.5">
                 <h3 className="font-display text-xl text-[rgb(var(--c-primary))] flex items-center gap-2 border-b border-[rgb(var(--c-border)/0.2)] pb-1.5">
-                  <Users className="w-5 h-5" /> COACH PRINCIPAL
+                  <Users className="w-5 h-5" /> COACH
                 </h3>
                 <div className="space-y-2.5">
                   <div>
@@ -1459,119 +1450,50 @@ function StepView(props: {
                       />
                     </div>
                   </div>
-                  <div>
-                    <div className="flex justify-between items-center mb-1">
-                      <label className="block text-[10px] font-bold tracking-widest text-[rgb(var(--c-text)/0.7)]">NOMBRE DEL EQUIPO</label>
-                      {state.academy.trim().length >= 2 && (
-                        <button
-                          type="button"
-                          onClick={() => updateState(s => ({ ...s, teamName: s.academy }))}
-                          className="text-[10px] text-[rgb(var(--c-primary))] hover:underline font-bold"
-                        >
-                          COPIAR ACADEMIA
-                        </button>
-                      )}
-                    </div>
-                    <input
-                      type="text"
-                      value={state.teamName}
-                      onChange={e => updateState(s => ({ ...s, teamName: e.target.value }))}
-                      placeholder={state.academy || "Ej. Ritmo Senior Team"}
-                      className="w-full bg-[rgb(var(--c-surface))] border border-[rgb(var(--c-border)/0.6)] text-[rgb(var(--c-text-strong))] rounded-2xl px-4 py-3 outline-none focus:border-[rgb(var(--c-primary))] focus:ring-1 focus:ring-[rgb(var(--c-primary))] transition-all text-sm"
-                      autoCapitalize="sentences"
-                    />
-                  </div>
                 </div>
               </div>
             </div>
 
-            {/* DYNAMIC STAFF CARD (EXTRA COACHES & ASSISTANTS) */}
-            <div className="p-3.5 sm:p-6 space-y-3.5 sm:space-y-5">
-              <h3 className="font-display text-xl text-[rgb(var(--c-primary))] border-b border-[rgb(var(--c-border)/0.2)] pb-2 flex items-center gap-2">
-                <Users className="w-5 h-5 text-[rgb(var(--c-primary))]" /> STAFF ADICIONAL (COACHES Y ASISTENTES)
-              </h3>
-              
-              <div className="grid md:grid-cols-2 gap-6">
-                {/* EXTRA COACHES */}
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center">
-                    <label className="text-xs font-display tracking-wider text-[rgb(var(--c-text-strong))] font-bold">COACHES ADICIONALES</label>
-                    <button
-                      type="button"
-                      onClick={() => updateCoach({ extras: [...state.coach.extras, ''] })}
-                      className="inline-flex items-center gap-1 text-xs text-[rgb(var(--c-primary))] font-bold hover:opacity-85 active:scale-95 transition-all duration-150"
-                    >
-                      <Plus className="w-3.5 h-3.5" /> AGREGAR
-                    </button>
-                  </div>
-                  
-                  {state.coach.extras.length === 0 ? (
-                    <p className="text-xs text-[rgb(var(--c-text)/0.5)] italic bg-[rgb(var(--c-surface))] p-3 rounded-2xl text-center">No hay coaches adicionales registrados</p>
-                  ) : (
-                    <div className="space-y-2 max-h-none overflow-visible md:max-h-[180px] md:overflow-y-auto pr-1">
-                      {state.coach.extras.map((e, idx) => (
-                        <div key={`extra-${idx}`} className="flex gap-2 animate-[fadeIn_0.2s_ease-out_forwards]">
-                          <input
-                            type="text"
-                            value={e}
-                            onChange={ev => updateCoach({ extras: state.coach.extras.map((x, j) => j === idx ? ev.target.value : x) })}
-                            placeholder={`Nombre del coach ${idx + 2}`}
-                            className="flex-1 bg-[rgb(var(--c-surface))] border border-[rgb(var(--c-border)/0.6)] text-[rgb(var(--c-text-strong))] rounded-xl px-3 py-2 outline-none focus:border-[rgb(var(--c-primary))] text-xs"
-                            autoCapitalize="words"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => updateCoach({ extras: state.coach.extras.filter((_, j) => j !== idx) })}
-                            className="text-[rgb(var(--c-primary))] bg-[rgb(var(--c-primary)/0.1)] active:bg-[rgb(var(--c-primary)/0.2)] p-2 rounded-xl active:scale-95 transition-all duration-150"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                {/* ASSISTANTS */}
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center">
-                    <label className="text-xs font-display tracking-wider text-[rgb(var(--c-text-strong))] font-bold">ASISTENTES (STAFF DE APOYO)</label>
-                    <button
-                      type="button"
-                      onClick={() => updateCoach({ assistants: [...state.coach.assistants, ''] })}
-                      className="inline-flex items-center gap-1 text-xs text-[rgb(var(--c-primary))] font-bold hover:opacity-85 active:scale-95 transition-all duration-150"
-                    >
-                      <Plus className="w-3.5 h-3.5" /> AGREGAR
-                    </button>
-                  </div>
-                  
-                  {state.coach.assistants.length === 0 ? (
-                    <p className="text-xs text-[rgb(var(--c-text)/0.5)] italic bg-[rgb(var(--c-surface))] p-3 rounded-2xl text-center">No hay asistentes registrados</p>
-                  ) : (
-                    <div className="space-y-2 max-h-none overflow-visible md:max-h-[180px] md:overflow-y-auto pr-1">
-                      {state.coach.assistants.map((ast, idx) => (
-                        <div key={`assistant-${idx}`} className="flex gap-2 animate-[fadeIn_0.2s_ease-out_forwards]">
-                          <input
-                            type="text"
-                            value={ast}
-                            onChange={ev => updateCoach({ assistants: state.coach.assistants.map((x, j) => j === idx ? ev.target.value : x) })}
-                            placeholder={`Nombre del asistente ${idx + 1}`}
-                            className="flex-1 bg-[rgb(var(--c-surface))] border border-[rgb(var(--c-border)/0.6)] text-[rgb(var(--c-text-strong))] rounded-xl px-3 py-2 outline-none focus:border-[rgb(var(--c-primary))] text-xs"
-                            autoCapitalize="words"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => updateCoach({ assistants: state.coach.assistants.filter((_, j) => j !== idx) })}
-                            className="text-[rgb(var(--c-primary))] bg-[rgb(var(--c-primary)/0.1)] active:bg-[rgb(var(--c-primary)/0.2)] p-2 rounded-xl active:scale-95 transition-all duration-150"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
+            {/* ASISTENTES */}
+            <div className="p-3.5 sm:p-6 space-y-3">
+              <div className="flex justify-between items-center border-b border-[rgb(var(--c-border)/0.2)] pb-2">
+                <h3 className="font-display text-xl text-[rgb(var(--c-primary))] flex items-center gap-2">
+                  <Users className="w-5 h-5" /> ASISTENTES
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => updateCoach({ assistants: [...state.coach.assistants, ''] })}
+                  className="inline-flex items-center gap-1 text-xs text-[rgb(var(--c-primary))] font-bold hover:opacity-85 active:scale-95 transition-all duration-150"
+                >
+                  <Plus className="w-3.5 h-3.5" /> AGREGAR
+                </button>
               </div>
+              {state.coach.assistants.length === 0 ? (
+                <p className="text-xs text-[rgb(var(--c-text)/0.5)] italic bg-[rgb(var(--c-surface))] p-3 rounded-2xl text-center">No hay asistentes registrados</p>
+              ) : (
+                <div className="space-y-2">
+                  {state.coach.assistants.map((ast, idx) => (
+                    <div key={`assistant-${idx}`} className="flex gap-2 animate-[fadeIn_0.2s_ease-out_forwards]">
+                      <input
+                        type="text"
+                        value={ast}
+                        onChange={ev => updateCoach({ assistants: state.coach.assistants.map((x, j) => j === idx ? ev.target.value : x) })}
+                        placeholder={`Nombre del asistente ${idx + 1}`}
+                        className="flex-1 bg-[rgb(var(--c-surface))] border border-[rgb(var(--c-border)/0.6)] text-[rgb(var(--c-text-strong))] rounded-xl px-3 py-2 outline-none focus:border-[rgb(var(--c-primary))] text-xs"
+                        autoCapitalize="words"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => updateCoach({ assistants: state.coach.assistants.filter((_, j) => j !== idx) })}
+                        className="text-[rgb(var(--c-primary))] bg-[rgb(var(--c-primary)/0.1)] active:bg-[rgb(var(--c-primary)/0.2)] p-2 rounded-xl active:scale-95 transition-all duration-150"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <p className="text-[10px] text-[rgb(var(--c-text)/0.5)] text-center">$1,000 por asistente · 1 gratis por cada 8 integrantes</p>
             </div>
           </div>
 
@@ -2254,17 +2176,10 @@ function FullSummary({ state, editMode, confirmed, confirm, saving, saveErr, sta
             </h3>
             <div className="grid md:grid-cols-2 gap-6">
               <div>
-                <p className="text-[10px] tracking-[0.2em] text-[rgb(var(--c-text)/0.6)] font-bold mb-1">COACH PRINCIPAL</p>
+                <p className="text-[10px] tracking-[0.2em] text-[rgb(var(--c-text)/0.6)] font-bold mb-1">COACH</p>
                 <p className="font-display text-2xl text-[rgb(var(--c-text-strong))] uppercase leading-tight">{state.coach.name || 'Sin nombre'}</p>
-                <p className="text-sm text-[rgb(var(--c-text))] mt-2 flex items-center gap-2"><span className="opacity-70">📱</span> {state.coach.phone || 'Sin WhatsApp'}</p>
-                {state.coach.email && <p className="text-sm text-[rgb(var(--c-text))] mt-1 flex items-center gap-2"><span className="opacity-70">✉️</span> {state.coach.email}</p>}
-                
-                {state.coach.extras.filter(e => e.trim()).length > 0 && (
-                  <div className="text-xs text-[rgb(var(--c-text))] mt-3 bg-[rgb(var(--c-surface))] p-2 rounded-xl border border-[rgb(var(--c-border)/0.25)]">
-                    <span className="font-bold block text-[9px] uppercase tracking-wider text-[rgb(var(--c-text)/0.6)] mb-0.5">Otros Coaches:</span>
-                    <span>{state.coach.extras.filter(e => e.trim()).join(', ')}</span>
-                  </div>
-                )}
+                <p className="text-sm text-[rgb(var(--c-text))] mt-2">{state.coach.phone || 'Sin WhatsApp'}</p>
+                {state.coach.email && <p className="text-sm text-[rgb(var(--c-text))] mt-1">{state.coach.email}</p>}
 
                 {state.coach.assistants && state.coach.assistants.filter(a => a.trim()).length > 0 && (
                   <div className="text-xs text-[rgb(var(--c-text))] mt-2 bg-[rgb(var(--c-surface))] p-2 rounded-xl border border-[rgb(var(--c-border)/0.25)]">
@@ -2283,10 +2198,6 @@ function FullSummary({ state, editMode, confirmed, confirm, saving, saveErr, sta
                     <p className="text-[10px] tracking-[0.2em] text-[rgb(var(--c-text)/0.6)] font-bold mb-1">CIUDAD</p>
                     <p className="font-display text-xl sm:text-2xl text-[rgb(var(--c-text-strong))] uppercase leading-tight">{state.city || 'Sin ciudad'}</p>
                   </div>
-                </div>
-                <div>
-                  <p className="text-[10px] tracking-[0.2em] text-[rgb(var(--c-text)/0.6)] font-bold mb-1">NOMBRE DEL EQUIPO</p>
-                  <p className="font-display text-xl sm:text-2xl text-[rgb(var(--c-success-strong))] uppercase leading-tight">{state.teamName || state.academy || 'Sin equipo'}</p>
                 </div>
               </div>
             </div>
@@ -2475,7 +2386,7 @@ function FullSummary({ state, editMode, confirmed, confirm, saving, saveErr, sta
                     )}
                     {freeEntries > 0 && (
                       <p className="text-[10px] text-[rgb(var(--c-success-strong))] bg-[rgb(var(--c-success)/0.08)] border border-[rgb(var(--c-success)/0.2)] rounded-xl px-3 py-1.5 font-medium">
-                        🎉 {freeEntries} entrada{freeEntries > 1 ? 's' : ''} de asistente gratis por tener {filledDancers.length} integrantes
+                        {freeEntries} entrada{freeEntries > 1 ? 's' : ''} de asistente gratis por tener {filledDancers.length} integrantes
                       </p>
                     )}
                     <div className="flex justify-between items-center border-t border-[rgb(var(--c-border)/0.4)] pt-3 mt-3">
