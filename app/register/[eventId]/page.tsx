@@ -332,8 +332,12 @@ export default function RegisterPage({ params }: Props) {
       setEvent(data as Event)
       setAuthState('ok')
       try {
-        const raw = localStorage.getItem(LS_KEY(eventId))
-        if (raw) {
+        const isReset = search.get('reset') === 'true' || search.get('new') === 'true'
+        if (isReset) {
+          localStorage.removeItem(LS_KEY(eventId))
+        } else {
+          const raw = localStorage.getItem(LS_KEY(eventId))
+          if (raw) {
           const saved = JSON.parse(raw) as State
           // Handle migration of old coach data structure
           if (saved.coach && !saved.coach.assistants) {
@@ -360,6 +364,7 @@ export default function RegisterPage({ params }: Props) {
           setState(saved)
           if (saved.confirmedRegistrationId) setStep({ kind: 'confirmed' })
         }
+      }
       } catch { /* ignore */ }
     })()
     return () => { cancelled = true }
