@@ -1422,21 +1422,14 @@ function StepView(props: {
 
                       {/* Categoría y edad */}
                       <div className="px-3 pt-1 pb-2.5 flex items-end gap-2">
-                        <div className="flex-1 min-w-0">
-                          <p className="text-[9px] font-bold tracking-widest text-[rgb(var(--c-text)/0.4)] mb-1.5">CATEGORÍA</p>
-                          <select
-                            value={d.categoryOverride ?? ''}
-                            onChange={e => updateDancer(i, { categoryOverride: (e.target.value || null) as AgeCategory | null })}
-                            className={`w-full bg-[rgb(var(--c-surface-2))] border border-[rgb(var(--c-border)/0.5)] rounded-xl px-2 py-2 text-sm outline-none font-bold transition-all ${
-                              d.categoryOverride ? 'text-[rgb(var(--c-primary))] border-[rgb(var(--c-primary)/0.4)]' : 'text-[rgb(var(--c-text-strong))]'
-                            }`}
-                          >
-                            <option value="">Auto{compCat ? `: ${AGE_CATEGORY_LABELS[compCat]}` : ''}</option>
-                            {AGE_CATEGORY_ORDER.map(cat => (
-                              <option key={cat} value={cat}>{AGE_CATEGORY_LABELS[cat]}</option>
-                            ))}
-                          </select>
-                        </div>
+                        {compCat && (
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[9px] font-bold tracking-widest text-[rgb(var(--c-text)/0.4)] mb-1.5">CATEGORÍA</p>
+                            <div className="bg-[rgb(var(--c-surface-2))] border border-[rgb(var(--c-border)/0.5)] rounded-xl px-2 py-2 text-sm font-bold text-[rgb(var(--c-text-strong))]">
+                              {AGE_CATEGORY_LABELS[compCat]}
+                            </div>
+                          </div>
+                        )}
                         {age !== null && (
                           <div className="w-16 shrink-0 text-center">
                             <p className="text-[9px] font-bold tracking-widest text-[rgb(var(--c-text)/0.4)] mb-1.5">EDAD</p>
