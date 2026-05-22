@@ -731,6 +731,15 @@ export default function RegisterPage({ params }: Props) {
           overflow: hidden;
           overscroll-behavior: none;
         }
+        /* Ocultar elementos de navegación e indicadores instantáneamente al enfocar cualquier input */
+        body:has(input:focus, textarea:focus, select:focus) .mobile-bottom-nav,
+        body:has(input:focus, textarea:focus, select:focus) .step-status-indicator {
+          display: none !important;
+        }
+        /* Garantizar holgura de scroll para evitar que el teclado tape los elementos */
+        body:has(input:focus, textarea:focus, select:focus) main {
+          padding-bottom: 40vh !important;
+        }
       ` }} />
       <meta name="theme-color" content="#F6F4EF" />
 
@@ -759,7 +768,7 @@ export default function RegisterPage({ params }: Props) {
 
         {/* STEP STATUS INDICATOR (iOS Tab Style) */}
         {!isKeyboardOpen && !isFirstStep && step.kind !== 'confirmed' && (
-          <div className="shrink-0 flex justify-center pt-0.5 pb-2 sm:py-3 px-4 sm:px-0">
+          <div className="step-status-indicator shrink-0 flex justify-center pt-0.5 pb-2 sm:py-3 px-4 sm:px-0">
             <div className="bg-[rgb(var(--c-surface-2))] p-1 rounded-2xl flex gap-1 w-full max-w-xl shadow-inner border border-[rgb(var(--c-border)/0.3)]">
               {[
                 { label: 'COACH', kind: 'setup' },
@@ -823,7 +832,7 @@ export default function RegisterPage({ params }: Props) {
       {/* MOBILE BOTTOM NAV BAR (iOS native feel) */}
       {!isKeyboardOpen && !isFirstStep && step.kind !== 'confirmed' && (
         <div
-          className="shrink-0 lg:hidden bg-[rgb(var(--c-surface)/0.96)] backdrop-blur flex items-center justify-between px-5 py-3 border-t border-[rgb(var(--c-border)/0.5)] z-40"
+          className="mobile-bottom-nav shrink-0 lg:hidden bg-[rgb(var(--c-surface)/0.96)] backdrop-blur flex items-center justify-between px-5 py-3 border-t border-[rgb(var(--c-border)/0.5)] z-40"
           style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 8px)' }}
         >
           <button
