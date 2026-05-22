@@ -21,6 +21,9 @@ export const metadata: Metadata = {
     title: "Dance4ever",
     statusBarStyle: "black-translucent",
   },
+  icons: {
+    apple: "/logo.png",
+  },
 };
 
 export const viewport: Viewport = {

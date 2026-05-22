@@ -38,6 +38,7 @@ export default function StaffPage() {
   const [showQr, setShowQr] = useState(false)
   const [showCreate, setShowCreate] = useState(false)
   const [showProgram, setShowProgram] = useState(false)
+  const [activeAnnouncement, setActiveAnnouncement] = useState('')
   const [programSearch, setProgramSearch] = useState('')
   const [editor, setEditor] = useState<EditorState>(null)
   const [showPerformed, setShowPerformed] = useState(false)
@@ -109,6 +110,50 @@ export default function StaffPage() {
       .subscribe()
     return () => { supabase.removeChannel(channel) }
   }, [event?.id, loadParticipants])
+
+  // Subscribing to live broadcast channel for voiceovers and announcements
+  useEffect(() => {
+    if (!event?.id) return
+    const ch = supabase.channel(`broadcast-${event.id}`, {
+      config: { broadcast: { self: true } }
+    })
+    
+    ch.on('broadcast', { event: 'announcement' }, (payload) => {
+      const text = payload.payload.text || ''
+      setActiveAnnouncement(text)
+      if (text) {
+        // play the synthesized chime
+        try {
+          const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext
+          if (AudioContextClass) {
+            const ctx = new AudioContextClass()
+            const playBeep = (startTime: number) => {
+              const osc = ctx.createOscillator()
+              const gain = ctx.createGain()
+              osc.connect(gain)
+              gain.connect(ctx.destination)
+              osc.type = 'sine'
+              osc.frequency.setValueAtTime(880, startTime) // A5
+              osc.frequency.exponentialRampToValueAtTime(1046.5, startTime + 0.15) // C6
+              gain.gain.setValueAtTime(0, startTime)
+              gain.gain.linearRampToValueAtTime(0.3, startTime + 0.02)
+              gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.25)
+              osc.start(startTime)
+              osc.stop(startTime + 0.25)
+            }
+            const now = ctx.currentTime
+            playBeep(now)
+            playBeep(now + 0.28) // double beep glide
+          }
+        } catch (e) {
+          console.error('AudioContext error:', e)
+        }
+      }
+    })
+    
+    ch.subscribe()
+    return () => { supabase.removeChannel(ch) }
+  }, [event?.id])
 
   async function loadLatestEvent() {
     const { data } = await supabase.from('events').select('*').order('created_at', { ascending: false }).limit(1).single()
@@ -297,6 +342,32 @@ export default function StaffPage() {
           </div>
         ) : <div className="w-px" />}
       </header>
+
+      {activeAnnouncement && (
+        <div className="bg-fuchsia-950 border-b border-yellow-400 py-1.5 shrink-0 overflow-hidden relative flex items-center z-50">
+          <style dangerouslySetInnerHTML={{__html: `
+            @keyframes marquee {
+              0% { transform: translateX(0%); }
+              100% { transform: translateX(-33.33%); }
+            }
+            .animate-marquee-custom {
+              display: inline-block;
+              white-space: nowrap;
+              animation: marquee 25s linear infinite;
+            }
+          `}} />
+          <div className="animate-marquee-custom font-display text-base tracking-[0.2em] text-yellow-300 font-bold uppercase">
+            <span>🚨 AVISO DE CONTROL: {activeAnnouncement} &nbsp;·&nbsp; 🚨 AVISO DE CONTROL: {activeAnnouncement} &nbsp;·&nbsp; 🚨 AVISO DE CONTROL: {activeAnnouncement} &nbsp;·&nbsp; </span>
+          </div>
+          <button 
+            onClick={() => setActiveAnnouncement('')} 
+            className="absolute right-2 bg-black/60 border border-fuchsia-500/50 hover:bg-black text-white hover:text-fuchsia-400 p-1 rounded-full z-10 transition-all duration-200"
+            aria-label="Cerrar aviso"
+          >
+            <X className="w-3 h-3" />
+          </button>
+        </div>
+      )}
 
       {event ? (
         <>

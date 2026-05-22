@@ -15,6 +15,51 @@ export default function MCPage({ params }: Props) {
   const [notFound, setNotFound] = useState(false)
   const [showProgram, setShowProgram] = useState(false)
   const [search, setSearch] = useState('')
+  const [activeAnnouncement, setActiveAnnouncement] = useState('')
+
+  // Subscribing to live broadcast channel for voiceovers and announcements
+  useEffect(() => {
+    if (!eventId) return
+    const ch = supabase.channel(`broadcast-${eventId}`, {
+      config: { broadcast: { self: true } }
+    })
+    
+    ch.on('broadcast', { event: 'announcement' }, (payload) => {
+      const text = payload.payload.text || ''
+      setActiveAnnouncement(text)
+      if (text) {
+        // play the synthesized chime
+        try {
+          const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext
+          if (AudioContextClass) {
+            const ctx = new AudioContextClass()
+            const playBeep = (startTime: number) => {
+              const osc = ctx.createOscillator()
+              const gain = ctx.createGain()
+              osc.connect(gain)
+              gain.connect(ctx.destination)
+              osc.type = 'sine'
+              osc.frequency.setValueAtTime(880, startTime) // A5
+              osc.frequency.exponentialRampToValueAtTime(1046.5, startTime + 0.15) // C6
+              gain.gain.setValueAtTime(0, startTime)
+              gain.gain.linearRampToValueAtTime(0.3, startTime + 0.02)
+              gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.25)
+              osc.start(startTime)
+              osc.stop(startTime + 0.25)
+            }
+            const now = ctx.currentTime
+            playBeep(now)
+            playBeep(now + 0.28) // double beep glide
+          }
+        } catch (e) {
+          console.error('AudioContext error:', e)
+        }
+      }
+    })
+    
+    ch.subscribe()
+    return () => { supabase.removeChannel(ch) }
+  }, [eventId])
 
   useEffect(() => { if (!showProgram) setSearch('') }, [showProgram])
 
@@ -65,6 +110,32 @@ export default function MCPage({ params }: Props) {
 
   return (
     <div className="h-[100dvh] bg-neutral-900 text-white flex flex-col overflow-hidden select-none">
+      {activeAnnouncement && (
+        <div className="bg-fuchsia-950 border-b border-yellow-400 py-2 shrink-0 overflow-hidden relative flex items-center z-50">
+          <style dangerouslySetInnerHTML={{__html: `
+            @keyframes marquee {
+              0% { transform: translateX(0%); }
+              100% { transform: translateX(-33.33%); }
+            }
+            .animate-marquee-custom {
+              display: inline-block;
+              white-space: nowrap;
+              animation: marquee 25s linear infinite;
+            }
+          `}} />
+          <div className="animate-marquee-custom font-display text-lg tracking-[0.2em] text-yellow-300 font-bold uppercase">
+            <span>🚨 AVISO DE CONTROL: {activeAnnouncement} &nbsp;·&nbsp; 🚨 AVISO DE CONTROL: {activeAnnouncement} &nbsp;·&nbsp; 🚨 AVISO DE CONTROL: {activeAnnouncement} &nbsp;·&nbsp; </span>
+          </div>
+          <button 
+            onClick={() => setActiveAnnouncement('')} 
+            className="absolute right-2 bg-black/60 border border-fuchsia-500/50 hover:bg-black text-white hover:text-fuchsia-400 p-1 rounded-full z-10 transition-all duration-200"
+            aria-label="Cerrar aviso"
+          >
+            <X className="w-3 h-3" />
+          </button>
+        </div>
+      )}
+
       <header className="bg-black px-3 py-2 flex items-center justify-between shrink-0">
         <h1 className="font-display text-3xl tracking-[0.2em] text-fuchsia-500 leading-none">PRESENTADOR</h1>
         <Image src="/logo.png" alt="Dance4ever" width={56} height={40} priority className="shrink-0" />

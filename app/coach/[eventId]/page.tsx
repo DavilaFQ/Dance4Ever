@@ -26,6 +26,7 @@ export default function CoachPage({ params }: Props) {
   const [search, setSearch] = useState('')
   const [alertedAt, setAlertedAt] = useState<number | null>(null)
   const [, setTick] = useState(0)
+  const [activeAnnouncement, setActiveAnnouncement] = useState('')
 
   useEffect(() => {
     syncServerTime()
@@ -65,6 +66,28 @@ export default function CoachPage({ params }: Props) {
       .subscribe()
     return () => { supabase.removeChannel(channel) }
   }, [eventId, loadAll])
+
+  // Subscribing to live broadcast channel for voiceovers and announcements
+  useEffect(() => {
+    if (!eventId) return
+    const ch = supabase.channel(`broadcast-${eventId}`, {
+      config: { broadcast: { self: true } }
+    })
+    
+    ch.on('broadcast', { event: 'announcement' }, (payload) => {
+      const text = payload.payload.text || ''
+      setActiveAnnouncement(text)
+      if (text) {
+        // Physical haptic haptics double-vibration
+        if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+          navigator.vibrate([200, 100, 200])
+        }
+      }
+    })
+    
+    ch.subscribe()
+    return () => { supabase.removeChannel(ch) }
+  }, [eventId])
 
   const coach = coaches.find(c => c.id === coachId)
   const current = event ? participants.find(p => p.position === event.current_position) : null
@@ -106,6 +129,32 @@ export default function CoachPage({ params }: Props) {
 
   return (
     <div className="h-[100dvh] bg-neutral-900 text-white flex flex-col overflow-hidden select-none">
+      {activeAnnouncement && (
+        <div className="bg-fuchsia-950 border-b border-yellow-400 py-1.5 shrink-0 overflow-hidden relative flex items-center z-50">
+          <style dangerouslySetInnerHTML={{__html: `
+            @keyframes marquee {
+              0% { transform: translateX(0%); }
+              100% { transform: translateX(-33.33%); }
+            }
+            .animate-marquee-custom {
+              display: inline-block;
+              white-space: nowrap;
+              animation: marquee 25s linear infinite;
+            }
+          `}} />
+          <div className="animate-marquee-custom font-display text-sm tracking-[0.2em] text-yellow-300 font-bold uppercase">
+            <span>🚨 AVISO DE CONTROL: {activeAnnouncement} &nbsp;·&nbsp; 🚨 AVISO DE CONTROL: {activeAnnouncement} &nbsp;·&nbsp; 🚨 AVISO DE CONTROL: {activeAnnouncement} &nbsp;·&nbsp; </span>
+          </div>
+          <button 
+            onClick={() => setActiveAnnouncement('')} 
+            className="absolute right-2 bg-black/60 border border-fuchsia-500/50 hover:bg-black text-white hover:text-fuchsia-400 p-1 rounded-full z-10 transition-all duration-200"
+            aria-label="Cerrar aviso"
+          >
+            <X className="w-3 h-3" />
+          </button>
+        </div>
+      )}
+
       {/* Header */}
       <header className="bg-black px-3 py-2 flex items-center gap-3 shrink-0">
         {coach ? (

@@ -2,7 +2,7 @@
 import { useEffect, useState, use, useCallback } from 'react'
 import Image from 'next/image'
 import { useSearchParams } from 'next/navigation'
-import { ArrowLeft, Check, Plus, Trash2, Pencil, MessageCircle, Info, X, ChevronDown, Sparkles, Users, Clipboard, HeartHandshake, School, Clock } from 'lucide-react'
+import { ArrowLeft, Check, Plus, Trash2, Pencil, MessageCircle, Info, X, ChevronDown, Sparkles, Users, Clipboard, HeartHandshake, School, Clock, Calendar } from 'lucide-react'
 import { supabase, Modality, AgeCategory, Level, Event, AGE_CATEGORY_ORDER, AGE_CATEGORY_LABELS, AGE_CATEGORY_HINTS, categoryFromBirthdate } from '@/lib/supabase'
 
 type Props = { params: Promise<{ eventId: string }> }
@@ -55,13 +55,13 @@ type Step =
 const STYLES = ['Jazz', 'Poms', 'Acro Jazz', 'Hip Hop', 'Show', 'Ballet', 'Contempo']
 
 const CATEGORY_COLORS: Record<AgeCategory, { bg: string; border: string; text: string }> = {
-  tiny: { bg: 'bg-rose-50/30', border: 'border-rose-200/40 focus-within:border-rose-400', text: 'text-rose-700' },
-  mini: { bg: 'bg-orange-50/30', border: 'border-orange-200/40 focus-within:border-orange-400', text: 'text-orange-700' },
-  elementary: { bg: 'bg-amber-50/30', border: 'border-amber-200/40 focus-within:border-amber-400', text: 'text-amber-700' },
-  junior: { bg: 'bg-emerald-50/30', border: 'border-emerald-200/40 focus-within:border-emerald-400', text: 'text-emerald-700' },
-  senior: { bg: 'bg-teal-50/30', border: 'border-teal-200/40 focus-within:border-teal-400', text: 'text-teal-700' },
-  college: { bg: 'bg-indigo-50/30', border: 'border-indigo-200/40 focus-within:border-indigo-400', text: 'text-indigo-700' },
-  open: { bg: 'bg-purple-50/30', border: 'border-purple-200/40 focus-within:border-purple-400', text: 'text-purple-700' },
+  tiny: { bg: 'bg-rose-100', border: 'border-rose-300 focus-within:border-rose-500', text: 'text-rose-700' },
+  mini: { bg: 'bg-orange-100', border: 'border-orange-300 focus-within:border-orange-500', text: 'text-orange-700' },
+  elementary: { bg: 'bg-amber-100', border: 'border-amber-300 focus-within:border-amber-500', text: 'text-amber-700' },
+  junior: { bg: 'bg-emerald-100', border: 'border-emerald-300 focus-within:border-emerald-500', text: 'text-emerald-700' },
+  senior: { bg: 'bg-teal-100', border: 'border-teal-300 focus-within:border-teal-500', text: 'text-teal-700' },
+  college: { bg: 'bg-indigo-100', border: 'border-indigo-300 focus-within:border-indigo-500', text: 'text-indigo-700' },
+  open: { bg: 'bg-purple-100', border: 'border-purple-300 focus-within:border-purple-500', text: 'text-purple-700' },
 }
 
 const DEFAULT_DANCER_COLOR = {
@@ -122,8 +122,8 @@ function initialState(): State {
     dancers: [],
     actCount: 0,
     acts: [],
-    costPaquete: 1000,
-    costRepeticion: 300,
+    costPaquete: PRECIO_PARTICIPACION,
+    costRepeticion: PRECIO_REPETICION,
     confirmedRegistrationId: null,
   }
 }
@@ -145,15 +145,23 @@ function participacionesPorAlumno(state: State): Map<number, number> {
   return counts
 }
 
+const PRECIO_PARTICIPACION = 1700
+const PRECIO_REPETICION = 300
+const PRECIO_ASISTENTE = 1000
+const DANCERS_POR_ENTRADA_GRATIS = 8
+
 function costoTotal(state: State): number {
-  const paq = state.costPaquete ?? 1000
-  const rep = state.costRepeticion ?? 300
   const counts = participacionesPorAlumno(state)
   let total = 0
   counts.forEach(n => {
-    if (n >= 1) total += paq
-    if (n > 1) total += (n - 1) * rep
+    if (n >= 1) total += PRECIO_PARTICIPACION
+    if (n > 1) total += (n - 1) * PRECIO_REPETICION
   })
+  const filledDancers = state.dancers.filter(d => d.name.trim().length > 0)
+  const freeEntries = Math.floor(filledDancers.length / DANCERS_POR_ENTRADA_GRATIS)
+  const assistants = state.coach.assistants.filter(a => a.trim()).length
+  const paidAssistants = Math.max(0, assistants - freeEntries)
+  total += paidAssistants * PRECIO_ASISTENTE
   return total
 }
 
@@ -195,18 +203,9 @@ function formatBirthdate(iso: string): string {
 }
 
 function getDancerDisplayName(dancer: Dancer, index: number, allDancers: Dancer[]): string {
-  const parts = dancer.name.trim().split(/\s+/).filter(Boolean)
-  if (parts.length === 0) return 'SIN NOMBRE'
-  const firstName = parts[0]
-  const hasDuplicate = allDancers.some((other, idx) => {
-    if (idx === index) return false
-    const otherParts = other.name.trim().split(/\s+/).filter(Boolean)
-    return otherParts.length > 0 && otherParts[0].toLowerCase() === firstName.toLowerCase()
-  })
-  if (hasDuplicate && parts.length > 1) {
-    return `${firstName} ${parts[1]}`.toUpperCase()
-  }
-  return firstName.toUpperCase()
+  const name = dancer.name.trim()
+  if (!name) return 'SIN NOMBRE'
+  return name.toUpperCase()
 }
 
 
@@ -337,10 +336,10 @@ export default function RegisterPage({ params }: Props) {
             saved.coach.assistants = []
           }
           if (saved.costPaquete === null) {
-            saved.costPaquete = 1000
+            saved.costPaquete = PRECIO_PARTICIPACION
           }
           if (saved.costRepeticion === null) {
-            saved.costRepeticion = 300
+            saved.costRepeticion = PRECIO_REPETICION
           }
           // Parse city from academy name if it contains "(city)" and city is not set
           if (saved.city === undefined || saved.city === null) {
@@ -363,6 +362,48 @@ export default function RegisterPage({ params }: Props) {
     if (authState !== 'ok') return
     try { localStorage.setItem(LS_KEY(eventId), JSON.stringify(state)) } catch { /* ignore */ }
   }, [state, eventId, authState])
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || typeof document === 'undefined') return
+    if (step.kind !== 'welcome') return
+
+    const handleTouchStart = (e: TouchEvent) => {
+      if (e.touches.length > 1) {
+        e.preventDefault()
+      }
+    }
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (e.touches.length > 1) {
+        e.preventDefault()
+      }
+    }
+
+    let lastTouchEnd = 0
+    const handleTouchEnd = (e: TouchEvent) => {
+      const now = Date.now()
+      if (now - lastTouchEnd <= 300) {
+        e.preventDefault()
+      }
+      lastTouchEnd = now
+    }
+
+    const handleGestureStart = (e: any) => {
+      e.preventDefault()
+    }
+
+    document.addEventListener('touchstart', handleTouchStart, { passive: false })
+    document.addEventListener('touchmove', handleTouchMove, { passive: false })
+    document.addEventListener('touchend', handleTouchEnd, { passive: false })
+    document.addEventListener('gesturestart', handleGestureStart, { passive: false })
+
+    return () => {
+      document.removeEventListener('touchstart', handleTouchStart)
+      document.removeEventListener('touchmove', handleTouchMove)
+      document.removeEventListener('touchend', handleTouchEnd)
+      document.removeEventListener('gesturestart', handleGestureStart)
+    }
+  }, [step.kind])
 
   useEffect(() => {
     try {
@@ -778,27 +819,29 @@ export default function RegisterPage({ params }: Props) {
       <meta name="theme-color" content="#F6F4EF" />
 
       <main
-        className="flex-1 min-h-0 px-0 sm:px-4 lg:px-8 flex flex-col overflow-y-auto lg:overflow-hidden"
+        className={`flex-1 min-h-0 flex flex-col overflow-y-auto lg:overflow-hidden ${step.kind === 'welcome' ? 'px-0' : 'px-0 sm:px-4 lg:px-8'}`}
         style={{
           paddingTop: 'env(safe-area-inset-top, 0px)',
           paddingBottom: '0px'
         }}
       >
         {/* DESKTOP HEADER */}
-        <div className="shrink-0 hidden lg:flex items-center gap-6 pb-4 border-b border-[rgb(var(--c-border)/0.3)]">
-          <div className="shrink-0 flex items-baseline gap-5">
-            <p className="font-display text-3xl lg:text-4xl tracking-[0.3em] text-[rgb(var(--c-primary))] leading-none">REGISTRO PARA</p>
-            <h1 className="font-display text-3xl lg:text-4xl uppercase text-[rgb(var(--c-text-strong))] truncate leading-none">{event?.name || 'EVENTO'}</h1>
-            {event?.date && <p className="font-display text-3xl lg:text-4xl uppercase text-[rgb(var(--c-text))] leading-none">{formatEventDate(event.date)}</p>}
-          </div>
-          <div className="flex-1" />
-          {editMode && (
-            <div className="bg-[rgb(var(--c-primary)/0.1)] border border-[rgb(var(--c-primary)/0.3)] text-[rgb(var(--c-primary))] px-3 py-1.5 rounded-xl font-display text-xs tracking-widest self-center">
-              MODO EDICIÓN
+        {!isFirstStep && (
+          <div className="shrink-0 hidden lg:flex items-center gap-6 pb-4 border-b border-[rgb(var(--c-border)/0.3)]">
+            <div className="shrink-0 flex items-baseline gap-5">
+              <p className="font-display text-3xl lg:text-4xl tracking-[0.3em] text-[rgb(var(--c-primary))] leading-none">REGISTRO PARA</p>
+              <h1 className="font-display text-3xl lg:text-4xl uppercase text-[rgb(var(--c-text-strong))] truncate leading-none">{event?.name || 'EVENTO'}</h1>
+              {event?.date && <p className="font-display text-3xl lg:text-4xl uppercase text-[rgb(var(--c-text))] leading-none">{formatEventDate(event.date)}</p>}
             </div>
-          )}
-          <Image src="/logo.png" alt="Dance4ever" width={100} height={75} priority className="shrink-0 mix-blend-multiply" />
-        </div>
+            <div className="flex-1" />
+            {editMode && (
+              <div className="bg-[rgb(var(--c-primary)/0.1)] border border-[rgb(var(--c-primary)/0.3)] text-[rgb(var(--c-primary))] px-3 py-1.5 rounded-xl font-display text-xs tracking-widest self-center">
+                MODO EDICIÓN
+              </div>
+            )}
+            <Image src="/logo.png" alt="Dance4ever" width={100} height={75} priority className="shrink-0 mix-blend-multiply" />
+          </div>
+        )}
 
         {/* STEP STATUS INDICATOR (iOS Tab Style - Rediseñado Premium) */}
         {(!isKeyboardOpen || step.kind === 'dancers') && !isFirstStep && step.kind !== 'confirmed' && (
@@ -815,7 +858,7 @@ export default function RegisterPage({ params }: Props) {
                   <button
                     key={tab.kind}
                     disabled={true} // Read-only progress bar
-                    className={`flex-1 py-2 text-center font-display tracking-widest text-[10px] sm:text-xs rounded-xl transition-all duration-300 font-bold ${
+                    className={`flex-1 py-2 text-center font-display tracking-widest text-xs sm:text-sm rounded-xl transition-all duration-300 font-bold ${
                       isCurrent
                         ? 'bg-gradient-to-r from-purple-600 via-[rgb(var(--c-primary))] to-pink-500 text-white shadow-md scale-105'
                         : 'text-purple-400/80 hover:text-purple-600'
@@ -830,7 +873,7 @@ export default function RegisterPage({ params }: Props) {
         )}
 
         <div className="flex-1 min-h-0 flex justify-center">
-          <div className={`w-full ${step.kind === 'summary' || step.kind === 'confirmed' || step.kind === 'dancers' ? 'max-w-6xl' : 'max-w-3xl'} min-h-full lg:h-full flex flex-col justify-start lg:justify-center ${isKeyboardOpen ? 'pt-[1vh] lg:pt-3' : 'pt-0 sm:pt-2 lg:pt-0'} min-h-0`}>
+          <div className={`w-full ${step.kind === 'welcome' ? '' : step.kind === 'summary' || step.kind === 'confirmed' || step.kind === 'dancers' ? 'max-w-6xl' : 'max-w-3xl'} min-h-full lg:h-full flex flex-col justify-start lg:justify-center ${step.kind === 'welcome' ? '' : isKeyboardOpen ? 'pt-[1vh] lg:pt-3' : 'pt-0 sm:pt-2 lg:pt-0'} min-h-0`}>
             <StepView
               step={step}
               state={state}
@@ -1050,46 +1093,256 @@ function StepView(props: {
 
   switch (step.kind) {
     case 'welcome': {
-      const eventCity = event?.name?.replace(/dance4ever/gi, '').replace(/\d{4}/g, '').trim() || 'Guadalajara'
-      const regDeadline = event?.date ? getRegistrationDeadline(event.date) : '15 días antes'
-      const chgDeadline = event?.date ? getChangesDeadline(event.date) : '7 días antes'
       return (
-        <div className="flex flex-col items-center justify-center text-center space-y-6 max-w-xl mx-auto py-4 my-auto lg:my-0" style={{ animation: 'fadeIn 0.3s ease-out' }}>
-          <Image src="/logo.png" alt="Dance4ever" width={160} height={120} priority className="mix-blend-multiply active:scale-95 transition-all duration-150" />
-          <div className="space-y-2">
-            <h2 className="font-sans text-3xl lg:text-4xl text-[rgb(var(--c-text-strong))] font-semibold tracking-tight uppercase">{event?.name || 'EVENTO'}</h2>
-            {event?.date && (
-              <p className="font-sans text-lg lg:text-xl text-[rgb(var(--c-text-strong))] font-medium">{formatEventDate(event.date)}</p>
-            )}
-          </div>
+        <div className="relative flex flex-col items-center justify-center h-[100dvh] w-full overflow-hidden select-none px-4 py-6 md:p-12" style={{ background: 'radial-gradient(circle at 50% 35%, #180033 0%, #080014 70%, #020005 100%)', touchAction: 'none', animation: 'fadeIn 0.4s ease-out' }}>
+          <style>{`
+            @keyframes riseUp {
+              0% { opacity: 0; transform: translateY(30px); }
+              100% { opacity: 1; transform: translateY(0); }
+            }
+            @keyframes swayLeft {
+              0%, 100% { transform: rotate(0deg) scale(1); }
+              50% { transform: rotate(3deg) scale(1.02); }
+            }
+            @keyframes swayRight {
+              0%, 100% { transform: rotate(0deg) scale(1); }
+              50% { transform: rotate(-3deg) scale(1.02); }
+            }
+            @keyframes pulseGlow {
+              0%, 100% { opacity: 0.45; filter: drop-shadow(0 0 20px rgba(0, 234, 255, 0.4)); }
+              50% { opacity: 0.7; filter: drop-shadow(0 0 35px rgba(252, 3, 161, 0.6)); }
+            }
+            @keyframes sweep {
+              0% { left: -100%; }
+              50% { left: 160%; }
+              100% { left: 160%; }
+            }
+          `}</style>
 
-          <div className="w-full bg-[rgb(var(--c-surface))] border border-[rgb(var(--c-border)/0.5)] rounded-3xl p-6 space-y-4 text-left shadow-sm">
-            <div className="flex justify-between items-center">
-              <div>
-                <p className="text-[10px] font-sans text-[rgb(var(--c-text)/0.6)] font-bold uppercase tracking-wider">FECHA LÍMITE DE REGISTRO</p>
-                <p className="text-base text-[rgb(var(--c-primary))] font-bold mt-0.5">{regDeadline}</p>
-              </div>
-              <div className="h-8 w-px bg-[rgb(var(--c-border)/0.3)]" />
-              <div>
-                <p className="text-[10px] font-sans text-[rgb(var(--c-text)/0.6)] font-bold uppercase tracking-wider">FECHA LÍMITE PARA CAMBIOS</p>
-                <p className="text-base text-[rgb(var(--c-primary))] font-bold mt-0.5">{chgDeadline}</p>
-              </div>
-            </div>
-            </div>
-
-          <div className="flex items-start gap-3 bg-[rgb(var(--c-primary)/0.05)] border border-[rgb(var(--c-primary)/0.2)] text-[rgb(var(--c-text-strong))] px-5 py-4 rounded-2xl text-left">
-            <Info className="w-5 h-5 shrink-0 mt-0.5 text-[rgb(var(--c-primary))]" />
-            <p className="text-xs lg:text-sm leading-snug">
-              <strong>Atención:</strong> Por favor, ingresa los datos correspondientes. Al finalizar, podrás revisar los datos y confirmar el registro.
-            </p>
-          </div>
-
-          <button
-            onClick={onNext}
-            className="w-full bg-[rgb(var(--c-primary))] active:bg-[rgb(var(--c-primary-strong))] hover:bg-[rgb(var(--c-primary-strong))] text-white font-display text-xl tracking-widest py-4 rounded-2xl transition-all shadow-md active:scale-[0.98] duration-150 font-bold"
+          {/* Lush, organic palm trees emerging directly from the very bottom edge with high-fidelity contained leaf vectors */}
+          <div 
+            className="absolute left-0 bottom-0 z-0 pointer-events-none select-none origin-bottom-left" 
+            style={{ 
+              animation: 'swayLeft 10s ease-in-out infinite', 
+              width: 'min(50vw, 35vh, 280px)', 
+              height: 'min(85vw, 60vh, 450px)',
+              bottom: '-5px',
+            }}
           >
-            COMENZAR REGISTRO
-          </button>
+            <svg viewBox="0 0 280 400" className="w-full h-full" fill="none">
+              <defs>
+                <linearGradient id="palm-left-trunk" x1="50%" y1="100%" x2="50%" y2="0%">
+                  <stop offset="0%" stopColor="#080014" stopOpacity="1" />
+                  <stop offset="40%" stopColor="#050824" stopOpacity="0.9" />
+                  <stop offset="100%" stopColor="#00bbf9" stopOpacity="1" />
+                </linearGradient>
+                <linearGradient id="palm-left-leaves" x1="0%" y1="100%" x2="100%" y2="0%">
+                  <stop offset="0%" stopColor="#00bbf9" stopOpacity="0.85" />
+                  <stop offset="100%" stopColor="#00f5d4" stopOpacity="1" />
+                </linearGradient>
+              </defs>
+              {/* Trunk */}
+              <path d="M 0,400 Q 60,300 100,120 Q 112,120 70,400 Z" fill="url(#palm-left-trunk)" />
+              {/* Contained Leaves */}
+              <path d="M 100,120 C 60,80 10,100 0,130 C 20,110 70,110 100,120 Z" fill="url(#palm-left-leaves)" />
+              <path d="M 100,120 C 50,110 0,160 -10,210 C 20,170 70,140 100,120 Z" fill="url(#palm-left-leaves)" />
+              <path d="M 100,120 C 60,170 30,230 10,280 C 40,230 80,180 100,120 Z" fill="url(#palm-left-leaves)" />
+              <path d="M 100,120 C 110,60 140,40 160,20 C 140,50 120,80 100,120 Z" fill="url(#palm-left-leaves)" />
+              <path d="M 100,120 C 140,80 190,100 210,130 C 180,110 130,110 100,120 Z" fill="url(#palm-left-leaves)" />
+              <path d="M 100,120 C 150,120 200,160 210,210 C 180,170 130,140 100,120 Z" fill="url(#palm-left-leaves)" />
+              <path d="M 100,120 C 130,170 150,220 160,270 C 140,210 120,170 100,120 Z" fill="url(#palm-left-leaves)" />
+            </svg>
+          </div>
+
+          <div 
+            className="absolute right-0 bottom-0 z-0 pointer-events-none select-none origin-bottom-right" 
+            style={{ 
+              animation: 'swayRight 12s ease-in-out infinite', 
+              width: 'min(50vw, 35vh, 280px)', 
+              height: 'min(85vw, 60vh, 450px)',
+              bottom: '-5px',
+            }}
+          >
+            <svg viewBox="0 0 280 400" className="w-full h-full" fill="none">
+              <defs>
+                <linearGradient id="palm-right-trunk" x1="50%" y1="100%" x2="50%" y2="0%">
+                  <stop offset="0%" stopColor="#080014" stopOpacity="1" />
+                  <stop offset="40%" stopColor="#1a0024" stopOpacity="0.9" />
+                  <stop offset="100%" stopColor="#ff007f" stopOpacity="1" />
+                </linearGradient>
+                <linearGradient id="palm-right-leaves" x1="100%" y1="100%" x2="0%" y2="0%">
+                  <stop offset="0%" stopColor="#7000ff" stopOpacity="0.85" />
+                  <stop offset="100%" stopColor="#ff007f" stopOpacity="1" />
+                </linearGradient>
+              </defs>
+              {/* Trunk */}
+              <path d="M 280,400 Q 220,300 180,120 Q 168,120 210,400 Z" fill="url(#palm-right-trunk)" />
+              {/* Contained Leaves */}
+              <path d="M 180,120 C 140,80 90,100 70,130 C 100,110 150,110 180,120 Z" fill="url(#palm-right-leaves)" />
+              <path d="M 180,120 C 130,120 80,160 70,210 C 100,170 150,140 180,120 Z" fill="url(#palm-right-leaves)" />
+              <path d="M 180,120 C 150,170 130,220 120,270 C 140,210 160,170 180,120 Z" fill="url(#palm-right-leaves)" />
+              <path d="M 180,120 C 170,60 140,40 120,20 C 140,50 160,80 180,120 Z" fill="url(#palm-right-leaves)" />
+              <path d="M 180,120 C 220,80 270,100 280,130 C 260,110 210,110 180,120 Z" fill="url(#palm-right-leaves)" />
+              <path d="M 180,120 C 230,110 280,160 290,210 C 260,170 210,140 180,120 Z" fill="url(#palm-right-leaves)" />
+              <path d="M 180,120 C 220,170 250,230 270,280 C 240,230 200,180 180,120 Z" fill="url(#palm-right-leaves)" />
+            </svg>
+          </div>
+
+          {/* Diagonal laser glows */}
+          <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
+            <div className="absolute top-[-20%] left-[-20%] w-[80%] h-[80%] rounded-full bg-[radial-gradient(circle,rgba(0,234,255,0.1)_0%,transparent_70%)] blur-3xl animate-[pulseGlow_6s_infinite]" />
+            <div className="absolute bottom-[-20%] right-[-20%] w-[80%] h-[80%] rounded-full bg-[radial-gradient(circle,rgba(252,3,161,0.1)_0%,transparent_70%)] blur-3xl animate-[pulseGlow_7s_infinite_1s]" />
+          </div>
+
+          {/* RESPONSIVE LAYOUT CONTAINER */}
+          <div className="relative z-10 w-full max-w-6xl flex flex-col lg:flex-row items-center justify-center gap-8 lg:gap-16 my-auto pt-6 lg:pt-0">
+            
+            {/* COLUMN 1: 3D Medallion (Flyer - IMG_9314.JPG) with curved CANCÚN text below it */}
+            <div 
+              className="relative shrink-0 flex flex-col items-center justify-center px-4 w-full sm:w-[420px] lg:w-[480px] pb-8 lg:pb-0 pt-4 lg:pt-8"
+              style={{ animation: 'riseUp 0.7s ease-out both' }}
+            >
+              {/* 3D Tilting Poster wrapper */}
+              <div
+                onMouseMove={(e) => {
+                  const card = e.currentTarget;
+                  const rect = card.getBoundingClientRect();
+                  const x = e.clientX - rect.left - rect.width / 2;
+                  const y = e.clientY - rect.top - rect.height / 2;
+                  card.style.transform = `perspective(1000px) rotateX(${-y / 15}deg) rotateY(${x / 15}deg) scale(1.04)`;
+                  card.style.boxShadow = '0 30px 70px rgba(0, 0, 0, 0.85), 0 0 45px rgba(0, 234, 255, 0.4), 0 0 90px rgba(252, 3, 161, 0.2)';
+                }}
+                onMouseLeave={(e) => {
+                  const card = e.currentTarget;
+                  card.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) scale(1)';
+                  card.style.boxShadow = '0 20px 50px rgba(0, 0, 0, 0.7), 0 0 30px rgba(252, 3, 161, 0.3)';
+                }}
+                style={{
+                  width: 'min(70vw, 34vh, 310px)',
+                  height: 'min(70vw, 34vh, 310px)',
+                  transition: 'transform 0.18s ease-out, box-shadow 0.25s ease',
+                  boxShadow: '0 20px 50px rgba(0, 0, 0, 0.7), 0 0 30px rgba(252, 3, 161, 0.3)',
+                  cursor: 'pointer',
+                  position: 'relative',
+                  marginTop: '36px',
+                }}
+                className="group"
+              >
+                {/* Real flyer image */}
+                <div className="absolute inset-0 rounded-full border-[6px] border-white/10 overflow-hidden select-none bg-[#110022]">
+                  <img 
+                    src="/grand_national_bg.jpg" 
+                    alt="12th Grand National" 
+                    className="w-full h-full object-cover select-none pointer-events-none scale-[1.01] group-hover:scale-105 transition-transform duration-500"
+                  />
+                  <div className="absolute inset-0 pointer-events-none bg-gradient-to-tr from-white/0 via-white/10 to-white/20 opacity-60 mix-blend-overlay" />
+                </div>
+                
+                {/* Curved CANCÚN Text perfectly wrapped BELOW the poster circumference */}
+                <svg 
+                  viewBox="0 0 400 400" 
+                  className="absolute -inset-[32px] w-[calc(100%+64px)] h-[calc(100%+64px)] pointer-events-none z-20 select-none overflow-visible"
+                >
+                  <defs>
+                    <path 
+                      id="curve" 
+                      d="M 60,300 A 160,160 0 0,0 340,300" 
+                      fill="none" 
+                    />
+                  </defs>
+                  <text className="font-display font-black tracking-[0.22em]" style={{ fontSize: '38px' }}>
+                    <textPath 
+                      href="#curve" 
+                      startOffset="50%" 
+                      textAnchor="middle" 
+                      fill="#00d2ff"
+                      style={{ 
+                        filter: 'drop-shadow(0 2px 10px rgba(0,210,255,0.95))',
+                        textShadow: '0 0 25px rgba(0,210,255,0.7)',
+                      }}
+                    >
+                      CANCÚN
+                    </textPath>
+                  </text>
+                </svg>
+              </div>
+            </div>
+
+            {/* COLUMN 2: Info & Action Buttons */}
+            <div 
+              className="flex-1 w-full flex flex-col items-center lg:items-start text-center lg:text-left space-y-6 sm:space-y-8 px-2 max-w-lg justify-center"
+              style={{ animation: 'riseUp 0.7s 0.2s ease-out both' }}
+            >
+              <div className="space-y-4 w-full">
+                {/* Clean Event Name (filters out "CANCÚN", "GRAN FINAL", "FINAL NACIONAL" to prevent duplication) */}
+                {(() => {
+                  let name = event?.name || '12th GRAND NATIONAL';
+                  name = name
+                    .replace(/gran final/gi, '')
+                    .replace(/final nacional/gi, '')
+                    .replace(/cancún/gi, '')
+                    .replace(/cancun/gi, '')
+                    .replace(/[\s-]+/g, ' ')
+                    .trim();
+                  const displayName = name || '12th GRAND NATIONAL';
+                  return (
+                    <h1 className="font-display font-bold uppercase leading-[1.1] tracking-wider text-2xl sm:text-4xl text-purple-100 drop-shadow-md">
+                      {displayName}
+                    </h1>
+                  );
+                })()}
+
+                {/* DATES ONLY (Stylized premium gold glassmorphism badge with Lucide Calendar icon - No Emojis/Stars) */}
+                <div className="pt-2 flex justify-center lg:justify-start w-full">
+                  <div 
+                    className="inline-flex items-center gap-3 px-5 py-2.5 bg-gradient-to-r from-amber-500/10 to-yellow-500/10 border border-yellow-500/30 rounded-2xl shadow-xl backdrop-blur-md relative overflow-hidden"
+                    style={{
+                      boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
+                    }}
+                  >
+                    <Calendar className="w-5 h-5 text-yellow-400 filter drop-shadow-[0_0_8px_rgba(250,204,21,0.6)] shrink-0" />
+                    <span className="font-display font-black text-base sm:text-lg bg-gradient-to-r from-yellow-300 via-amber-200 to-yellow-300 bg-clip-text text-transparent tracking-[0.12em] uppercase">
+                      {event?.date ? formatEventDate(event.date) : '26 y 27 de Junio, 2026'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Call to Action Button (Sunset Neon Tropical Gradient with sleek white text and high-contrast glow) */}
+              <div 
+                className="w-full relative pt-2"
+                style={{ animation: 'riseUp 0.7s 0.35s ease-out both' }}
+              >
+                <button
+                  onClick={onNext}
+                  className="w-full py-4.5 rounded-2xl font-display text-xl tracking-[0.16em] font-extrabold hover:scale-[1.02] active:scale-[0.98] transition-all duration-150 relative overflow-hidden group shadow-2xl"
+                  style={{
+                    background: 'linear-gradient(135deg, #ff007f 0%, #ff5e62 50%, #ff9966 100%)',
+                    color: '#ffffff',
+                    border: '1px solid rgba(255,255,255,0.4)',
+                    boxShadow: '0 0 35px rgba(255, 0, 127, 0.55), 0 0 70px rgba(255, 94, 98, 0.35), inset 0 1px 0 rgba(255,255,255,0.45)',
+                  }}
+                >
+                  {/* Sparkling Light Sweep Overlay */}
+                  <div className="absolute inset-0 pointer-events-none overflow-hidden">
+                    <div 
+                      className="absolute inset-y-0 w-1/3 bg-gradient-to-r from-transparent via-white/50 to-transparent -skew-x-25"
+                      style={{ 
+                        left: '-100%',
+                        animation: 'sweep 3.5s infinite ease-in-out',
+                      }} 
+                    />
+                  </div>
+
+                  <span className="relative z-10 inline-block uppercase font-black">
+                    COMENZAR REGISTRO
+                  </span>
+                </button>
+              </div>
+
+            </div>
+
+          </div>
         </div>
       )
     }
@@ -1804,7 +2057,7 @@ function StepView(props: {
                                                   }`}>
                                                     {isSel && <Check className="w-3 h-3 text-white" strokeWidth={3} />}
                                                   </div>
-                                                  <span className="truncate">{getDancerDisplayName(d, di, state.dancers)}</span>
+                                                  <span className="break-words">{getDancerDisplayName(d, di, state.dancers)}</span>
                                                 </div>
                                               </button>
                                             )
@@ -2117,6 +2370,61 @@ function FullSummary({ state, editMode, confirmed, confirm, saving, saveErr, sta
             </div>
           </div>
         </div>
+
+        {/* DESGLOSE DE COSTOS */}
+        {(() => {
+          const counts = participacionesPorAlumno(state)
+          const filledDancers = state.dancers.filter(d => d.name.trim().length > 0)
+          const freeEntries = Math.floor(filledDancers.length / DANCERS_POR_ENTRADA_GRATIS)
+          const assistants = state.coach.assistants.filter(a => a.trim())
+          const paidAssistants = Math.max(0, assistants.length - freeEntries)
+          let participaciones = 0, repeticiones = 0
+          counts.forEach(n => { if (n >= 1) { participaciones++; repeticiones += n - 1 } })
+          const totalDancers = participaciones * PRECIO_PARTICIPACION + repeticiones * PRECIO_REPETICION
+          const totalAsistentes = paidAssistants * PRECIO_ASISTENTE
+          const total = totalDancers + totalAsistentes
+          return (
+            <div className="mt-3 sm:mt-4 px-0 sm:px-0">
+              <div className="bg-[rgb(var(--c-surface))] rounded-none sm:rounded-3xl border-t sm:border border-[rgb(var(--c-border)/0.4)] shadow-none sm:shadow-sm overflow-hidden">
+                <div className="p-3.5 sm:p-5">
+                  <h3 className="font-display text-lg tracking-widest text-[rgb(var(--c-primary))] mb-4 border-b border-[rgb(var(--c-border)/0.25)] pb-2">
+                    DESGLOSE DE COSTOS
+                  </h3>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between items-center">
+                      <span className="text-[rgb(var(--c-text))]">Participaciones <span className="text-[rgb(var(--c-text)/0.5)] text-xs">({participaciones} × {formatMoney(PRECIO_PARTICIPACION)})</span></span>
+                      <span className="font-bold text-[rgb(var(--c-text-strong))]">{formatMoney(participaciones * PRECIO_PARTICIPACION)}</span>
+                    </div>
+                    {repeticiones > 0 && (
+                      <div className="flex justify-between items-center">
+                        <span className="text-[rgb(var(--c-text))]">Repeticiones <span className="text-[rgb(var(--c-text)/0.5)] text-xs">({repeticiones} × {formatMoney(PRECIO_REPETICION)})</span></span>
+                        <span className="font-bold text-[rgb(var(--c-text-strong))]">{formatMoney(repeticiones * PRECIO_REPETICION)}</span>
+                      </div>
+                    )}
+                    {assistants.length > 0 && (
+                      <div className="flex justify-between items-center">
+                        <span className="text-[rgb(var(--c-text))]">
+                          Asistentes <span className="text-[rgb(var(--c-text)/0.5)] text-xs">({paidAssistants} × {formatMoney(PRECIO_ASISTENTE)}{freeEntries > 0 ? `, ${freeEntries} gratis` : ''})</span>
+                        </span>
+                        <span className="font-bold text-[rgb(var(--c-text-strong))]">{formatMoney(totalAsistentes)}</span>
+                      </div>
+                    )}
+                    {freeEntries > 0 && (
+                      <p className="text-[10px] text-[rgb(var(--c-success-strong))] bg-[rgb(var(--c-success)/0.08)] border border-[rgb(var(--c-success)/0.2)] rounded-xl px-3 py-1.5 font-medium">
+                        🎉 {freeEntries} entrada{freeEntries > 1 ? 's' : ''} de asistente gratis por tener {filledDancers.length} integrantes
+                      </p>
+                    )}
+                    <div className="flex justify-between items-center border-t border-[rgb(var(--c-border)/0.4)] pt-3 mt-3">
+                      <span className="font-display text-base tracking-widest text-[rgb(var(--c-text-strong))]">TOTAL ESTIMADO</span>
+                      <span className="font-display text-2xl text-[rgb(var(--c-primary))] font-bold">{formatMoney(total)}</span>
+                    </div>
+                    <p className="text-[10px] text-[rgb(var(--c-text)/0.45)] text-center pt-1">Precio estimado · sujeto a confirmación por los organizadores</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )
+        })()}
 
       </div>
 
