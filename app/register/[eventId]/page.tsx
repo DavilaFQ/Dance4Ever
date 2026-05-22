@@ -55,13 +55,13 @@ type Step =
 const STYLES = ['Jazz', 'Poms', 'Acro Jazz', 'Hip Hop', 'Show', 'Ballet', 'Contempo']
 
 const CATEGORY_COLORS: Record<AgeCategory, { bg: string; border: string; text: string }> = {
-  tiny: { bg: 'bg-rose-50/70', border: 'border-rose-200/60 focus-within:border-rose-400', text: 'text-rose-700' },
-  mini: { bg: 'bg-orange-50/70', border: 'border-orange-200/60 focus-within:border-orange-400', text: 'text-orange-700' },
-  elementary: { bg: 'bg-amber-50/70', border: 'border-amber-200/60 focus-within:border-amber-400', text: 'text-amber-700' },
-  junior: { bg: 'bg-emerald-50/70', border: 'border-emerald-200/60 focus-within:border-emerald-400', text: 'text-emerald-700' },
-  senior: { bg: 'bg-teal-50/70', border: 'border-teal-200/60 focus-within:border-teal-400', text: 'text-teal-700' },
-  college: { bg: 'bg-indigo-50/70', border: 'border-indigo-200/60 focus-within:border-indigo-400', text: 'text-indigo-700' },
-  open: { bg: 'bg-purple-50/70', border: 'border-purple-200/60 focus-within:border-purple-400', text: 'text-purple-700' },
+  tiny: { bg: 'bg-rose-50/30', border: 'border-rose-200/40 focus-within:border-rose-400', text: 'text-rose-700' },
+  mini: { bg: 'bg-orange-50/30', border: 'border-orange-200/40 focus-within:border-orange-400', text: 'text-orange-700' },
+  elementary: { bg: 'bg-amber-50/30', border: 'border-amber-200/40 focus-within:border-amber-400', text: 'text-amber-700' },
+  junior: { bg: 'bg-emerald-50/30', border: 'border-emerald-200/40 focus-within:border-emerald-400', text: 'text-emerald-700' },
+  senior: { bg: 'bg-teal-50/30', border: 'border-teal-200/40 focus-within:border-teal-400', text: 'text-teal-700' },
+  college: { bg: 'bg-indigo-50/30', border: 'border-indigo-200/40 focus-within:border-indigo-400', text: 'text-indigo-700' },
+  open: { bg: 'bg-purple-50/30', border: 'border-purple-200/40 focus-within:border-purple-400', text: 'text-purple-700' },
 }
 
 const DEFAULT_DANCER_COLOR = {
@@ -277,6 +277,7 @@ export default function RegisterPage({ params }: Props) {
   const [isKeyboardOpen, setIsKeyboardOpen] = useState(false)
   const [showSuccessSplash, setShowSuccessSplash] = useState(false)
 
+
   // Acts confirmation flow
   const [activeActIndex, setActiveActIndex] = useState<number | null>(0)
   const [actsConfirmed, setActsConfirmed] = useState(false)
@@ -430,19 +431,16 @@ export default function RegisterPage({ params }: Props) {
     }
 
     const updateHeight = () => {
-      if (vv && typeof window !== 'undefined') {
+      if (vv && typeof window !== 'undefined' && !checkKeyboard()) {
         document.documentElement.style.setProperty('--viewport-height', `${vv.height}px`)
       }
       const keyboardActive = checkKeyboard()
       setIsKeyboardOpen(keyboardActive)
-      if (keyboardActive && typeof window !== 'undefined' && window.scrollY !== 0) {
-        window.scrollTo(0, 0)
-      }
     }
 
-    const handleWindowScroll = () => {
-      const keyboardActive = checkKeyboard()
-      if (keyboardActive && typeof window !== 'undefined' && window.scrollY !== 0) {
+    const handleWindowScroll = (e: Event) => {
+      if (typeof window !== 'undefined' && window.scrollY !== 0) {
+        e.preventDefault()
         window.scrollTo(0, 0)
       }
     }
@@ -450,20 +448,22 @@ export default function RegisterPage({ params }: Props) {
     const handleFocusIn = (e: any) => {
       updateHeight()
       const target = e.target as HTMLElement
-      if (target && typeof target.scrollIntoView === 'function') {
+      if (target) {
         setTimeout(() => {
-          target.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' })
-          if (typeof window !== 'undefined' && window.scrollY !== 0) {
-            window.scrollTo(0, 0)
+          const scrollContainer = document.querySelector('main')
+          if (scrollContainer && window.visualViewport) {
+            const targetRect = target.getBoundingClientRect()
+            const visibleHeight = window.visualViewport.height
+            const margin = 16
+            const offset = targetRect.bottom - visibleHeight + margin
+            scrollContainer.scrollBy({ top: offset, behavior: 'smooth' })
           }
-        }, 150)
+        }, 300)
       }
     }
 
     const handleFocusOut = () => {
-      setTimeout(() => {
-        updateHeight()
-      }, 50)
+      updateHeight()
     }
 
     if (vv) {
@@ -471,7 +471,7 @@ export default function RegisterPage({ params }: Props) {
       vv.addEventListener('scroll', updateHeight)
     }
     if (typeof window !== 'undefined') {
-      window.addEventListener('scroll', handleWindowScroll, { passive: true })
+      window.addEventListener('scroll', handleWindowScroll, { passive: false })
     }
     if (typeof document !== 'undefined') {
       document.addEventListener('focusin', handleFocusIn)
@@ -731,7 +731,8 @@ export default function RegisterPage({ params }: Props) {
   return (
     <div
       className="bg-[rgb(var(--c-surface))] text-[rgb(var(--c-text-strong))] flex flex-col overflow-hidden font-sans select-none w-full"
-      style={{ height: 'var(--viewport-height, 100dvh)' }}
+      data-step={step.kind}
+      style={{ height: 'var(--viewport-height, 100dvh)', transition: 'height 0.25s ease' }}
     >
       {showSuccessSplash && (
         <div className="fixed inset-0 z-[9999] bg-[rgb(var(--c-success))] text-white flex flex-col items-center justify-center p-6" style={{ animation: 'fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards' }}>
@@ -757,8 +758,12 @@ export default function RegisterPage({ params }: Props) {
           from { opacity: 0; transform: scale(0.96); }
           to { opacity: 1; transform: scale(1); }
         }
+        @keyframes fadeOut {
+          from { opacity: 1; }
+          to { opacity: 0; }
+        }
         html, body {
-          background-color: rgb(var(--c-surface)) !important;
+          background-color: #000 !important;
           margin: 0;
           padding: 0;
           width: 100%;
@@ -766,14 +771,9 @@ export default function RegisterPage({ params }: Props) {
           overflow: hidden;
           overscroll-behavior: none;
         }
-        /* Ocultar elementos de navegación e indicadores instantáneamente al enfocar cualquier input */
-        body:has(input:focus, textarea:focus, select:focus) .mobile-bottom-nav,
-        body:has(input:focus, textarea:focus, select:focus) .step-status-indicator {
-          display: none !important;
-        }
-        /* Garantizar holgura de scroll para evitar que el teclado tape los elementos */
-        body:has(input:focus, textarea:focus, select:focus) main {
-          padding-bottom: 40vh !important;
+        /* Ocultar bottom nav al enfocar inputs, excepto en el paso de integrantes */
+        body:has(input:focus, textarea:focus, select:focus) [data-step]:not([data-step="dancers"]) .mobile-bottom-nav {
+          visibility: hidden;
         }
       ` }} />
       <meta name="theme-color" content="#F6F4EF" />
@@ -782,7 +782,7 @@ export default function RegisterPage({ params }: Props) {
         className="flex-1 min-h-0 px-0 sm:px-4 lg:px-8 flex flex-col overflow-y-auto lg:overflow-hidden"
         style={{
           paddingTop: 'env(safe-area-inset-top, 0px)',
-          paddingBottom: isKeyboardOpen ? '40vh' : '0px'
+          paddingBottom: '0px'
         }}
       >
         {/* DESKTOP HEADER */}
@@ -802,8 +802,8 @@ export default function RegisterPage({ params }: Props) {
         </div>
 
         {/* STEP STATUS INDICATOR (iOS Tab Style - Rediseñado Premium) */}
-        {!isKeyboardOpen && !isFirstStep && step.kind !== 'confirmed' && (
-          <div className="step-status-indicator shrink-0 flex justify-center pt-0.5 pb-2 sm:py-3 px-4 sm:px-0">
+        {(!isKeyboardOpen || step.kind === 'dancers') && !isFirstStep && step.kind !== 'confirmed' && (
+          <div className="step-status-indicator shrink-0 flex justify-center pt-0.5 pb-2 sm:py-3 px-4 sm:px-0 relative z-[99999]">
             <div className="bg-purple-50/70 p-1 rounded-2xl flex gap-1 w-full max-w-xl shadow-inner border border-purple-200/40">
               {[
                 { label: 'COACH', kind: 'setup' },
@@ -865,9 +865,9 @@ export default function RegisterPage({ params }: Props) {
       </main>
 
       {/* MOBILE BOTTOM NAV BAR (iOS native feel) */}
-      {!isKeyboardOpen && !isFirstStep && step.kind !== 'confirmed' && (
+      {(!isKeyboardOpen || step.kind === 'dancers') && !isFirstStep && step.kind !== 'confirmed' && (
         <div
-          className="mobile-bottom-nav shrink-0 lg:hidden bg-[rgb(var(--c-surface)/0.96)] backdrop-blur flex items-center justify-between px-5 py-3 z-40"
+          className="mobile-bottom-nav shrink-0 lg:hidden bg-[rgb(var(--c-surface)/0.96)] backdrop-blur flex items-center justify-between px-5 py-3 z-40 border-t border-[rgb(var(--c-border)/0.4)]"
           style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 8px)' }}
         >
           <button
@@ -972,17 +972,17 @@ export default function RegisterPage({ params }: Props) {
               <Clipboard className="w-5 h-5 text-[rgb(var(--c-text-strong))]" strokeWidth={2.5} /> PEGAR DESDE EL PORTAPAPELES
             </button>
 
-            <div className="relative shrink-0 flex items-center justify-center py-1 hidden md:flex">
+            <div className="relative shrink-0 flex items-center justify-center py-1">
               <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-[rgb(var(--c-border)/0.4)]" /></div>
               <span className="relative bg-[rgb(var(--c-surface))] px-3 text-[10px] text-[rgb(var(--c-text)/0.5)] font-semibold uppercase tracking-wider">o pega manualmente abajo</span>
             </div>
 
-            <div className="flex-1 min-h-0 flex flex-col hidden md:flex">
+            <div className="flex-1 min-h-0 flex flex-col">
               <textarea
                 value={pasteText}
                 onChange={e => setPasteText(e.target.value)}
                 placeholder="Pega la lista aquí..."
-                className="w-full flex-1 min-h-[150px] bg-white border border-[rgb(var(--c-border))] rounded-2xl p-4 text-sm font-sans outline-none focus:ring-1 focus:ring-[rgb(var(--c-primary))] focus:border-[rgb(var(--c-primary))] resize-none shadow-inner"
+                className="w-full flex-1 min-h-[150px] bg-[rgb(var(--c-surface))] border border-[rgb(var(--c-border))] rounded-2xl p-4 text-sm font-sans outline-none focus:ring-1 focus:ring-[rgb(var(--c-primary))] focus:border-[rgb(var(--c-primary))] resize-none shadow-inner"
               />
             </div>
 
@@ -990,7 +990,7 @@ export default function RegisterPage({ params }: Props) {
               <button
                 type="button"
                 onClick={() => setIsPasteModalOpen(false)}
-                className="py-3 bg-white border border-[rgb(var(--c-border))] text-[rgb(var(--c-text-strong))] font-display text-base tracking-widest rounded-2xl active:scale-95 duration-150 transition-all font-semibold"
+                className="py-3 bg-[rgb(var(--c-surface))] border border-[rgb(var(--c-border))] text-[rgb(var(--c-text-strong))] font-display text-base tracking-widest rounded-2xl active:scale-95 duration-150 transition-all font-semibold"
               >
                 <span className="md:hidden">CERRAR</span>
                 <span className="hidden md:inline">CANCELAR</span>
@@ -1040,6 +1040,14 @@ function StepView(props: {
   setActiveActIndex: (i: number | null) => void
 }) {
   const { step, state, event, editMode, onNext, goToStep, updateCoach, updateState, updateDancer, addDancer, removeDancer, onOpenSmartPaste, updateAct, addAct, removeAct, confirm, saving, saveErr, startEdit, actsConfirmed, setActsConfirmed, activeActIndex, setActiveActIndex } = props
+  const [datePickerIndex, setDatePickerIndex] = useState<number | null>(null)
+  const [datePickerVal, setDatePickerVal] = useState({ day: '', month: '', year: '' })
+  const [datePickerClosing, setDatePickerClosing] = useState(false)
+  const closeDatePicker = () => {
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', '#F6F4EF')
+    setDatePickerClosing(true)
+    setTimeout(() => { setDatePickerIndex(null); setDatePickerClosing(false) }, 180)
+  }
 
   switch (step.kind) {
     case 'welcome': {
@@ -1056,7 +1064,7 @@ function StepView(props: {
             )}
           </div>
 
-          <div className="w-full bg-white border border-[rgb(var(--c-border)/0.5)] rounded-3xl p-6 space-y-4 text-left shadow-sm">
+          <div className="w-full bg-[rgb(var(--c-surface))] border border-[rgb(var(--c-border)/0.5)] rounded-3xl p-6 space-y-4 text-left shadow-sm">
             <div className="flex justify-between items-center">
               <div>
                 <p className="text-[10px] font-sans text-[rgb(var(--c-text)/0.6)] font-bold uppercase tracking-wider">FECHA LÍMITE DE REGISTRO</p>
@@ -1101,7 +1109,7 @@ function StepView(props: {
             <p className="text-xs text-[rgb(var(--c-text))]">Completa tu información organizativa general</p>
           </div>
 
-          <div className="bg-white border-t sm:border-b sm:border border-[rgb(var(--c-border)/0.4)] rounded-none sm:rounded-3xl shadow-none sm:shadow-sm overflow-hidden divide-y divide-[rgb(var(--c-border)/0.25)]">
+          <div className="bg-[rgb(var(--c-surface))] border-t sm:border-b sm:border border-[rgb(var(--c-border)/0.4)] rounded-none sm:rounded-3xl shadow-none sm:shadow-sm overflow-hidden divide-y divide-[rgb(var(--c-border)/0.25)]">
             <div className="grid grid-cols-1 lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-[rgb(var(--c-border)/0.25)]">
               {/* COACH CARD */}
               <div className="p-3 sm:p-5 space-y-2.5">
@@ -1319,7 +1327,7 @@ function StepView(props: {
       const isAllValid = state.dancers.length > 0 && state.dancers.every(d => d.name.trim().length >= 2 && d.birthdate.length === 10)
 
       return (
-        <div className="space-y-3 py-1 sm:space-y-4 overflow-visible max-h-none md:overflow-y-auto md:max-h-[82vh] px-0 sm:px-1 flex flex-col md:h-full md:min-h-0" style={{ animation: 'fadeIn 0.3s ease-out' }}>
+        <><div className="space-y-3 py-1 sm:space-y-4 overflow-visible max-h-none md:overflow-y-auto md:max-h-[82vh] px-0 sm:px-1 flex flex-col md:h-full md:min-h-0" style={{ animation: 'fadeIn 0.3s ease-out' }}>
           <div className="shrink-0 flex flex-col md:flex-row md:items-center justify-between gap-3 px-4 sm:px-0">
             <div className="text-center md:text-left space-y-0.5">
               <h2 className="font-display text-3xl text-[rgb(var(--c-text-strong))]">Paso 2: Registro de Integrantes</h2>
@@ -1330,7 +1338,7 @@ function StepView(props: {
               <button
                 type="button"
                 onClick={onOpenSmartPaste}
-                className="inline-flex items-center gap-1.5 bg-white border border-[rgb(var(--c-primary)/0.4)] text-[rgb(var(--c-primary))] px-4 py-2.5 rounded-2xl font-display text-sm tracking-wider font-bold shadow-sm active:scale-95 active:bg-[rgb(var(--c-surface-2))] transition-all duration-150"
+                className="inline-flex items-center gap-1.5 bg-[rgb(var(--c-surface))] border border-[rgb(var(--c-primary)/0.4)] text-[rgb(var(--c-primary))] px-4 py-2.5 rounded-2xl font-display text-sm tracking-wider font-bold shadow-sm active:scale-95 active:bg-[rgb(var(--c-surface-2))] transition-all duration-150"
               >
                 <Clipboard className="w-4 h-4 text-[rgb(var(--c-primary))]" /> PEGAR LISTA
               </button>
@@ -1344,7 +1352,7 @@ function StepView(props: {
             </div>
           </div>
 
-          <div className="overflow-visible md:flex-1 md:min-h-0 md:overflow-y-auto bg-white border-t sm:border-b sm:border border-[rgb(var(--c-border)/0.4)] rounded-none sm:rounded-3xl shadow-none sm:shadow-sm p-2 sm:p-4">
+          <div className="overflow-visible md:flex-1 md:min-h-0 md:overflow-y-auto bg-[rgb(var(--c-surface))] border-t sm:border-b sm:border border-[rgb(var(--c-border)/0.4)] rounded-none sm:rounded-3xl shadow-none sm:shadow-sm p-2 sm:p-4">
             {state.dancers.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-16 text-center space-y-4">
                 <div className="p-4 bg-[rgb(var(--c-primary)/0.05)] rounded-full text-[rgb(var(--c-primary))]">
@@ -1368,78 +1376,74 @@ function StepView(props: {
                   return (
                     <div
                       key={`dancer-${i}`}
-                      className={`border rounded-xl p-1.5 md:p-2 flex flex-col md:flex-row items-stretch md:items-center gap-1.5 md:gap-3 transition-all duration-200 animate-[fadeIn_0.2s_ease-out_forwards] ${
-                        isDancerValid ? `${color.bg} ${color.border}` : 'bg-[rgb(var(--c-primary)/0.02)] border-[rgb(var(--c-primary)/0.15)]'
+                      className={`border rounded-2xl overflow-hidden transition-all duration-200 animate-[fadeIn_0.2s_ease-out_forwards] ${
+                        isDancerValid ? `${color.bg} ${color.border}` : 'bg-[rgb(var(--c-surface))] border-[rgb(var(--c-border)/0.4)]'
                       }`}
                     >
-                      {/* Row 1: Number, Name input, and Delete (mobile only trash icon) */}
-                      <div className="flex items-center gap-1.5 min-w-0 md:flex-1">
-                        <span className="font-display text-xs text-[rgb(var(--c-primary)/0.6)] w-5 text-center shrink-0 font-bold">{i + 1}.</span>
-                        <div className="flex-1 min-w-0">
-                          <input
-                            type="text"
-                            value={d.name}
-                            onChange={e => updateDancer(i, { name: e.target.value })}
-                            placeholder="Nombre completo del integrante"
-                            className="w-full bg-white border border-[rgb(var(--c-border)/0.5)] text-[rgb(var(--c-text-strong))] rounded-lg px-2.5 py-1 text-xs outline-none focus:border-[rgb(var(--c-primary))] transition-all font-semibold h-8"
-                            autoCapitalize="words"
-                            autoComplete="off"
-                            autoCorrect="off"
-                            spellCheck={false}
-                          />
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => removeDancer(i)}
-                          className="md:hidden text-[rgb(var(--c-primary))] hover:text-red-600 active:scale-95 transition-all p-1 shrink-0"
-                        >
+                      {/* Nombre */}
+                      <div className="flex items-center gap-2 px-3 py-2.5 border-b border-[rgb(var(--c-border)/0.2)]">
+                        <span className="font-display text-base text-[rgb(var(--c-primary))] shrink-0 w-5 text-center">{i + 1}</span>
+                        <input
+                          type="text"
+                          value={d.name}
+                          onChange={e => updateDancer(i, { name: e.target.value })}
+                          placeholder="Nombre completo"
+                          className="flex-1 min-w-0 bg-transparent text-[rgb(var(--c-text-strong))] text-sm font-semibold outline-none placeholder:text-[rgb(var(--c-text)/0.3)]"
+                          autoCapitalize="words"
+                          autoComplete="off"
+                          autoCorrect="off"
+                          spellCheck={false}
+                        />
+                        <button type="button" onClick={() => removeDancer(i)} className="shrink-0 text-[rgb(var(--c-text)/0.25)] active:text-red-500 p-1">
                           <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
 
-                      {/* Row 2 on mobile, continuation on desktop - flex-wrap to prevent overlap */}
-                      <div className="flex flex-wrap md:flex-nowrap items-center gap-1.5 pl-5 md:pl-0 shrink-0 w-full md:w-auto">
-                        {/* Birthdate Input - w-[115px] sm:w-[130px] shrink-0 */}
-                        <div className="w-[115px] sm:w-[130px] shrink-0">
-                          <input
-                            type="date"
-                            value={d.birthdate}
-                            onChange={e => updateDancer(i, { birthdate: e.target.value })}
-                            className="w-full bg-white border border-[rgb(var(--c-border)/0.5)] text-[rgb(var(--c-text-strong))] rounded-lg px-1.5 py-1 text-[11px] md:text-xs outline-none focus:border-[rgb(var(--c-primary))] transition-all font-semibold text-center h-8"
-                          />
-                        </div>
+                      {/* Fecha de nacimiento */}
+                      <div className="px-3 pt-2 pb-1">
+                        <p className="text-[9px] font-bold tracking-widest text-[rgb(var(--c-text)/0.4)] mb-1.5">FECHA DE NACIMIENTO</p>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const [y, m, day] = d.birthdate ? d.birthdate.split('-') : ['', '', '']
+                            setDatePickerVal({ day: day || '', month: m || '', year: y || '' })
+                            setDatePickerIndex(i)
+                            document.querySelector('meta[name="theme-color"]')?.setAttribute('content', '#000000')
+                          }}
+                          className="w-full bg-[rgb(var(--c-surface-2))] border border-[rgb(var(--c-border)/0.5)] rounded-xl px-3 py-2 text-sm font-semibold text-left flex items-center gap-2 active:border-[rgb(var(--c-primary))] transition-all"
+                        >
+                          <span className="text-[rgb(var(--c-primary)/0.7)]">📅</span>
+                          <span className={d.birthdate && d.birthdate.length === 10 ? 'text-[rgb(var(--c-text-strong))]' : 'text-[rgb(var(--c-text)/0.35)]'}>
+                            {d.birthdate && d.birthdate.length === 10
+                              ? (() => { const [y,m,day] = d.birthdate.split('-'); return `${day}/${m}/${y}` })()
+                              : 'DD / MM / AAAA'}
+                          </span>
+                        </button>
+                      </div>
 
-                        {/* Category Override Select - min-w-[125px] flex-1 to prevent overlap */}
-                        <div className="min-w-[125px] flex-1 md:w-[150px] md:flex-none">
+                      {/* Categoría y edad */}
+                      <div className="px-3 pt-1 pb-2.5 flex items-end gap-2">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[9px] font-bold tracking-widest text-[rgb(var(--c-text)/0.4)] mb-1.5">CATEGORÍA</p>
                           <select
                             value={d.categoryOverride ?? ''}
                             onChange={e => updateDancer(i, { categoryOverride: (e.target.value || null) as AgeCategory | null })}
-                            className={`w-full bg-white border border-[rgb(var(--c-border)/0.5)] text-[rgb(var(--c-text-strong))] rounded-lg px-1 py-1 text-[10px] md:text-xs outline-none font-display font-bold text-center h-8 ${
-                              d.categoryOverride ? 'text-[rgb(var(--c-primary))] bg-[rgb(var(--c-primary)/0.03)] border-[rgb(var(--c-primary)/0.3)]' : ''
+                            className={`w-full bg-[rgb(var(--c-surface-2))] border border-[rgb(var(--c-border)/0.5)] rounded-xl px-2 py-2 text-sm outline-none font-bold transition-all ${
+                              d.categoryOverride ? 'text-[rgb(var(--c-primary))] border-[rgb(var(--c-primary)/0.4)]' : 'text-[rgb(var(--c-text-strong))]'
                             }`}
                           >
-                            <option value="">Auto: {compCat ? AGE_CATEGORY_LABELS[compCat] : '—'}</option>
+                            <option value="">Auto{compCat ? `: ${AGE_CATEGORY_LABELS[compCat]}` : ''}</option>
                             {AGE_CATEGORY_ORDER.map(cat => (
                               <option key={cat} value={cat}>{AGE_CATEGORY_LABELS[cat]}</option>
                             ))}
                           </select>
                         </div>
-
-                        {/* Age Tag - Formato legible */}
                         {age !== null && (
-                          <span className="shrink-0 text-[10px] font-bold text-[rgb(var(--c-text)/0.75)] bg-[rgb(var(--c-surface-2))] border border-[rgb(var(--c-border)/0.3)] px-2 h-8 flex items-center justify-center rounded-lg min-w-[45px] font-mono leading-none whitespace-nowrap">
-                            {age} años
-                          </span>
+                          <div className="w-16 shrink-0 text-center">
+                            <p className="text-[9px] font-bold tracking-widest text-[rgb(var(--c-text)/0.4)] mb-1.5">EDAD</p>
+                            <span className="block bg-[rgb(var(--c-surface-2))] border border-[rgb(var(--c-border)/0.3)] rounded-xl py-2 text-sm font-mono font-bold text-[rgb(var(--c-text)/0.6)] whitespace-nowrap">{age} años</span>
+                          </div>
                         )}
-
-                        {/* Desktop Delete button */}
-                        <button
-                          type="button"
-                          onClick={() => removeDancer(i)}
-                          className="hidden md:block shrink-0 text-[rgb(var(--c-text)/0.4)] hover:text-[rgb(var(--c-primary))] hover:bg-[rgb(var(--c-primary)/0.05)] p-1.5 rounded-lg active:scale-95 transition-all duration-150"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
                       </div>
                     </div>
                   )
@@ -1469,6 +1473,58 @@ function StepView(props: {
             </button>
           </div>
         </div>
+
+        {/* DATE PICKER SHEET */}
+        {datePickerIndex !== null && (
+          <div className="fixed inset-x-0 bottom-0 top-24 z-[99998] flex flex-col justify-end" onClick={closeDatePicker} style={{ animation: datePickerClosing ? 'fadeOut 0.18s ease-in forwards' : 'fadeIn 0.2s ease-out' }}>
+            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/30 to-black/50" />
+            <div className="relative bg-[rgb(var(--c-surface))] rounded-t-3xl p-5 space-y-4" onClick={e => e.stopPropagation()}>
+              <div className="flex justify-between items-center">
+                <button type="button" onClick={closeDatePicker} className="text-sm text-[rgb(var(--c-text)/0.5)] font-semibold px-2 py-1">Cancelar</button>
+                <p className="font-display text-lg tracking-widest text-[rgb(var(--c-text-strong))]">FECHA DE NACIMIENTO</p>
+                <button type="button" onClick={() => {
+                  if (datePickerVal.day && datePickerVal.month && datePickerVal.year) {
+                    updateDancer(datePickerIndex, { birthdate: `${datePickerVal.year}-${datePickerVal.month}-${datePickerVal.day}` })
+                  }
+                  closeDatePicker()
+                }} className="text-sm text-[rgb(var(--c-primary))] font-bold px-2 py-1">Listo</button>
+              </div>
+              <div className="flex gap-3">
+                <div className="flex-1">
+                  <p className="text-[9px] font-bold tracking-widest text-[rgb(var(--c-text)/0.4)] mb-1.5 text-center">DÍA</p>
+                  <select value={datePickerVal.day} onChange={e => setDatePickerVal(v => ({ ...v, day: e.target.value }))}
+                    className="w-full bg-[rgb(var(--c-surface-2))] border border-[rgb(var(--c-border)/0.5)] rounded-xl px-2 py-2.5 text-sm font-semibold text-center outline-none text-[rgb(var(--c-text-strong))]">
+                    <option value="">Día</option>
+                    {Array.from({ length: 31 }, (_, i) => i + 1).map(d => (
+                      <option key={d} value={String(d).padStart(2, '0')}>{d}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex-[2]">
+                  <p className="text-[9px] font-bold tracking-widest text-[rgb(var(--c-text)/0.4)] mb-1.5 text-center">MES</p>
+                  <select value={datePickerVal.month} onChange={e => setDatePickerVal(v => ({ ...v, month: e.target.value }))}
+                    className="w-full bg-[rgb(var(--c-surface-2))] border border-[rgb(var(--c-border)/0.5)] rounded-xl px-2 py-2.5 text-sm font-semibold text-center outline-none text-[rgb(var(--c-text-strong))]">
+                    <option value="">Mes</option>
+                    {['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'].map((m, idx) => (
+                      <option key={m} value={String(idx + 1).padStart(2, '0')}>{m}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex-[1.5]">
+                  <p className="text-[9px] font-bold tracking-widest text-[rgb(var(--c-text)/0.4)] mb-1.5 text-center">AÑO</p>
+                  <select value={datePickerVal.year} onChange={e => setDatePickerVal(v => ({ ...v, year: e.target.value }))}
+                    className="w-full bg-[rgb(var(--c-surface-2))] border border-[rgb(var(--c-border)/0.5)] rounded-xl px-2 py-2.5 text-sm font-semibold text-center outline-none text-[rgb(var(--c-text-strong))]">
+                    <option value="">Año</option>
+                    {Array.from({ length: 30 }, (_, i) => new Date().getFullYear() - i).map(y => (
+                      <option key={y} value={String(y)}>{y}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+        </>
       )
     }
 
@@ -1499,7 +1555,7 @@ function StepView(props: {
 
           <div className="overflow-visible md:flex-1 md:min-h-0 md:overflow-y-auto">
             {state.acts.length === 0 ? (
-              <div className="bg-white border border-[rgb(var(--c-border)/0.5)] rounded-3xl p-16 text-center space-y-4 shadow-sm mx-4 sm:mx-0">
+              <div className="bg-[rgb(var(--c-surface))] border border-[rgb(var(--c-border)/0.5)] rounded-3xl p-16 text-center space-y-4 shadow-sm mx-4 sm:mx-0">
                 <div className="p-4 bg-[rgb(var(--c-primary)/0.05)] rounded-full text-[rgb(var(--c-primary))] inline-block">
                   <Sparkles className="w-12 h-12" />
                 </div>
@@ -1511,7 +1567,7 @@ function StepView(props: {
                 </div>
               </div>
             ) : (
-              <div className="bg-white border-t sm:border-b sm:border border-[rgb(var(--c-border)/0.4)] rounded-none sm:rounded-3xl shadow-none sm:shadow-sm divide-y divide-[rgb(var(--c-border)/0.25)] overflow-hidden">
+              <div className="bg-[rgb(var(--c-surface))] border-t sm:border-b sm:border border-[rgb(var(--c-border)/0.4)] rounded-none sm:rounded-3xl shadow-none sm:shadow-sm divide-y divide-[rgb(var(--c-border)/0.25)] overflow-hidden">
                 {state.acts.map((act, i) => {
                   const isOpen = activeActIndex === i
                   const labelModality = act.modality ? modalityLabel(act.modality) : 'Sin modalidad'
@@ -1531,7 +1587,7 @@ function StepView(props: {
                   return (
                     <div
                       key={`act-${i}`}
-                      className={`overflow-hidden transition-all duration-200 ${isOpen ? 'bg-[rgb(var(--c-primary)/0.025)]' : ''}`}
+                      className="overflow-hidden"
                     >
                       {/* Header Acordeón */}
                       <div
@@ -1571,7 +1627,7 @@ function StepView(props: {
 
                       {/* Body Acordeón */}
                       {isOpen && (
-                        <div className="p-3.5 sm:p-4 border-t border-[rgb(var(--c-border)/0.25)] bg-[rgb(var(--c-surface)/0.15)] space-y-4 animate-[fadeIn_0.25s_ease-out_forwards]">
+                        <div className="p-3.5 sm:p-4 border-t border-[rgb(var(--c-border)/0.25)] space-y-4 animate-[fadeIn_0.25s_ease-out_forwards]">
                           {/* 1. Modalidad */}
                           <div className="space-y-1.5">
                             <label className="block text-[10px] font-bold tracking-widest text-[rgb(var(--c-text)/0.7)] uppercase">{modalityNum}. Selecciona la Modalidad</label>
@@ -1598,7 +1654,7 @@ function StepView(props: {
                                         ? 'bg-[rgb(var(--c-primary))] border-[rgb(var(--c-primary))] text-white shadow-sm'
                                         : isDisabled
                                           ? 'bg-[rgb(var(--c-surface-2))] border-[rgb(var(--c-border)/0.2)] text-[rgb(var(--c-text)/0.35)] cursor-not-allowed opacity-60'
-                                          : 'bg-white border-[rgb(var(--c-border)/0.5)] text-[rgb(var(--c-text-strong))] hover:bg-[rgb(var(--c-surface-2))] active:scale-95'
+                                          : 'bg-[rgb(var(--c-surface))] border-[rgb(var(--c-border)/0.5)] text-[rgb(var(--c-text-strong))] hover:bg-[rgb(var(--c-surface-2))] active:scale-95'
                                     }`}
                                     title={isDisabled ? `Requiere al menos ${minDancers(opt.value)} integrantes registrados` : undefined}
                                   >
@@ -1640,7 +1696,7 @@ function StepView(props: {
                                       className={`py-2 px-3 rounded-xl font-display text-sm tracking-wider font-bold transition-all border active:scale-95 duration-150 ${
                                         isSelected
                                           ? 'bg-[rgb(var(--c-primary))] border-[rgb(var(--c-primary))] text-white shadow-sm'
-                                          : 'bg-white border-[rgb(var(--c-border)/0.5)] text-[rgb(var(--c-text-strong))] hover:bg-[rgb(var(--c-surface-2))]'
+                                          : 'bg-[rgb(var(--c-surface))] border-[rgb(var(--c-border)/0.5)] text-[rgb(var(--c-text-strong))] hover:bg-[rgb(var(--c-surface-2))]'
                                       }`}
                                     >
                                       {opt.label}
@@ -1665,7 +1721,7 @@ function StepView(props: {
                                     className={`py-2 px-3.5 rounded-full font-display text-xs tracking-wider font-bold transition-all border active:scale-95 duration-150 ${
                                       isSelected
                                         ? 'bg-[rgb(var(--c-primary))] border-[rgb(var(--c-primary))] text-white shadow-sm'
-                                        : 'bg-white border-[rgb(var(--c-border)/0.5)] text-[rgb(var(--c-text-strong))] hover:bg-[rgb(var(--c-surface-2))]'
+                                        : 'bg-[rgb(var(--c-surface))] border-[rgb(var(--c-border)/0.5)] text-[rgb(var(--c-text-strong))] hover:bg-[rgb(var(--c-surface-2))]'
                                     }`}
                                   >
                                     {style.toUpperCase()}
@@ -1691,11 +1747,11 @@ function StepView(props: {
                               </div>
 
                               {state.dancers.length === 0 ? (
-                                <p className="text-xs text-[rgb(var(--c-text)/0.6)] italic bg-white border border-[rgb(var(--c-border)/0.3)] rounded-2xl p-4 text-center">
+                                <p className="text-xs text-[rgb(var(--c-text)/0.6)] italic bg-[rgb(var(--c-surface))] border border-[rgb(var(--c-border)/0.3)] rounded-2xl p-4 text-center">
                                   Regresa al Paso anterior y registra integrantes primero
                                 </p>
                               ) : (
-                                <div className="bg-white border border-[rgb(var(--c-border)/0.4)] rounded-2xl p-3 sm:p-4 max-h-none overflow-visible md:max-h-[300px] md:overflow-y-auto space-y-4">
+                                <div className="bg-[rgb(var(--c-surface))] border border-[rgb(var(--c-border)/0.4)] rounded-2xl p-3 sm:p-4 max-h-none overflow-visible md:max-h-[300px] md:overflow-y-auto space-y-4">
                                   {/* Group Dancers by calculated ageCategory */}
                                   {AGE_CATEGORY_ORDER.map(cat => {
                                     const groupDancers = state.dancers
@@ -1747,12 +1803,12 @@ function StepView(props: {
                                                 className={`flex items-center justify-between p-2.5 rounded-xl font-display text-xs tracking-wider transition-all border active:scale-[0.98] duration-100 text-left ${
                                                   isSel
                                                     ? 'bg-purple-50/90 border-purple-300 text-purple-950 font-bold shadow-sm'
-                                                    : 'bg-white border-[rgb(var(--c-border)/0.4)] text-[rgb(var(--c-text-strong))] hover:bg-[rgb(var(--c-surface-2))]'
+                                                    : 'bg-[rgb(var(--c-surface))] border-[rgb(var(--c-border)/0.4)] text-[rgb(var(--c-text-strong))] hover:bg-[rgb(var(--c-surface-2))]'
                                                 }`}
                                               >
                                                 <div className="flex items-center gap-2.5 min-w-0">
                                                   <div className={`w-4 h-4 rounded border flex items-center justify-center transition-all ${
-                                                    isSel ? 'bg-purple-600 border-purple-600 text-white' : 'border-[rgb(var(--c-border)/0.7)] bg-white'
+                                                    isSel ? 'bg-purple-600 border-purple-600 text-white' : 'border-[rgb(var(--c-border)/0.7)] bg-[rgb(var(--c-surface))]'
                                                   }`}>
                                                     {isSel && <Check className="w-3 h-3 text-white" strokeWidth={3} />}
                                                   </div>
@@ -1768,17 +1824,6 @@ function StepView(props: {
                                 </div>
                               )}
 
-                              {/* Botón Confirmar Acto en Acordeón */}
-                              <div className="flex justify-center pt-2">
-                                <button
-                                  type="button"
-                                  onClick={() => setActiveActIndex(null)}
-                                  className="inline-flex items-center gap-1.5 bg-gradient-to-r from-purple-600 to-[rgb(var(--c-primary))] hover:brightness-105 active:scale-95 text-white px-6 py-2.5 rounded-2xl font-display text-sm tracking-wider font-bold shadow-md transition-all duration-150"
-                                >
-                                  <Check className="w-4 h-4 text-white" strokeWidth={3} />
-                                  CONFIRMAR ACTO #{i + 1}
-                                </button>
-                              </div>
                             </div>
                           ) : (
                             <p className="text-xs text-[rgb(var(--c-text)/0.5)] italic text-center py-3">Selecciona modalidad y estilo primero para habilitar los integrantes</p>
@@ -1895,7 +1940,7 @@ function MoneyInput({ value, onChange, onEnter }: {
         }}
         onKeyDown={e => { if (e.key === 'Enter' && onEnter) onEnter() }}
         placeholder="0"
-        className="w-full bg-white border border-[rgb(var(--c-border)/0.5)] text-[rgb(var(--c-text-strong))] text-2xl lg:text-3xl text-center rounded-2xl h-12 lg:h-16 outline-none focus:border-[rgb(var(--c-primary))] focus:ring-1 focus:ring-[rgb(var(--c-primary))] font-display pl-10 lg:pl-12 pr-10 lg:pr-12 placeholder:text-[rgb(var(--c-text)/0.6)] transition-all shadow-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none font-bold"
+        className="w-full bg-[rgb(var(--c-surface))] border border-[rgb(var(--c-border)/0.5)] text-[rgb(var(--c-text-strong))] text-2xl lg:text-3xl text-center rounded-2xl h-12 lg:h-16 outline-none focus:border-[rgb(var(--c-primary))] focus:ring-1 focus:ring-[rgb(var(--c-primary))] font-display pl-10 lg:pl-12 pr-10 lg:pr-12 placeholder:text-[rgb(var(--c-text)/0.6)] transition-all shadow-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none font-bold"
       />
     </div>
   )
@@ -1938,7 +1983,7 @@ function FullSummary({ state, editMode, confirmed, confirm, saving, saveErr, sta
       
       <div className="flex-1 overflow-visible md:overflow-y-auto px-0 sm:px-4 lg:px-6 py-2 sm:py-4 pb-0 sm:pb-14 max-h-none md:max-h-[75vh]">
         
-        <div className="bg-white rounded-none sm:rounded-3xl border-t sm:border-b sm:border border-[rgb(var(--c-border)/0.4)] shadow-none sm:shadow-sm divide-y divide-[rgb(var(--c-border)/0.25)] overflow-hidden">
+        <div className="bg-[rgb(var(--c-surface))] rounded-none sm:rounded-3xl border-t sm:border-b sm:border border-[rgb(var(--c-border)/0.4)] shadow-none sm:shadow-sm divide-y divide-[rgb(var(--c-border)/0.25)] overflow-hidden">
           {/* COACH, ACADEMY & STAFF */}
           <div className="p-3.5 sm:p-5 relative">
             <h3 className="font-display text-lg tracking-widest text-[rgb(var(--c-primary))] mb-4 border-b border-[rgb(var(--c-border)/0.25)] pb-2 flex justify-between items-center">
@@ -2040,7 +2085,7 @@ function FullSummary({ state, editMode, confirmed, confirm, saving, saveErr, sta
                 )}
               </div>
             </h3>
-            <div className="border border-[rgb(var(--c-border)/0.35)] rounded-2xl bg-white divide-y divide-[rgb(var(--c-border)/0.25)] overflow-hidden shadow-xs">
+            <div className="border border-[rgb(var(--c-border)/0.35)] rounded-2xl bg-[rgb(var(--c-surface))] divide-y divide-[rgb(var(--c-border)/0.25)] overflow-hidden shadow-xs">
               {state.acts.length === 0 ? (
                 <p className="text-[rgb(var(--c-text)/0.5)] italic text-sm p-4">Sin actos registrados</p>
               ) : state.acts.map((a, idx) => {
@@ -2048,7 +2093,7 @@ function FullSummary({ state, editMode, confirmed, confirm, saving, saveErr, sta
                 const mod = a.modality ? modalityLabel(a.modality) : '—'
                 const lvl = a.modality === 'grupal' ? (a.level === 'basico' ? ' BÁSICO' : a.level === 'avanzado' ? ' AVANZADO' : '') : ''
                 return (
-                  <div key={idx} className="p-3.5 sm:p-4 bg-white flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 animate-[fadeIn_0.2s_ease-out_forwards]">
+                  <div key={idx} className="p-3.5 sm:p-4 bg-[rgb(var(--c-surface))] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 animate-[fadeIn_0.2s_ease-out_forwards]">
                     <div className="flex items-start gap-3 min-w-0 flex-1">
                       <div className="font-display text-2xl text-[rgb(var(--c-primary))] shrink-0 font-bold">#{idx + 1}</div>
                       <div className="min-w-0">
@@ -2085,7 +2130,7 @@ function FullSummary({ state, editMode, confirmed, confirm, saving, saveErr, sta
 
       {/* FLOATING ACTION BAR FOR CONFIRM / SAVE */}
       <div 
-        className={`shrink-0 bg-white border-t border-[rgb(var(--c-border)/0.7)] shadow-[0_-10px_40px_rgba(0,0,0,0.05)] z-20 rounded-t-3xl mt-2 ${
+        className={`shrink-0 bg-[rgb(var(--c-surface))] border-t border-[rgb(var(--c-border)/0.7)] shadow-[0_-10px_40px_rgba(0,0,0,0.05)] z-20 rounded-t-3xl mt-2 ${
           confirmed ? 'p-3 pb-1 md:p-5' : 'p-4 md:p-5 hidden lg:block'
         }`}
         style={{ 
@@ -2111,7 +2156,7 @@ function FullSummary({ state, editMode, confirmed, confirm, saving, saveErr, sta
               </div>
               <button
                 onClick={startEdit}
-                className="w-full h-12 md:h-14 flex items-center justify-center gap-3 bg-white border-2 border-[rgb(var(--c-border))] hover:bg-[rgb(var(--c-surface-2))] text-[rgb(var(--c-text-strong))] font-display text-base tracking-widest rounded-2xl transition-all shadow-sm active:scale-[0.98] duration-150 font-bold"
+                className="w-full h-12 md:h-14 flex items-center justify-center gap-3 bg-[rgb(var(--c-surface))] border-2 border-[rgb(var(--c-border))] hover:bg-[rgb(var(--c-surface-2))] text-[rgb(var(--c-text-strong))] font-display text-base tracking-widest rounded-2xl transition-all shadow-sm active:scale-[0.98] duration-150 font-bold"
               >
                 <Pencil className="w-4 h-4 text-[rgb(var(--c-primary))]" /> MODIFICAR REGISTRO
               </button>
@@ -2120,7 +2165,7 @@ function FullSummary({ state, editMode, confirmed, confirm, saving, saveErr, sta
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <button
                 onClick={() => goToStep({ kind: 'setup' })}
-                className="w-full h-14 flex items-center justify-center gap-2 bg-white border-2 border-[rgb(var(--c-border))] hover:bg-[rgb(var(--c-surface-2))] text-[rgb(var(--c-text-strong))] font-display text-sm tracking-widest rounded-2xl transition-all active:scale-[0.98] duration-150 md:col-span-1 font-semibold"
+                className="w-full h-14 flex items-center justify-center gap-2 bg-[rgb(var(--c-surface))] border-2 border-[rgb(var(--c-border))] hover:bg-[rgb(var(--c-surface-2))] text-[rgb(var(--c-text-strong))] font-display text-sm tracking-widest rounded-2xl transition-all active:scale-[0.98] duration-150 md:col-span-1 font-semibold"
               >
                 <Pencil className="w-4 h-4 text-[rgb(var(--c-primary))]" /> CORREGIR DATOS
               </button>
