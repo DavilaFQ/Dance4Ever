@@ -286,6 +286,21 @@ export default function RegisterPage({ params }: Props) {
   const [pasteText, setPasteText] = useState('')
 
   useEffect(() => {
+    try {
+      const metaTheme = document.querySelector('meta[name="theme-color"]')
+      if (showSuccessSplash) {
+        if (metaTheme) metaTheme.setAttribute('content', '#16A34A')
+        document.body.style.setProperty('background-color', '#16A34A', 'important')
+        document.documentElement.style.setProperty('background-color', '#16A34A', 'important')
+      } else {
+        if (metaTheme) metaTheme.setAttribute('content', '#F6F4EF')
+        document.body.style.setProperty('background-color', 'rgb(var(--c-surface))', 'important')
+        document.documentElement.style.setProperty('background-color', 'rgb(var(--c-surface))', 'important')
+      }
+    } catch { /* ignore document reference errors on SSR */ }
+  }, [showSuccessSplash])
+
+  useEffect(() => {
     const check = () => {
       const okSize = window.innerWidth >= 1024 && window.innerHeight >= 700
       const isCoarsePointer = window.matchMedia('(pointer: coarse)').matches
@@ -1103,6 +1118,9 @@ function StepView(props: {
                       placeholder="Nombre del coach principal"
                       className="w-full bg-[rgb(var(--c-surface))] border border-[rgb(var(--c-border)/0.6)] text-[rgb(var(--c-text-strong))] rounded-2xl px-4 py-3 outline-none focus:border-[rgb(var(--c-primary))] focus:ring-1 focus:ring-[rgb(var(--c-primary))] transition-all text-sm"
                       autoCapitalize="words"
+                      autoComplete="name"
+                      autoCorrect="off"
+                      spellCheck={false}
                     />
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -1115,6 +1133,9 @@ function StepView(props: {
                         onChange={e => updateCoach({ phone: e.target.value.replace(/\D/g, '') })}
                         placeholder="Números sin espacios ni guiones"
                         className="w-full bg-[rgb(var(--c-surface))] border border-[rgb(var(--c-border)/0.6)] text-[rgb(var(--c-text-strong))] rounded-2xl px-4 py-3 outline-none focus:border-[rgb(var(--c-primary))] focus:ring-1 focus:ring-[rgb(var(--c-primary))] transition-all text-sm"
+                        autoComplete="one-time-code"
+                        autoCorrect="off"
+                        spellCheck={false}
                       />
                     </div>
                     <div>
@@ -1126,6 +1147,9 @@ function StepView(props: {
                         placeholder="correo@ejemplo.com"
                         className="w-full bg-[rgb(var(--c-surface))] border border-[rgb(var(--c-border)/0.6)] text-[rgb(var(--c-text-strong))] rounded-2xl px-4 py-3 outline-none focus:border-[rgb(var(--c-primary))] focus:ring-1 focus:ring-[rgb(var(--c-primary))] transition-all text-sm"
                         autoCapitalize="off"
+                        autoComplete="email"
+                        autoCorrect="off"
+                        spellCheck={false}
                       />
                     </div>
                   </div>
@@ -1359,6 +1383,9 @@ function StepView(props: {
                             placeholder="Nombre completo del integrante"
                             className="w-full bg-white border border-[rgb(var(--c-border)/0.5)] text-[rgb(var(--c-text-strong))] rounded-lg px-2.5 py-1 text-xs outline-none focus:border-[rgb(var(--c-primary))] transition-all font-semibold h-8"
                             autoCapitalize="words"
+                            autoComplete="off"
+                            autoCorrect="off"
+                            spellCheck={false}
                           />
                         </div>
                         <button
@@ -1370,23 +1397,20 @@ function StepView(props: {
                         </button>
                       </div>
 
-                      {/* Row 2 on mobile, continuation on desktop - No-wrap en móvil */}
-                      <div className="flex flex-nowrap items-center gap-1.5 pl-5 md:pl-0 shrink-0 w-full md:w-auto">
+                      {/* Row 2 on mobile, continuation on desktop - flex-wrap to prevent overlap */}
+                      <div className="flex flex-wrap md:flex-nowrap items-center gap-1.5 pl-5 md:pl-0 shrink-0 w-full md:w-auto">
                         {/* Birthdate Input - w-[115px] sm:w-[130px] shrink-0 */}
                         <div className="w-[115px] sm:w-[130px] shrink-0">
                           <input
-                            type={d.birthdate ? "date" : "text"}
+                            type="date"
                             value={d.birthdate}
                             onChange={e => updateDancer(i, { birthdate: e.target.value })}
-                            placeholder="Fecha nacimiento"
-                            onFocus={e => (e.target.type = "date")}
-                            onBlur={e => { if (!d.birthdate) e.target.type = "text" }}
                             className="w-full bg-white border border-[rgb(var(--c-border)/0.5)] text-[rgb(var(--c-text-strong))] rounded-lg px-1.5 py-1 text-[11px] md:text-xs outline-none focus:border-[rgb(var(--c-primary))] transition-all font-semibold text-center h-8"
                           />
                         </div>
 
-                        {/* Category Override Select - flex-1 en móvil */}
-                        <div className="flex-1 md:w-[150px] md:flex-none min-w-0">
+                        {/* Category Override Select - min-w-[125px] flex-1 to prevent overlap */}
+                        <div className="min-w-[125px] flex-1 md:w-[150px] md:flex-none">
                           <select
                             value={d.categoryOverride ?? ''}
                             onChange={e => updateDancer(i, { categoryOverride: (e.target.value || null) as AgeCategory | null })}
@@ -1590,6 +1614,12 @@ function StepView(props: {
                                 agrega más alumnos en el Paso 2.
                               </p>
                             )}
+                            <div className="mt-2.5 bg-amber-50 border border-amber-200/60 rounded-xl p-3 flex items-start gap-2 shadow-xs animate-[fadeIn_0.2s_ease-out_forwards]">
+                              <Info className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                              <p className="text-[11px] leading-snug text-amber-800 font-medium">
+                                <strong>Nota importante:</strong> No existe nivel básico para solistas, dúos y tríos, todos son avanzados.
+                              </p>
+                            </div>
                           </div>
 
                           {/* 2. Nivel (Solo si es Grupal) */}
@@ -1728,9 +1758,6 @@ function StepView(props: {
                                                   </div>
                                                   <span className="truncate">{getDancerDisplayName(d, di, state.dancers)}</span>
                                                 </div>
-                                                <span className="text-[10px] font-sans font-bold text-purple-400 shrink-0 ml-1.5">
-                                                  #{di + 1}
-                                                </span>
                                               </button>
                                             )
                                           })}
@@ -1895,9 +1922,17 @@ function FullSummary({ state, editMode, confirmed, confirm, saving, saveErr, sta
   return (
     <div className="w-full flex flex-col min-h-0 md:h-full overflow-visible md:overflow-hidden" style={{ animation: 'fadeIn 0.3s ease-out' }}>
       {confirmed && (
-        <div className="shrink-0 bg-[rgb(var(--c-success))] text-white text-center py-4 px-4 shadow-md z-10 rounded-none sm:rounded-2xl mb-4">
-          <p className="font-display text-xl md:text-2xl tracking-widest font-bold">¡REGISTRO CONFIRMADO EXITOSAMENTE!</p>
-          <p className="text-sm opacity-90 mt-1">Tu información ha sido guardada en nuestro sistema.</p>
+        <div className="shrink-0 bg-[rgb(var(--c-success))] text-white text-center py-5 px-4 shadow-md z-10 rounded-none sm:rounded-2xl mb-4 space-y-3 flex flex-col items-center">
+          <div>
+            <p className="font-display text-xl md:text-2xl tracking-widest font-bold">¡REGISTRO CONFIRMADO EXITOSAMENTE!</p>
+            <p className="text-sm opacity-90 mt-1">Tu información ha sido guardada en nuestro sistema.</p>
+          </div>
+          <div className="inline-flex items-center gap-2.5 bg-white/15 backdrop-blur-xs border border-white/20 rounded-xl px-4 py-2 text-xs md:text-sm font-medium max-w-xl mx-auto shadow-xs text-left">
+            <Clock className="w-4 h-4 text-white shrink-0" />
+            <span>
+              Tienes hasta el <strong className="font-bold">{chgDeadline}</strong> para realizar cambios o editar tu registro.
+            </span>
+          </div>
         </div>
       )}
       
@@ -2005,24 +2040,24 @@ function FullSummary({ state, editMode, confirmed, confirm, saving, saveErr, sta
                 )}
               </div>
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="border border-[rgb(var(--c-border)/0.35)] rounded-2xl bg-white divide-y divide-[rgb(var(--c-border)/0.25)] overflow-hidden shadow-xs">
               {state.acts.length === 0 ? (
-                <p className="text-[rgb(var(--c-text)/0.5)] italic text-sm col-span-full">Sin actos registrados</p>
+                <p className="text-[rgb(var(--c-text)/0.5)] italic text-sm p-4">Sin actos registrados</p>
               ) : state.acts.map((a, idx) => {
                 const cat = a.ageCategory ? AGE_CATEGORY_LABELS[a.ageCategory] : '—'
                 const mod = a.modality ? modalityLabel(a.modality) : '—'
                 const lvl = a.modality === 'grupal' ? (a.level === 'basico' ? ' BÁSICO' : a.level === 'avanzado' ? ' AVANZADO' : '') : ''
                 return (
-                  <div key={idx} className="border border-[rgb(var(--c-border)/0.4)] rounded-xl sm:rounded-2xl p-3 sm:p-4 bg-[rgb(var(--c-surface-2)/0.2)] flex flex-col justify-between space-y-3 animate-[fadeIn_0.2s_ease-out_forwards]">
-                    <div className="flex items-start gap-3">
+                  <div key={idx} className="p-3.5 sm:p-4 bg-white flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 animate-[fadeIn_0.2s_ease-out_forwards]">
+                    <div className="flex items-start gap-3 min-w-0 flex-1">
                       <div className="font-display text-2xl text-[rgb(var(--c-primary))] shrink-0 font-bold">#{idx + 1}</div>
-                      <div className="flex-1 min-w-0">
+                      <div className="min-w-0">
                         <p className="font-display text-lg text-[rgb(var(--c-text-strong))] leading-tight truncate uppercase font-bold">{cat}</p>
                         <p className="font-display text-xs text-[rgb(var(--c-text))] mt-0.5 leading-none">{mod}{lvl} · {a.style ?? '—'}</p>
                       </div>
                     </div>
                     {a.dancerIndices.length > 0 && (
-                      <div className="bg-white border border-[rgb(var(--c-border)/0.25)] rounded-xl p-2.5">
+                      <div className="bg-[rgb(var(--c-surface-2)/0.3)] border border-[rgb(var(--c-border)/0.25)] rounded-xl p-2.5 max-w-md shrink-0 w-full sm:w-auto">
                         <p className="text-[9px] font-bold tracking-widest text-[rgb(var(--c-text)/0.5)] mb-1 uppercase">INTEGRANTES ({a.dancerIndices.length})</p>
                         <div className="flex flex-wrap gap-1">
                           {a.dancerIndices.map(di => {
@@ -2031,7 +2066,7 @@ function FullSummary({ state, editMode, confirmed, confirm, saving, saveErr, sta
                             const compCat = effectiveCategory(d)
                             const color = compCat ? CATEGORY_COLORS[compCat] : DEFAULT_DANCER_COLOR
                             return (
-                              <span key={di} className={`inline-block ${color.bg} ${color.text} text-[10px] px-2 py-0.5 rounded-md font-semibold border border-purple-200/40 shadow-sm`}>
+                              <span key={di} className={`inline-block ${color.bg} ${color.text} text-[10px] px-2 py-0.5 rounded-md font-semibold border border-purple-200/40 shadow-xs`}>
                                 {getDancerDisplayName(d, di, state.dancers)}
                               </span>
                             )
