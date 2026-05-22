@@ -971,12 +971,12 @@ export default function RegisterPage({ params }: Props) {
               <Clipboard className="w-5 h-5 text-[rgb(var(--c-text-strong))]" strokeWidth={2.5} /> PEGAR DESDE EL PORTAPAPELES
             </button>
 
-            <div className="relative shrink-0 flex items-center justify-center py-1">
+            <div className="relative shrink-0 hidden md:flex items-center justify-center py-1">
               <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-[rgb(var(--c-border)/0.4)]" /></div>
               <span className="relative bg-[rgb(var(--c-surface))] px-3 text-[10px] text-[rgb(var(--c-text)/0.5)] font-semibold uppercase tracking-wider">o pega manualmente abajo</span>
             </div>
 
-            <div className="flex-1 min-h-0 flex flex-col">
+            <div className="flex-1 min-h-0 hidden md:flex flex-col">
               <textarea
                 value={pasteText}
                 onChange={e => setPasteText(e.target.value)}
