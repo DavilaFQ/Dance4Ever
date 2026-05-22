@@ -724,12 +724,12 @@ export default function RegisterPage({ params }: Props) {
         }
         html, body {
           background-color: rgb(var(--c-surface)) !important;
-          overflow: hidden !important;
-          position: fixed !important;
-          width: 100% !important;
-          height: 100% !important;
-          left: 0 !important;
-          top: 0 !important;
+          margin: 0;
+          padding: 0;
+          width: 100%;
+          height: 100%;
+          overflow: hidden;
+          overscroll-behavior: none;
         }
       ` }} />
       <meta name="theme-color" content="#F6F4EF" />
@@ -763,7 +763,7 @@ export default function RegisterPage({ params }: Props) {
             <div className="bg-[rgb(var(--c-surface-2))] p-1 rounded-2xl flex gap-1 w-full max-w-xl shadow-inner border border-[rgb(var(--c-border)/0.3)]">
               {[
                 { label: 'COACH', kind: 'setup' },
-                { label: 'ALUMNOS', kind: 'dancers' },
+                { label: 'INTEGRANTES', kind: 'dancers' },
                 { label: 'ACTOS', kind: 'acts' },
                 { label: 'CONFIRMAR', kind: 'summary' }
               ].map((tab, idx) => {
@@ -840,7 +840,7 @@ export default function RegisterPage({ params }: Props) {
               const count = state.dancers.filter(d => d.name.trim().length >= 2 && d.birthdate.length === 10).length
               return (
                 <span className="text-xs font-display text-[rgb(var(--c-success))] font-bold bg-[rgb(var(--c-success)/0.1)] border border-[rgb(var(--c-success)/0.2)] px-3 py-1 rounded-full">
-                  {count} {count === 1 ? 'Alumno' : 'Alumnos'}
+                  {count} {count === 1 ? 'Integrante' : 'Integrantes'}
                 </span>
               )
             })()}
@@ -910,7 +910,7 @@ export default function RegisterPage({ params }: Props) {
             </div>
             
             <p className="text-xs text-[rgb(var(--c-text))] leading-relaxed">
-              Copia y pega la lista de alumnos desde WhatsApp o Excel. Detectamos nombres y fechas de nacimiento automáticamente.
+              Copia y pega la lista de integrantes desde WhatsApp o Excel. Detectamos nombres y fechas de nacimiento automáticamente.
             </p>
             <div className="bg-[rgb(var(--c-surface-2)/0.4)] border border-[rgb(var(--c-border)/0.4)] rounded-xl p-3 text-[10px] text-[rgb(var(--c-text)/0.85)] font-mono space-y-1">
               <p className="font-bold text-[rgb(var(--c-primary))]">FORMATOS ADMITIDOS:</p>
@@ -1006,10 +1006,9 @@ function StepView(props: {
         <div className="flex flex-col items-center justify-center text-center space-y-6 max-w-xl mx-auto py-4 my-auto lg:my-0" style={{ animation: 'fadeIn 0.3s ease-out' }}>
           <Image src="/logo.png" alt="Dance4ever" width={160} height={120} priority className="mix-blend-multiply active:scale-95 transition-all duration-150" />
           <div className="space-y-2">
-            <p className="font-sans text-xs tracking-widest text-[rgb(var(--c-primary))] font-bold">SISTEMA DE REGISTRO REDISEÑADO</p>
             <h2 className="font-sans text-3xl lg:text-4xl text-[rgb(var(--c-text-strong))] font-semibold tracking-tight uppercase">{event?.name || 'EVENTO'}</h2>
             {event?.date && (
-              <p className="font-sans text-lg lg:text-xl text-[rgb(var(--c-text-strong))] font-medium">{eventCity} · {formatEventDate(event.date)}</p>
+              <p className="font-sans text-lg lg:text-xl text-[rgb(var(--c-text-strong))] font-medium">{formatEventDate(event.date)}</p>
             )}
           </div>
 
@@ -1085,7 +1084,7 @@ function StepView(props: {
                         inputMode="numeric"
                         value={state.coach.phone}
                         onChange={e => updateCoach({ phone: e.target.value.replace(/\D/g, '') })}
-                        placeholder="Números sin espacios"
+                        placeholder="Números sin espacios ni guiones"
                         className="w-full bg-[rgb(var(--c-surface))] border border-[rgb(var(--c-border)/0.6)] text-[rgb(var(--c-text-strong))] rounded-2xl px-4 py-3 outline-none focus:border-[rgb(var(--c-primary))] focus:ring-1 focus:ring-[rgb(var(--c-primary))] transition-all text-sm"
                       />
                     </div>
@@ -1256,7 +1255,7 @@ function StepView(props: {
               disabled={!isValid}
               className="w-full bg-gradient-to-r from-[#16A34A] via-[#82f606] to-[#fff200] hover:brightness-105 active:brightness-95 text-[rgb(var(--c-text-strong))] font-display text-xl tracking-widest py-4 rounded-2xl transition-all shadow-md active:scale-[0.98] duration-150 font-bold disabled:opacity-40 disabled:pointer-events-none"
             >
-              CONTINUAR AL PASO 2: ALUMNOS
+              CONTINUAR AL PASO 2: INTEGRANTES
             </button>
           </div>
         </div>
@@ -1270,8 +1269,8 @@ function StepView(props: {
         <div className="space-y-3 py-1 sm:space-y-4 overflow-visible max-h-none md:overflow-y-auto md:max-h-[82vh] px-0 sm:px-1 flex flex-col md:h-full md:min-h-0" style={{ animation: 'fadeIn 0.3s ease-out' }}>
           <div className="shrink-0 flex flex-col md:flex-row md:items-center justify-between gap-3 px-4 sm:px-0">
             <div className="text-center md:text-left space-y-0.5">
-              <h2 className="font-display text-3xl text-[rgb(var(--c-text-strong))]">Paso 2: Registro de Alumnos</h2>
-              <p className="text-xs text-[rgb(var(--c-text))]">Ingresa los bailarines. La edad y categoría se calculan automáticamente.</p>
+              <h2 className="font-display text-3xl text-[rgb(var(--c-text-strong))]">Paso 2: Registro de Integrantes</h2>
+              <p className="text-xs text-[rgb(var(--c-text))]">Ingresa los integrantes. La edad y categoría se calculan automáticamente.</p>
             </div>
             
             <div className="flex gap-2 justify-center shrink-0">
@@ -1287,7 +1286,7 @@ function StepView(props: {
                 onClick={addDancer}
                 className="inline-flex items-center gap-1 bg-[rgb(var(--c-primary))] hover:bg-[rgb(var(--c-primary-strong))] text-white px-4 py-2.5 rounded-2xl font-display text-sm tracking-wider font-bold shadow-sm active:scale-95 transition-all duration-150"
               >
-                <Plus className="w-4 h-4" /> AGREGAR FILA
+                <Plus className="w-4 h-4" /> AGREGAR INTEGRANTE
               </button>
             </div>
           </div>
@@ -1299,7 +1298,7 @@ function StepView(props: {
                   <Users className="w-12 h-12" />
                 </div>
                 <div>
-                  <h4 className="font-display text-xl text-[rgb(var(--c-text-strong))]">Sin alumnos registrados</h4>
+                  <h4 className="font-display text-xl text-[rgb(var(--c-text-strong))]">Sin integrantes registrados</h4>
                   <p className="text-xs text-[rgb(var(--c-text)/0.7)] mt-1 max-w-xs mx-auto">
                     {'Usa el botón "Agregar Fila" para escribir un nombre, o "Pegar Lista" para cargar desde WhatsApp.'}
                   </p>
@@ -1327,7 +1326,7 @@ function StepView(props: {
                             type="text"
                             value={d.name}
                             onChange={e => updateDancer(i, { name: e.target.value })}
-                            placeholder="Nombre completo del bailarín"
+                            placeholder="Nombre completo del integrante"
                             className="w-full bg-white border border-[rgb(var(--c-border)/0.5)] text-[rgb(var(--c-text-strong))] rounded-lg px-2.5 py-1 text-xs outline-none focus:border-[rgb(var(--c-primary))] transition-all font-semibold h-8"
                             autoCapitalize="words"
                           />
@@ -1398,7 +1397,7 @@ function StepView(props: {
                       onClick={addDancer}
                       className="w-full inline-flex items-center justify-center gap-1.5 bg-[rgb(var(--c-primary))] hover:bg-[rgb(var(--c-primary-strong))] text-white py-3 rounded-2xl font-display text-sm tracking-wider font-bold shadow-sm active:scale-95 transition-all duration-150"
                     >
-                      <Plus className="w-4 h-4" /> AGREGAR ALUMNO
+                      <Plus className="w-4 h-4" /> AGREGAR INTEGRANTE
                     </button>
                   </div>
                 )}
@@ -1412,7 +1411,7 @@ function StepView(props: {
               disabled={!isAllValid}
               className="w-full bg-gradient-to-r from-[#16A34A] via-[#82f606] to-[#fff200] hover:brightness-105 active:brightness-95 text-[rgb(var(--c-text-strong))] font-display text-xl tracking-widest py-4 rounded-2xl transition-all shadow-md active:scale-[0.98] duration-150 font-bold disabled:opacity-40 disabled:pointer-events-none"
             >
-              CONTINUAR AL PASO 3: REGISTRO DE ACTOS ({state.dancers.length} Alumnos)
+              CONTINUAR AL PASO 3: REGISTRO DE ACTOS ({state.dancers.length} Integrantes)
             </button>
           </div>
         </div>
@@ -1620,7 +1619,7 @@ function StepView(props: {
 
                             {state.dancers.length === 0 ? (
                               <p className="text-xs text-[rgb(var(--c-text)/0.6)] italic bg-white border border-[rgb(var(--c-border)/0.3)] rounded-2xl p-4 text-center">
-                                Regresa al Paso anterior y registra alumnos primero
+                                Regresa al Paso anterior y registra integrantes primero
                               </p>
                             ) : (
                               <div className="bg-white border border-[rgb(var(--c-border)/0.4)] rounded-2xl p-3 sm:p-4 max-h-none overflow-visible md:max-h-[220px] md:overflow-y-auto space-y-3.5">
@@ -1891,7 +1890,7 @@ function FullSummary({ state, editMode, confirmed, confirm, saving, saveErr, sta
           {/* DANCERS SUMMARY */}
           <div className="p-3.5 sm:p-5">
             <h3 className="font-display text-lg tracking-widest text-[rgb(var(--c-primary))] mb-4 border-b border-[rgb(var(--c-border)/0.25)] pb-2 flex justify-between items-center">
-              <span>ALUMNOS/AS REGISTRADOS</span>
+              <span>INTEGRANTES REGISTRADOS</span>
               <div className="flex items-center gap-3">
                 <span className="text-[rgb(var(--c-text))] opacity-60 text-xs font-semibold">{filledDancers.length} Integrantes</span>
                 {!confirmed && (
@@ -1903,7 +1902,7 @@ function FullSummary({ state, editMode, confirmed, confirm, saving, saveErr, sta
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-2">
               {filledDancers.length === 0 ? (
-                <p className="text-[rgb(var(--c-text)/0.5)] italic text-sm col-span-full">Sin alumnos</p>
+                <p className="text-[rgb(var(--c-text)/0.5)] italic text-sm col-span-full">Sin integrantes</p>
               ) : filledDancers.map((d, di) => {
                 const n = counts.get(di) ?? 0
                 return (
