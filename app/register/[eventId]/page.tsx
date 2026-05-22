@@ -439,7 +439,7 @@ export default function RegisterPage({ params }: Props) {
     }
 
     const handleWindowScroll = () => {
-      if (typeof window !== 'undefined' && window.scrollY !== 0) {
+      if (typeof window !== 'undefined' && window.scrollY !== 0 && document.activeElement?.closest('main') === null) {
         window.scrollTo(0, 0)
       }
     }
