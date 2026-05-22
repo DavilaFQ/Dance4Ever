@@ -511,6 +511,9 @@ export default function RegisterPage({ params }: Props) {
 
     const handleFocusOut = () => {
       updateHeight()
+      // Chrome iOS updates visualViewport late — re-check after it settles
+      setTimeout(updateHeight, 100)
+      setTimeout(updateHeight, 350)
     }
 
     if (vv) {
