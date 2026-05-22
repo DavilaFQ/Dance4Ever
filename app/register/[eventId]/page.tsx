@@ -2501,9 +2501,31 @@ function extractErrorMessage(e: unknown): string {
   return String(e ?? 'Error desconocido')
 }
 
+const loadImage = (src: string): Promise<HTMLImageElement> => {
+  return new Promise((resolve) => {
+    if (typeof window === 'undefined') {
+      resolve(null as any)
+      return
+    }
+    const img = new window.Image()
+    img.src = src
+    img.crossOrigin = 'anonymous'
+    img.onload = () => resolve(img)
+    img.onerror = () => resolve(null as any)
+  })
+}
+
 async function generateReceiptPDF(state: State, event: Event | null) {
   const jsPDF = (await import('jspdf')).default
   const autoTable = (await import('jspdf-autotable')).default
+
+  // Preload logo
+  let logoImg: HTMLImageElement | null = null
+  try {
+    logoImg = await loadImage('/logo.png')
+  } catch (e) {
+    console.error('Failed to load logo:', e)
+  }
 
   const doc = new jsPDF('p', 'mm', 'a4')
   const filledDancers = state.dancers.filter(d => d.name.trim().length > 0)
@@ -2520,12 +2542,19 @@ async function generateReceiptPDF(state: State, event: Event | null) {
   doc.setTextColor(255, 255, 255)
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(26)
-  doc.text('DANCE4EVER', 15, 18)
   
-  doc.setTextColor(234, 179, 8) // Gold
-  doc.setFontSize(10)
-  doc.setFont('helvetica', 'bold')
-  doc.text('COMPROBANTE DE REGISTRO', 15, 24)
+  if (logoImg) {
+    doc.addImage(logoImg, 'PNG', 15, 6, 20, 20)
+    doc.text('DANCE4EVER', 39, 18)
+    doc.setTextColor(234, 179, 8) // Gold
+    doc.setFontSize(10)
+    doc.text('COMPROBANTE DE REGISTRO', 39, 24)
+  } else {
+    doc.text('DANCE4EVER', 15, 18)
+    doc.setTextColor(234, 179, 8) // Gold
+    doc.setFontSize(10)
+    doc.text('COMPROBANTE DE REGISTRO', 15, 24)
+  }
 
   // Event name and date on the right side
   doc.setTextColor(255, 255, 255)
@@ -2651,6 +2680,31 @@ async function generateReceiptPDF(state: State, event: Event | null) {
 
   y += 3
 
+  // Unified page footer/header hooks
+  const pageFooterHook = (data: any) => {
+    if (data.pageNumber > 1) {
+      doc.setFillColor(18, 18, 18)
+      doc.rect(0, 0, 210, 15, 'F')
+      doc.setFillColor(217, 70, 239)
+      doc.rect(0, 15, 210, 1, 'F')
+      
+      doc.setTextColor(255, 255, 255)
+      doc.setFont('helvetica', 'bold')
+      doc.setFontSize(9)
+      doc.text('DANCE4EVER - DETALLES Y COSTOS DE REGISTRO', 15, 10)
+    }
+    
+    const footerY = 287
+    doc.setDrawColor(217, 70, 239, 0.3)
+    doc.setLineWidth(0.3)
+    doc.line(15, footerY - 4, 195, footerY - 4)
+
+    doc.setTextColor(120, 120, 120)
+    doc.setFontSize(7)
+    doc.setFont('helvetica', 'italic')
+    doc.text(`Dance4ever Nacional · Página ${data.pageNumber} · www.dance4ever.mx`, 105, footerY, { align: 'center' })
+  }
+
   // Section: Acts
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(10)
@@ -2685,8 +2739,9 @@ async function generateReceiptPDF(state: State, event: Event | null) {
     theme: 'striped',
     styles: { fontSize: 8.5, font: 'helvetica', cellPadding: 2.5 },
     headStyles: { fillColor: [17, 17, 17], textColor: [255, 255, 255], fontStyle: 'bold' },
-    alternateRowStyles: { fillColor: [250, 245, 255] }, // Soft purple tint
-    margin: { left: 15, right: 15 }
+    alternateRowStyles: { fillColor: [250, 245, 255] },
+    margin: { left: 15, right: 15 },
+    didDrawPage: pageFooterHook
   })
 
   let finalY = (doc as any).lastAutoTable.finalY || (y + 10)
@@ -2694,80 +2749,83 @@ async function generateReceiptPDF(state: State, event: Event | null) {
   // Section: Dancers
   let dancersY = finalY + 8
   
-  // Quick sanity check for overflow
   if (dancersY > 235) {
     doc.addPage()
-    dancersY = 20
+    dancersY = 22
   }
 
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(10)
   doc.setTextColor(17, 17, 17)
-  doc.text(`INTEGRANTES REGISTRADOS (${filledDancers.length})`, 15, dancersY)
+  doc.text(`INTEGRANTES REGISTRADOS (${filledDancers.length}) - DETALLE DE PAGO`, 15, dancersY)
   dancersY += 4
 
   doc.setDrawColor(217, 70, 239)
   doc.setLineWidth(0.5)
   doc.line(15, dancersY, 195, dancersY)
-  dancersY += 5
+  dancersY += 4
 
-  doc.setFontSize(8)
-  doc.setTextColor(50, 50, 50)
+  // Sort dancers alphabetically by name
+  const sortedDancersWithIndex = filledDancers
+    .map((dancer, originalIndex) => ({ dancer, originalIndex }))
+    .sort((a, b) => a.dancer.name.localeCompare(b.dancer.name, 'es'))
 
-  const numCols = 3
-  const colWidth = 60
-  const startX = 15
-  let colIdx = 0
-  let rowY = dancersY
+  const countsMap = participacionesPorAlumno(state)
 
-  filledDancers.forEach((dancer, di) => {
+  const dancerRows = sortedDancersWithIndex.map(({ dancer, originalIndex }, rank) => {
     const compCat = effectiveCategory(dancer)
     const categoryStr = compCat ? AGE_CATEGORY_LABELS[compCat] : '—'
+    const n = countsMap.get(originalIndex) ?? 0
     
-    const posX = startX + colIdx * colWidth
-    doc.setFont('helvetica', 'bold')
-    doc.text(`${di + 1}.`, posX, rowY)
-    doc.setFont('helvetica', 'normal')
-    
-    // truncate name if too long
-    const displayName = dancer.name.length > 20 ? dancer.name.substring(0, 18) + '...' : dancer.name
-    doc.text(`${displayName.toUpperCase()}`, posX + 4, rowY)
-    
-    colIdx++
-    if (colIdx >= numCols) {
-      colIdx = 0
-      rowY += 4.5
+    let cost = 0
+    let breakdownStr = '$0'
+    if (n === 1) {
+      cost = PRECIO_PARTICIPACION
+      breakdownStr = `$${PRECIO_PARTICIPACION.toLocaleString('es-MX')} (Base)`
+    } else if (n > 1) {
+      cost = PRECIO_PARTICIPACION + (n - 1) * PRECIO_REPETICION
+      breakdownStr = `$${PRECIO_PARTICIPACION.toLocaleString('es-MX')} + $${((n - 1) * PRECIO_REPETICION).toLocaleString('es-MX')}`
     }
+    
+    return [
+      `${rank + 1}`,
+      dancer.name.toUpperCase(),
+      categoryStr.toUpperCase(),
+      `${n} Acto${n === 1 ? '' : 's'}`,
+      breakdownStr,
+      `$${cost.toLocaleString('es-MX')}`
+    ]
   })
 
-  if (colIdx > 0) {
-    rowY += 4.5
-  }
-  let dancersEndY = rowY + 3
+  autoTable(doc, {
+    startY: dancersY,
+    head: [['#', 'INTEGRANTE (ALFABÉTICO)', 'CATEGORÍA', 'ACTOS', 'DESGLOSE DE PAGO', 'TOTAL']],
+    body: dancerRows,
+    theme: 'striped',
+    styles: { fontSize: 8, font: 'helvetica', cellPadding: 2 },
+    headStyles: { fillColor: [217, 70, 239], textColor: [255, 255, 255], fontStyle: 'bold' },
+    alternateRowStyles: { fillColor: [253, 244, 255] },
+    columnStyles: {
+      0: { cellWidth: 8, halign: 'center' },
+      1: { fontStyle: 'bold' },
+      2: { cellWidth: 25 },
+      3: { cellWidth: 20, halign: 'center' },
+      4: { cellWidth: 45, halign: 'right' },
+      5: { cellWidth: 20, halign: 'right', fontStyle: 'bold' }
+    },
+    margin: { left: 15, right: 15 },
+    didDrawPage: pageFooterHook
+  })
 
-  // Costs Breakdown & QR Code section
-  let costY = dancersEndY + 5
-  
-  // If costY is > 220, it might overflow the bottom margin. Paging support:
-  if (costY > 220) {
+  let finalDancersY = (doc as any).lastAutoTable.finalY || (dancersY + 15)
+  let costY = finalDancersY + 8
+
+  if (costY > 225) {
     doc.addPage()
-    costY = 20
-    
-    // Add page 2 header
-    doc.setFillColor(18, 18, 18)
-    doc.rect(0, 0, 210, 15, 'F')
-    doc.setFillColor(217, 70, 239)
-    doc.rect(0, 15, 210, 1, 'F')
-    
-    doc.setTextColor(255, 255, 255)
-    doc.setFont('helvetica', 'bold')
-    doc.setFontSize(10)
-    doc.text('DANCE4EVER - DETALLES Y COSTOS DE REGISTRO', 15, 10)
-    costY = 25
+    costY = 22
   }
 
   // Cost items calculation
-  const countsMap = participacionesPorAlumno(state)
   const freeEntries = Math.floor(filledDancers.length / DANCERS_POR_ENTRADA_GRATIS)
   const assistantsList = state.coach.assistants.filter(a => a.trim())
   const paidAssistants = Math.max(0, assistantsList.length - freeEntries)
@@ -2878,10 +2936,10 @@ async function generateReceiptPDF(state: State, event: Event | null) {
   const qrSize = 40
 
   // Draw frame
-  doc.setFillColor(250, 250, 250)
-  doc.setDrawColor(200, 200, 200)
-  doc.setLineWidth(0.3)
-  doc.rect(qrX, qrY, qrSize, qrSize, 'FD')
+  doc.setFillColor(250, 248, 255) // Soft lavander tint
+  doc.setDrawColor(217, 70, 239) // Fuchsia
+  doc.setLineWidth(0.4)
+  doc.rect(qrX, qrY, qrSize, qrSize + 10, 'FD')
 
   try {
     const qrString = `D4E-EVENT-${event?.id || 'EVENT'}-REG-${state.confirmedRegistrationId || 'TEMP'}-TOTAL-${total}`
@@ -2903,19 +2961,8 @@ async function generateReceiptPDF(state: State, event: Event | null) {
   // Label under the QR Code
   doc.setTextColor(120, 120, 120)
   doc.setFontSize(7.5)
-  doc.setFont('helvetica', 'normal')
-  doc.text('ESCANEAR PARA VALIDACIÓN', qrX + qrSize/2, qrY + qrSize + 4, { align: 'center' })
-
-  // Footer line
-  const footerY = 285
-  doc.setDrawColor(217, 70, 239, 0.4)
-  doc.setLineWidth(0.5)
-  doc.line(15, footerY - 5, 195, footerY - 5)
-
-  doc.setTextColor(120, 120, 120)
-  doc.setFontSize(7.5)
-  doc.setFont('helvetica', 'italic')
-  doc.text('Dance4ever Nacional · Todos los derechos reservados · www.dance4ever.mx', 105, footerY, { align: 'center' })
+  doc.setFont('helvetica', 'bold')
+  doc.text('ESCANEAR PARA VALIDAR', qrX + qrSize/2, qrY + qrSize + 6, { align: 'center' })
 
   // Output / Download
   const filename = `Comprobante_Registro_${state.academy.replace(/\s+/g, '_') || 'Dance4ever'}.pdf`
