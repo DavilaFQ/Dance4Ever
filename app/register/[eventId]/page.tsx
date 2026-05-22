@@ -2,7 +2,7 @@
 import { useEffect, useState, use, useCallback } from 'react'
 import Image from 'next/image'
 import { useSearchParams } from 'next/navigation'
-import { ArrowLeft, Check, Plus, Trash2, Pencil, MessageCircle, Info, X, ChevronDown, Sparkles, Users, Clipboard, HeartHandshake, School } from 'lucide-react'
+import { ArrowLeft, Check, Plus, Trash2, Pencil, MessageCircle, Info, X, ChevronDown, Sparkles, Users, Clipboard, HeartHandshake, School, Clock } from 'lucide-react'
 import { supabase, Modality, AgeCategory, Level, Event, AGE_CATEGORY_ORDER, AGE_CATEGORY_LABELS, AGE_CATEGORY_HINTS, categoryFromBirthdate } from '@/lib/supabase'
 
 type Props = { params: Promise<{ eventId: string }> }
@@ -53,6 +53,22 @@ type Step =
   | { kind: 'confirmed' }
 
 const STYLES = ['Jazz', 'Poms', 'Acro Jazz', 'Hip Hop', 'Show', 'Ballet', 'Contempo']
+
+const CATEGORY_COLORS: Record<AgeCategory, { bg: string; border: string; text: string }> = {
+  tiny: { bg: 'bg-rose-50/70', border: 'border-rose-200/60 focus-within:border-rose-400', text: 'text-rose-700' },
+  mini: { bg: 'bg-orange-50/70', border: 'border-orange-200/60 focus-within:border-orange-400', text: 'text-orange-700' },
+  elementary: { bg: 'bg-amber-50/70', border: 'border-amber-200/60 focus-within:border-amber-400', text: 'text-amber-700' },
+  junior: { bg: 'bg-emerald-50/70', border: 'border-emerald-200/60 focus-within:border-emerald-400', text: 'text-emerald-700' },
+  senior: { bg: 'bg-teal-50/70', border: 'border-teal-200/60 focus-within:border-teal-400', text: 'text-teal-700' },
+  college: { bg: 'bg-indigo-50/70', border: 'border-indigo-200/60 focus-within:border-indigo-400', text: 'text-indigo-700' },
+  open: { bg: 'bg-purple-50/70', border: 'border-purple-200/60 focus-within:border-purple-400', text: 'text-purple-700' },
+}
+
+const DEFAULT_DANCER_COLOR = {
+  bg: 'bg-[rgb(var(--c-primary)/0.02)]',
+  border: 'border-[rgb(var(--c-primary)/0.15)] focus-within:border-[rgb(var(--c-primary))]',
+  text: 'text-[rgb(var(--c-primary))]'
+}
 
 const MODALITY_OPTIONS: { value: Modality; label: string }[] = [
   { value: 'solista', label: 'SOLISTA' },
@@ -505,8 +521,12 @@ export default function RegisterPage({ params }: Props) {
   function addDancer() {
     setActsConfirmed(false)
     setState(s => {
-      const dancers = [...s.dancers, { name: '', birthdate: '', categoryOverride: null }]
-      return { ...s, dancers, teamSize: dancers.length }
+      const dancers = [{ name: '', birthdate: '', categoryOverride: null }, ...s.dancers]
+      const acts = s.acts.map(a => ({
+        ...a,
+        dancerIndices: a.dancerIndices.map(idx => idx + 1)
+      }))
+      return { ...s, dancers, acts, teamSize: dancers.length }
     })
   }
 
@@ -747,7 +767,7 @@ export default function RegisterPage({ params }: Props) {
         className="flex-1 min-h-0 px-0 sm:px-4 lg:px-8 flex flex-col overflow-y-auto lg:overflow-hidden"
         style={{
           paddingTop: 'env(safe-area-inset-top, 0px)',
-          paddingBottom: isKeyboardOpen ? '40vh' : 'calc(env(safe-area-inset-bottom, 0px) + 8px)'
+          paddingBottom: isKeyboardOpen ? '40vh' : '0px'
         }}
       >
         {/* DESKTOP HEADER */}
@@ -766,10 +786,10 @@ export default function RegisterPage({ params }: Props) {
           <Image src="/logo.png" alt="Dance4ever" width={100} height={75} priority className="shrink-0 mix-blend-multiply" />
         </div>
 
-        {/* STEP STATUS INDICATOR (iOS Tab Style) */}
+        {/* STEP STATUS INDICATOR (iOS Tab Style - Rediseñado Premium) */}
         {!isKeyboardOpen && !isFirstStep && step.kind !== 'confirmed' && (
           <div className="step-status-indicator shrink-0 flex justify-center pt-0.5 pb-2 sm:py-3 px-4 sm:px-0">
-            <div className="bg-[rgb(var(--c-surface-2))] p-1 rounded-2xl flex gap-1 w-full max-w-xl shadow-inner border border-[rgb(var(--c-border)/0.3)]">
+            <div className="bg-purple-50/70 p-1 rounded-2xl flex gap-1 w-full max-w-xl shadow-inner border border-purple-200/40">
               {[
                 { label: 'COACH', kind: 'setup' },
                 { label: 'INTEGRANTES', kind: 'dancers' },
@@ -781,10 +801,10 @@ export default function RegisterPage({ params }: Props) {
                   <button
                     key={tab.kind}
                     disabled={true} // Read-only progress bar
-                    className={`flex-1 py-2 text-center font-display tracking-widest text-xs rounded-xl transition-all duration-300 font-bold ${
+                    className={`flex-1 py-2 text-center font-display tracking-widest text-[10px] sm:text-xs rounded-xl transition-all duration-300 font-bold ${
                       isCurrent
-                        ? 'bg-[rgb(var(--c-primary))] text-white shadow-md scale-105'
-                        : 'text-[rgb(var(--c-text)/0.5)]'
+                        ? 'bg-gradient-to-r from-purple-600 via-[rgb(var(--c-primary))] to-pink-500 text-white shadow-md scale-105'
+                        : 'text-purple-400/80 hover:text-purple-600'
                     }`}
                   >
                     {idx + 1}. {tab.label}
@@ -832,7 +852,7 @@ export default function RegisterPage({ params }: Props) {
       {/* MOBILE BOTTOM NAV BAR (iOS native feel) */}
       {!isKeyboardOpen && !isFirstStep && step.kind !== 'confirmed' && (
         <div
-          className="mobile-bottom-nav shrink-0 lg:hidden bg-[rgb(var(--c-surface)/0.96)] backdrop-blur flex items-center justify-between px-5 py-3 border-t border-[rgb(var(--c-border)/0.5)] z-40"
+          className="mobile-bottom-nav shrink-0 lg:hidden bg-[rgb(var(--c-surface)/0.96)] backdrop-blur flex items-center justify-between px-5 py-3 z-40"
           style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 8px)' }}
         >
           <button
@@ -1066,7 +1086,7 @@ function StepView(props: {
             <p className="text-xs text-[rgb(var(--c-text))]">Completa tu información organizativa general</p>
           </div>
 
-          <div className="bg-white border-y sm:border border-[rgb(var(--c-border)/0.4)] rounded-none sm:rounded-3xl shadow-none sm:shadow-sm overflow-hidden divide-y divide-[rgb(var(--c-border)/0.25)]">
+          <div className="bg-white border-t sm:border-b sm:border border-[rgb(var(--c-border)/0.4)] rounded-none sm:rounded-3xl shadow-none sm:shadow-sm overflow-hidden divide-y divide-[rgb(var(--c-border)/0.25)]">
             <div className="grid grid-cols-1 lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-[rgb(var(--c-border)/0.25)]">
               {/* COACH CARD */}
               <div className="p-3 sm:p-5 space-y-2.5">
@@ -1300,7 +1320,7 @@ function StepView(props: {
             </div>
           </div>
 
-          <div className="overflow-visible md:flex-1 md:min-h-0 md:overflow-y-auto bg-white border-y sm:border border-[rgb(var(--c-border)/0.4)] rounded-none sm:rounded-3xl shadow-none sm:shadow-sm p-2 sm:p-4">
+          <div className="overflow-visible md:flex-1 md:min-h-0 md:overflow-y-auto bg-white border-t sm:border-b sm:border border-[rgb(var(--c-border)/0.4)] rounded-none sm:rounded-3xl shadow-none sm:shadow-sm p-2 sm:p-4">
             {state.dancers.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-16 text-center space-y-4">
                 <div className="p-4 bg-[rgb(var(--c-primary)/0.05)] rounded-full text-[rgb(var(--c-primary))]">
@@ -1319,12 +1339,13 @@ function StepView(props: {
                   const compCat = categoryFromBirthdate(d.birthdate)
                   const age = ageFromBirthdate(d.birthdate)
                   const isDancerValid = d.name.trim().length >= 2 && d.birthdate.length === 10
+                  const color = compCat ? CATEGORY_COLORS[compCat] : DEFAULT_DANCER_COLOR
 
                   return (
                     <div
                       key={`dancer-${i}`}
                       className={`border rounded-xl p-1.5 md:p-2 flex flex-col md:flex-row items-stretch md:items-center gap-1.5 md:gap-3 transition-all duration-200 animate-[fadeIn_0.2s_ease-out_forwards] ${
-                        isDancerValid ? 'bg-[rgb(var(--c-surface)/0.25)] border-[rgb(var(--c-border)/0.3)]' : 'bg-[rgb(var(--c-primary)/0.02)] border-[rgb(var(--c-primary)/0.15)]'
+                        isDancerValid ? `${color.bg} ${color.border}` : 'bg-[rgb(var(--c-primary)/0.02)] border-[rgb(var(--c-primary)/0.15)]'
                       }`}
                     >
                       {/* Row 1: Number, Name input, and Delete (mobile only trash icon) */}
@@ -1349,10 +1370,10 @@ function StepView(props: {
                         </button>
                       </div>
 
-                      {/* Row 2 on mobile, continuation on desktop */}
-                      <div className="flex flex-wrap md:flex-nowrap items-center gap-1.5 pl-5 md:pl-0 shrink-0 w-full md:w-auto">
-                        {/* Birthdate Input */}
-                        <div className="flex-1 min-w-[95px] md:w-[130px] md:flex-none">
+                      {/* Row 2 on mobile, continuation on desktop - No-wrap en móvil */}
+                      <div className="flex flex-nowrap items-center gap-1.5 pl-5 md:pl-0 shrink-0 w-full md:w-auto">
+                        {/* Birthdate Input - w-[115px] sm:w-[130px] shrink-0 */}
+                        <div className="w-[115px] sm:w-[130px] shrink-0">
                           <input
                             type={d.birthdate ? "date" : "text"}
                             value={d.birthdate}
@@ -1364,8 +1385,8 @@ function StepView(props: {
                           />
                         </div>
 
-                        {/* Category Override Select */}
-                        <div className="flex-[1.2] min-w-[105px] md:w-[150px] md:flex-none">
+                        {/* Category Override Select - flex-1 en móvil */}
+                        <div className="flex-1 md:w-[150px] md:flex-none min-w-0">
                           <select
                             value={d.categoryOverride ?? ''}
                             onChange={e => updateDancer(i, { categoryOverride: (e.target.value || null) as AgeCategory | null })}
@@ -1380,10 +1401,10 @@ function StepView(props: {
                           </select>
                         </div>
 
-                        {/* Age Tag */}
+                        {/* Age Tag - Formato legible */}
                         {age !== null && (
-                          <span className="shrink-0 text-[10px] font-bold text-[rgb(var(--c-text)/0.75)] bg-[rgb(var(--c-surface-2))] border border-[rgb(var(--c-border)/0.3)] px-2 h-8 flex items-center justify-center rounded-lg min-w-[45px] font-mono leading-none">
-                            {age}a
+                          <span className="shrink-0 text-[10px] font-bold text-[rgb(var(--c-text)/0.75)] bg-[rgb(var(--c-surface-2))] border border-[rgb(var(--c-border)/0.3)] px-2 h-8 flex items-center justify-center rounded-lg min-w-[45px] font-mono leading-none whitespace-nowrap">
+                            {age} años
                           </span>
                         )}
 
@@ -1466,7 +1487,7 @@ function StepView(props: {
                 </div>
               </div>
             ) : (
-              <div className="bg-white border-y sm:border border-[rgb(var(--c-border)/0.4)] rounded-none sm:rounded-3xl shadow-none sm:shadow-sm divide-y divide-[rgb(var(--c-border)/0.25)] overflow-hidden">
+              <div className="bg-white border-t sm:border-b sm:border border-[rgb(var(--c-border)/0.4)] rounded-none sm:rounded-3xl shadow-none sm:shadow-sm divide-y divide-[rgb(var(--c-border)/0.25)] overflow-hidden">
                 {state.acts.map((act, i) => {
                   const isOpen = activeActIndex === i
                   const labelModality = act.modality ? modalityLabel(act.modality) : 'Sin modalidad'
@@ -1602,121 +1623,141 @@ function StepView(props: {
 
                           {/* 3. Estilo */}
                           <div className="space-y-1.5">
-                          <label className="block text-[10px] font-bold tracking-widest text-[rgb(var(--c-text)/0.7)] uppercase">{styleNum}. Estilo Coreográfico</label>
-                          <div className="flex flex-wrap gap-2">
-                            {STYLES.map(style => {
-                              const isSelected = act.style === style
-                              return (
-                                <button
-                                  key={style}
-                                  type="button"
-                                  onClick={() => updateAct(i, { style })}
-                                  className={`py-2 px-3.5 rounded-full font-display text-xs tracking-wider font-bold transition-all border active:scale-95 duration-150 ${
-                                    isSelected
-                                      ? 'bg-[rgb(var(--c-primary))] border-[rgb(var(--c-primary))] text-white shadow-sm'
-                                      : 'bg-white border-[rgb(var(--c-border)/0.5)] text-[rgb(var(--c-text-strong))] hover:bg-[rgb(var(--c-surface-2))]'
-                                  }`}
-                                >
-                                  {style.toUpperCase()}
-                                </button>
-                              )
-                            })}
-                          </div>
-                        </div>
-
-                        {/* 4. Integrantes (Dancers Picker) */}
-                        {act.modality ? (
-                          <div className="space-y-2 animate-[fadeIn_0.2s_ease-out_forwards]">
-                            <div className="flex justify-between items-center">
-                              <label className="block text-[10px] font-bold tracking-widest text-[rgb(var(--c-text)/0.7)] uppercase">
-                                {dancersNum}. Selecciona Integrantes ({actDancersCount} de {limitDancers === 100 ? '4 o más' : limitDancers})
-                              </label>
-                              
-                              {act.ageCategory && (
-                                <span className="text-[10px] font-bold font-display bg-[rgb(var(--c-primary))] text-white px-2.5 py-0.5 rounded-lg uppercase">
-                                  Categoría Acto: {AGE_CATEGORY_LABELS[act.ageCategory]}
-                                </span>
-                              )}
+                            <label className="block text-[10px] font-bold tracking-widest text-[rgb(var(--c-text)/0.7)] uppercase">{styleNum}. Estilo Coreográfico</label>
+                            <div className="flex flex-wrap justify-center gap-2.5">
+                              {STYLES.map(style => {
+                                const isSelected = act.style === style
+                                return (
+                                  <button
+                                    key={style}
+                                    type="button"
+                                    onClick={() => updateAct(i, { style })}
+                                    className={`py-2 px-3.5 rounded-full font-display text-xs tracking-wider font-bold transition-all border active:scale-95 duration-150 ${
+                                      isSelected
+                                        ? 'bg-[rgb(var(--c-primary))] border-[rgb(var(--c-primary))] text-white shadow-sm'
+                                        : 'bg-white border-[rgb(var(--c-border)/0.5)] text-[rgb(var(--c-text-strong))] hover:bg-[rgb(var(--c-surface-2))]'
+                                    }`}
+                                  >
+                                    {style.toUpperCase()}
+                                  </button>
+                                )
+                              })}
                             </div>
-
-                            {state.dancers.length === 0 ? (
-                              <p className="text-xs text-[rgb(var(--c-text)/0.6)] italic bg-white border border-[rgb(var(--c-border)/0.3)] rounded-2xl p-4 text-center">
-                                Regresa al Paso anterior y registra integrantes primero
-                              </p>
-                            ) : (
-                              <div className="bg-white border border-[rgb(var(--c-border)/0.4)] rounded-2xl p-3 sm:p-4 max-h-none overflow-visible md:max-h-[220px] md:overflow-y-auto space-y-3.5">
-                                {/* Group Dancers by calculated ageCategory */}
-                                {AGE_CATEGORY_ORDER.map(cat => {
-                                  const groupDancers = state.dancers
-                                    .map((d, di) => ({ d, di }))
-                                    .filter(({ d }) => effectiveCategory(d) === cat)
-                                  
-                                  if (groupDancers.length === 0) return null
-
-                                  return (
-                                    <div key={cat} className="space-y-1.5">
-                                      <p className="text-[11px] font-display tracking-[0.12em] font-bold text-[rgb(var(--c-primary)/0.9)] border-b border-[rgb(var(--c-border)/0.15)] pb-0.5 uppercase">
-                                        {AGE_CATEGORY_LABELS[cat]} · {AGE_CATEGORY_HINTS[cat]}
-                                      </p>
-                                      <div className="flex flex-wrap gap-2">
-                                        {groupDancers.map(({ d, di }) => {
-                                          const isSel = act.dancerIndices.includes(di)
-                                          
-                                          const toggleDancer = () => {
-                                            let nextIndices: number[]
-                                            if (isSel) {
-                                              nextIndices = act.dancerIndices.filter(idx => idx !== di)
-                                            } else {
-                                              if (act.modality === 'solista') {
-                                                nextIndices = [di]
-                                              } else {
-                                                if (act.dancerIndices.length >= limitDancers) return
-                                                nextIndices = [...act.dancerIndices, di]
-                                              }
-                                            }
-                                            
-                                            // Compute high category
-                                            const selectedCategories = nextIndices
-                                              .map(idx => effectiveCategory(state.dancers[idx]))
-                                              .filter(Boolean) as AgeCategory[]
-                                            let highestCat: AgeCategory | null = null
-                                            if (selectedCategories.length > 0) {
-                                              const maxIndex = Math.max(...selectedCategories.map(c => AGE_CATEGORY_ORDER.indexOf(c)))
-                                              highestCat = AGE_CATEGORY_ORDER[maxIndex]
-                                            }
-
-                                            updateAct(i, { dancerIndices: nextIndices, ageCategory: highestCat })
-                                          }
-
-                                          return (
-                                            <button
-                                              key={di}
-                                              type="button"
-                                              onClick={toggleDancer}
-                                              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-display text-xs tracking-wider transition-all border active:scale-95 duration-100 ${
-                                                isSel
-                                                  ? 'bg-[rgb(var(--c-primary))] border-[rgb(var(--c-primary))] text-white shadow-sm font-bold'
-                                                  : 'bg-[rgb(var(--c-surface))] border-[rgb(var(--c-border)/0.4)] text-[rgb(var(--c-text-strong))] hover:bg-[rgb(var(--c-surface-2))]'
-                                              }`}
-                                            >
-                                              {isSel && <Check className="w-3 h-3 text-white" strokeWidth={3} />}
-                                              <span className="opacity-60 font-sans font-bold text-[9px]">{di + 1}</span>
-                                              <span>{getDancerDisplayName(d, di, state.dancers)}</span>
-                                            </button>
-                                          )
-                                        })}
-                                      </div>
-                                    </div>
-                                  )
-                                })}
-                              </div>
-                            )}
                           </div>
-                        ) : (
-                          <p className="text-xs text-[rgb(var(--c-text)/0.5)] italic text-center py-3">Selecciona modalidad y estilo primero para habilitar los integrantes</p>
-                        )}
-                      </div>
-                    )}
+
+                          {/* 4. Integrantes (Dancers Picker) */}
+                          {act.modality ? (
+                            <div className="space-y-2 animate-[fadeIn_0.2s_ease-out_forwards]">
+                              <div className="flex justify-between items-center">
+                                <label className="block text-[10px] font-bold tracking-widest text-[rgb(var(--c-text)/0.7)] uppercase">
+                                  {dancersNum}. Selecciona Integrantes ({actDancersCount} de {limitDancers === 100 ? '4 o más' : limitDancers})
+                                </label>
+                                
+                                {act.ageCategory && (
+                                  <span className="text-[10px] font-bold font-display bg-[rgb(var(--c-primary))] text-white px-2.5 py-0.5 rounded-lg uppercase">
+                                    Categoría Acto: {AGE_CATEGORY_LABELS[act.ageCategory]}
+                                  </span>
+                                )}
+                              </div>
+
+                              {state.dancers.length === 0 ? (
+                                <p className="text-xs text-[rgb(var(--c-text)/0.6)] italic bg-white border border-[rgb(var(--c-border)/0.3)] rounded-2xl p-4 text-center">
+                                  Regresa al Paso anterior y registra integrantes primero
+                                </p>
+                              ) : (
+                                <div className="bg-white border border-[rgb(var(--c-border)/0.4)] rounded-2xl p-3 sm:p-4 max-h-none overflow-visible md:max-h-[300px] md:overflow-y-auto space-y-4">
+                                  {/* Group Dancers by calculated ageCategory */}
+                                  {AGE_CATEGORY_ORDER.map(cat => {
+                                    const groupDancers = state.dancers
+                                      .map((d, di) => ({ d, di }))
+                                      .filter(({ d }) => effectiveCategory(d) === cat)
+                                    
+                                    if (groupDancers.length === 0) return null
+
+                                    return (
+                                      <div key={cat} className="space-y-2">
+                                        <p className="text-sm sm:text-base font-extrabold text-[rgb(var(--c-primary))] border-b border-[rgb(var(--c-border)/0.25)] pb-1 uppercase mt-2.5 first:mt-0">
+                                          {AGE_CATEGORY_LABELS[cat]} <span className="text-xs font-normal text-[rgb(var(--c-text)/0.6)] lowercase italic">({AGE_CATEGORY_HINTS[cat]})</span>
+                                        </p>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-1">
+                                          {groupDancers.map(({ d, di }) => {
+                                            const isSel = act.dancerIndices.includes(di)
+                                            
+                                            const toggleDancer = () => {
+                                              let nextIndices: number[]
+                                              if (isSel) {
+                                                nextIndices = act.dancerIndices.filter(idx => idx !== di)
+                                              } else {
+                                                if (act.modality === 'solista') {
+                                                  nextIndices = [di]
+                                                } else {
+                                                  if (act.dancerIndices.length >= limitDancers) return
+                                                  nextIndices = [...act.dancerIndices, di]
+                                                }
+                                              }
+                                              
+                                              // Compute high category
+                                              const selectedCategories = nextIndices
+                                                .map(idx => effectiveCategory(state.dancers[idx]))
+                                                .filter(Boolean) as AgeCategory[]
+                                              let highestCat: AgeCategory | null = null
+                                              if (selectedCategories.length > 0) {
+                                                const maxIndex = Math.max(...selectedCategories.map(c => AGE_CATEGORY_ORDER.indexOf(c)))
+                                                highestCat = AGE_CATEGORY_ORDER[maxIndex]
+                                              }
+
+                                              updateAct(i, { dancerIndices: nextIndices, ageCategory: highestCat })
+                                            }
+
+                                            return (
+                                              <button
+                                                key={di}
+                                                type="button"
+                                                onClick={toggleDancer}
+                                                className={`flex items-center justify-between p-2.5 rounded-xl font-display text-xs tracking-wider transition-all border active:scale-[0.98] duration-100 text-left ${
+                                                  isSel
+                                                    ? 'bg-purple-50/90 border-purple-300 text-purple-950 font-bold shadow-sm'
+                                                    : 'bg-white border-[rgb(var(--c-border)/0.4)] text-[rgb(var(--c-text-strong))] hover:bg-[rgb(var(--c-surface-2))]'
+                                                }`}
+                                              >
+                                                <div className="flex items-center gap-2.5 min-w-0">
+                                                  <div className={`w-4 h-4 rounded border flex items-center justify-center transition-all ${
+                                                    isSel ? 'bg-purple-600 border-purple-600 text-white' : 'border-[rgb(var(--c-border)/0.7)] bg-white'
+                                                  }`}>
+                                                    {isSel && <Check className="w-3 h-3 text-white" strokeWidth={3} />}
+                                                  </div>
+                                                  <span className="truncate">{getDancerDisplayName(d, di, state.dancers)}</span>
+                                                </div>
+                                                <span className="text-[10px] font-sans font-bold text-purple-400 shrink-0 ml-1.5">
+                                                  #{di + 1}
+                                                </span>
+                                              </button>
+                                            )
+                                          })}
+                                        </div>
+                                      </div>
+                                    )
+                                  })}
+                                </div>
+                              )}
+
+                              {/* Botón Confirmar Acto en Acordeón */}
+                              <div className="flex justify-center pt-2">
+                                <button
+                                  type="button"
+                                  onClick={() => setActiveActIndex(null)}
+                                  className="inline-flex items-center gap-1.5 bg-gradient-to-r from-purple-600 to-[rgb(var(--c-primary))] hover:brightness-105 active:scale-95 text-white px-6 py-2.5 rounded-2xl font-display text-sm tracking-wider font-bold shadow-md transition-all duration-150"
+                                >
+                                  <Check className="w-4 h-4 text-white" strokeWidth={3} />
+                                  CONFIRMAR ACTO #{i + 1}
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            <p className="text-xs text-[rgb(var(--c-text)/0.5)] italic text-center py-3">Selecciona modalidad y estilo primero para habilitar los integrantes</p>
+                          )}
+                        </div>
+                      )}
                   </div>
                 )
               })}
@@ -1762,6 +1803,7 @@ function StepView(props: {
           saveErr={saveErr}
           updateState={updateState}
           goToStep={goToStep}
+          event={event}
         />
       )
 
@@ -1774,6 +1816,7 @@ function StepView(props: {
           startEdit={startEdit}
           updateState={updateState}
           goToStep={goToStep}
+          event={event}
         />
       )
   }
@@ -1831,7 +1874,7 @@ function MoneyInput({ value, onChange, onEnter }: {
   )
 }
 
-function FullSummary({ state, editMode, confirmed, confirm, saving, saveErr, startEdit, updateState, goToStep }: {
+function FullSummary({ state, editMode, confirmed, confirm, saving, saveErr, startEdit, updateState, goToStep, event }: {
   state: State
   editMode: boolean
   confirmed?: boolean
@@ -1841,11 +1884,13 @@ function FullSummary({ state, editMode, confirmed, confirm, saving, saveErr, sta
   startEdit?: () => void
   updateState: React.Dispatch<React.SetStateAction<State>>
   goToStep: (s: Step) => void
+  event: Event | null
 }) {
   const filledDancers = state.dancers.filter(d => d.name.trim().length > 0)
   const counts = participacionesPorAlumno(state)
   const total = costoTotal(state)
   const hasCosts = state.costPaquete !== null && state.costPaquete >= 0 && state.costRepeticion !== null && state.costRepeticion >= 0
+  const chgDeadline = event?.date ? getChangesDeadline(event.date) : '7 días antes del evento'
 
   return (
     <div className="w-full flex flex-col min-h-0 md:h-full overflow-visible md:overflow-hidden" style={{ animation: 'fadeIn 0.3s ease-out' }}>
@@ -1856,9 +1901,9 @@ function FullSummary({ state, editMode, confirmed, confirm, saving, saveErr, sta
         </div>
       )}
       
-      <div className="flex-1 overflow-visible md:overflow-y-auto px-0 sm:px-4 lg:px-6 py-2 sm:py-4 pb-6 sm:pb-28 max-h-none md:max-h-[75vh]">
+      <div className="flex-1 overflow-visible md:overflow-y-auto px-0 sm:px-4 lg:px-6 py-2 sm:py-4 pb-0 sm:pb-14 max-h-none md:max-h-[75vh]">
         
-        <div className="bg-white rounded-none sm:rounded-3xl border-y sm:border border-[rgb(var(--c-border)/0.4)] shadow-none sm:shadow-sm divide-y divide-[rgb(var(--c-border)/0.25)] overflow-hidden">
+        <div className="bg-white rounded-none sm:rounded-3xl border-t sm:border-b sm:border border-[rgb(var(--c-border)/0.4)] shadow-none sm:shadow-sm divide-y divide-[rgb(var(--c-border)/0.25)] overflow-hidden">
           {/* COACH, ACADEMY & STAFF */}
           <div className="p-3.5 sm:p-5 relative">
             <h3 className="font-display text-lg tracking-widest text-[rgb(var(--c-primary))] mb-4 border-b border-[rgb(var(--c-border)/0.25)] pb-2 flex justify-between items-center">
@@ -1983,8 +2028,10 @@ function FullSummary({ state, editMode, confirmed, confirm, saving, saveErr, sta
                           {a.dancerIndices.map(di => {
                             const d = state.dancers[di]
                             if (!d) return null
+                            const compCat = effectiveCategory(d)
+                            const color = compCat ? CATEGORY_COLORS[compCat] : DEFAULT_DANCER_COLOR
                             return (
-                              <span key={di} className="inline-block bg-[rgb(var(--c-surface-2))] text-[rgb(var(--c-text-strong))] text-[10px] px-2 py-0.5 rounded-md font-semibold border border-[rgb(var(--c-border)/0.3)]">
+                              <span key={di} className={`inline-block ${color.bg} ${color.text} text-[10px] px-2 py-0.5 rounded-md font-semibold border border-purple-200/40 shadow-sm`}>
                                 {getDancerDisplayName(d, di, state.dancers)}
                               </span>
                             )
@@ -2017,12 +2064,23 @@ function FullSummary({ state, editMode, confirmed, confirm, saving, saveErr, sta
             <p className="text-[rgb(var(--c-primary))] text-xs bg-[rgb(var(--c-primary)/0.05)] border border-[rgb(var(--c-primary)/0.2)] rounded-xl px-4 py-2.5 mb-3 text-center font-bold">{saveErr}</p>
           )}
           {confirmed ? (
-            <button
-              onClick={startEdit}
-              className="w-full h-12 md:h-14 flex items-center justify-center gap-3 bg-white border-2 border-[rgb(var(--c-border))] hover:bg-[rgb(var(--c-surface-2))] text-[rgb(var(--c-text-strong))] font-display text-base tracking-widest rounded-2xl transition-all shadow-sm active:scale-[0.98] duration-150 font-bold"
-            >
-              <Pencil className="w-4 h-4 text-[rgb(var(--c-primary))]" /> MODIFICAR REGISTRO
-            </button>
+            <div className="space-y-3">
+              <div className="bg-purple-50 border border-purple-200/80 rounded-2xl p-3 flex items-start gap-2.5 shadow-sm w-full">
+                <Clock className="w-4 h-4 text-purple-600 shrink-0 mt-0.5" />
+                <div className="text-left">
+                  <p className="text-xs font-semibold text-purple-950">Información importante</p>
+                  <p className="text-[11px] text-purple-800/90 mt-0.5">
+                    Recuerda que tienes hasta el <strong className="font-bold text-purple-900">{chgDeadline}</strong> para realizar cambios o editar tu registro.
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={startEdit}
+                className="w-full h-12 md:h-14 flex items-center justify-center gap-3 bg-white border-2 border-[rgb(var(--c-border))] hover:bg-[rgb(var(--c-surface-2))] text-[rgb(var(--c-text-strong))] font-display text-base tracking-widest rounded-2xl transition-all shadow-sm active:scale-[0.98] duration-150 font-bold"
+              >
+                <Pencil className="w-4 h-4 text-[rgb(var(--c-primary))]" /> MODIFICAR REGISTRO
+              </button>
+            </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <button
