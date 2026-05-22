@@ -1374,7 +1374,7 @@ function StepView(props: {
                       type="text"
                       value={state.coach.name}
                       onChange={e => updateCoach({ name: e.target.value })}
-                      placeholder="Nombre del coach principal"
+                      placeholder="Nombre del coach"
                       className="w-full bg-[rgb(var(--c-surface))] border border-[rgb(var(--c-border)/0.6)] text-[rgb(var(--c-text-strong))] rounded-2xl px-4 py-3 outline-none focus:border-[rgb(var(--c-primary))] focus:ring-1 focus:ring-[rgb(var(--c-primary))] transition-all text-sm"
                       autoCapitalize="words"
                       autoComplete="name"
@@ -2942,7 +2942,7 @@ async function generateReceiptPDF(state: State, event: Event | null) {
   doc.rect(qrX, qrY, qrSize, qrSize + 10, 'FD')
 
   try {
-    const qrString = `D4E-EVENT-${event?.id || 'EVENT'}-REG-${state.confirmedRegistrationId || 'TEMP'}-TOTAL-${total}`
+    const qrString = `${window.location.origin}/socios?registrationId=${state.confirmedRegistrationId || ''}`
     const QRCode = (await import('qrcode')).default
     const qrDataUrl = await QRCode.toDataURL(qrString, {
       margin: 1,
