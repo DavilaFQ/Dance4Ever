@@ -154,6 +154,7 @@ function costoTotal(state: State): number {
     if (n >= 1) total += PRECIO_PARTICIPACION
     if (n > 1) total += (n - 1) * PRECIO_REPETICION
   })
+  total += PRECIO_ASISTENTE // coach siempre paga
   const filledDancers = state.dancers.filter(d => d.name.trim().length > 0)
   const freeEntries = Math.floor(filledDancers.length / DANCERS_POR_ENTRADA_GRATIS)
   const assistants = state.coach.assistants.filter(a => a.trim()).length
@@ -2219,25 +2220,34 @@ function FullSummary({ state, editMode, confirmed, confirm, saving, saveErr, sta
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-2">
               {filledDancers.length === 0 ? (
                 <p className="text-[rgb(var(--c-text)/0.5)] italic text-sm col-span-full">Sin integrantes</p>
-              ) : filledDancers.map((d, di) => {
-                const n = counts.get(di) ?? 0
-                return (
-                  <div key={di} className="flex items-center gap-3 border-b border-[rgb(var(--c-border)/0.2)] pb-1 text-xs">
-                    <span className="font-display text-sm text-[rgb(var(--c-text)/0.4)] w-5 text-right shrink-0">{di + 1}.</span>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-display text-sm uppercase text-[rgb(var(--c-text-strong))] truncate leading-tight font-bold">{d.name}</p>
-                      <p className="text-[10px] text-[rgb(var(--c-text)/0.7)] mt-0.5 font-medium">{formatBirthdate(d.birthdate)} · {AGE_CATEGORY_LABELS[effectiveCategory(d) || 'tiny']}</p>
+              ) : (() => {
+                const sorted = filledDancers
+                  .map((d, di) => ({ d, di }))
+                  .sort((a, b) => {
+                    const catA = effectiveCategory(a.d) ?? 'tiny'
+                    const catB = effectiveCategory(b.d) ?? 'tiny'
+                    return AGE_CATEGORY_ORDER.indexOf(catA) - AGE_CATEGORY_ORDER.indexOf(catB)
+                  })
+                return sorted.map(({ d, di }, rank) => {
+                  const n = counts.get(di) ?? 0
+                  return (
+                    <div key={di} className="flex items-center gap-3 border-b border-[rgb(var(--c-border)/0.2)] pb-1 text-xs">
+                      <span className="font-display text-sm text-[rgb(var(--c-text)/0.4)] w-5 text-right shrink-0">{rank + 1}.</span>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-display text-sm uppercase text-[rgb(var(--c-text-strong))] truncate leading-tight font-bold">{d.name}</p>
+                        <p className="text-[10px] text-[rgb(var(--c-text)/0.7)] mt-0.5 font-medium">{formatBirthdate(d.birthdate)} · {AGE_CATEGORY_LABELS[effectiveCategory(d) || 'tiny']}</p>
+                      </div>
+                      <div className="text-right shrink-0">
+                        {n > 0 ? (
+                          <span className="block text-[10px] text-[rgb(var(--c-primary))] font-bold bg-[rgb(var(--c-primary)/0.03)] px-1.5 py-0.5 rounded-lg border border-[rgb(var(--c-primary)/0.15)] leading-none">{n} Acto{n === 1 ? '' : 's'}</span>
+                        ) : (
+                          <span className="block text-[9px] text-[rgb(var(--c-text)/0.4)] italic">Sin acto</span>
+                        )}
+                      </div>
                     </div>
-                    <div className="text-right shrink-0">
-                      {n > 0 ? (
-                        <span className="block text-[10px] text-[rgb(var(--c-primary))] font-bold bg-[rgb(var(--c-primary)/0.03)] px-1.5 py-0.5 rounded-lg border border-[rgb(var(--c-primary)/0.15)] leading-none">{n} Acto{n === 1 ? '' : 's'}</span>
-                      ) : (
-                        <span className="block text-[9px] text-[rgb(var(--c-text)/0.4)] italic">Sin acto</span>
-                      )}
-                    </div>
-                  </div>
-                )
-              })}
+                  )
+                })
+              })()}
             </div>
           </div>
 
@@ -2349,9 +2359,10 @@ function FullSummary({ state, editMode, confirmed, confirm, saving, saveErr, sta
           let participaciones = 0, repeticiones = 0
           counts.forEach(n => { if (n >= 1) { participaciones++; repeticiones += n - 1 } })
           const totalDancers = participaciones * PRECIO_PARTICIPACION + repeticiones * PRECIO_REPETICION
+          const totalCoach = PRECIO_ASISTENTE
           const totalAsistentes = paidAssistants * PRECIO_ASISTENTE
           const totalEntradas = (state.ticketsCount ?? 0) * PRECIO_ENTRADA
-          const total = totalDancers + totalAsistentes + totalEntradas
+          const total = totalDancers + totalCoach + totalAsistentes + totalEntradas
           return (
             <div className="mt-3 sm:mt-4 px-0 sm:px-0">
               <div className="bg-[rgb(var(--c-surface))] rounded-none sm:rounded-3xl border-t sm:border border-[rgb(var(--c-border)/0.4)] shadow-none sm:shadow-sm overflow-hidden">
@@ -2360,6 +2371,10 @@ function FullSummary({ state, editMode, confirmed, confirm, saving, saveErr, sta
                     DESGLOSE DE COSTOS
                   </h3>
                   <div className="space-y-2 text-sm">
+                    <div className="flex justify-between items-center">
+                      <span className="text-[rgb(var(--c-text))]">Coach <span className="text-[rgb(var(--c-text)/0.5)] text-xs">(entrada)</span></span>
+                      <span className="font-bold text-[rgb(var(--c-text-strong))]">{formatMoney(totalCoach)}</span>
+                    </div>
                     <div className="flex justify-between items-center">
                       <span className="text-[rgb(var(--c-text))]">Participaciones <span className="text-[rgb(var(--c-text)/0.5)] text-xs">({participaciones} × {formatMoney(PRECIO_PARTICIPACION)})</span></span>
                       <span className="font-bold text-[rgb(var(--c-text-strong))]">{formatMoney(participaciones * PRECIO_PARTICIPACION)}</span>
@@ -2386,14 +2401,14 @@ function FullSummary({ state, editMode, confirmed, confirm, saving, saveErr, sta
                     )}
                     {freeEntries > 0 && (
                       <p className="text-[10px] text-[rgb(var(--c-success-strong))] bg-[rgb(var(--c-success)/0.08)] border border-[rgb(var(--c-success)/0.2)] rounded-xl px-3 py-1.5 font-medium">
-                        {freeEntries} entrada{freeEntries > 1 ? 's' : ''} de asistente gratis por tener {filledDancers.length} integrantes
+                        1 entrada gratis para asistente por cada {DANCERS_POR_ENTRADA_GRATIS} integrantes
                       </p>
                     )}
                     <div className="flex justify-between items-center border-t border-[rgb(var(--c-border)/0.4)] pt-3 mt-3">
                       <span className="font-display text-base tracking-widest text-[rgb(var(--c-text-strong))]">TOTAL ESTIMADO</span>
                       <span className="font-display text-2xl text-[rgb(var(--c-primary))] font-bold">{formatMoney(total)}</span>
                     </div>
-                    <p className="text-[10px] text-[rgb(var(--c-text)/0.45)] text-center pt-1">Precio estimado · sujeto a confirmación por los organizadores</p>
+                    <p className="text-xs text-[rgb(var(--c-text)/0.7)] text-center pt-1 font-medium">Precio estimado · sujeto a confirmación por los organizadores</p>
                   </div>
                 </div>
               </div>
