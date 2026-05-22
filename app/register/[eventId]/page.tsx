@@ -1533,11 +1533,14 @@ function StepView(props: {
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5">
                               {MODALITY_OPTIONS.map(opt => {
                                 const isSelected = act.modality === opt.value
+                                const isDisabled = state.dancers.length < minDancers(opt.value)
                                 return (
                                   <button
                                     key={opt.value}
                                     type="button"
+                                    disabled={isDisabled}
                                     onClick={() => {
+                                      if (isDisabled) return
                                       const cleanedDancers = act.dancerIndices.slice(0, maxDancers(opt.value))
                                       updateAct(i, {
                                         modality: opt.value,
@@ -1545,17 +1548,27 @@ function StepView(props: {
                                         level: opt.value === 'grupal' ? act.level : null
                                       })
                                     }}
-                                    className={`py-2 px-3 rounded-xl font-display text-sm tracking-wider font-bold transition-all border active:scale-95 duration-150 ${
+                                    className={`py-2 px-3 rounded-xl font-display text-xs sm:text-sm tracking-wider font-bold transition-all border duration-150 ${
                                       isSelected
                                         ? 'bg-[rgb(var(--c-primary))] border-[rgb(var(--c-primary))] text-white shadow-sm'
-                                        : 'bg-white border-[rgb(var(--c-border)/0.5)] text-[rgb(var(--c-text-strong))] hover:bg-[rgb(var(--c-surface-2))]'
+                                        : isDisabled
+                                          ? 'bg-[rgb(var(--c-surface-2))] border-[rgb(var(--c-border)/0.2)] text-[rgb(var(--c-text)/0.35)] cursor-not-allowed opacity-60'
+                                          : 'bg-white border-[rgb(var(--c-border)/0.5)] text-[rgb(var(--c-text-strong))] hover:bg-[rgb(var(--c-surface-2))] active:scale-95'
                                     }`}
+                                    title={isDisabled ? `Requiere al menos ${minDancers(opt.value)} integrantes registrados` : undefined}
                                   >
                                     {opt.label}
                                   </button>
                                 )
                               })}
                             </div>
+                            {state.dancers.length < 4 && (
+                              <p className="text-[10px] text-[rgb(var(--c-primary))] font-semibold mt-1 animate-[fadeIn_0.2s_ease-out_forwards]">
+                                * Registraste {state.dancers.length} {state.dancers.length === 1 ? 'integrante' : 'integrantes'}. 
+                                Para habilitar {state.dancers.length < 2 ? 'Dueto, Trío o Grupal' : state.dancers.length < 3 ? 'Trío o Grupal' : 'Grupal'}, 
+                                agrega más alumnos en el Paso 2.
+                              </p>
+                            )}
                           </div>
 
                           {/* 2. Nivel (Solo si es Grupal) */}
