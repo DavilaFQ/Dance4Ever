@@ -416,13 +416,17 @@ export default function RegisterPage({ params }: Props) {
       }
     }
 
-    const handleFocusIn = () => {
+    const handleFocusIn = (e: any) => {
       updateHeight()
-      setTimeout(() => {
-        if (typeof window !== 'undefined' && window.scrollY !== 0) {
-          window.scrollTo(0, 0)
-        }
-      }, 50)
+      const target = e.target as HTMLElement
+      if (target && typeof target.scrollIntoView === 'function') {
+        setTimeout(() => {
+          target.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' })
+          if (typeof window !== 'undefined' && window.scrollY !== 0) {
+            window.scrollTo(0, 0)
+          }
+        }, 150)
+      }
     }
 
     const handleFocusOut = () => {
@@ -870,7 +874,7 @@ export default function RegisterPage({ params }: Props) {
               <button
                 onClick={goNext}
                 disabled={
-                  step.kind === 'setup' && (state.coach.name.trim().length < 2 || state.coach.phone.trim().length < 8 || state.academy.trim().length < 2 || !state.city || state.city.trim().length < 2)
+                  step.kind === 'setup' && (state.coach.name.trim().length < 2 || state.coach.phone.trim().length < 8 || state.coach.email.trim().length < 5 || !state.coach.email.includes('@') || !state.coach.email.includes('.') || state.academy.trim().length < 2 || !state.city || state.city.trim().length < 2)
                   || step.kind === 'dancers' && (state.dancers.length === 0 || state.dancers.some(d => d.name.trim().length < 2 || d.birthdate.length !== 10))
                   || step.kind === 'acts' && (state.acts.length === 0 || state.acts.some(a => !a.modality || !a.style || a.dancerIndices.length === 0))
                 }
@@ -1021,12 +1025,7 @@ function StepView(props: {
                 <p className="text-base text-[rgb(var(--c-primary))] font-bold mt-0.5">{chgDeadline}</p>
               </div>
             </div>
-            <div className="h-px bg-[rgb(var(--c-border)/0.3)]" />
-            <div className="flex items-center gap-2.5 text-[rgb(var(--c-success-strong))] font-medium text-xs">
-              <Sparkles className="w-4 h-4 text-[rgb(var(--c-primary))] shrink-0" />
-              <span>Flujo de 3 pasos simplificado y optimizado para celular</span>
             </div>
-          </div>
 
           <div className="flex items-start gap-3 bg-[rgb(var(--c-primary)/0.05)] border border-[rgb(var(--c-primary)/0.2)] text-[rgb(var(--c-text-strong))] px-5 py-4 rounded-2xl text-left">
             <Info className="w-5 h-5 shrink-0 mt-0.5 text-[rgb(var(--c-primary))]" />
@@ -1046,7 +1045,8 @@ function StepView(props: {
     }
 
     case 'setup': {
-      const isCoachValid = state.coach.name.trim().length >= 2 && state.coach.phone.trim().length >= 8
+      const isEmailValid = state.coach.email.trim().length >= 5 && state.coach.email.includes('@') && state.coach.email.includes('.')
+      const isCoachValid = state.coach.name.trim().length >= 2 && state.coach.phone.trim().length >= 8 && isEmailValid
       const isAcademyValid = state.academy.trim().length >= 2
       const isCityValid = state.city && state.city.trim().length >= 2
       const isValid = isCoachValid && isAcademyValid && isCityValid
@@ -1058,192 +1058,194 @@ function StepView(props: {
             <p className="text-xs text-[rgb(var(--c-text))]">Completa tu información organizativa general</p>
           </div>
 
-          <div className="grid lg:grid-cols-2 gap-3 sm:gap-4">
-            {/* COACH CARD */}
-            <div className="bg-white border-y sm:border border-[rgb(var(--c-border)/0.4)] rounded-none sm:rounded-3xl p-3 sm:p-5 shadow-none sm:shadow-sm space-y-2.5">
-              <h3 className="font-display text-xl text-[rgb(var(--c-primary))] flex items-center gap-2 border-b border-[rgb(var(--c-border)/0.2)] pb-1.5">
-                <Users className="w-5 h-5" /> COACH PRINCIPAL
-              </h3>
-              <div className="space-y-2.5">
-                <div>
-                  <label className="block text-[10px] font-bold tracking-widest text-[rgb(var(--c-text)/0.7)] mb-1">NOMBRE COMPLETO</label>
-                  <input
-                    type="text"
-                    value={state.coach.name}
-                    onChange={e => updateCoach({ name: e.target.value })}
-                    placeholder="Nombre del coach principal"
-                    className="w-full bg-[rgb(var(--c-surface))] border border-[rgb(var(--c-border)/0.6)] text-[rgb(var(--c-text-strong))] rounded-2xl px-4 py-3 outline-none focus:border-[rgb(var(--c-primary))] focus:ring-1 focus:ring-[rgb(var(--c-primary))] transition-all text-sm"
-                    autoCapitalize="words"
-                  />
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="bg-white border-y sm:border border-[rgb(var(--c-border)/0.4)] rounded-none sm:rounded-3xl shadow-none sm:shadow-sm overflow-hidden divide-y divide-[rgb(var(--c-border)/0.25)]">
+            <div className="grid grid-cols-1 lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-[rgb(var(--c-border)/0.25)]">
+              {/* COACH CARD */}
+              <div className="p-3 sm:p-5 space-y-2.5">
+                <h3 className="font-display text-xl text-[rgb(var(--c-primary))] flex items-center gap-2 border-b border-[rgb(var(--c-border)/0.2)] pb-1.5">
+                  <Users className="w-5 h-5" /> COACH PRINCIPAL
+                </h3>
+                <div className="space-y-2.5">
                   <div>
-                    <label className="block text-[10px] font-bold tracking-widest text-[rgb(var(--c-text)/0.7)] mb-1">WHATSAPP (TELÉFONO)</label>
-                    <input
-                      type="tel"
-                      inputMode="numeric"
-                      value={state.coach.phone}
-                      onChange={e => updateCoach({ phone: e.target.value.replace(/\D/g, '') })}
-                      placeholder="Números sin espacios"
-                      className="w-full bg-[rgb(var(--c-surface))] border border-[rgb(var(--c-border)/0.6)] text-[rgb(var(--c-text-strong))] rounded-2xl px-4 py-3 outline-none focus:border-[rgb(var(--c-primary))] focus:ring-1 focus:ring-[rgb(var(--c-primary))] transition-all text-sm"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] font-bold tracking-widest text-[rgb(var(--c-text)/0.7)] mb-1">CORREO ELECTRÓNICO (OPCIONAL)</label>
-                    <input
-                      type="email"
-                      value={state.coach.email}
-                      onChange={e => updateCoach({ email: e.target.value })}
-                      placeholder="correo@ejemplo.com"
-                      className="w-full bg-[rgb(var(--c-surface))] border border-[rgb(var(--c-border)/0.6)] text-[rgb(var(--c-text-strong))] rounded-2xl px-4 py-3 outline-none focus:border-[rgb(var(--c-primary))] focus:ring-1 focus:ring-[rgb(var(--c-primary))] transition-all text-sm"
-                      autoCapitalize="off"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* ACADEMY CARD */}
-            <div className="bg-white border-y sm:border border-[rgb(var(--c-border)/0.4)] rounded-none sm:rounded-3xl p-3 sm:p-5 shadow-none sm:shadow-sm space-y-2.5">
-              <h3 className="font-display text-xl text-[rgb(var(--c-primary))] flex items-center gap-2 border-b border-[rgb(var(--c-border)/0.2)] pb-1.5">
-                <School className="w-5 h-5" /> ACADEMIA Y EQUIPO
-              </h3>
-              <div className="space-y-2.5">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-[10px] font-bold tracking-widest text-[rgb(var(--c-text)/0.7)] mb-1">COLEGIO / ACADEMIA</label>
+                    <label className="block text-[10px] font-bold tracking-widest text-[rgb(var(--c-text)/0.7)] mb-1">NOMBRE COMPLETO</label>
                     <input
                       type="text"
-                      value={state.academy}
-                      onChange={e => updateState(s => ({ ...s, academy: e.target.value }))}
-                      placeholder="Ej. Escuela de Danza Ritmo"
-                      className="w-full bg-[rgb(var(--c-surface))] border border-[rgb(var(--c-border)/0.6)] text-[rgb(var(--c-text-strong))] rounded-2xl px-4 py-3 outline-none focus:border-[rgb(var(--c-primary))] focus:ring-1 focus:ring-[rgb(var(--c-primary))] transition-all text-sm"
-                      autoCapitalize="sentences"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] font-bold tracking-widest text-[rgb(var(--c-text)/0.7)] mb-1">CIUDAD</label>
-                    <input
-                      type="text"
-                      value={state.city}
-                      onChange={e => updateState(s => ({ ...s, city: e.target.value }))}
-                      placeholder="Ej. Monterrey"
+                      value={state.coach.name}
+                      onChange={e => updateCoach({ name: e.target.value })}
+                      placeholder="Nombre del coach principal"
                       className="w-full bg-[rgb(var(--c-surface))] border border-[rgb(var(--c-border)/0.6)] text-[rgb(var(--c-text-strong))] rounded-2xl px-4 py-3 outline-none focus:border-[rgb(var(--c-primary))] focus:ring-1 focus:ring-[rgb(var(--c-primary))] transition-all text-sm"
                       autoCapitalize="words"
                     />
                   </div>
-                </div>
-                <div>
-                  <div className="flex justify-between items-center mb-1">
-                    <label className="block text-[10px] font-bold tracking-widest text-[rgb(var(--c-text)/0.7)]">NOMBRE DEL EQUIPO</label>
-                    {state.academy.trim().length >= 2 && (
-                      <button
-                        type="button"
-                        onClick={() => updateState(s => ({ ...s, teamName: s.academy }))}
-                        className="text-[10px] text-[rgb(var(--c-primary))] hover:underline font-bold"
-                      >
-                        COPIAR ACADEMIA
-                      </button>
-                    )}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-[10px] font-bold tracking-widest text-[rgb(var(--c-text)/0.7)] mb-1">WHATSAPP (TELÉFONO)</label>
+                      <input
+                        type="tel"
+                        inputMode="numeric"
+                        value={state.coach.phone}
+                        onChange={e => updateCoach({ phone: e.target.value.replace(/\D/g, '') })}
+                        placeholder="Números sin espacios"
+                        className="w-full bg-[rgb(var(--c-surface))] border border-[rgb(var(--c-border)/0.6)] text-[rgb(var(--c-text-strong))] rounded-2xl px-4 py-3 outline-none focus:border-[rgb(var(--c-primary))] focus:ring-1 focus:ring-[rgb(var(--c-primary))] transition-all text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold tracking-widest text-[rgb(var(--c-text)/0.7)] mb-1">CORREO ELECTRÓNICO</label>
+                      <input
+                        type="email"
+                        value={state.coach.email}
+                        onChange={e => updateCoach({ email: e.target.value })}
+                        placeholder="correo@ejemplo.com"
+                        className="w-full bg-[rgb(var(--c-surface))] border border-[rgb(var(--c-border)/0.6)] text-[rgb(var(--c-text-strong))] rounded-2xl px-4 py-3 outline-none focus:border-[rgb(var(--c-primary))] focus:ring-1 focus:ring-[rgb(var(--c-primary))] transition-all text-sm"
+                        autoCapitalize="off"
+                      />
+                    </div>
                   </div>
-                  <input
-                    type="text"
-                    value={state.teamName}
-                    onChange={e => updateState(s => ({ ...s, teamName: e.target.value }))}
-                    placeholder={state.academy || "Ej. Ritmo Senior Team"}
-                    className="w-full bg-[rgb(var(--c-surface))] border border-[rgb(var(--c-border)/0.6)] text-[rgb(var(--c-text-strong))] rounded-2xl px-4 py-3 outline-none focus:border-[rgb(var(--c-primary))] focus:ring-1 focus:ring-[rgb(var(--c-primary))] transition-all text-sm"
-                    autoCapitalize="sentences"
-                  />
+                </div>
+              </div>
+
+              {/* ACADEMY CARD */}
+              <div className="p-3 sm:p-5 space-y-2.5">
+                <h3 className="font-display text-xl text-[rgb(var(--c-primary))] flex items-center gap-2 border-b border-[rgb(var(--c-border)/0.2)] pb-1.5">
+                  <School className="w-5 h-5" /> ACADEMIA Y EQUIPO
+                </h3>
+                <div className="space-y-2.5">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-[10px] font-bold tracking-widest text-[rgb(var(--c-text)/0.7)] mb-1">CIUDAD</label>
+                      <input
+                        type="text"
+                        value={state.city}
+                        onChange={e => updateState(s => ({ ...s, city: e.target.value }))}
+                        placeholder="Ej. Monterrey"
+                        className="w-full bg-[rgb(var(--c-surface))] border border-[rgb(var(--c-border)/0.6)] text-[rgb(var(--c-text-strong))] rounded-2xl px-4 py-3 outline-none focus:border-[rgb(var(--c-primary))] focus:ring-1 focus:ring-[rgb(var(--c-primary))] transition-all text-sm"
+                        autoCapitalize="words"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold tracking-widest text-[rgb(var(--c-text)/0.7)] mb-1">COLEGIO / ACADEMIA</label>
+                      <input
+                        type="text"
+                        value={state.academy}
+                        onChange={e => updateState(s => ({ ...s, academy: e.target.value }))}
+                        placeholder="Ej. Escuela de Danza Ritmo"
+                        className="w-full bg-[rgb(var(--c-surface))] border border-[rgb(var(--c-border)/0.6)] text-[rgb(var(--c-text-strong))] rounded-2xl px-4 py-3 outline-none focus:border-[rgb(var(--c-primary))] focus:ring-1 focus:ring-[rgb(var(--c-primary))] transition-all text-sm"
+                        autoCapitalize="sentences"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <div className="flex justify-between items-center mb-1">
+                      <label className="block text-[10px] font-bold tracking-widest text-[rgb(var(--c-text)/0.7)]">NOMBRE DEL EQUIPO</label>
+                      {state.academy.trim().length >= 2 && (
+                        <button
+                          type="button"
+                          onClick={() => updateState(s => ({ ...s, teamName: s.academy }))}
+                          className="text-[10px] text-[rgb(var(--c-primary))] hover:underline font-bold"
+                        >
+                          COPIAR ACADEMIA
+                        </button>
+                      )}
+                    </div>
+                    <input
+                      type="text"
+                      value={state.teamName}
+                      onChange={e => updateState(s => ({ ...s, teamName: e.target.value }))}
+                      placeholder={state.academy || "Ej. Ritmo Senior Team"}
+                      className="w-full bg-[rgb(var(--c-surface))] border border-[rgb(var(--c-border)/0.6)] text-[rgb(var(--c-text-strong))] rounded-2xl px-4 py-3 outline-none focus:border-[rgb(var(--c-primary))] focus:ring-1 focus:ring-[rgb(var(--c-primary))] transition-all text-sm"
+                      autoCapitalize="sentences"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          {/* DYNAMIC STAFF CARD (EXTRA COACHES & ASSISTANTS) */}
-          <div className="bg-white border-y sm:border border-[rgb(var(--c-border)/0.4)] rounded-none sm:rounded-3xl p-3.5 sm:p-6 shadow-none sm:shadow-sm space-y-3.5 sm:space-y-5">
-            <h3 className="font-display text-xl text-[rgb(var(--c-primary))] border-b border-[rgb(var(--c-border)/0.2)] pb-2 flex items-center gap-2">
-              <Users className="w-5 h-5 text-[rgb(var(--c-primary))]" /> STAFF ADICIONAL (COACHES Y ASISTENTES)
-            </h3>
-            
-            <div className="grid md:grid-cols-2 gap-6">
-              {/* EXTRA COACHES */}
-              <div className="space-y-3">
-                <div className="flex justify-between items-center">
-                  <label className="text-xs font-display tracking-wider text-[rgb(var(--c-text-strong))] font-bold">COACHES ADICIONALES</label>
-                  <button
-                    type="button"
-                    onClick={() => updateCoach({ extras: [...state.coach.extras, ''] })}
-                    className="inline-flex items-center gap-1 text-xs text-[rgb(var(--c-primary))] font-bold hover:opacity-85 active:scale-95 transition-all duration-150"
-                  >
-                    <Plus className="w-3.5 h-3.5" /> AGREGAR
-                  </button>
-                </div>
-                
-                {state.coach.extras.length === 0 ? (
-                  <p className="text-xs text-[rgb(var(--c-text)/0.5)] italic bg-[rgb(var(--c-surface))] p-3 rounded-2xl text-center">No hay coaches adicionales registrados</p>
-                ) : (
-                  <div className="space-y-2 max-h-none overflow-visible md:max-h-[180px] md:overflow-y-auto pr-1">
-                    {state.coach.extras.map((e, idx) => (
-                      <div key={`extra-${idx}`} className="flex gap-2 animate-[fadeIn_0.2s_ease-out_forwards]">
-                        <input
-                          type="text"
-                          value={e}
-                          onChange={ev => updateCoach({ extras: state.coach.extras.map((x, j) => j === idx ? ev.target.value : x) })}
-                          placeholder={`Nombre del coach ${idx + 2}`}
-                          className="flex-1 bg-[rgb(var(--c-surface))] border border-[rgb(var(--c-border)/0.6)] text-[rgb(var(--c-text-strong))] rounded-xl px-3 py-2 outline-none focus:border-[rgb(var(--c-primary))] text-xs"
-                          autoCapitalize="words"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => updateCoach({ extras: state.coach.extras.filter((_, j) => j !== idx) })}
-                          className="text-[rgb(var(--c-primary))] bg-[rgb(var(--c-primary)/0.1)] active:bg-[rgb(var(--c-primary)/0.2)] p-2 rounded-xl active:scale-95 transition-all duration-150"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    ))}
+            {/* DYNAMIC STAFF CARD (EXTRA COACHES & ASSISTANTS) */}
+            <div className="p-3.5 sm:p-6 space-y-3.5 sm:space-y-5">
+              <h3 className="font-display text-xl text-[rgb(var(--c-primary))] border-b border-[rgb(var(--c-border)/0.2)] pb-2 flex items-center gap-2">
+                <Users className="w-5 h-5 text-[rgb(var(--c-primary))]" /> STAFF ADICIONAL (COACHES Y ASISTENTES)
+              </h3>
+              
+              <div className="grid md:grid-cols-2 gap-6">
+                {/* EXTRA COACHES */}
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <label className="text-xs font-display tracking-wider text-[rgb(var(--c-text-strong))] font-bold">COACHES ADICIONALES</label>
+                    <button
+                      type="button"
+                      onClick={() => updateCoach({ extras: [...state.coach.extras, ''] })}
+                      className="inline-flex items-center gap-1 text-xs text-[rgb(var(--c-primary))] font-bold hover:opacity-85 active:scale-95 transition-all duration-150"
+                    >
+                      <Plus className="w-3.5 h-3.5" /> AGREGAR
+                    </button>
                   </div>
-                )}
-              </div>
+                  
+                  {state.coach.extras.length === 0 ? (
+                    <p className="text-xs text-[rgb(var(--c-text)/0.5)] italic bg-[rgb(var(--c-surface))] p-3 rounded-2xl text-center">No hay coaches adicionales registrados</p>
+                  ) : (
+                    <div className="space-y-2 max-h-none overflow-visible md:max-h-[180px] md:overflow-y-auto pr-1">
+                      {state.coach.extras.map((e, idx) => (
+                        <div key={`extra-${idx}`} className="flex gap-2 animate-[fadeIn_0.2s_ease-out_forwards]">
+                          <input
+                            type="text"
+                            value={e}
+                            onChange={ev => updateCoach({ extras: state.coach.extras.map((x, j) => j === idx ? ev.target.value : x) })}
+                            placeholder={`Nombre del coach ${idx + 2}`}
+                            className="flex-1 bg-[rgb(var(--c-surface))] border border-[rgb(var(--c-border)/0.6)] text-[rgb(var(--c-text-strong))] rounded-xl px-3 py-2 outline-none focus:border-[rgb(var(--c-primary))] text-xs"
+                            autoCapitalize="words"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => updateCoach({ extras: state.coach.extras.filter((_, j) => j !== idx) })}
+                            className="text-[rgb(var(--c-primary))] bg-[rgb(var(--c-primary)/0.1)] active:bg-[rgb(var(--c-primary)/0.2)] p-2 rounded-xl active:scale-95 transition-all duration-150"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
 
-              {/* ASSISTANTS */}
-              <div className="space-y-3">
-                <div className="flex justify-between items-center">
-                  <label className="text-xs font-display tracking-wider text-[rgb(var(--c-text-strong))] font-bold">ASISTENTES (STAFF DE APOYO)</label>
-                  <button
-                    type="button"
-                    onClick={() => updateCoach({ assistants: [...state.coach.assistants, ''] })}
-                    className="inline-flex items-center gap-1 text-xs text-[rgb(var(--c-primary))] font-bold hover:opacity-85 active:scale-95 transition-all duration-150"
-                  >
-                    <Plus className="w-3.5 h-3.5" /> AGREGAR
-                  </button>
-                </div>
-                
-                {state.coach.assistants.length === 0 ? (
-                  <p className="text-xs text-[rgb(var(--c-text)/0.5)] italic bg-[rgb(var(--c-surface))] p-3 rounded-2xl text-center">No hay asistentes registrados</p>
-                ) : (
-                  <div className="space-y-2 max-h-none overflow-visible md:max-h-[180px] md:overflow-y-auto pr-1">
-                    {state.coach.assistants.map((ast, idx) => (
-                      <div key={`assistant-${idx}`} className="flex gap-2 animate-[fadeIn_0.2s_ease-out_forwards]">
-                        <input
-                          type="text"
-                          value={ast}
-                          onChange={ev => updateCoach({ assistants: state.coach.assistants.map((x, j) => j === idx ? ev.target.value : x) })}
-                          placeholder={`Nombre del asistente ${idx + 1}`}
-                          className="flex-1 bg-[rgb(var(--c-surface))] border border-[rgb(var(--c-border)/0.6)] text-[rgb(var(--c-text-strong))] rounded-xl px-3 py-2 outline-none focus:border-[rgb(var(--c-primary))] text-xs"
-                          autoCapitalize="words"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => updateCoach({ assistants: state.coach.assistants.filter((_, j) => j !== idx) })}
-                          className="text-[rgb(var(--c-primary))] bg-[rgb(var(--c-primary)/0.1)] active:bg-[rgb(var(--c-primary)/0.2)] p-2 rounded-xl active:scale-95 transition-all duration-150"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    ))}
+                {/* ASSISTANTS */}
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <label className="text-xs font-display tracking-wider text-[rgb(var(--c-text-strong))] font-bold">ASISTENTES (STAFF DE APOYO)</label>
+                    <button
+                      type="button"
+                      onClick={() => updateCoach({ assistants: [...state.coach.assistants, ''] })}
+                      className="inline-flex items-center gap-1 text-xs text-[rgb(var(--c-primary))] font-bold hover:opacity-85 active:scale-95 transition-all duration-150"
+                    >
+                      <Plus className="w-3.5 h-3.5" /> AGREGAR
+                    </button>
                   </div>
-                )}
+                  
+                  {state.coach.assistants.length === 0 ? (
+                    <p className="text-xs text-[rgb(var(--c-text)/0.5)] italic bg-[rgb(var(--c-surface))] p-3 rounded-2xl text-center">No hay asistentes registrados</p>
+                  ) : (
+                    <div className="space-y-2 max-h-none overflow-visible md:max-h-[180px] md:overflow-y-auto pr-1">
+                      {state.coach.assistants.map((ast, idx) => (
+                        <div key={`assistant-${idx}`} className="flex gap-2 animate-[fadeIn_0.2s_ease-out_forwards]">
+                          <input
+                            type="text"
+                            value={ast}
+                            onChange={ev => updateCoach({ assistants: state.coach.assistants.map((x, j) => j === idx ? ev.target.value : x) })}
+                            placeholder={`Nombre del asistente ${idx + 1}`}
+                            className="flex-1 bg-[rgb(var(--c-surface))] border border-[rgb(var(--c-border)/0.6)] text-[rgb(var(--c-text-strong))] rounded-xl px-3 py-2 outline-none focus:border-[rgb(var(--c-primary))] text-xs"
+                            autoCapitalize="words"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => updateCoach({ assistants: state.coach.assistants.filter((_, j) => j !== idx) })}
+                            className="text-[rgb(var(--c-primary))] bg-[rgb(var(--c-primary)/0.1)] active:bg-[rgb(var(--c-primary)/0.2)] p-2 rounded-xl active:scale-95 transition-all duration-150"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -1340,9 +1342,9 @@ function StepView(props: {
                       </div>
 
                       {/* Row 2 on mobile, continuation on desktop */}
-                      <div className="flex items-center gap-1.5 pl-6 md:pl-0 shrink-0 md:w-auto">
+                      <div className="flex flex-wrap md:flex-nowrap items-center gap-1.5 pl-5 md:pl-0 shrink-0 w-full md:w-auto">
                         {/* Birthdate Input */}
-                        <div className="w-[110px] shrink-0 md:w-[130px]">
+                        <div className="flex-1 min-w-[95px] md:w-[130px] md:flex-none">
                           <input
                             type={d.birthdate ? "date" : "text"}
                             value={d.birthdate}
@@ -1355,7 +1357,7 @@ function StepView(props: {
                         </div>
 
                         {/* Category Override Select */}
-                        <div className="w-[120px] md:w-[150px] shrink-0">
+                        <div className="flex-[1.2] min-w-[105px] md:w-[150px] md:flex-none">
                           <select
                             value={d.categoryOverride ?? ''}
                             onChange={e => updateDancer(i, { categoryOverride: (e.target.value || null) as AgeCategory | null })}
@@ -1389,6 +1391,17 @@ function StepView(props: {
                     </div>
                   )
                 })}
+                {state.dancers.length > 0 && (
+                  <div className="mt-3 pt-2 border-t border-[rgb(var(--c-border)/0.25)] flex justify-center">
+                    <button
+                      type="button"
+                      onClick={addDancer}
+                      className="w-full inline-flex items-center justify-center gap-1.5 bg-[rgb(var(--c-primary))] hover:bg-[rgb(var(--c-primary-strong))] text-white py-3 rounded-2xl font-display text-sm tracking-wider font-bold shadow-sm active:scale-95 transition-all duration-150"
+                    >
+                      <Plus className="w-4 h-4" /> AGREGAR ALUMNO
+                    </button>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -1431,7 +1444,7 @@ function StepView(props: {
             </button>
           </div>
 
-          <div className="overflow-visible md:flex-1 md:min-h-0 md:overflow-y-auto space-y-1 sm:space-y-2">
+          <div className="overflow-visible md:flex-1 md:min-h-0 md:overflow-y-auto">
             {state.acts.length === 0 ? (
               <div className="bg-white border border-[rgb(var(--c-border)/0.5)] rounded-3xl p-16 text-center space-y-4 shadow-sm mx-4 sm:mx-0">
                 <div className="p-4 bg-[rgb(var(--c-primary)/0.05)] rounded-full text-[rgb(var(--c-primary))] inline-block">
@@ -1445,114 +1458,85 @@ function StepView(props: {
                 </div>
               </div>
             ) : (
-              state.acts.map((act, i) => {
-                const isOpen = activeActIndex === i
-                const labelModality = act.modality ? modalityLabel(act.modality) : 'Sin modalidad'
-                const styleName = act.style ? act.style.toUpperCase() : 'ESTILO PENDIENTE'
-                const actDancersCount = act.dancerIndices.length
-                const reqDancers = minDancers(act.modality)
-                const limitDancers = maxDancers(act.modality)
-                const isActValid = act.modality && act.style && actDancersCount >= reqDancers && actDancersCount <= limitDancers
+              <div className="bg-white border-y sm:border border-[rgb(var(--c-border)/0.4)] rounded-none sm:rounded-3xl shadow-none sm:shadow-sm divide-y divide-[rgb(var(--c-border)/0.25)] overflow-hidden">
+                {state.acts.map((act, i) => {
+                  const isOpen = activeActIndex === i
+                  const labelModality = act.modality ? modalityLabel(act.modality) : 'Sin modalidad'
+                  const styleName = act.style ? act.style.toUpperCase() : 'ESTILO PENDIENTE'
+                  const actDancersCount = act.dancerIndices.length
+                  const reqDancers = minDancers(act.modality)
+                  const limitDancers = maxDancers(act.modality)
+                  const isActValid = act.modality && act.style && actDancersCount >= reqDancers && actDancersCount <= limitDancers
 
-                // Dynamic numbering sequence
-                let stepNum = 1
-                const modalityNum = stepNum++
-                const levelNum = act.modality === 'grupal' ? stepNum++ : null
-                const styleNum = stepNum++
-                const dancersNum = act.modality ? stepNum++ : null
+                  // Dynamic numbering sequence
+                  let stepNum = 1
+                  const modalityNum = stepNum++
+                  const levelNum = act.modality === 'grupal' ? stepNum++ : null
+                  const styleNum = stepNum++
+                  const dancersNum = act.modality ? stepNum++ : null
 
-                return (
-                  <div
-                    key={`act-${i}`}
-                    className={`bg-white border-y sm:border rounded-none sm:rounded-3xl shadow-none sm:shadow-sm overflow-hidden transition-all duration-200 ${
-                      isOpen ? 'ring-1 ring-[rgb(var(--c-primary))] border-[rgb(var(--c-primary))]' : 'border-y border-[rgb(var(--c-border)/0.4)] sm:border-[rgb(var(--c-border)/0.5)] hover:border-[rgb(var(--c-border))]'
-                    }`}
-                  >
-                    {/* Header Acordeón */}
+                  return (
                     <div
-                      onClick={() => setActiveActIndex(isOpen ? null : i)}
-                      className={`px-4 py-2.5 sm:py-3 flex items-center justify-between cursor-pointer active:bg-[rgb(var(--c-surface))] transition-all ${
-                        isActValid ? 'border-l-4 border-l-[rgb(var(--c-success))]' : 'border-l-4 border-l-[rgb(var(--c-primary))]'
-                      }`}
+                      key={`act-${i}`}
+                      className={`overflow-hidden transition-all duration-200 ${isOpen ? 'bg-[rgb(var(--c-primary)/0.025)]' : ''}`}
                     >
-                      <div className="min-w-0 flex-1 flex items-center gap-3">
-                        <span className="font-display text-2xl text-[rgb(var(--c-primary))]">#{i + 1}</span>
-                        <div className="truncate">
-                          <p className="font-display text-lg text-[rgb(var(--c-text-strong))] uppercase leading-tight">
-                            {act.ageCategory ? AGE_CATEGORY_LABELS[act.ageCategory].toUpperCase() : 'Categoría Pendiente'}
-                          </p>
-                          <p className="text-xs text-[rgb(var(--c-text)/0.8)] mt-0.5 font-medium leading-none">
-                            {labelModality} · {styleName} {act.level === 'basico' ? '· BÁSICO' : act.level === 'avanzado' ? '· AVANZADO' : ''}
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-3.5 shrink-0">
-                        {actDancersCount > 0 && (
-                          <span className="text-[10px] font-bold text-[rgb(var(--c-success-strong))] bg-[rgb(var(--c-success)/0.08)] border border-[rgb(var(--c-success)/0.2)] px-2.5 py-1 rounded-xl">
-                            {actDancersCount} Integrantes
-                          </span>
-                        )}
-                        <button
-                          type="button"
-                          onClick={(e) => { e.stopPropagation(); removeAct(i) }}
-                          className="text-[rgb(var(--c-text)/0.4)] hover:text-[rgb(var(--c-primary))] p-1 hover:bg-[rgb(var(--c-primary)/0.05)] rounded-lg active:scale-95 transition-all duration-150"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                        <ChevronDown className={`w-5 h-5 text-[rgb(var(--c-text)/0.6)] transition-transform duration-300 ${isOpen ? 'rotate-180 text-[rgb(var(--c-primary))]' : ''}`} />
-                      </div>
-                    </div>
-
-                    {/* Body Acordeón */}
-                    {isOpen && (
-                      <div className="p-3.5 sm:p-4 border-t border-[rgb(var(--c-border)/0.25)] bg-[rgb(var(--c-surface)/0.15)] space-y-4 animate-[fadeIn_0.25s_ease-out_forwards]">
-                        {/* 1. Modalidad */}
-                        <div className="space-y-1.5">
-                          <label className="block text-[10px] font-bold tracking-widest text-[rgb(var(--c-text)/0.7)] uppercase">{modalityNum}. Selecciona la Modalidad</label>
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5">
-                            {MODALITY_OPTIONS.map(opt => {
-                              const isSelected = act.modality === opt.value
-                              return (
-                                <button
-                                  key={opt.value}
-                                  type="button"
-                                  onClick={() => {
-                                    const cleanedDancers = act.dancerIndices.slice(0, maxDancers(opt.value))
-                                    updateAct(i, {
-                                      modality: opt.value,
-                                      dancerIndices: cleanedDancers,
-                                      level: opt.value === 'grupal' ? act.level : null
-                                    })
-                                  }}
-                                  className={`py-2 px-3 rounded-xl font-display text-sm tracking-wider font-bold transition-all border active:scale-95 duration-150 ${
-                                    isSelected
-                                      ? 'bg-[rgb(var(--c-primary))] border-[rgb(var(--c-primary))] text-white shadow-sm'
-                                      : 'bg-white border-[rgb(var(--c-border)/0.5)] text-[rgb(var(--c-text-strong))] hover:bg-[rgb(var(--c-surface-2))]'
-                                  }`}
-                                >
-                                  {opt.label}
-                                </button>
-                              )
-                            })}
+                      {/* Header Acordeón */}
+                      <div
+                        onClick={() => setActiveActIndex(isOpen ? null : i)}
+                        className={`px-4 py-2.5 sm:py-3 flex items-center justify-between cursor-pointer active:bg-[rgb(var(--c-surface))] transition-all ${
+                          isActValid ? 'border-l-4 border-l-[rgb(var(--c-success))]' : 'border-l-4 border-l-[rgb(var(--c-primary))]'
+                        }`}
+                      >
+                        <div className="min-w-0 flex-1 flex items-center gap-3">
+                          <span className="font-display text-2xl text-[rgb(var(--c-primary))]">#{i + 1}</span>
+                          <div className="truncate">
+                            <p className="font-display text-lg text-[rgb(var(--c-text-strong))] uppercase leading-tight">
+                              {act.ageCategory ? AGE_CATEGORY_LABELS[act.ageCategory].toUpperCase() : 'Categoría Pendiente'}
+                            </p>
+                            <p className="text-xs text-[rgb(var(--c-text)/0.8)] mt-0.5 font-medium leading-none">
+                              {labelModality} · {styleName} {act.level === 'basico' ? '· BÁSICO' : act.level === 'avanzado' ? '· AVANZADO' : ''}
+                            </p>
                           </div>
                         </div>
 
-                        {/* 2. Nivel (Solo si es Grupal) */}
-                        {act.modality === 'grupal' && (
-                          <div className="space-y-1.5 animate-[fadeIn_0.2s_ease-out_forwards]">
-                            <label className="block text-[10px] font-bold tracking-widest text-[rgb(var(--c-text)/0.7)] uppercase">{levelNum}. Nivel Escolar de la Categoría</label>
-                            <div className="grid grid-cols-2 gap-2.5 max-w-sm">
-                              {[
-                                { val: 'basico', label: 'BÁSICO' },
-                                { val: 'avanzado', label: 'AVANZADO' }
-                              ].map(opt => {
-                                const isSelected = act.level === opt.val
+                        <div className="flex items-center gap-3.5 shrink-0">
+                          {actDancersCount > 0 && (
+                            <span className="text-[10px] font-bold text-[rgb(var(--c-success-strong))] bg-[rgb(var(--c-success)/0.08)] border border-[rgb(var(--c-success)/0.2)] px-2.5 py-1 rounded-xl">
+                              {actDancersCount} Integrantes
+                            </span>
+                          )}
+                          <button
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); removeAct(i) }}
+                            className="text-[rgb(var(--c-text)/0.4)] hover:text-[rgb(var(--c-primary))] p-1 hover:bg-[rgb(var(--c-primary)/0.05)] rounded-lg active:scale-95 transition-all duration-150"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                          <ChevronDown className={`w-5 h-5 text-[rgb(var(--c-text)/0.6)] transition-transform duration-300 ${isOpen ? 'rotate-180 text-[rgb(var(--c-primary))]' : ''}`} />
+                        </div>
+                      </div>
+
+                      {/* Body Acordeón */}
+                      {isOpen && (
+                        <div className="p-3.5 sm:p-4 border-t border-[rgb(var(--c-border)/0.25)] bg-[rgb(var(--c-surface)/0.15)] space-y-4 animate-[fadeIn_0.25s_ease-out_forwards]">
+                          {/* 1. Modalidad */}
+                          <div className="space-y-1.5">
+                            <label className="block text-[10px] font-bold tracking-widest text-[rgb(var(--c-text)/0.7)] uppercase">{modalityNum}. Selecciona la Modalidad</label>
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5">
+                              {MODALITY_OPTIONS.map(opt => {
+                                const isSelected = act.modality === opt.value
                                 return (
                                   <button
-                                    key={opt.val}
+                                    key={opt.value}
                                     type="button"
-                                    onClick={() => updateAct(i, { level: opt.val as Level })}
+                                    onClick={() => {
+                                      const cleanedDancers = act.dancerIndices.slice(0, maxDancers(opt.value))
+                                      updateAct(i, {
+                                        modality: opt.value,
+                                        dancerIndices: cleanedDancers,
+                                        level: opt.value === 'grupal' ? act.level : null
+                                      })
+                                    }}
                                     className={`py-2 px-3 rounded-xl font-display text-sm tracking-wider font-bold transition-all border active:scale-95 duration-150 ${
                                       isSelected
                                         ? 'bg-[rgb(var(--c-primary))] border-[rgb(var(--c-primary))] text-white shadow-sm'
@@ -1565,10 +1549,38 @@ function StepView(props: {
                               })}
                             </div>
                           </div>
-                        )}
 
-                        {/* 3. Estilo */}
-                        <div className="space-y-1.5">
+                          {/* 2. Nivel (Solo si es Grupal) */}
+                          {act.modality === 'grupal' && (
+                            <div className="space-y-1.5 animate-[fadeIn_0.2s_ease-out_forwards]">
+                              <label className="block text-[10px] font-bold tracking-widest text-[rgb(var(--c-text)/0.7)] uppercase">{levelNum}. Nivel Escolar de la Categoría</label>
+                              <div className="grid grid-cols-2 gap-2.5 max-w-sm">
+                                {[
+                                  { val: 'basico', label: 'BÁSICO' },
+                                  { val: 'avanzado', label: 'AVANZADO' }
+                                ].map(opt => {
+                                  const isSelected = act.level === opt.val
+                                  return (
+                                    <button
+                                      key={opt.val}
+                                      type="button"
+                                      onClick={() => updateAct(i, { level: opt.val as Level })}
+                                      className={`py-2 px-3 rounded-xl font-display text-sm tracking-wider font-bold transition-all border active:scale-95 duration-150 ${
+                                        isSelected
+                                          ? 'bg-[rgb(var(--c-primary))] border-[rgb(var(--c-primary))] text-white shadow-sm'
+                                          : 'bg-white border-[rgb(var(--c-border)/0.5)] text-[rgb(var(--c-text-strong))] hover:bg-[rgb(var(--c-surface-2))]'
+                                      }`}
+                                    >
+                                      {opt.label}
+                                    </button>
+                                  )
+                                })}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* 3. Estilo */}
+                          <div className="space-y-1.5">
                           <label className="block text-[10px] font-bold tracking-widest text-[rgb(var(--c-text)/0.7)] uppercase">{styleNum}. Estilo Coreográfico</label>
                           <div className="flex flex-wrap gap-2">
                             {STYLES.map(style => {
@@ -1686,9 +1698,10 @@ function StepView(props: {
                     )}
                   </div>
                 )
-              })
-            )}
-          </div>
+              })}
+            </div>
+          )}
+        </div>
 
           <div className="hidden lg:block shrink-0 pt-2">
             {!actsConfirmed ? (
@@ -1814,7 +1827,7 @@ function FullSummary({ state, editMode, confirmed, confirm, saving, saveErr, sta
   const hasCosts = state.costPaquete !== null && state.costPaquete >= 0 && state.costRepeticion !== null && state.costRepeticion >= 0
 
   return (
-    <div className="w-full flex flex-col h-full overflow-hidden" style={{ animation: 'fadeIn 0.3s ease-out' }}>
+    <div className="w-full flex flex-col min-h-0 md:h-full overflow-visible md:overflow-hidden" style={{ animation: 'fadeIn 0.3s ease-out' }}>
       {confirmed && (
         <div className="shrink-0 bg-[rgb(var(--c-success))] text-white text-center py-4 px-4 shadow-md z-10 rounded-none sm:rounded-2xl mb-4">
           <p className="font-display text-xl md:text-2xl tracking-widest font-bold">¡REGISTRO CONFIRMADO EXITOSAMENTE!</p>
@@ -1822,144 +1835,146 @@ function FullSummary({ state, editMode, confirmed, confirm, saving, saveErr, sta
         </div>
       )}
       
-      <div className="flex-1 overflow-visible md:overflow-y-auto px-0 sm:px-4 lg:px-6 py-2 sm:py-4 pb-6 sm:pb-28 space-y-2.5 sm:space-y-4 bg-transparent sm:bg-[rgb(var(--c-surface-2)/0.35)] rounded-none sm:rounded-3xl max-h-none md:max-h-[75vh]">
+      <div className="flex-1 overflow-visible md:overflow-y-auto px-0 sm:px-4 lg:px-6 py-2 sm:py-4 pb-6 sm:pb-28 max-h-none md:max-h-[75vh]">
         
-        {/* COACH, ACADEMY & STAFF */}
-        <div className="bg-white rounded-none sm:rounded-3xl border-y sm:border border-[rgb(var(--c-border)/0.4)] p-3.5 sm:p-5 shadow-none sm:shadow-sm relative">
-          <h3 className="font-display text-lg tracking-widest text-[rgb(var(--c-primary))] mb-4 border-b border-[rgb(var(--c-border)/0.25)] pb-2 flex justify-between items-center">
-            <span>COACH Y ACADEMIA</span>
-            {!confirmed && (
-              <button onClick={() => goToStep({ kind: 'setup' })} className="text-xs text-[rgb(var(--c-primary))] hover:underline flex items-center gap-1">
-                <Pencil className="w-3.5 h-3.5" /> Editar
-              </button>
-            )}
-          </h3>
-          <div className="grid md:grid-cols-2 gap-6">
-            <div>
-              <p className="text-[10px] tracking-[0.2em] text-[rgb(var(--c-text)/0.6)] font-bold mb-1">COACH PRINCIPAL</p>
-              <p className="font-display text-2xl text-[rgb(var(--c-text-strong))] uppercase leading-tight">{state.coach.name || 'Sin nombre'}</p>
-              <p className="text-sm text-[rgb(var(--c-text))] mt-2 flex items-center gap-2"><span className="opacity-70">📱</span> {state.coach.phone || 'Sin WhatsApp'}</p>
-              {state.coach.email && <p className="text-sm text-[rgb(var(--c-text))] mt-1 flex items-center gap-2"><span className="opacity-70">✉️</span> {state.coach.email}</p>}
-              
-              {state.coach.extras.filter(e => e.trim()).length > 0 && (
-                <div className="text-xs text-[rgb(var(--c-text))] mt-3 bg-[rgb(var(--c-surface))] p-2 rounded-xl border border-[rgb(var(--c-border)/0.25)]">
-                  <span className="font-bold block text-[9px] uppercase tracking-wider text-[rgb(var(--c-text)/0.6)] mb-0.5">Otros Coaches:</span>
-                  <span>{state.coach.extras.filter(e => e.trim()).join(', ')}</span>
-                </div>
+        <div className="bg-white rounded-none sm:rounded-3xl border-y sm:border border-[rgb(var(--c-border)/0.4)] shadow-none sm:shadow-sm divide-y divide-[rgb(var(--c-border)/0.25)] overflow-hidden">
+          {/* COACH, ACADEMY & STAFF */}
+          <div className="p-3.5 sm:p-5 relative">
+            <h3 className="font-display text-lg tracking-widest text-[rgb(var(--c-primary))] mb-4 border-b border-[rgb(var(--c-border)/0.25)] pb-2 flex justify-between items-center">
+              <span>COACH Y ACADEMIA</span>
+              {!confirmed && (
+                <button onClick={() => goToStep({ kind: 'setup' })} className="text-xs text-[rgb(var(--c-primary))] hover:underline flex items-center gap-1">
+                  <Pencil className="w-3.5 h-3.5" /> Editar
+                </button>
               )}
-
-              {state.coach.assistants && state.coach.assistants.filter(a => a.trim()).length > 0 && (
-                <div className="text-xs text-[rgb(var(--c-text))] mt-2 bg-[rgb(var(--c-surface))] p-2 rounded-xl border border-[rgb(var(--c-border)/0.25)]">
-                  <span className="font-bold block text-[9px] uppercase tracking-wider text-[rgb(var(--c-text)/0.6)] mb-0.5">Asistentes:</span>
-                  <span>{state.coach.assistants.filter(a => a.trim()).join(', ')}</span>
-                </div>
-              )}
-            </div>
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-[10px] tracking-[0.2em] text-[rgb(var(--c-text)/0.6)] font-bold mb-1">COLEGIO / ACADEMIA</p>
-                  <p className="font-display text-xl sm:text-2xl text-[rgb(var(--c-text-strong))] uppercase leading-tight">{state.academy || 'Sin academia'}</p>
-                </div>
-                <div>
-                  <p className="text-[10px] tracking-[0.2em] text-[rgb(var(--c-text)/0.6)] font-bold mb-1">CIUDAD</p>
-                  <p className="font-display text-xl sm:text-2xl text-[rgb(var(--c-text-strong))] uppercase leading-tight">{state.city || 'Sin ciudad'}</p>
-                </div>
-              </div>
+            </h3>
+            <div className="grid md:grid-cols-2 gap-6">
               <div>
-                <p className="text-[10px] tracking-[0.2em] text-[rgb(var(--c-text)/0.6)] font-bold mb-1">NOMBRE DEL EQUIPO</p>
-                <p className="font-display text-xl sm:text-2xl text-[rgb(var(--c-success-strong))] uppercase leading-tight">{state.teamName || state.academy || 'Sin equipo'}</p>
+                <p className="text-[10px] tracking-[0.2em] text-[rgb(var(--c-text)/0.6)] font-bold mb-1">COACH PRINCIPAL</p>
+                <p className="font-display text-2xl text-[rgb(var(--c-text-strong))] uppercase leading-tight">{state.coach.name || 'Sin nombre'}</p>
+                <p className="text-sm text-[rgb(var(--c-text))] mt-2 flex items-center gap-2"><span className="opacity-70">📱</span> {state.coach.phone || 'Sin WhatsApp'}</p>
+                {state.coach.email && <p className="text-sm text-[rgb(var(--c-text))] mt-1 flex items-center gap-2"><span className="opacity-70">✉️</span> {state.coach.email}</p>}
+                
+                {state.coach.extras.filter(e => e.trim()).length > 0 && (
+                  <div className="text-xs text-[rgb(var(--c-text))] mt-3 bg-[rgb(var(--c-surface))] p-2 rounded-xl border border-[rgb(var(--c-border)/0.25)]">
+                    <span className="font-bold block text-[9px] uppercase tracking-wider text-[rgb(var(--c-text)/0.6)] mb-0.5">Otros Coaches:</span>
+                    <span>{state.coach.extras.filter(e => e.trim()).join(', ')}</span>
+                  </div>
+                )}
+
+                {state.coach.assistants && state.coach.assistants.filter(a => a.trim()).length > 0 && (
+                  <div className="text-xs text-[rgb(var(--c-text))] mt-2 bg-[rgb(var(--c-surface))] p-2 rounded-xl border border-[rgb(var(--c-border)/0.25)]">
+                    <span className="font-bold block text-[9px] uppercase tracking-wider text-[rgb(var(--c-text)/0.6)] mb-0.5">Asistentes:</span>
+                    <span>{state.coach.assistants.filter(a => a.trim()).join(', ')}</span>
+                  </div>
+                )}
+              </div>
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-[10px] tracking-[0.2em] text-[rgb(var(--c-text)/0.6)] font-bold mb-1">COLEGIO / ACADEMIA</p>
+                    <p className="font-display text-xl sm:text-2xl text-[rgb(var(--c-text-strong))] uppercase leading-tight">{state.academy || 'Sin academia'}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] tracking-[0.2em] text-[rgb(var(--c-text)/0.6)] font-bold mb-1">CIUDAD</p>
+                    <p className="font-display text-xl sm:text-2xl text-[rgb(var(--c-text-strong))] uppercase leading-tight">{state.city || 'Sin ciudad'}</p>
+                  </div>
+                </div>
+                <div>
+                  <p className="text-[10px] tracking-[0.2em] text-[rgb(var(--c-text)/0.6)] font-bold mb-1">NOMBRE DEL EQUIPO</p>
+                  <p className="font-display text-xl sm:text-2xl text-[rgb(var(--c-success-strong))] uppercase leading-tight">{state.teamName || state.academy || 'Sin equipo'}</p>
+                </div>
               </div>
             </div>
           </div>
-        </div>
 
-        {/* DANCERS SUMMARY */}
-        <div className="bg-white rounded-none sm:rounded-3xl border-y sm:border border-[rgb(var(--c-border)/0.4)] p-3.5 sm:p-5 shadow-none sm:shadow-sm">
-          <h3 className="font-display text-lg tracking-widest text-[rgb(var(--c-primary))] mb-4 border-b border-[rgb(var(--c-border)/0.25)] pb-2 flex justify-between items-center">
-            <span>ALUMNOS/AS REGISTRADOS</span>
-            <div className="flex items-center gap-3">
-              <span className="text-[rgb(var(--c-text))] opacity-60 text-xs font-semibold">{filledDancers.length} Integrantes</span>
-              {!confirmed && (
-                <button onClick={() => goToStep({ kind: 'dancers' })} className="text-xs text-[rgb(var(--c-primary))] hover:underline flex items-center gap-1">
-                  <Pencil className="w-3.5 h-3.5" /> Editar
-                </button>
-              )}
-            </div>
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-2">
-            {filledDancers.length === 0 ? (
-              <p className="text-[rgb(var(--c-text)/0.5)] italic text-sm col-span-full">Sin alumnos</p>
-            ) : filledDancers.map((d, di) => {
-              const n = counts.get(di) ?? 0
-              return (
-                <div key={di} className="flex items-center gap-3 border-b border-[rgb(var(--c-border)/0.2)] pb-1 text-xs">
-                  <span className="font-display text-sm text-[rgb(var(--c-text)/0.4)] w-5 text-right shrink-0">{di + 1}.</span>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-display text-sm uppercase text-[rgb(var(--c-text-strong))] truncate leading-tight font-bold">{d.name}</p>
-                    <p className="text-[10px] text-[rgb(var(--c-text)/0.7)] mt-0.5 font-medium">{formatBirthdate(d.birthdate)} · {AGE_CATEGORY_LABELS[effectiveCategory(d) || 'tiny']}</p>
-                  </div>
-                  <div className="text-right shrink-0">
-                    {n > 0 ? (
-                      <span className="block text-[10px] text-[rgb(var(--c-primary))] font-bold bg-[rgb(var(--c-primary)/0.03)] px-1.5 py-0.5 rounded-lg border border-[rgb(var(--c-primary)/0.15)] leading-none">{n} Acto{n === 1 ? '' : 's'}</span>
-                    ) : (
-                      <span className="block text-[9px] text-[rgb(var(--c-text)/0.4)] italic">Sin acto</span>
-                    )}
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        </div>
-
-        {/* ACTS SUMMARY */}
-        <div className="bg-white rounded-none sm:rounded-3xl border-y sm:border border-[rgb(var(--c-border)/0.4)] p-3.5 sm:p-5 shadow-none sm:shadow-sm">
-          <h3 className="font-display text-lg tracking-widest text-[rgb(var(--c-primary))] mb-4 border-b border-[rgb(var(--c-border)/0.25)] pb-2 flex justify-between items-center">
-            <span>ACTOS REGISTRADOS</span>
-            <div className="flex items-center gap-3">
-              <span className="text-[rgb(var(--c-text))] opacity-60 text-xs font-semibold">{state.acts.length} {state.acts.length === 1 ? 'Coreografía' : 'Coreografías'}</span>
-              {!confirmed && (
-                <button onClick={() => goToStep({ kind: 'acts' })} className="text-xs text-[rgb(var(--c-primary))] hover:underline flex items-center gap-1">
-                  <Pencil className="w-3.5 h-3.5" /> Editar
-                </button>
-              )}
-            </div>
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {state.acts.length === 0 ? (
-              <p className="text-[rgb(var(--c-text)/0.5)] italic text-sm col-span-full">Sin actos registrados</p>
-            ) : state.acts.map((a, idx) => {
-              const cat = a.ageCategory ? AGE_CATEGORY_LABELS[a.ageCategory] : '—'
-              const mod = a.modality ? modalityLabel(a.modality) : '—'
-              const lvl = a.modality === 'grupal' ? (a.level === 'basico' ? ' BÁSICO' : a.level === 'avanzado' ? ' AVANZADO' : '') : ''
-              return (
-                <div key={idx} className="border border-[rgb(var(--c-border)/0.4)] rounded-xl sm:rounded-2xl p-3 sm:p-4 bg-[rgb(var(--c-surface-2)/0.2)] flex flex-col justify-between space-y-3 animate-[fadeIn_0.2s_ease-out_forwards]">
-                  <div className="flex items-start gap-3">
-                    <div className="font-display text-2xl text-[rgb(var(--c-primary))] shrink-0 font-bold">#{idx + 1}</div>
+          {/* DANCERS SUMMARY */}
+          <div className="p-3.5 sm:p-5">
+            <h3 className="font-display text-lg tracking-widest text-[rgb(var(--c-primary))] mb-4 border-b border-[rgb(var(--c-border)/0.25)] pb-2 flex justify-between items-center">
+              <span>ALUMNOS/AS REGISTRADOS</span>
+              <div className="flex items-center gap-3">
+                <span className="text-[rgb(var(--c-text))] opacity-60 text-xs font-semibold">{filledDancers.length} Integrantes</span>
+                {!confirmed && (
+                  <button onClick={() => goToStep({ kind: 'dancers' })} className="text-xs text-[rgb(var(--c-primary))] hover:underline flex items-center gap-1">
+                    <Pencil className="w-3.5 h-3.5" /> Editar
+                  </button>
+                )}
+              </div>
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-2">
+              {filledDancers.length === 0 ? (
+                <p className="text-[rgb(var(--c-text)/0.5)] italic text-sm col-span-full">Sin alumnos</p>
+              ) : filledDancers.map((d, di) => {
+                const n = counts.get(di) ?? 0
+                return (
+                  <div key={di} className="flex items-center gap-3 border-b border-[rgb(var(--c-border)/0.2)] pb-1 text-xs">
+                    <span className="font-display text-sm text-[rgb(var(--c-text)/0.4)] w-5 text-right shrink-0">{di + 1}.</span>
                     <div className="flex-1 min-w-0">
-                      <p className="font-display text-lg text-[rgb(var(--c-text-strong))] leading-tight truncate uppercase font-bold">{cat}</p>
-                      <p className="font-display text-xs text-[rgb(var(--c-text))] mt-0.5 leading-none">{mod}{lvl} · {a.style ?? '—'}</p>
+                      <p className="font-display text-sm uppercase text-[rgb(var(--c-text-strong))] truncate leading-tight font-bold">{d.name}</p>
+                      <p className="text-[10px] text-[rgb(var(--c-text)/0.7)] mt-0.5 font-medium">{formatBirthdate(d.birthdate)} · {AGE_CATEGORY_LABELS[effectiveCategory(d) || 'tiny']}</p>
+                    </div>
+                    <div className="text-right shrink-0">
+                      {n > 0 ? (
+                        <span className="block text-[10px] text-[rgb(var(--c-primary))] font-bold bg-[rgb(var(--c-primary)/0.03)] px-1.5 py-0.5 rounded-lg border border-[rgb(var(--c-primary)/0.15)] leading-none">{n} Acto{n === 1 ? '' : 's'}</span>
+                      ) : (
+                        <span className="block text-[9px] text-[rgb(var(--c-text)/0.4)] italic">Sin acto</span>
+                      )}
                     </div>
                   </div>
-                  {a.dancerIndices.length > 0 && (
-                    <div className="bg-white border border-[rgb(var(--c-border)/0.25)] rounded-xl p-2.5">
-                      <p className="text-[9px] font-bold tracking-widest text-[rgb(var(--c-text)/0.5)] mb-1 uppercase">INTEGRANTES ({a.dancerIndices.length})</p>
-                      <div className="flex flex-wrap gap-1">
-                        {a.dancerIndices.map(di => {
-                          const d = state.dancers[di]
-                          if (!d) return null
-                          return (
-                            <span key={di} className="inline-block bg-[rgb(var(--c-surface-2))] text-[rgb(var(--c-text-strong))] text-[10px] px-2 py-0.5 rounded-md font-semibold border border-[rgb(var(--c-border)/0.3)]">
-                              {getDancerDisplayName(d, di, state.dancers)}
-                            </span>
-                          )
-                        })}
+                )
+              })}
+            </div>
+          </div>
+
+          {/* ACTS SUMMARY */}
+          <div className="p-3.5 sm:p-5">
+            <h3 className="font-display text-lg tracking-widest text-[rgb(var(--c-primary))] mb-4 border-b border-[rgb(var(--c-border)/0.25)] pb-2 flex justify-between items-center">
+              <span>ACTOS REGISTRADOS</span>
+              <div className="flex items-center gap-3">
+                <span className="text-[rgb(var(--c-text))] opacity-60 text-xs font-semibold">{state.acts.length} {state.acts.length === 1 ? 'Coreografía' : 'Coreografías'}</span>
+                {!confirmed && (
+                  <button onClick={() => goToStep({ kind: 'acts' })} className="text-xs text-[rgb(var(--c-primary))] hover:underline flex items-center gap-1">
+                    <Pencil className="w-3.5 h-3.5" /> Editar
+                  </button>
+                )}
+              </div>
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {state.acts.length === 0 ? (
+                <p className="text-[rgb(var(--c-text)/0.5)] italic text-sm col-span-full">Sin actos registrados</p>
+              ) : state.acts.map((a, idx) => {
+                const cat = a.ageCategory ? AGE_CATEGORY_LABELS[a.ageCategory] : '—'
+                const mod = a.modality ? modalityLabel(a.modality) : '—'
+                const lvl = a.modality === 'grupal' ? (a.level === 'basico' ? ' BÁSICO' : a.level === 'avanzado' ? ' AVANZADO' : '') : ''
+                return (
+                  <div key={idx} className="border border-[rgb(var(--c-border)/0.4)] rounded-xl sm:rounded-2xl p-3 sm:p-4 bg-[rgb(var(--c-surface-2)/0.2)] flex flex-col justify-between space-y-3 animate-[fadeIn_0.2s_ease-out_forwards]">
+                    <div className="flex items-start gap-3">
+                      <div className="font-display text-2xl text-[rgb(var(--c-primary))] shrink-0 font-bold">#{idx + 1}</div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-display text-lg text-[rgb(var(--c-text-strong))] leading-tight truncate uppercase font-bold">{cat}</p>
+                        <p className="font-display text-xs text-[rgb(var(--c-text))] mt-0.5 leading-none">{mod}{lvl} · {a.style ?? '—'}</p>
                       </div>
                     </div>
-                  )}
-                </div>
-              )
-            })}
+                    {a.dancerIndices.length > 0 && (
+                      <div className="bg-white border border-[rgb(var(--c-border)/0.25)] rounded-xl p-2.5">
+                        <p className="text-[9px] font-bold tracking-widest text-[rgb(var(--c-text)/0.5)] mb-1 uppercase">INTEGRANTES ({a.dancerIndices.length})</p>
+                        <div className="flex flex-wrap gap-1">
+                          {a.dancerIndices.map(di => {
+                            const d = state.dancers[di]
+                            if (!d) return null
+                            return (
+                              <span key={di} className="inline-block bg-[rgb(var(--c-surface-2))] text-[rgb(var(--c-text-strong))] text-[10px] px-2 py-0.5 rounded-md font-semibold border border-[rgb(var(--c-border)/0.3)]">
+                                {getDancerDisplayName(d, di, state.dancers)}
+                              </span>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
           </div>
         </div>
 
