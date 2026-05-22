@@ -443,37 +443,22 @@ export default function RegisterPage({ params }: Props) {
     const vv = typeof window !== 'undefined' ? window.visualViewport : null
 
     const checkKeyboard = () => {
-      if (typeof document === 'undefined') return false
-      const activeEl = document.activeElement
-      if (activeEl) {
-        const tagName = activeEl.tagName.toLowerCase()
-        const type = (activeEl as HTMLInputElement).type?.toLowerCase()
-        const isTextInput =
-          tagName === 'textarea' ||
-          (tagName === 'input' &&
-            [
-              'text',
-              'number',
-              'email',
-              'tel',
-              'url',
-              'search',
-              'password',
-              'date',
-              'datetime-local',
-              'month',
-              'week',
-              'time'
-            ].includes(type))
-        if (isTextInput) {
-          return true
+      if (typeof window === 'undefined') return false
+      if (window.innerHeight > initialHeight) initialHeight = window.innerHeight
+      // If viewport is back to (near) full size, keyboard is definitely closed
+      if (vv && vv.height >= initialHeight * 0.85) return false
+      // If viewport is shrunken, check activeElement to confirm keyboard is open
+      if (vv && (vv.height < window.screen.height * 0.75 || vv.height < initialHeight * 0.85)) {
+        const activeEl = document.activeElement
+        if (activeEl) {
+          const tagName = activeEl.tagName.toLowerCase()
+          const type = (activeEl as HTMLInputElement).type?.toLowerCase()
+          const isTextInput =
+            tagName === 'textarea' ||
+            (tagName === 'input' && ['text','number','email','tel','url','search','password','date','datetime-local','month','week','time'].includes(type))
+          if (isTextInput) return true
         }
-      }
-      if (typeof window !== 'undefined') {
-        if (window.innerHeight > initialHeight) initialHeight = window.innerHeight
-        if (vv) {
-          return vv.height < window.screen.height * 0.75 || vv.height < initialHeight * 0.85
-        }
+        return true
       }
       return false
     }
@@ -511,9 +496,13 @@ export default function RegisterPage({ params }: Props) {
 
     const handleFocusOut = () => {
       updateHeight()
-      // Chrome iOS updates visualViewport late — re-check after it settles
-      setTimeout(updateHeight, 100)
-      setTimeout(updateHeight, 350)
+      setTimeout(updateHeight, 150)
+      setTimeout(updateHeight, 500)
+      setTimeout(updateHeight, 1000)
+    }
+
+    const handleTouchStart = () => {
+      updateHeight()
     }
 
     if (vv) {
@@ -526,6 +515,7 @@ export default function RegisterPage({ params }: Props) {
     if (typeof document !== 'undefined') {
       document.addEventListener('focusin', handleFocusIn)
       document.addEventListener('focusout', handleFocusOut)
+      document.addEventListener('touchstart', handleTouchStart, { passive: true })
     }
 
     updateHeight()
@@ -541,6 +531,7 @@ export default function RegisterPage({ params }: Props) {
       if (typeof document !== 'undefined') {
         document.removeEventListener('focusin', handleFocusIn)
         document.removeEventListener('focusout', handleFocusOut)
+        document.removeEventListener('touchstart', handleTouchStart)
       }
     }
   }, [])
