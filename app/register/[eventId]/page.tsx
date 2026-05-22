@@ -2,7 +2,7 @@
 import { useEffect, useState, use, useCallback } from 'react'
 import Image from 'next/image'
 import { useSearchParams } from 'next/navigation'
-import { ArrowLeft, Check, Plus, Trash2, Pencil, MessageCircle, Info, X, ChevronDown, Sparkles, Users, Clipboard, HeartHandshake, School, Clock, Calendar } from 'lucide-react'
+import { ArrowLeft, Check, Plus, Trash2, Pencil, MessageCircle, Info, X, ChevronDown, Sparkles, Users, Clipboard, HeartHandshake, School, Clock, Calendar, Ticket } from 'lucide-react'
 import { supabase, Modality, AgeCategory, Level, Event, AGE_CATEGORY_ORDER, AGE_CATEGORY_LABELS, AGE_CATEGORY_HINTS, categoryFromBirthdate } from '@/lib/supabase'
 
 type Props = { params: Promise<{ eventId: string }> }
@@ -42,6 +42,7 @@ type State = {
   costPaquete: number | null
   costRepeticion: number | null
   confirmedRegistrationId: number | null
+  ticketsCount: number
 }
 
 type Step =
@@ -125,6 +126,7 @@ function initialState(): State {
     costPaquete: PRECIO_PARTICIPACION,
     costRepeticion: PRECIO_REPETICION,
     confirmedRegistrationId: null,
+    ticketsCount: 0,
   }
 }
 
@@ -148,6 +150,7 @@ function participacionesPorAlumno(state: State): Map<number, number> {
 const PRECIO_PARTICIPACION = 1700
 const PRECIO_REPETICION = 300
 const PRECIO_ASISTENTE = 1000
+const PRECIO_ENTRADA = 400
 const DANCERS_POR_ENTRADA_GRATIS = 8
 
 function costoTotal(state: State): number {
@@ -162,6 +165,7 @@ function costoTotal(state: State): number {
   const assistants = state.coach.assistants.filter(a => a.trim()).length
   const paidAssistants = Math.max(0, assistants - freeEntries)
   total += paidAssistants * PRECIO_ASISTENTE
+  total += (state.ticketsCount ?? 0) * PRECIO_ENTRADA
   return total
 }
 
@@ -349,6 +353,9 @@ export default function RegisterPage({ params }: Props) {
               saved.academy = match[1]
               saved.city = match[2]
             }
+          }
+          if (saved.ticketsCount === undefined || saved.ticketsCount === null) {
+            saved.ticketsCount = 0
           }
           setState(saved)
           if (saved.confirmedRegistrationId) setStep({ kind: 'confirmed' })
@@ -662,7 +669,8 @@ export default function RegisterPage({ params }: Props) {
       // Merge assistants into extra_coaches with Asistente prefix
       const extrasMerged = [
         ...state.coach.extras.map(e => e.trim()).filter(Boolean),
-        ...state.coach.assistants.map(a => `Asistente: ${a.trim()}`).filter(a => a !== 'Asistente:')
+        ...state.coach.assistants.map(a => `Asistente: ${a.trim()}`).filter(a => a !== 'Asistente:'),
+        ...(state.ticketsCount ? [`Entradas: ${state.ticketsCount}`] : [])
       ]
 
       const regPayload = {
@@ -2371,6 +2379,50 @@ function FullSummary({ state, editMode, confirmed, confirm, saving, saveErr, sta
           </div>
         </div>
 
+        {/* ENTRADAS PARA ACOMPAÑANTES */}
+        <div className="mt-4 bg-[rgb(var(--c-surface))] rounded-none sm:rounded-3xl border-t sm:border border-[rgb(var(--c-border)/0.4)] shadow-none sm:shadow-sm overflow-hidden">
+          <div className="p-3.5 sm:p-5">
+            <h3 className="font-display text-lg tracking-widest text-[rgb(var(--c-primary))] mb-4 border-b border-[rgb(var(--c-border)/0.25)] pb-2 flex items-center gap-2">
+              <Ticket className="w-5 h-5 text-[rgb(var(--c-primary))]" />
+              <span>ENTRADAS PARA FAMILIARES / PAPÁS</span>
+            </h3>
+            <div className="bg-gradient-to-r from-purple-950/5 to-pink-950/5 border border-purple-500/10 rounded-2xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="space-y-1 max-w-md">
+                <p className="text-xs font-semibold text-[rgb(var(--c-text-strong))]">Recuerda que por este medio puedes registrar cuántas entradas van a comprar para familiares, papás y acompañantes.</p>
+                <p className="text-[11px] text-[rgb(var(--c-text)/0.7)]">Costo por Entrada: <strong className="font-bold text-[rgb(var(--c-primary))]">{formatMoney(PRECIO_ENTRADA)} MXN</strong>.</p>
+              </div>
+              <div className="flex items-center gap-4 self-center md:self-auto bg-[rgb(var(--c-surface))] border border-[rgb(var(--c-border)/0.5)] rounded-2xl p-1.5 shadow-xs">
+                {confirmed ? (
+                  <div className="px-4 py-1.5 flex items-center gap-2">
+                    <span className="text-sm font-semibold text-[rgb(var(--c-text))]">Compradas:</span>
+                    <span className="font-display text-lg font-bold text-[rgb(var(--c-primary))]">{state.ticketsCount ?? 0}</span>
+                  </div>
+                ) : (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => updateState(prev => ({ ...prev, ticketsCount: Math.max(0, (prev.ticketsCount ?? 0) - 1) }))}
+                      className="w-9 h-9 rounded-xl flex items-center justify-center bg-[rgb(var(--c-surface-2))] border border-[rgb(var(--c-border)/0.4)] hover:bg-[rgb(var(--c-border)/0.15)] active:scale-95 transition-all text-lg font-bold text-[rgb(var(--c-text))]"
+                    >
+                      -
+                    </button>
+                    <span className="font-display text-xl font-bold w-8 text-center text-[rgb(var(--c-text-strong))]">
+                      {state.ticketsCount ?? 0}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => updateState(prev => ({ ...prev, ticketsCount: (prev.ticketsCount ?? 0) + 1 }))}
+                      className="w-9 h-9 rounded-xl flex items-center justify-center bg-[rgb(var(--c-surface-2))] border border-[rgb(var(--c-border)/0.4)] hover:bg-[rgb(var(--c-border)/0.15)] active:scale-95 transition-all text-lg font-bold text-[rgb(var(--c-text))]"
+                    >
+                      +
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* DESGLOSE DE COSTOS */}
         {(() => {
           const counts = participacionesPorAlumno(state)
@@ -2382,7 +2434,8 @@ function FullSummary({ state, editMode, confirmed, confirm, saving, saveErr, sta
           counts.forEach(n => { if (n >= 1) { participaciones++; repeticiones += n - 1 } })
           const totalDancers = participaciones * PRECIO_PARTICIPACION + repeticiones * PRECIO_REPETICION
           const totalAsistentes = paidAssistants * PRECIO_ASISTENTE
-          const total = totalDancers + totalAsistentes
+          const totalEntradas = (state.ticketsCount ?? 0) * PRECIO_ENTRADA
+          const total = totalDancers + totalAsistentes + totalEntradas
           return (
             <div className="mt-3 sm:mt-4 px-0 sm:px-0">
               <div className="bg-[rgb(var(--c-surface))] rounded-none sm:rounded-3xl border-t sm:border border-[rgb(var(--c-border)/0.4)] shadow-none sm:shadow-sm overflow-hidden">
@@ -2407,6 +2460,12 @@ function FullSummary({ state, editMode, confirmed, confirm, saving, saveErr, sta
                           Asistentes <span className="text-[rgb(var(--c-text)/0.5)] text-xs">({paidAssistants} × {formatMoney(PRECIO_ASISTENTE)}{freeEntries > 0 ? `, ${freeEntries} gratis` : ''})</span>
                         </span>
                         <span className="font-bold text-[rgb(var(--c-text-strong))]">{formatMoney(totalAsistentes)}</span>
+                      </div>
+                    )}
+                    {(state.ticketsCount ?? 0) > 0 && (
+                      <div className="flex justify-between items-center">
+                        <span className="text-[rgb(var(--c-text))]">Entradas para Acompañantes <span className="text-[rgb(var(--c-text)/0.5)] text-xs">({state.ticketsCount} × {formatMoney(PRECIO_ENTRADA)})</span></span>
+                        <span className="font-bold text-[rgb(var(--c-text-strong))]">{formatMoney(totalEntradas)}</span>
                       </div>
                     )}
                     {freeEntries > 0 && (
@@ -2445,15 +2504,6 @@ function FullSummary({ state, editMode, confirmed, confirm, saving, saveErr, sta
           )}
           {confirmed ? (
             <div className="space-y-3">
-              <div className="bg-purple-50 border border-purple-200/80 rounded-2xl p-3 flex items-start gap-2.5 shadow-sm w-full">
-                <Clock className="w-4 h-4 text-purple-600 shrink-0 mt-0.5" />
-                <div className="text-left">
-                  <p className="text-xs font-semibold text-purple-950">Información importante</p>
-                  <p className="text-[11px] text-purple-800/90 mt-0.5">
-                    Recuerda que tienes hasta el <strong className="font-bold text-purple-900">{chgDeadline}</strong> para realizar cambios o editar tu registro.
-                  </p>
-                </div>
-              </div>
               <button
                 onClick={startEdit}
                 className="w-full h-12 md:h-14 flex items-center justify-center gap-3 bg-[rgb(var(--c-surface))] border-2 border-[rgb(var(--c-border))] hover:bg-[rgb(var(--c-surface-2))] text-[rgb(var(--c-text-strong))] font-display text-base tracking-widest rounded-2xl transition-all shadow-sm active:scale-[0.98] duration-150 font-bold"
