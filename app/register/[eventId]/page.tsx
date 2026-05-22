@@ -438,9 +438,8 @@ export default function RegisterPage({ params }: Props) {
       setIsKeyboardOpen(keyboardActive)
     }
 
-    const handleWindowScroll = (e: Event) => {
+    const handleWindowScroll = () => {
       if (typeof window !== 'undefined' && window.scrollY !== 0) {
-        e.preventDefault()
         window.scrollTo(0, 0)
       }
     }
