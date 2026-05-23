@@ -335,9 +335,9 @@ export default function RegisterPage({ params }: Props) {
     try {
       const metaTheme = document.querySelector('meta[name="theme-color"]')
       if (step.kind === 'welcome' || authState === 'loading') {
-        if (metaTheme) metaTheme.setAttribute('content', '#020005')
-        document.body.style.setProperty('background-color', '#020005', 'important')
-        document.documentElement.style.setProperty('background-color', '#020005', 'important')
+        if (metaTheme) metaTheme.setAttribute('content', '#000000')
+        document.body.style.setProperty('background-color', '#000000', 'important')
+        document.documentElement.style.setProperty('background-color', '#000000', 'important')
       } else if (showSuccessSplash) {
         if (metaTheme) metaTheme.setAttribute('content', '#16A34A')
         document.body.style.setProperty('background-color', '#16A34A', 'important')
@@ -891,7 +891,7 @@ export default function RegisterPage({ params }: Props) {
     return (
       <div 
         className="min-h-[100dvh] flex flex-col items-center justify-center p-6 select-none" 
-        style={{ background: '#020005' }}
+        style={{ background: '#000000' }}
       >
         <div className="flex flex-col items-center gap-4">
           <Sparkles className="w-8 h-8 text-amber-400 animate-spin" style={{ animationDuration: '3s' }} />
@@ -916,7 +916,9 @@ export default function RegisterPage({ params }: Props) {
 
   return (
     <div
-      className="bg-[rgb(var(--c-surface))] text-[rgb(var(--c-text-strong))] flex flex-col overflow-hidden font-sans select-none w-full"
+      className={`text-[rgb(var(--c-text-strong))] flex flex-col overflow-hidden font-sans select-none w-full transition-colors duration-300 ${
+        step.kind === 'welcome' ? 'bg-black' : 'bg-[rgb(var(--c-surface))]'
+      }`}
       data-step={step.kind}
       style={{ height: 'var(--viewport-height, 100dvh)', transition: 'height 0.25s ease' }}
     >
@@ -962,10 +964,10 @@ export default function RegisterPage({ params }: Props) {
           visibility: hidden;
         }
       ` }} />
-      <meta name="theme-color" content={step.kind === 'welcome' ? '#020005' : '#F6F4EF'} />
+      <meta name="theme-color" content={step.kind === 'welcome' ? '#000000' : '#F6F4EF'} />
 
       <main
-        className={`flex-1 min-h-0 flex flex-col overflow-y-auto lg:overflow-hidden ${step.kind === 'welcome' ? 'px-0' : 'px-0 sm:px-4 lg:px-8'}`}
+        className={`flex-1 min-h-0 flex flex-col overflow-y-auto lg:overflow-hidden transition-colors duration-300 ${step.kind === 'welcome' ? 'px-0 bg-black' : 'px-0 sm:px-4 lg:px-8'}`}
         style={{
           paddingTop: step.kind === 'welcome' ? '0px' : 'env(safe-area-inset-top, 0px)',
           paddingBottom: '0px'
@@ -1018,8 +1020,8 @@ export default function RegisterPage({ params }: Props) {
           </div>
         )}
 
-        <div className="flex-1 min-h-0 flex justify-center">
-          <div className={`w-full ${step.kind === 'welcome' ? '' : step.kind === 'summary' || step.kind === 'confirmed' || step.kind === 'dancers' ? 'max-w-6xl' : 'max-w-3xl'} min-h-full lg:h-full flex flex-col justify-start lg:justify-center ${step.kind === 'welcome' ? '' : isKeyboardOpen ? 'pt-[1vh] lg:pt-3' : 'pt-0 sm:pt-2 lg:pt-0'} min-h-0`}>
+        <div className={`flex-1 min-h-0 flex justify-center transition-colors duration-300 ${step.kind === 'welcome' ? 'bg-black' : ''}`}>
+          <div className={`w-full ${step.kind === 'welcome' ? 'bg-black' : step.kind === 'summary' || step.kind === 'confirmed' || step.kind === 'dancers' ? 'max-w-6xl' : 'max-w-3xl'} min-h-full lg:h-full flex flex-col justify-start lg:justify-center transition-colors duration-300 ${step.kind === 'welcome' ? 'bg-black' : isKeyboardOpen ? 'pt-[1vh] lg:pt-3' : 'pt-0 sm:pt-2 lg:pt-0'} min-h-0`}>
             <StepView
               step={step}
               state={state}
@@ -1265,7 +1267,7 @@ function StepView(props: {
         <div 
           className="relative flex flex-col items-center justify-end h-[100dvh] w-full overflow-hidden select-none px-6 pb-4" 
           style={{ 
-            background: '#020005', 
+            background: '#000000', 
             touchAction: 'none', 
             animation: 'fadeIn 0.5s ease-out' 
           }}
@@ -1369,16 +1371,18 @@ function StepView(props: {
             style={{
               objectPosition: 'center top',
               opacity: (videoLoaded || useFallback) ? 1 : 0,
-              transition: 'opacity 800ms ease-out',
-              backgroundColor: '#020005',
+              visibility: (videoLoaded || useFallback) ? 'visible' : 'hidden',
+              transition: 'opacity 800ms ease-out, visibility 800ms ease-out',
+              backgroundColor: '#000000',
             }}
+            poster="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII="
           >
-            <source src="/untitled.mp4" type="video/mp4" />
+            <source src="/untitled.mp4#t=0.001" type="video/mp4" />
           </video>
 
           {/* CINEMATIC GRADIENT OVERLAY WHEN VIDEO ENDS */}
           <div 
-            className={`absolute inset-0 z-0 bg-gradient-to-b from-amber-950/20 via-[#020005]/80 to-[#020005] transition-opacity pointer-events-none ${
+            className={`absolute inset-0 z-0 bg-gradient-to-b from-amber-950/20 via-black/80 to-black transition-opacity pointer-events-none ${
               (videoEnded || useFallback || startBlurring) ? 'opacity-100' : 'opacity-0'
             }`} 
             style={{
