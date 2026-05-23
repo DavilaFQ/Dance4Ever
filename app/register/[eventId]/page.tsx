@@ -1196,17 +1196,6 @@ function StepView(props: {
             <source src="/d4e.mp4" type="video/mp4" />
           </video>
 
-          {/* LOCALIZED SHIMMERING GOLD FLARE ORB (Camouflages and hides the Gemini watermark responsively) */}
-          <div 
-            className={`absolute bottom-[88px] right-[26px] z-10 w-16 h-16 rounded-full pointer-events-none transition-all duration-1000 animate-pulse ${
-              videoEnded ? 'opacity-0 scale-90' : 'opacity-100 scale-100'
-            }`}
-            style={{
-              background: 'radial-gradient(circle, rgba(251,191,36,0.7) 0%, rgba(245,158,11,0.25) 45%, transparent 70%)',
-              filter: 'blur(5px)',
-            }}
-          />
-
           {/* CINEMATIC BLURRED OVERLAY WHEN VIDEO ENDS */}
           <div 
             className={`absolute inset-0 z-0 bg-gradient-to-b from-amber-950/15 via-[#020005]/70 to-[#020005] transition-opacity duration-1500 pointer-events-none ${
