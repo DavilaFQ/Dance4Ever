@@ -2185,6 +2185,35 @@ function FullSummary({ state, editMode, confirmed, confirm, saving, saveErr, sta
   const chgDeadline = event?.date ? getChangesDeadline(event.date) : '7 días antes del evento'
 
   const [generatingPDF, setGeneratingPDF] = useState(false)
+  const [newExtraTickets, setNewExtraTickets] = useState(1)
+  const [copiedField, setCopiedField] = useState<'clabe' | 'card' | null>(null)
+  const [generatingExtraPDF, setGeneratingExtraPDF] = useState(false)
+
+  const handleCopyText = (text: string, field: 'clabe' | 'card') => {
+    navigator.clipboard.writeText(text)
+    setCopiedField(field)
+    setTimeout(() => setCopiedField(null), 2000)
+  }
+
+  const handleBuyExtraTickets = async () => {
+    try {
+      setGeneratingExtraPDF(true)
+      await generateExtraTicketsPDF(state, event, newExtraTickets)
+      
+      updateState(prev => ({
+        ...prev,
+        ticketsCount: (prev.ticketsCount ?? 0) + newExtraTickets
+      }))
+      
+      alert(`¡Compra de entradas extras confirmada exitosamente! Se ha descargado el comprobante de pago por $${(newExtraTickets * 400).toLocaleString('es-MX')} MXN correspondientes a las ${newExtraTickets} nuevas entradas adicionales.`)
+      setNewExtraTickets(1)
+    } catch (err) {
+      console.error('Error purchasing extra tickets:', err)
+      alert('Hubo un error al procesar tu solicitud de entradas adicionales. Por favor, vuelve a intentarlo.')
+    } finally {
+      setGeneratingExtraPDF(false)
+    }
+  }
   
   const handleDownloadPDF = async () => {
     try {
@@ -2217,6 +2246,134 @@ function FullSummary({ state, editMode, confirmed, confirm, saving, saveErr, sta
       
       <div className="flex-1 overflow-visible md:overflow-y-auto px-0 sm:px-4 lg:px-6 py-2 sm:py-4 pb-0 sm:pb-14 max-h-none md:max-h-[75vh]">
         
+        {confirmed && (
+          <div className="grid md:grid-cols-2 gap-4 mb-6 px-3.5 sm:px-0 animate-fadeIn">
+            {/* CARD 1: INFORMACIÓN BANCARIA */}
+            <div className="bg-gradient-to-br from-fuchsia-600/[0.04] to-pink-600/[0.04] backdrop-blur-xs border border-fuchsia-500/15 rounded-3xl p-5 shadow-xs relative overflow-hidden flex flex-col justify-between">
+              <div className="absolute top-0 right-0 w-24 h-24 bg-fuchsia-500/10 rounded-bl-full blur-xl pointer-events-none" />
+              <div>
+                <div className="flex items-center gap-3 mb-3 shrink-0">
+                  <div className="w-9 h-9 rounded-2xl bg-fuchsia-500/10 flex items-center justify-center">
+                    <Clipboard className="w-5 h-5 text-fuchsia-500" />
+                  </div>
+                  <div>
+                    <h4 className="font-display text-sm tracking-wider text-[rgb(var(--c-text-strong))] font-bold uppercase">INFORMACIÓN DE PAGO</h4>
+                    <p className="text-[10px] text-[rgb(var(--c-text)/0.6)]">Realiza tu depósito o transferencia</p>
+                  </div>
+                </div>
+                
+                <div className="space-y-2 text-xs">
+                  <div className="flex justify-between items-center py-1.5 border-b border-[rgb(var(--c-border)/0.2)]">
+                    <span className="text-[rgb(var(--c-text)/0.6)]">Beneficiario:</span>
+                    <span className="font-semibold text-[rgb(var(--c-text-strong))]">JOEL ARTURO GARCIA</span>
+                  </div>
+                  <div className="flex justify-between items-center py-1.5 border-b border-[rgb(var(--c-border)/0.2)]">
+                    <span className="text-[rgb(var(--c-text)/0.6)]">Banco:</span>
+                    <span className="font-bold text-[rgb(var(--c-text-strong))]">BBVA</span>
+                  </div>
+                  <div className="flex justify-between items-center py-1.5 border-b border-[rgb(var(--c-border)/0.2)]">
+                    <span className="text-[rgb(var(--c-text)/0.6)]">Cuenta:</span>
+                    <span className="font-bold text-[rgb(var(--c-text-strong))]">010 440 2340</span>
+                  </div>
+                  <div className="flex justify-between items-center py-1.5 border-b border-[rgb(var(--c-border)/0.2)]">
+                    <span className="text-[rgb(var(--c-text)/0.6)]">CLABE:</span>
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-[rgb(var(--c-text-strong))] tracking-wide">012 180 001044023400</span>
+                      <button 
+                        onClick={() => handleCopyText('012 180 001044023400', 'clabe')}
+                        className="p-1 hover:bg-fuchsia-500/10 rounded-lg text-fuchsia-500 transition-colors active:scale-90 cursor-pointer"
+                        title="Copiar CLABE"
+                      >
+                        {copiedField === 'clabe' ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Clipboard className="w-3.5 h-3.5" />}
+                      </button>
+                    </div>
+                  </div>
+                  <div className="flex justify-between items-center py-1.5 border-b border-[rgb(var(--c-border)/0.2)]">
+                    <span className="text-[rgb(var(--c-text)/0.6)]">No. de Tarjeta:</span>
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-[rgb(var(--c-text-strong))] tracking-wide">4152 3139 6949 9099</span>
+                      <button 
+                        onClick={() => handleCopyText('4152313969499099', 'card')}
+                        className="p-1 hover:bg-fuchsia-500/10 rounded-lg text-fuchsia-500 transition-colors active:scale-90 cursor-pointer"
+                        title="Copiar Tarjeta"
+                      >
+                        {copiedField === 'card' ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Clipboard className="w-3.5 h-3.5" />}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="mt-3.5 bg-fuchsia-500/5 border border-fuchsia-500/10 rounded-2xl p-2.5 text-[10px] text-[rgb(var(--c-text)/0.85)] flex items-start gap-2 shrink-0">
+                <Info className="w-3.5 h-3.5 text-fuchsia-500 shrink-0 mt-0.5" />
+                <span>Esta información bancaria también viene detallada en el comprobante PDF que puedes descargar abajo.</span>
+              </div>
+            </div>
+
+            {/* CARD 2: ADQUIRIR ENTRADAS ADICIONALES */}
+            <div className="bg-gradient-to-br from-purple-600/[0.04] to-indigo-600/[0.04] backdrop-blur-xs border border-purple-500/15 rounded-3xl p-5 shadow-xs relative overflow-hidden flex flex-col justify-between">
+              <div className="absolute top-0 right-0 w-24 h-24 bg-purple-500/10 rounded-bl-full blur-xl pointer-events-none" />
+              <div>
+                <div className="flex items-center gap-3 mb-3 shrink-0">
+                  <div className="w-9 h-9 rounded-2xl bg-purple-500/10 flex items-center justify-center">
+                    <Ticket className="w-5 h-5 text-purple-500" />
+                  </div>
+                  <div>
+                    <h4 className="font-display text-sm tracking-wider text-[rgb(var(--c-text-strong))] font-bold uppercase">ENTRADAS ADICIONALES</h4>
+                    <p className="text-[10px] text-[rgb(var(--c-text)/0.6)]">Para familiares o acompañantes</p>
+                  </div>
+                </div>
+                
+                <div className="text-xs text-[rgb(var(--c-text)/0.8)] mb-4">
+                  ¿Necesitas más entradas adicionales en el futuro? Solicítalas directamente aquí sin modificar tu registro principal. Se generará un PDF de pago separado por este lote.
+                </div>
+              </div>
+              
+              <div className="space-y-3 bg-purple-500/[0.03] border border-purple-500/10 rounded-2xl p-3 shrink-0">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-bold text-[rgb(var(--c-text-strong))]">CANTIDAD:</span>
+                  <div className="flex items-center gap-3">
+                    <button 
+                      onClick={() => setNewExtraTickets(prev => Math.max(1, prev - 1))}
+                      className="w-7 h-7 rounded-lg bg-[rgb(var(--c-surface))] border border-[rgb(var(--c-border)/0.5)] flex items-center justify-center text-[rgb(var(--c-text-strong))] hover:bg-[rgb(var(--c-surface-2))] transition-colors active:scale-95 cursor-pointer font-bold"
+                    >
+                      -
+                    </button>
+                    <span className="font-display text-base font-bold text-[rgb(var(--c-text-strong))] w-5 text-center">{newExtraTickets}</span>
+                    <button 
+                      onClick={() => setNewExtraTickets(prev => prev + 1)}
+                      className="w-7 h-7 rounded-lg bg-[rgb(var(--c-surface))] border border-[rgb(var(--c-border)/0.5)] flex items-center justify-center text-[rgb(var(--c-text-strong))] hover:bg-[rgb(var(--c-surface-2))] transition-colors active:scale-95 cursor-pointer font-bold"
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+                
+                <div className="flex items-center justify-between border-t border-[rgb(var(--c-border)/0.2)] pt-2.5">
+                  <span className="text-[10px] text-[rgb(var(--c-text)/0.6)]">Total de esta solicitud ({newExtraTickets} x $400):</span>
+                  <span className="font-display text-base font-bold text-purple-600">${(newExtraTickets * 400).toLocaleString('es-MX')} MXN</span>
+                </div>
+
+                <button
+                  onClick={handleBuyExtraTickets}
+                  disabled={generatingExtraPDF}
+                  className="w-full h-10 bg-gradient-to-r from-purple-600 via-indigo-600 to-violet-600 hover:brightness-105 active:scale-[0.98] disabled:opacity-50 text-white font-display text-[10px] tracking-widest rounded-xl transition-all shadow-md font-bold flex items-center justify-center gap-2 cursor-pointer mt-1"
+                >
+                  {generatingExtraPDF ? (
+                    <>
+                      <Clock className="w-3.5 h-3.5 animate-spin" /> GENERANDO RECIBO…
+                    </>
+                  ) : (
+                    <>
+                      <Download className="w-3.5 h-3.5 text-white" /> CONFIRMAR Y DESCARGAR COMPROBANTE
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="bg-[rgb(var(--c-surface))] rounded-none sm:rounded-3xl border-t sm:border-b sm:border border-[rgb(var(--c-border)/0.4)] shadow-none sm:shadow-sm divide-y divide-[rgb(var(--c-border)/0.25)] overflow-hidden">
           {/* COACH, ACADEMY & STAFF */}
           <div className="p-3.5 sm:p-5 relative">
@@ -2584,22 +2741,42 @@ async function generateReceiptPDF(state: State, event: Event | null) {
   doc.rect(0, 42, 210, 2.5, 'F')
 
   // Logo / Brand Name
+  let logoWidth = 20
+  let logoHeight = 20
+  let textStartX = 39
+
+  if (logoImg) {
+    const originalWidth = logoImg.width
+    const originalHeight = logoImg.height
+    if (originalWidth > 0 && originalHeight > 0) {
+      const ratio = originalWidth / originalHeight
+      // Safe height for logo inside header is 18mm
+      logoHeight = 18
+      logoWidth = logoHeight * ratio
+      // Cap width just in case it is too wide
+      if (logoWidth > 40) {
+        logoWidth = 40
+        logoHeight = logoWidth / ratio
+      }
+    }
+
+    // Vertical centering in the 42mm header
+    const logoY = (42 - logoHeight) / 2
+    doc.addImage(logoImg, 'PNG', 15, logoY, logoWidth, logoHeight)
+    textStartX = 15 + logoWidth + 4
+  } else {
+    textStartX = 15
+  }
+
   doc.setTextColor(255, 255, 255)
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(26)
-  
-  if (logoImg) {
-    doc.addImage(logoImg, 'PNG', 15, 6, 20, 20)
-    doc.text('DANCE4EVER', 39, 18)
-    doc.setTextColor(234, 179, 8) // Gold
-    doc.setFontSize(10)
-    doc.text('COMPROBANTE DE REGISTRO', 39, 24)
-  } else {
-    doc.text('DANCE4EVER', 15, 18)
-    doc.setTextColor(234, 179, 8) // Gold
-    doc.setFontSize(10)
-    doc.text('COMPROBANTE DE REGISTRO', 15, 24)
-  }
+  doc.text('DANCE4EVER', textStartX, 18)
+
+  doc.setTextColor(234, 179, 8) // Gold
+  doc.setFontSize(10)
+  doc.setFont('helvetica', 'bold')
+  doc.text('COMPROBANTE DE REGISTRO', textStartX, 24)
 
   // Event name and date on the right side
   doc.setTextColor(255, 255, 255)
@@ -2660,7 +2837,7 @@ async function generateReceiptPDF(state: State, event: Event | null) {
   // Row 2
   doc.setTextColor(100, 100, 100)
   doc.setFont('helvetica', 'bold')
-  doc.text('COACH PRINCIPAL:', 15, y)
+  doc.text('COACH:', 15, y)
   doc.setTextColor(17, 17, 17)
   doc.setFont('helvetica', 'normal')
   doc.text(state.coach.name.toUpperCase() || 'SIN NOMBRE', 52, y)
@@ -2681,15 +2858,6 @@ async function generateReceiptPDF(state: State, event: Event | null) {
   doc.setTextColor(17, 17, 17)
   doc.setFont('helvetica', 'normal')
   doc.text(state.coach.phone || 'SIN WHATSAPP', 52, y)
-
-  doc.setTextColor(100, 100, 100)
-  doc.setFont('helvetica', 'bold')
-  doc.text('NOMBRE DEL EQUIPO:', 120, y)
-  doc.setTextColor(22, 163, 74) // Green
-  doc.setFont('helvetica', 'bold')
-  doc.text((state.teamName || state.academy || 'SIN EQUIPO').toUpperCase(), 150, y)
-
-  y += 5
 
   // Row 4
   if (state.coach.email || state.coach.extras.filter(e => e.trim()).length > 0) {
@@ -2747,7 +2915,7 @@ async function generateReceiptPDF(state: State, event: Event | null) {
     doc.setTextColor(120, 120, 120)
     doc.setFontSize(7)
     doc.setFont('helvetica', 'italic')
-    doc.text(`Dance4ever Nacional · Página ${data.pageNumber} · www.dance4ever.mx`, 105, footerY, { align: 'center' })
+    doc.text(`Dance4Ever Nacional · Página ${data.pageNumber} · www.dance4ever.com.mx`, 105, footerY, { align: 'center' })
   }
 
   // Section: Acts
@@ -2863,7 +3031,65 @@ async function generateReceiptPDF(state: State, event: Event | null) {
   })
 
   let finalDancersY = (doc as any).lastAutoTable.finalY || (dancersY + 15)
-  let costY = finalDancersY + 8
+  let bankY = finalDancersY + 8
+
+  if (bankY > 215) {
+    doc.addPage()
+    bankY = 22
+  }
+
+  // Draw light lavender background bank card
+  doc.setFillColor(250, 245, 255) // Soft cream/lavender tint `#FAF5FF`
+  doc.setDrawColor(217, 70, 239) // Fuchsia
+  doc.setLineWidth(0.4)
+  doc.rect(15, bankY, 180, 18, 'FD')
+
+  // Title inside card
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(8.5)
+  doc.setTextColor(217, 70, 239) // Fuchsia
+  doc.text('INFORMACIÓN DE PAGO (DEPÓSITO O TRANSFERENCIA)', 20, bankY + 5)
+
+  doc.setFontSize(7.5)
+  // Col 1
+  doc.setTextColor(100, 100, 100)
+  doc.setFont('helvetica', 'normal')
+  doc.text('BENEFICIARIO:', 20, bankY + 10)
+  doc.setTextColor(17, 17, 17)
+  doc.setFont('helvetica', 'bold')
+  doc.text('JOEL ARTURO GARCIA', 45, bankY + 10)
+  
+  doc.setFont('helvetica', 'normal')
+  doc.setTextColor(100, 100, 100)
+  doc.text('BANCO:', 20, bankY + 14)
+  doc.setTextColor(17, 17, 17)
+  doc.setFont('helvetica', 'bold')
+  doc.text('BBVA', 45, bankY + 14)
+
+  // Col 2
+  doc.setFont('helvetica', 'normal')
+  doc.setTextColor(100, 100, 100)
+  doc.text('CUENTA:', 95, bankY + 10)
+  doc.setTextColor(17, 17, 17)
+  doc.setFont('helvetica', 'bold')
+  doc.text('010 440 2340', 115, bankY + 10)
+
+  doc.setFont('helvetica', 'normal')
+  doc.setTextColor(100, 100, 100)
+  doc.text('CLABE:', 95, bankY + 14)
+  doc.setTextColor(17, 17, 17)
+  doc.setFont('helvetica', 'bold')
+  doc.text('012 180 001044023400', 115, bankY + 14)
+
+  // Col 3
+  doc.setFont('helvetica', 'normal')
+  doc.setTextColor(100, 100, 100)
+  doc.text('NO. DE TARJETA:', 148, bankY + 10)
+  doc.setTextColor(17, 17, 17)
+  doc.setFont('helvetica', 'bold')
+  doc.text('4152 3139 6949 9099', 148, bankY + 14)
+
+  let costY = bankY + 18 + 6
 
   if (costY > 225) {
     doc.addPage()
@@ -3011,5 +3237,267 @@ async function generateReceiptPDF(state: State, event: Event | null) {
 
   // Output / Download
   const filename = `Comprobante_Registro_${state.academy.replace(/\s+/g, '_') || 'Dance4ever'}.pdf`
+  doc.save(filename)
+}
+
+async function generateExtraTicketsPDF(state: State, event: Event | null, newTickets: number) {
+  const jsPDF = (await import('jspdf')).default
+  
+  let logoImg: HTMLImageElement | null = null
+  try {
+    logoImg = await loadImage('/logo.png')
+  } catch (e) {
+    console.error('Failed to load logo:', e)
+  }
+
+  const doc = new jsPDF('p', 'mm', 'a4')
+  
+  // Header Background
+  doc.setFillColor(18, 18, 18) // Slate dark
+  doc.rect(0, 0, 210, 42, 'F')
+
+  // Accent line
+  doc.setFillColor(217, 70, 239) // Fuchsia
+  doc.rect(0, 42, 210, 2.5, 'F')
+
+  // Logo / Brand Name
+  let logoWidth = 20
+  let logoHeight = 20
+  let textStartX = 39
+
+  if (logoImg) {
+    const originalWidth = logoImg.width
+    const originalHeight = logoImg.height
+    if (originalWidth > 0 && originalHeight > 0) {
+      const ratio = originalWidth / originalHeight
+      logoHeight = 18
+      logoWidth = logoHeight * ratio
+      if (logoWidth > 40) {
+        logoWidth = 40
+        logoHeight = logoWidth / ratio
+      }
+    }
+    const logoY = (42 - logoHeight) / 2
+    doc.addImage(logoImg, 'PNG', 15, logoY, logoWidth, logoHeight)
+    textStartX = 15 + logoWidth + 4
+  } else {
+    textStartX = 15
+  }
+
+  doc.setTextColor(255, 255, 255)
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(24)
+  doc.text('DANCE4EVER', textStartX, 18)
+
+  doc.setTextColor(234, 179, 8) // Gold
+  doc.setFontSize(9)
+  doc.text('COMPROBANTE DE ENTRADAS ADICIONALES', textStartX, 24)
+
+  // Event name on right
+  doc.setTextColor(255, 255, 255)
+  doc.setFontSize(11)
+  const eventName = event?.name?.toUpperCase() || 'EVENTO NACIONAL DANCE4EVER'
+  doc.text(eventName, 195, 18, { align: 'right' })
+  
+  doc.setTextColor(200, 200, 200)
+  doc.setFontSize(9)
+  const eventDate = event?.date ? formatEventDate(event.date) : 'Temporada 2026'
+  doc.text(eventDate, 195, 24, { align: 'right' })
+
+  let y = 52
+
+  // Coach and Academy Info Section
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(10)
+  doc.setTextColor(17, 17, 17)
+  doc.text('INFORMACIÓN DE REFERENCIA DEL REGISTRO', 15, y)
+  y += 4
+
+  doc.setDrawColor(217, 70, 239)
+  doc.setLineWidth(0.5)
+  doc.line(15, y, 195, y)
+  y += 5
+
+  doc.setFontSize(8.5)
+  doc.setTextColor(100, 100, 100)
+  doc.setFont('helvetica', 'bold')
+  doc.text('ACADEMIA / COLEGIO:', 15, y)
+  doc.setTextColor(17, 17, 17)
+  doc.setFont('helvetica', 'normal')
+  doc.text(state.academy.toUpperCase() || 'SIN ACADEMIA', 52, y)
+
+  doc.setTextColor(100, 100, 100)
+  doc.setFont('helvetica', 'bold')
+  doc.text('FOLIO REGISTRO:', 120, y)
+  doc.setTextColor(217, 70, 239) // Fuchsia
+  doc.text(`#D4E-${state.confirmedRegistrationId || 'TEMP'}`, 150, y)
+  y += 5
+
+  doc.setTextColor(100, 100, 100)
+  doc.setFont('helvetica', 'bold')
+  doc.text('COACH:', 15, y)
+  doc.setTextColor(17, 17, 17)
+  doc.setFont('helvetica', 'normal')
+  doc.text(state.coach.name.toUpperCase() || 'SIN NOMBRE', 52, y)
+
+  doc.setTextColor(100, 100, 100)
+  doc.setFont('helvetica', 'bold')
+  doc.text('CIUDAD / SEDE:', 120, y)
+  doc.text(state.city.toUpperCase() || 'SIN CIUDAD', 150, y)
+  y += 5
+
+  doc.setTextColor(100, 100, 100)
+  doc.setFont('helvetica', 'bold')
+  doc.text('WHATSAPP / TEL:', 15, y)
+  doc.setTextColor(17, 17, 17)
+  doc.setFont('helvetica', 'normal')
+  doc.text(state.coach.phone || 'SIN WHATSAPP', 52, y)
+
+  doc.setTextColor(100, 100, 100)
+  doc.setFont('helvetica', 'bold')
+  doc.text('FECHA SOLICITUD:', 120, y)
+  doc.text(new Date().toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }).toUpperCase(), 150, y)
+  y += 12
+
+  // Ticket detail card
+  doc.setFillColor(250, 245, 255) // soft lavender
+  doc.setDrawColor(217, 70, 239)
+  doc.setLineWidth(0.4)
+  doc.rect(15, y, 180, 28, 'FD')
+
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(10)
+  doc.setTextColor(217, 70, 239)
+  doc.text('DETALLE DE ENTRADAS ADICIONALES SOLICITADAS', 20, y + 6)
+
+  doc.setDrawColor(217, 70, 239, 0.3)
+  doc.line(20, y + 9, 190, y + 9)
+
+  doc.setFont('helvetica', 'normal')
+  doc.setFontSize(9)
+  doc.setTextColor(80, 80, 80)
+  doc.text('CONCEPTO: Entradas para Acompañantes / Familiares (Dance4Ever)', 20, y + 14)
+  doc.text(`CANTIDAD: ${newTickets} boleto(s) adicional(es)`, 20, y + 19)
+  doc.text(`COSTO UNITARIO: $${PRECIO_ENTRADA.toLocaleString('es-MX')} MXN`, 20, y + 24)
+
+  doc.setFont('helvetica', 'bold')
+  doc.setTextColor(17, 17, 17)
+  const extraTotal = newTickets * PRECIO_ENTRADA
+  doc.text(`TOTAL DE ESTA SOLICITUD: $${extraTotal.toLocaleString('es-MX')} MXN`, 110, y + 24)
+
+  y += 34
+
+  // Bank Info Card
+  doc.setFillColor(255, 254, 242) // Cream soft yellow background
+  doc.setDrawColor(217, 70, 239)
+  doc.setLineWidth(0.4)
+  doc.rect(15, y, 180, 22, 'FD')
+
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(8.5)
+  doc.setTextColor(217, 70, 239)
+  doc.text('INFORMACIÓN DE PAGO PARA ESTE LOTE DE BOLETOS', 20, y + 5)
+
+  doc.setFontSize(7.5)
+  // Col 1
+  doc.setTextColor(100, 100, 100)
+  doc.text('BENEFICIARIO:', 20, y + 11)
+  doc.setTextColor(17, 17, 17)
+  doc.setFont('helvetica', 'bold')
+  doc.text('JOEL ARTURO GARCIA', 45, y + 11)
+  
+  doc.setFont('helvetica', 'normal')
+  doc.setTextColor(100, 100, 100)
+  doc.text('BANCO:', 20, y + 16)
+  doc.setTextColor(17, 17, 17)
+  doc.setFont('helvetica', 'bold')
+  doc.text('BBVA', 45, y + 16)
+
+  // Col 2
+  doc.setFont('helvetica', 'normal')
+  doc.setTextColor(100, 100, 100)
+  doc.text('CUENTA:', 95, y + 11)
+  doc.setTextColor(17, 17, 17)
+  doc.setFont('helvetica', 'bold')
+  doc.text('010 440 2340', 115, y + 11)
+
+  doc.setFont('helvetica', 'normal')
+  doc.setTextColor(100, 100, 100)
+  doc.text('CLABE:', 95, y + 16)
+  doc.setTextColor(17, 17, 17)
+  doc.setFont('helvetica', 'bold')
+  doc.text('012 180 001044023400', 115, y + 16)
+
+  // Col 3
+  doc.setFont('helvetica', 'normal')
+  doc.setTextColor(100, 100, 100)
+  doc.text('NO. DE TARJETA:', 148, y + 11)
+  doc.setTextColor(17, 17, 17)
+  doc.setFont('helvetica', 'bold')
+  doc.text('4152 3139 6949 9099', 148, y + 16)
+
+  y += 28
+
+  // Instructions
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(8.5)
+  doc.setTextColor(17, 17, 17)
+  doc.text('INSTRUCCIONES IMPORTANTES PARA LA ENTREGA:', 15, y)
+  y += 5
+
+  doc.setFont('helvetica', 'normal')
+  doc.setFontSize(8)
+  doc.setTextColor(80, 80, 80)
+  const paragraph = '1. Realiza la transferencia o depósito bancario por el total exacto indicado en este recibo.\n2. Envía una fotografía o captura del comprobante de pago de la transferencia junto con este archivo PDF al comité organizador vía WhatsApp.\n3. Tus boletos físicos adicionales te serán entregados el día del evento en la taquilla de registro junto con tu paquete principal.'
+  doc.text(paragraph, 15, y, { maxWidth: 180 })
+
+  y += 18
+
+  // QR Code or validation
+  const qrX = 85
+  const qrSize = 40
+  const qrY = y
+
+  // Draw frame
+  doc.setFillColor(250, 248, 255)
+  doc.setDrawColor(217, 70, 239)
+  doc.setLineWidth(0.4)
+  doc.rect(qrX, qrY, qrSize, qrSize + 10, 'FD')
+
+  try {
+    const qrString = `D4E-EVENT-${event?.id || 'EVENT'}-REG-${state.confirmedRegistrationId || 'TEMP'}-EXTRA-TICKETS-${newTickets}-TOTAL-${extraTotal}`
+    const QRCode = (await import('qrcode')).default
+    const qrDataUrl = await QRCode.toDataURL(qrString, {
+      margin: 1,
+      color: {
+        dark: '#111111',
+        light: '#FAFAFA'
+      }
+    })
+    doc.addImage(qrDataUrl, 'PNG', qrX + 2, qrY + 2, qrSize - 4, qrSize - 4)
+  } catch (e) {
+    doc.setTextColor(150, 150, 150)
+    doc.setFontSize(7)
+    doc.text('[ CÓDIGO QR ]', qrX + qrSize/2, qrY + qrSize/2, { align: 'center' })
+  }
+
+  // Label under the QR Code
+  doc.setTextColor(120, 120, 120)
+  doc.setFontSize(7.5)
+  doc.setFont('helvetica', 'bold')
+  doc.text('ESCANEAR PARA VALIDAR', qrX + qrSize/2, qrY + qrSize + 6, { align: 'center' })
+
+  // Footer
+  const footerY = 287
+  doc.setDrawColor(217, 70, 239, 0.3)
+  doc.setLineWidth(0.3)
+  doc.line(15, footerY - 4, 195, footerY - 4)
+
+  doc.setTextColor(120, 120, 120)
+  doc.setFontSize(7)
+  doc.setFont('helvetica', 'italic')
+  doc.text('Dance4Ever Nacional · Comprobante de Entradas Extras · www.dance4ever.com.mx', 105, footerY, { align: 'center' })
+
+  const filename = `Recibo_Entradas_Extras_${state.academy.replace(/\s+/g, '_') || 'Dance4ever'}.pdf`
   doc.save(filename)
 }
