@@ -2521,138 +2521,141 @@ function FullSummary({ state, editMode, confirmed, confirm, saving, saveErr, sta
         })()}
       </>
     ) : (
-      <div className="max-w-3xl mx-auto w-full py-2 px-3.5 sm:px-0 space-y-4 divide-y divide-[rgb(var(--c-border)/0.12)] [&>*]:pt-4 [&>*:first-child]:pt-0">
+      <div className="max-w-3xl mx-auto w-full py-2 px-3.5 sm:px-0 space-y-3 divide-y divide-[rgb(var(--c-border)/0.12)] [&>*]:pt-3 [&>*:first-child]:pt-0">
         
-        {/* 1. MENSAJE VERDE DE REGISTRO CONFIRMADO + FECHA LÍMITE (PEGADOS Y EN CABECERA) */}
-        <div className="flex flex-col gap-2.5 animate-fadeIn">
-          <div className="flex items-center justify-center gap-3 sm:gap-6 py-1 select-none">
-            {/* Left Arrow Path */}
-            <div className="flex flex-col items-center gap-0.5 opacity-90 shrink-0 text-purple-600">
-              <ChevronDown className="w-5 h-5 text-purple-500 animate-arrow-1 stroke-[2.5px]" />
-              <ChevronDown className="w-5 h-5 text-purple-600 animate-arrow-2 stroke-[2.5px]" />
-              <ChevronDown className="w-5 h-5 text-purple-700 animate-arrow-3 stroke-[2.5px]" />
-              <ChevronDown className="w-5 h-5 text-purple-800 animate-arrow-4 stroke-[2.5px]" />
-            </div>
-            
-            {/* Center Green Success Recuadro Grande */}
-            <div className="flex-1 bg-[rgb(var(--c-success))] text-white rounded-2xl p-4 md:p-5 shadow-sm text-center space-y-1.5 border border-[rgb(var(--c-success-strong)/0.15)]">
-              <div className="flex items-center justify-center gap-2">
-                <Check className="w-6 h-6 stroke-[3px] shrink-0" />
-                <h2 className="font-display text-lg md:text-xl tracking-widest font-bold uppercase">¡REGISTRO CONFIRMADO!</h2>
+        {/* COMBINED 1 & 2: CABECERA VERDE, FECHA LÍMITE Y ENTRADAS ADICIONALES (TODOS JUNTOS Y PEGADOS) */}
+        <div className="space-y-2 animate-fadeIn">
+          {/* 1. MENSAJE VERDE DE REGISTRO CONFIRMADO + FECHA LÍMITE (PEGADOS Y EN CABECERA) */}
+          <div className="flex flex-col gap-1.5">
+            <div className="flex items-center justify-center gap-3 sm:gap-6 py-0.5 select-none">
+              {/* Left Arrow Path */}
+              <div className="flex flex-col items-center gap-0.5 opacity-90 shrink-0 text-purple-600">
+                <ChevronDown className="w-5 h-5 text-purple-500 animate-arrow-1 stroke-[2.5px]" />
+                <ChevronDown className="w-5 h-5 text-purple-600 animate-arrow-2 stroke-[2.5px]" />
+                <ChevronDown className="w-5 h-5 text-purple-700 animate-arrow-3 stroke-[2.5px]" />
+                <ChevronDown className="w-5 h-5 text-purple-800 animate-arrow-4 stroke-[2.5px]" />
               </div>
-              <p className="text-[11px] sm:text-xs font-semibold opacity-95">Tu información ha sido guardada de forma segura en nuestro sistema.</p>
-            </div>
-            
-            {/* Right Arrow Path */}
-            <div className="flex flex-col items-center gap-0.5 opacity-90 shrink-0 text-purple-600">
-              <ChevronDown className="w-5 h-5 text-purple-500 animate-arrow-1 stroke-[2.5px]" />
-              <ChevronDown className="w-5 h-5 text-purple-600 animate-arrow-2 stroke-[2.5px]" />
-              <ChevronDown className="w-5 h-5 text-purple-700 animate-arrow-3 stroke-[2.5px]" />
-              <ChevronDown className="w-5 h-5 text-purple-800 animate-arrow-4 stroke-[2.5px]" />
-            </div>
-          </div>
-
-          {/* DEADLINE MESSAGE (SUBTLE AND EXTREMELY CLOSE UNDERNEATH) */}
-          <div className="text-center">
-            <p className="text-[10px] sm:text-[11px] text-[rgb(var(--c-text)/0.55)] font-semibold flex items-center justify-center gap-1.5">
-              <Clock className="w-3.5 h-3.5 text-[rgb(var(--c-primary))]" />
-              Tienes hasta el <span className="text-[rgb(var(--c-text-strong))] font-bold">{chgDeadline}</span> para realizar cambios o editar tu registro.
-            </p>
-          </div>
-        </div>
-
-        {/* 2. ENTRADAS ADICIONALES (COMPACTO) */}
-        <div className="py-1 text-left animate-fadeIn">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 mb-2">
-            <div className="flex items-center gap-2">
-              <Ticket className="w-4.5 h-4.5 text-purple-600 shrink-0" />
-              <h4 className="font-display text-xs tracking-wider text-[rgb(var(--c-text-strong))] font-bold uppercase">ENTRADAS ADICIONALES</h4>
-            </div>
-            <p className="text-[10.5px] text-[rgb(var(--c-text)/0.6)]">
-              Para familiares y acompañantes ($400 pesos c/u).
-            </p>
-          </div>
-          
-          <div className="flex items-center justify-between gap-4 py-2 border-y border-[rgb(var(--c-border)/0.1)] my-2">
-            <div className="flex items-center gap-3">
-              <span className="text-[10px] font-bold text-[rgb(var(--c-text-strong))]">CANTIDAD:</span>
-              <div className="flex items-center gap-2">
-                <button 
-                  onClick={() => setNewExtraTickets(prev => Math.max(1, prev - 1))}
-                  className="w-7 h-7 rounded-lg bg-[rgb(var(--c-surface))] border border-[rgb(var(--c-border)/0.5)] flex items-center justify-center text-xs font-bold hover:bg-[rgb(var(--c-surface-2))] transition-colors active:scale-95 cursor-pointer"
-                >
-                  -
-                </button>
-                <span className="font-display text-sm font-bold text-[rgb(var(--c-text-strong))] w-5 text-center">{newExtraTickets}</span>
-                <button 
-                  onClick={() => setNewExtraTickets(prev => prev + 1)}
-                  className="w-7 h-7 rounded-lg bg-[rgb(var(--c-surface))] border border-[rgb(var(--c-border)/0.5)] flex items-center justify-center text-xs font-bold hover:bg-[rgb(var(--c-surface-2))] transition-colors active:scale-95 cursor-pointer"
-                >
-                  +
-                </button>
+              
+              {/* Center Green Success Recuadro Grande */}
+              <div className="flex-1 bg-[rgb(var(--c-success))] text-white rounded-2xl p-4 md:p-5 shadow-sm text-center space-y-1 border border-[rgb(var(--c-success-strong)/0.15)]">
+                <div className="flex items-center justify-center gap-2">
+                  <Check className="w-6 h-6 stroke-[3px] shrink-0" />
+                  <h2 className="font-display text-lg md:text-xl tracking-widest font-bold uppercase">¡REGISTRO CONFIRMADO!</h2>
+                </div>
+                <p className="text-[11px] sm:text-xs font-semibold opacity-95">Tu información ha sido guardada de forma segura en nuestro sistema.</p>
+              </div>
+              
+              {/* Right Arrow Path */}
+              <div className="flex flex-col items-center gap-0.5 opacity-90 shrink-0 text-purple-600">
+                <ChevronDown className="w-5 h-5 text-purple-500 animate-arrow-1 stroke-[2.5px]" />
+                <ChevronDown className="w-5 h-5 text-purple-600 animate-arrow-2 stroke-[2.5px]" />
+                <ChevronDown className="w-5 h-5 text-purple-700 animate-arrow-3 stroke-[2.5px]" />
+                <ChevronDown className="w-5 h-5 text-purple-800 animate-arrow-4 stroke-[2.5px]" />
               </div>
             </div>
-            
-            <div className="text-right flex items-center gap-1.5">
-              <span className="text-[10px] text-[rgb(var(--c-text)/0.5)]">Total lote:</span>
-              <span className="font-display text-sm font-bold text-purple-600">${(newExtraTickets * 400).toLocaleString('es-MX')} MXN</span>
-            </div>
-          </div>
 
-          <button
-            onClick={handleBuyExtraTickets}
-            disabled={generatingExtraPDF}
-            className="w-full h-10 bg-gradient-to-r from-purple-600 via-indigo-600 to-violet-600 hover:brightness-105 active:scale-[0.98] disabled:opacity-50 text-white font-display text-xs tracking-widest rounded-xl transition-all shadow-md duration-150 font-bold flex items-center justify-center gap-2 cursor-pointer"
-          >
-            {generatingExtraPDF ? 'PROCESANDO…' : 'SOLICITAR ENTRADAS ADICIONALES'}
-          </button>
-
-          {extraTicketsSuccess && (
-            <div className="mt-3.5 space-y-3 animate-fadeIn text-center py-1 border-t border-[rgb(var(--c-border)/0.08)] pt-3">
-              <div className="flex items-center justify-center gap-1.5 text-green-600 font-bold text-[11px]">
-                <Check className="w-4 h-4" /> ¡SOLICITUD CONFIRMADA CON ÉXITO!
-              </div>
-              <p className="text-[10px] text-[rgb(var(--c-text)/0.7)] leading-relaxed">
-                Se han solicitado <strong className="font-bold text-[rgb(var(--c-text-strong))]">{lastPurchasedCount}</strong> entradas adicionales. Selecciona una opción:
+            {/* DEADLINE MESSAGE (SUBTLE AND EXTREMELY CLOSE UNDERNEATH) */}
+            <div className="text-center">
+              <p className="text-[10px] sm:text-[11px] text-[rgb(var(--c-text)/0.55)] font-semibold flex items-center justify-center gap-1.5">
+                <Clock className="w-3.5 h-3.5 text-[rgb(var(--c-primary))]" />
+                Tienes hasta el <span className="text-[rgb(var(--c-text-strong))] font-bold">{chgDeadline}</span> para realizar cambios o editar tu registro.
               </p>
-              <div className="flex gap-2.5">
-                <button 
-                  onClick={() => handleViewExtraPDF(lastPurchasedCount)}
-                  className="flex-1 h-10 flex items-center justify-center gap-2 bg-[rgb(var(--c-surface))] border border-[rgb(var(--c-border)/0.5)] hover:bg-[rgb(var(--c-surface-2))] text-[rgb(var(--c-text-strong))] font-display text-[10px] tracking-wider rounded-xl transition-all font-bold cursor-pointer"
-                >
-                  <Eye className="w-4 h-4 text-[rgb(var(--c-primary))]" /> VER ONLINE
-                </button>
-                <button 
-                  onClick={() => handleDownloadExtraPDF(lastPurchasedCount)}
-                  className="flex-1 h-10 bg-gradient-to-r from-purple-600 via-indigo-600 to-violet-600 hover:brightness-105 active:scale-[0.98] disabled:opacity-50 text-white font-display text-[10px] tracking-wider rounded-xl transition-all font-bold flex items-center justify-center gap-2 cursor-pointer"
-                >
-                  <Download className="w-4 h-4 text-white" /> DESCARGAR PDF
-                </button>
+            </div>
+          </div>
+
+          {/* 2. ENTRADAS ADICIONALES (COMPACTO Y PEGADO) */}
+          <div className="text-left pt-0.5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-1">
+              <div className="flex items-center gap-2">
+                <Ticket className="w-4.5 h-4.5 text-purple-600 shrink-0" />
+                <h4 className="font-display text-xs tracking-wider text-[rgb(var(--c-text-strong))] font-bold uppercase">ENTRADAS ADICIONALES</h4>
+              </div>
+              <p className="text-[10.5px] text-[rgb(var(--c-text)/0.6)]">
+                Para familiares y acompañantes ($400 pesos c/u).
+              </p>
+            </div>
+            
+            <div className="flex items-center justify-between gap-4 py-1 my-1">
+              <div className="flex items-center gap-3">
+                <span className="text-[10px] font-bold text-[rgb(var(--c-text-strong))]">CANTIDAD:</span>
+                <div className="flex items-center gap-2">
+                  <button 
+                    onClick={() => setNewExtraTickets(prev => Math.max(1, prev - 1))}
+                    className="w-7 h-7 rounded-lg bg-[rgb(var(--c-surface))] border border-[rgb(var(--c-border)/0.5)] flex items-center justify-center text-xs font-bold hover:bg-[rgb(var(--c-surface-2))] transition-colors active:scale-95 cursor-pointer"
+                  >
+                    -
+                  </button>
+                  <span className="font-display text-sm font-bold text-[rgb(var(--c-text-strong))] w-5 text-center">{newExtraTickets}</span>
+                  <button 
+                    onClick={() => setNewExtraTickets(prev => prev + 1)}
+                    className="w-7 h-7 rounded-lg bg-[rgb(var(--c-surface))] border border-[rgb(var(--c-border)/0.5)] flex items-center justify-center text-xs font-bold hover:bg-[rgb(var(--c-surface-2))] transition-colors active:scale-95 cursor-pointer"
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+              
+              <div className="text-right flex items-center gap-1.5">
+                <span className="text-[10px] text-[rgb(var(--c-text)/0.5)]">Total lote:</span>
+                <span className="font-display text-sm font-bold text-purple-600">${(newExtraTickets * 400).toLocaleString('es-MX')} MXN</span>
               </div>
             </div>
-          )}
+
+            <button
+              onClick={handleBuyExtraTickets}
+              disabled={generatingExtraPDF}
+              className="w-full h-10 bg-gradient-to-r from-purple-600 via-indigo-600 to-violet-600 hover:brightness-105 active:scale-[0.98] disabled:opacity-50 text-white font-display text-xs tracking-widest rounded-xl transition-all shadow-md duration-150 font-bold flex items-center justify-center gap-2 cursor-pointer"
+            >
+              {generatingExtraPDF ? 'PROCESANDO…' : 'SOLICITAR ENTRADAS ADICIONALES'}
+            </button>
+
+            {extraTicketsSuccess && (
+              <div className="mt-2 space-y-2 animate-fadeIn text-center pt-2">
+                <div className="flex items-center justify-center gap-1.5 text-green-600 font-bold text-[11px]">
+                  <Check className="w-4 h-4" /> ¡SOLICITUD CONFIRMADA CON ÉXITO!
+                </div>
+                <p className="text-[10px] text-[rgb(var(--c-text)/0.7)] leading-relaxed">
+                  Se han solicitado <strong className="font-bold text-[rgb(var(--c-text-strong))]">{lastPurchasedCount}</strong> entradas adicionales. Selecciona una opción:
+                </p>
+                <div className="flex gap-2.5">
+                  <button 
+                    onClick={() => handleViewExtraPDF(lastPurchasedCount)}
+                    className="flex-1 h-10 flex items-center justify-center gap-2 bg-[rgb(var(--c-surface))] border border-[rgb(var(--c-border)/0.5)] hover:bg-[rgb(var(--c-surface-2))] text-[rgb(var(--c-text-strong))] font-display text-[10px] tracking-wider rounded-xl transition-all font-bold cursor-pointer"
+                  >
+                    <Eye className="w-4 h-4 text-[rgb(var(--c-primary))]" /> VER ONLINE
+                  </button>
+                  <button 
+                    onClick={() => handleDownloadExtraPDF(lastPurchasedCount)}
+                    className="flex-1 h-10 bg-gradient-to-r from-purple-600 via-indigo-600 to-violet-600 hover:brightness-105 active:scale-[0.98] disabled:opacity-50 text-white font-display text-[10px] tracking-wider rounded-xl transition-all font-bold flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    <Download className="w-4 h-4 text-white" /> DESCARGAR PDF
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* 3. INFORMACIÓN BANCARIA (SIN CAJAS, EN EL FONDO) */}
-        <div className="py-2 text-left animate-fadeIn">
-          <div className="flex items-center gap-2.5 mb-4">
-            <Clipboard className="w-5 h-5 text-fuchsia-500 shrink-0" />
+        <div className="py-1 text-left animate-fadeIn">
+          <div className="flex items-center gap-2 mb-2">
+            <Clipboard className="w-4.5 h-4.5 text-fuchsia-500 shrink-0" />
             <div>
-              <h4 className="font-display text-sm tracking-wider text-[rgb(var(--c-text-strong))] font-bold uppercase">INFORMACIÓN PARA EL PAGO BANCARIO</h4>
-              <p className="text-[10px] text-[rgb(var(--c-text)/0.5)]">Realiza tu depósito o transferencia</p>
+              <h4 className="font-display text-xs tracking-wider text-[rgb(var(--c-text-strong))] font-bold uppercase">INFORMACIÓN PARA EL PAGO BANCARIO</h4>
+              <p className="text-[9.5px] text-[rgb(var(--c-text)/0.5)] leading-tight">Realiza tu depósito o transferencia</p>
             </div>
           </div>
           
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-3.5 text-xs py-2">
-            <div className="flex justify-between items-center py-2 border-b border-[rgb(var(--c-border)/0.15)]">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-1.5 text-xs py-1">
+            <div className="flex justify-between items-center py-1 border-b border-[rgb(var(--c-border)/0.15)]">
               <span className="text-[rgb(var(--c-text)/0.6)]">Beneficiario:</span>
               <span className="font-semibold text-[rgb(var(--c-text-strong))]">JOEL ARTURO GARCIA</span>
             </div>
-            <div className="flex justify-between items-center py-2 border-b border-[rgb(var(--c-border)/0.15)]">
+            <div className="flex justify-between items-center py-1 border-b border-[rgb(var(--c-border)/0.15)]">
               <span className="text-[rgb(var(--c-text)/0.6)]">Banco:</span>
               <span className="font-bold text-[rgb(var(--c-text-strong))]">BBVA</span>
             </div>
-            <div className="flex justify-between items-center py-2 border-b border-[rgb(var(--c-border)/0.15)]">
+            <div className="flex justify-between items-center py-1 border-b border-[rgb(var(--c-border)/0.15)]">
               <span className="text-[rgb(var(--c-text)/0.6)]">Cuenta:</span>
               <div className="flex items-center gap-2">
                 <span className="font-bold text-[rgb(var(--c-text-strong))]">010 440 2340</span>
@@ -2665,7 +2668,7 @@ function FullSummary({ state, editMode, confirmed, confirm, saving, saveErr, sta
                 </button>
               </div>
             </div>
-            <div className="flex justify-between items-center py-2 border-b border-[rgb(var(--c-border)/0.15)] md:col-span-1 lg:col-span-2">
+            <div className="flex justify-between items-center py-1 border-b border-[rgb(var(--c-border)/0.15)] md:col-span-1 lg:col-span-2">
               <span className="text-[rgb(var(--c-text)/0.6)]">CLABE:</span>
               <div className="flex items-center gap-2">
                 <span className="font-bold text-[rgb(var(--c-text-strong))] tracking-wide">012 180 001044023400</span>
@@ -2678,7 +2681,7 @@ function FullSummary({ state, editMode, confirmed, confirm, saving, saveErr, sta
                 </button>
               </div>
             </div>
-            <div className="flex justify-between items-center py-2 border-b border-[rgb(var(--c-border)/0.15)] md:col-span-1">
+            <div className="flex justify-between items-center py-1 border-b border-[rgb(var(--c-border)/0.15)] md:col-span-1">
               <span className="text-[rgb(var(--c-text)/0.6)]">No. de Tarjeta:</span>
               <div className="flex items-center gap-2">
                 <span className="font-bold text-[rgb(var(--c-text-strong))] tracking-wide">4152 3139 6949 9099</span>
@@ -2693,7 +2696,7 @@ function FullSummary({ state, editMode, confirmed, confirm, saving, saveErr, sta
             </div>
           </div>
 
-          <div className="mt-3.5 text-[10px] text-[rgb(var(--c-text)/0.5)] flex items-start gap-2">
+          <div className="mt-1.5 text-[9.5px] text-[rgb(var(--c-text)/0.5)] flex items-start gap-2">
             <Info className="w-3.5 h-3.5 text-fuchsia-500 shrink-0 mt-0.5" />
             <span>Esta información bancaria también viene detallada en el comprobante PDF de tu registro completo.</span>
           </div>
