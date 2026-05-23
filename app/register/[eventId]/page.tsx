@@ -2050,7 +2050,7 @@ function StepView(props: {
                                     key={style}
                                     type="button"
                                     onClick={() => updateAct(i, { style })}
-                                    className={`py-2 px-3.5 rounded-xl font-display text-xs tracking-wider font-bold transition-all border active:scale-95 duration-150 ${
+                                    className={`py-3 px-5 rounded-xl font-display text-sm tracking-wider font-bold transition-all border active:scale-95 duration-150 ${
                                       isSelected
                                         ? 'bg-[rgb(var(--c-primary))] border-[rgb(var(--c-primary))] text-white shadow-sm'
                                         : 'bg-[rgb(var(--c-surface))] border-[rgb(var(--c-border)/0.5)] text-[rgb(var(--c-text-strong))] hover:bg-[rgb(var(--c-surface-2))]'
