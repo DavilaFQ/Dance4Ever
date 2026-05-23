@@ -1354,7 +1354,7 @@ function StepView(props: {
                 animation: (videoEnded || useFallback || startBlurring) ? 'textReveal 2.2s cubic-bezier(0.16, 1, 0.3, 1) forwards' : 'none'
               }}
             >
-              ¿Listos para las nacionales?
+              ¿Listos para la GRAN NACIONAL?
             </h1>
 
             {!(videoEnded || useFallback) ? (
@@ -1364,9 +1364,8 @@ function StepView(props: {
                 style={{ animation: 'slideFromLeft 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)' }}
               >
                 <div className="flex items-center gap-2 mb-2.5">
-                  <Sparkles className="w-4 h-4 text-amber-400/80 animate-pulse" />
                   <span className="font-display text-[10px] sm:text-xs tracking-[0.25em] font-extrabold text-amber-400/80 uppercase animate-pulse">
-                    Sincronizando Experiencia...
+                    Preparando todo...
                   </span>
                 </div>
                 
