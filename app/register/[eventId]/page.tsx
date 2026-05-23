@@ -2379,15 +2379,15 @@ function FullSummary({ state, editMode, confirmed, isEditSave, confirm, saving, 
                 )}
               </div>
             </h3>
-            <div className="border border-[rgb(var(--c-border)/0.35)] rounded-2xl bg-[rgb(var(--c-surface))] divide-y divide-[rgb(var(--c-border)/0.25)] overflow-hidden shadow-xs">
+            <div className="divide-y divide-[rgb(var(--c-border)/0.25)] bg-transparent">
               {state.acts.length === 0 ? (
-                <p className="text-[rgb(var(--c-text)/0.5)] italic text-sm p-4">Sin actos registrados</p>
+                <p className="text-[rgb(var(--c-text)/0.5)] italic text-sm py-4">Sin actos registrados</p>
               ) : state.acts.map((a, idx) => {
                 const cat = a.ageCategory ? AGE_CATEGORY_LABELS[a.ageCategory] : '—'
                 const mod = a.modality ? modalityLabel(a.modality) : '—'
                 const lvl = a.modality === 'grupal' ? (a.level === 'basico' ? ' BÁSICO' : a.level === 'avanzado' ? ' AVANZADO' : '') : ''
                 return (
-                  <div key={idx} className="p-3.5 sm:p-4 bg-[rgb(var(--c-surface))] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 animate-[fadeIn_0.2s_ease-out_forwards]">
+                  <div key={idx} className="py-3.5 bg-transparent flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 animate-[fadeIn_0.2s_ease-out_forwards]">
                     <div className="flex items-start gap-3 min-w-0 flex-1">
                       <div className="font-display text-2xl text-[rgb(var(--c-primary))] shrink-0 font-bold">#{idx + 1}</div>
                       <div className="min-w-0">
@@ -2396,7 +2396,7 @@ function FullSummary({ state, editMode, confirmed, isEditSave, confirm, saving, 
                       </div>
                     </div>
                     {a.dancerIndices.length > 0 && (
-                      <div className="bg-[rgb(var(--c-surface-2)/0.3)] border border-[rgb(var(--c-border)/0.25)] rounded-xl p-2.5 max-w-md shrink-0 w-full sm:w-auto">
+                      <div className="border-l-2 border-[rgb(var(--c-primary)/0.3)] pl-3.5 max-w-md shrink-0 w-full sm:w-auto">
                         <p className="text-[9px] font-bold tracking-widest text-[rgb(var(--c-text)/0.5)] mb-1 uppercase">INTEGRANTES ({a.dancerIndices.length})</p>
                         <div className="flex flex-wrap gap-1">
                           {a.dancerIndices.map(di => {
@@ -2418,19 +2418,20 @@ function FullSummary({ state, editMode, confirmed, isEditSave, confirm, saving, 
               })}
             </div>
           </div>
-        </div>
 
-        {/* ENTRADAS PARA ACOMPAÑANTES */}
-        <div className="mt-4 bg-[rgb(var(--c-surface))] rounded-none sm:rounded-3xl border-t sm:border border-[rgb(var(--c-border)/0.4)] shadow-none sm:shadow-sm overflow-hidden">
+          {/* ENTRADAS PARA ACOMPAÑANTES */}
           <div className="p-3.5 sm:p-5">
             <h3 className="font-display text-lg tracking-widest text-[rgb(var(--c-primary))] mb-4 border-b border-[rgb(var(--c-border)/0.25)] pb-2 flex items-center gap-2">
               <Ticket className="w-5 h-5 text-[rgb(var(--c-primary))]" />
               <span>ENTRADAS PARA FAMILIARES / PAPÁS</span>
             </h3>
-            <div className="bg-gradient-to-r from-purple-950/5 to-pink-950/5 border border-purple-500/10 rounded-2xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 py-2">
               <div className="space-y-1 max-w-md">
                 <p className="text-xs font-semibold text-[rgb(var(--c-text-strong))]">Recuerda que por este medio puedes registrar cuántas entradas van a comprar para familiares, papás y acompañantes.</p>
-                <p className="text-[11px] text-[rgb(var(--c-text)/0.7)]">Costo por Entrada: <strong className="font-bold text-[rgb(var(--c-primary))]">{formatMoney(PRECIO_ENTRADA)} MXN</strong>.</p>
+                <p className="text-[11px] text-[rgb(var(--c-text)/0.75)] italic font-medium text-purple-700 dark:text-purple-400">
+                  Si en este momento ya tienes entradas confirmadas, colócalas aquí. Podrás adquirir más entradas adicionales más adelante después de confirmar tu registro.
+                </p>
+                <p className="text-[11px] text-[rgb(var(--c-text)/0.75)]">Costo por Entrada: <strong className="font-bold text-[rgb(var(--c-primary))]">{formatMoney(PRECIO_ENTRADA)} MXN</strong>.</p>
                 {editMode && (
                   <p className="text-[10px] text-amber-600 font-bold bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded-xl mt-1.5 inline-block">
                     ⚠️ Para adquirir entradas adicionales, utiliza la opción al confirmar tu registro.
