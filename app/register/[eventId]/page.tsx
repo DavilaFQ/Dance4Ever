@@ -1178,7 +1178,7 @@ function StepView(props: {
             }
           `}</style>
 
-          {/* BACKGROUND VIDEO (Plays once, blurs on end, bottom 6% cropped to hide watermark on all devices) */}
+          {/* BACKGROUND VIDEO (Plays once, blurs on end, top-aligned) */}
           <video
             autoPlay
             muted
@@ -1190,11 +1190,16 @@ function StepView(props: {
             style={{
               filter: videoEnded ? 'blur(12px) brightness(0.45)' : 'none',
               transition: 'filter 1.5s cubic-bezier(0.25, 1, 0.5, 1), brightness 1.5s cubic-bezier(0.25, 1, 0.5, 1)',
-              objectPosition: 'center 4%',
+              objectPosition: 'center top',
             }}
           >
             <source src="/d4e.mp4" type="video/mp4" />
           </video>
+
+          {/* PERMANENT BOTTOM CINEMATIC DARK GRADIENT MASK (Hides Gemini watermark and enhances button contrast) */}
+          <div 
+            className="absolute bottom-0 left-0 right-0 h-36 z-10 bg-gradient-to-t from-[#020005] via-[#020005]/95 to-transparent pointer-events-none"
+          />
 
           {/* CINEMATIC BLURRED OVERLAY WHEN VIDEO ENDS */}
           <div 
