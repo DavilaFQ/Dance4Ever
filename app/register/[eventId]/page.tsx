@@ -748,6 +748,18 @@ export default function RegisterPage({ params }: Props) {
       setTimeout(() => {
         setShowSuccessSplash(false)
       }, 3500)
+
+      // Auto-scroll to the bottom so they immediately see the "DESCARGAR COMPROBANTE PDF" button!
+      setTimeout(() => {
+        try {
+          window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })
+          document.querySelectorAll('.overflow-y-auto').forEach(el => {
+            el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' })
+          })
+        } catch (err) {
+          console.error('Scroll error:', err)
+        }
+      }, 200)
     } catch (e) {
       setSaveErr(extractErrorMessage(e))
     } finally {
