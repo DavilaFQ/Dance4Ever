@@ -2539,22 +2539,42 @@ async function generateReceiptPDF(state: State, event: Event | null) {
   doc.rect(0, 42, 210, 2.5, 'F')
 
   // Logo / Brand Name
+  let logoWidth = 20
+  let logoHeight = 20
+  let textStartX = 39
+  
+  if (logoImg) {
+    const originalWidth = logoImg.width
+    const originalHeight = logoImg.height
+    if (originalWidth > 0 && originalHeight > 0) {
+      const ratio = originalWidth / originalHeight
+      // Safe height for logo inside header is 18mm
+      logoHeight = 18
+      logoWidth = logoHeight * ratio
+      // Cap width just in case it is too wide
+      if (logoWidth > 40) {
+        logoWidth = 40
+        logoHeight = logoWidth / ratio
+      }
+    }
+    
+    // Vertical centering in the 42mm header
+    const logoY = (42 - logoHeight) / 2
+    doc.addImage(logoImg, 'PNG', 15, logoY, logoWidth, logoHeight)
+    textStartX = 15 + logoWidth + 4
+  } else {
+    textStartX = 15
+  }
+
   doc.setTextColor(255, 255, 255)
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(26)
+  doc.text('DANCE4EVER', textStartX, 18)
   
-  if (logoImg) {
-    doc.addImage(logoImg, 'PNG', 15, 6, 20, 20)
-    doc.text('DANCE4EVER', 39, 18)
-    doc.setTextColor(234, 179, 8) // Gold
-    doc.setFontSize(10)
-    doc.text('COMPROBANTE DE REGISTRO', 39, 24)
-  } else {
-    doc.text('DANCE4EVER', 15, 18)
-    doc.setTextColor(234, 179, 8) // Gold
-    doc.setFontSize(10)
-    doc.text('COMPROBANTE DE REGISTRO', 15, 24)
-  }
+  doc.setTextColor(234, 179, 8) // Gold
+  doc.setFontSize(10)
+  doc.setFont('helvetica', 'bold')
+  doc.text('COMPROBANTE DE REGISTRO', textStartX, 24)
 
   // Event name and date on the right side
   doc.setTextColor(255, 255, 255)
@@ -2615,7 +2635,7 @@ async function generateReceiptPDF(state: State, event: Event | null) {
   // Row 2
   doc.setTextColor(100, 100, 100)
   doc.setFont('helvetica', 'bold')
-  doc.text('COACH PRINCIPAL:', 15, y)
+  doc.text('COACH:', 15, y)
   doc.setTextColor(17, 17, 17)
   doc.setFont('helvetica', 'normal')
   doc.text(state.coach.name.toUpperCase() || 'SIN NOMBRE', 52, y)
@@ -2636,13 +2656,6 @@ async function generateReceiptPDF(state: State, event: Event | null) {
   doc.setTextColor(17, 17, 17)
   doc.setFont('helvetica', 'normal')
   doc.text(state.coach.phone || 'SIN WHATSAPP', 52, y)
-
-  doc.setTextColor(100, 100, 100)
-  doc.setFont('helvetica', 'bold')
-  doc.text('NOMBRE DEL EQUIPO:', 120, y)
-  doc.setTextColor(22, 163, 74) // Green
-  doc.setFont('helvetica', 'bold')
-  doc.text((state.teamName || state.academy || 'SIN EQUIPO').toUpperCase(), 150, y)
 
   y += 5
 
@@ -2702,7 +2715,7 @@ async function generateReceiptPDF(state: State, event: Event | null) {
     doc.setTextColor(120, 120, 120)
     doc.setFontSize(7)
     doc.setFont('helvetica', 'italic')
-    doc.text(`Dance4ever Nacional · Página ${data.pageNumber} · www.dance4ever.mx`, 105, footerY, { align: 'center' })
+    doc.text(`Dance4Ever Nacional · Página ${data.pageNumber} · www.dance4ever.com.mx`, 105, footerY, { align: 'center' })
   }
 
   // Section: Acts
