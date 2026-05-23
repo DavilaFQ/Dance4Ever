@@ -1148,6 +1148,7 @@ function StepView(props: {
   const [datePickerIndex, setDatePickerIndex] = useState<number | null>(null)
   const [datePickerVal, setDatePickerVal] = useState({ day: '', month: '', year: '' })
   const [datePickerClosing, setDatePickerClosing] = useState(false)
+  const [videoEnded, setVideoEnded] = useState(false)
   const closeDatePicker = () => {
     document.querySelector('meta[name="theme-color"]')?.setAttribute('content', '#F6F4EF')
     setDatePickerClosing(true)
@@ -1158,7 +1159,7 @@ function StepView(props: {
     case 'welcome': {
       return (
         <div 
-          className="relative flex flex-col items-center justify-center h-[100dvh] w-full overflow-hidden select-none px-6" 
+          className="relative flex flex-col items-center justify-end h-[100dvh] w-full overflow-hidden select-none px-6 pb-12" 
           style={{ 
             background: '#020005', 
             touchAction: 'none', 
@@ -1177,39 +1178,48 @@ function StepView(props: {
             }
           `}</style>
 
-          {/* BACKGROUND VIDEO LOOP */}
+          {/* BACKGROUND VIDEO (Plays once, crops watermark, blurs on end) */}
           <video
             autoPlay
             muted
-            loop
+            loop={false}
+            onEnded={() => setVideoEnded(true)}
             playsInline
             className="absolute inset-0 w-full h-full object-cover z-0 pointer-events-none select-none"
             poster="/grand_national_bg.jpg"
+            style={{
+              transform: 'scale(1.08)',
+              filter: videoEnded ? 'blur(12px) brightness(0.45)' : 'none',
+              transition: 'filter 1.5s cubic-bezier(0.25, 1, 0.5, 1), brightness 1.5s cubic-bezier(0.25, 1, 0.5, 1)',
+            }}
           >
             <source src="/d4e.mp4" type="video/mp4" />
           </video>
 
-          {/* BOTTOM-CENTER FLOATING CTA BUTTON WRAPPER */}
+          {/* CINEMATIC BLURRED OVERLAY WHEN VIDEO ENDS */}
           <div 
-            className="relative z-10 w-full max-w-sm flex flex-col items-center justify-center mt-auto mb-16"
-            style={{ animation: 'riseUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) both' }}
+            className={`absolute inset-0 z-0 bg-gradient-to-b from-amber-950/15 via-[#020005]/70 to-[#020005] transition-opacity duration-1500 pointer-events-none ${
+              videoEnded ? 'opacity-100' : 'opacity-0'
+            }`} 
+          />
+
+          {/* BOTTOM-CENTER FLOATING CTA BUTTON WRAPPER (Fades in when video ends) */}
+          <div 
+            className={`relative z-10 w-full max-w-sm flex flex-col items-center justify-center mb-4 transition-all duration-1200 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+              videoEnded ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-6 scale-95 pointer-events-none'
+            }`}
           >
             <button
               onClick={onNext}
-              className="w-full py-5 rounded-2xl font-display text-2xl tracking-[0.2em] font-extrabold hover:scale-[1.03] active:scale-[0.97] transition-all duration-300 relative overflow-hidden group shadow-[0_20px_50px_rgba(252,3,161,0.35)]"
-              style={{
-                background: 'linear-gradient(135deg, rgb(var(--c-primary)) 0%, #ff4b91 50%, #ff8c37 100%)',
-                color: '#ffffff',
-                border: '1px solid rgba(255,255,255,0.35)',
-              }}
+              className="w-full py-5 rounded-2xl font-display text-2xl tracking-[0.2em] font-extrabold hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 relative overflow-hidden group shadow-[0_15px_40px_rgba(245,158,11,0.15),inset_0_1px_1px_rgba(255,255,255,0.08)] border border-amber-500/35 bg-amber-500/[0.04] backdrop-blur-xl text-amber-400 hover:text-yellow-200 hover:border-amber-500/50"
             >
-              {/* Sliding Gradient Overlay on Hover */}
-              <div className="absolute inset-0 bg-gradient-to-r from-[#ff4b91] via-[#ff8c37] to-rgb(var(--c-primary)) opacity-0 group-hover:opacity-100 transition-opacity duration-500 ease-out z-0" />
+              {/* Sliding Gold Sheen Overlay on Hover */}
+              <div className="absolute inset-0 bg-gradient-to-r from-amber-500/10 via-yellow-500/5 to-amber-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 ease-out z-0" />
 
               {/* Sparkling Light Sweep Overlay */}
               <div className="absolute inset-0 pointer-events-none overflow-hidden z-10">
                 <div 
-                  className="absolute inset-y-0 w-1/3 bg-gradient-to-r from-transparent via-white/40 to-transparent -skew-x-25"
+                  className="absolute inset-y-0 w-1/3 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-25"
                   style={{ 
                     left: '-100%',
                     animation: 'sweep 3.5s infinite ease-in-out',
@@ -1217,9 +1227,9 @@ function StepView(props: {
                 />
               </div>
 
-              <span className="relative z-20 flex items-center justify-center gap-3.5 uppercase font-black">
+              <span className="relative z-20 flex items-center justify-center gap-3.5 uppercase font-black tracking-[0.16em] filter drop-shadow-[0_0_8px_rgba(245,158,11,0.4)]">
                 COMENZAR REGISTRO
-                <Sparkles className="w-6 h-6 text-white animate-bounce shrink-0" />
+                <Sparkles className="w-5.5 h-5.5 text-amber-400 group-hover:text-yellow-200 animate-bounce shrink-0 filter drop-shadow-[0_0_5px_rgba(245,158,11,0.5)]" />
               </span>
             </button>
           </div>
