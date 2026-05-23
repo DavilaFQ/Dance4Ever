@@ -1183,19 +1183,11 @@ function StepView(props: {
             muted
             loop
             playsInline
-            className="absolute inset-0 w-full h-full object-cover z-0 opacity-[0.35] pointer-events-none select-none"
+            className="absolute inset-0 w-full h-full object-cover z-0 pointer-events-none select-none"
             poster="/grand_national_bg.jpg"
           >
             <source src="/d4e.mp4" type="video/mp4" />
           </video>
-
-          {/* RADIAL VIGNETTE OVERLAY FOR LUXURY VIBE */}
-          <div 
-            className="absolute inset-0 z-0 pointer-events-none" 
-            style={{
-              background: 'radial-gradient(circle, transparent 30%, rgba(2, 0, 5, 0.9) 100%)',
-            }}
-          />
 
           {/* BOTTOM-CENTER FLOATING CTA BUTTON WRAPPER */}
           <div 
