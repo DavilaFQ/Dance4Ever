@@ -43,6 +43,7 @@ type State = {
   costRepeticion: number | null
   confirmedRegistrationId: number | null
   ticketsCount: number
+  confirmedAt?: string | null
 }
 
 type Step =
@@ -127,6 +128,7 @@ function initialState(): State {
     costRepeticion: PRECIO_REPETICION,
     confirmedRegistrationId: null,
     ticketsCount: 0,
+    confirmedAt: null,
   }
 }
 
@@ -362,7 +364,29 @@ export default function RegisterPage({ params }: Props) {
             saved.ticketsCount = 0
           }
           setState(saved)
-          if (saved.confirmedRegistrationId) setStep({ kind: 'confirmed' })
+          if (saved.confirmedRegistrationId) {
+            setStep({ kind: 'confirmed' })
+            // Fetch precise confirmed_at from database to be absolutely sure we have the exact confirmation timestamp
+            ;(async () => {
+              try {
+                const { data: regData } = await supabase
+                  .from('coach_registrations')
+                  .select('confirmed_at')
+                  .eq('id', saved.confirmedRegistrationId)
+                  .single()
+                if (regData && regData.confirmed_at) {
+                  setState(s => {
+                    if (s.confirmedRegistrationId === saved.confirmedRegistrationId && s.confirmedAt !== regData.confirmed_at) {
+                      return { ...s, confirmedAt: regData.confirmed_at }
+                    }
+                    return s
+                  })
+                }
+              } catch (e) {
+                console.error("Failed to fetch confirmation timestamp:", e)
+              }
+            })()
+          }
         }
       }
       } catch { /* ignore */ }
@@ -749,7 +773,11 @@ export default function RegisterPage({ params }: Props) {
       const { error: aErr } = await supabase.from('registration_acts').insert(actRows)
       if (aErr) throw aErr
 
-      setState(s => ({ ...s, confirmedRegistrationId: registrationId }))
+      setState(s => ({ 
+        ...s, 
+        confirmedRegistrationId: registrationId,
+        confirmedAt: regPayload.confirmed_at
+      }))
       setEditMode(false)
       setShowSuccessSplash(true)
       setStep({ kind: 'confirmed' })
@@ -3093,7 +3121,8 @@ async function generateReceiptPDF(state: State, event: Event | null) {
   doc.text('FECHA REGISTRO:', 120, y)
   doc.setTextColor(17, 17, 17)
   doc.setFont('helvetica', 'normal')
-  const confirmTimestamp = new Date().toLocaleString('es-MX', { 
+  const confirmDateObj = state.confirmedAt ? new Date(state.confirmedAt) : new Date()
+  const confirmTimestamp = confirmDateObj.toLocaleString('es-MX', { 
     day: '2-digit', 
     month: 'short', 
     year: 'numeric', 
