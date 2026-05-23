@@ -1158,9 +1158,9 @@ function StepView(props: {
     case 'welcome': {
       return (
         <div 
-          className="relative flex flex-col items-center justify-center h-[100dvh] w-full overflow-hidden select-none px-4 py-6 md:p-12" 
+          className="relative flex flex-col items-center justify-center h-[100dvh] w-full overflow-hidden select-none px-6" 
           style={{ 
-            background: 'radial-gradient(circle at 50% 35%, #0d011c 0%, #05000a 80%, #010003 100%)', 
+            background: '#020005', 
             touchAction: 'none', 
             animation: 'fadeIn 0.5s ease-out' 
           }}
@@ -1170,46 +1170,10 @@ function StepView(props: {
               0% { opacity: 0; transform: translateY(30px); }
               100% { opacity: 1; transform: translateY(0); }
             }
-            @keyframes swayLeft {
-              0%, 100% { transform: rotate(0deg) scale(1); }
-              50% { transform: rotate(2.5deg) scale(1.01); }
-            }
-            @keyframes swayRight {
-              0%, 100% { transform: rotate(0deg) scale(1); }
-              50% { transform: rotate(-2.5deg) scale(1.01); }
-            }
-            @keyframes rustle {
-              0%, 100% { transform: rotate(0deg); }
-              50% { transform: rotate(1.8deg) scaleX(1.01); }
-            }
-            @keyframes pulseGlow {
-              0%, 100% { opacity: 0.35; filter: drop-shadow(0 0 15px rgba(0, 234, 255, 0.3)); }
-              50% { opacity: 0.6; filter: drop-shadow(0 0 30px rgba(252, 3, 161, 0.5)); }
-            }
             @keyframes sweep {
               0% { left: -100%; }
               50% { left: 160%; }
               100% { left: 160%; }
-            }
-            @keyframes floatOrb1 {
-              0%, 100% { transform: translate(0, 0) scale(1); }
-              50% { transform: translate(8%, -6%) scale(1.1); }
-            }
-            @keyframes floatOrb2 {
-              0%, 100% { transform: translate(0, 0) scale(1.1); }
-              50% { transform: translate(-8%, 6%) scale(0.9); }
-            }
-            @keyframes spinRing {
-              0% { transform: rotate(0deg); }
-              100% { transform: rotate(360deg); }
-            }
-            @keyframes textGlow {
-              0%, 100% { filter: drop-shadow(0 2px 10px rgba(0, 234, 255, 0.7)); }
-              50% { filter: drop-shadow(0 2px 20px rgba(252, 3, 161, 0.8)); }
-            }
-            @keyframes pulseLive {
-              0%, 100% { transform: scale(1); opacity: 0.95; }
-              50% { transform: scale(1.25); opacity: 0.4; }
             }
           `}</style>
 
@@ -1219,296 +1183,53 @@ function StepView(props: {
             muted
             loop
             playsInline
-            className="absolute inset-0 w-full h-full object-cover z-0 opacity-[0.22] mix-blend-lighten pointer-events-none select-none"
+            className="absolute inset-0 w-full h-full object-cover z-0 opacity-[0.35] pointer-events-none select-none"
             poster="/grand_national_bg.jpg"
           >
             <source src="/d4e.mp4" type="video/mp4" />
           </video>
 
-          {/* GRADIENT OVERLAY FOR TEXT CONTRAST */}
-          <div className="absolute inset-0 z-0 bg-gradient-to-b from-[#060010]/95 via-[#020006]/85 to-[#010003]/95 pointer-events-none" />
-
-          {/* TECH GRID TEXTURE OVERLAY */}
+          {/* RADIAL VIGNETTE OVERLAY FOR LUXURY VIBE */}
           <div 
-            className="absolute inset-0 z-0 opacity-[0.03] pointer-events-none select-none"
+            className="absolute inset-0 z-0 pointer-events-none" 
             style={{
-              backgroundImage: 'linear-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.1) 1px, transparent 1px)',
-              backgroundSize: '36px 36px',
+              background: 'radial-gradient(circle, transparent 30%, rgba(2, 0, 5, 0.9) 100%)',
             }}
           />
 
-          {/* FLOATING NEON ORBS */}
-          <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
-            <div 
-              className="absolute top-[10%] left-[15%] w-[45vw] h-[45vw] max-w-[380px] max-h-[380px] rounded-full bg-[radial-gradient(circle,rgba(252,3,161,0.12)_0%,transparent_75%)] blur-3xl" 
-              style={{ animation: 'floatOrb1 15s ease-in-out infinite' }}
-            />
-            <div 
-              className="absolute bottom-[10%] right-[15%] w-[45vw] h-[45vw] max-w-[380px] max-h-[380px] rounded-full bg-[radial-gradient(circle,rgba(0,234,255,0.1)_0%,transparent_75%)] blur-3xl" 
-              style={{ animation: 'floatOrb2 18s ease-in-out infinite' }}
-            />
-          </div>
-
-          {/* TOP BRANDING BAR */}
-          <div className="absolute top-6 left-0 right-0 z-20 flex flex-col items-center justify-center pointer-events-none">
-            <p className="font-display text-[10px] tracking-[0.5em] text-white/30 font-bold uppercase select-none animate-[riseUp_0.7s_ease-out]">
-              DANCE4EVER PRESENTA
-            </p>
-            <div className="w-12 h-[1px] bg-gradient-to-r from-transparent via-white/15 to-transparent mt-1.5" />
-          </div>
-
-          {/* LUSH WIND-RUSTLED PALM TREES */}
+          {/* BOTTOM-CENTER FLOATING CTA BUTTON WRAPPER */}
           <div 
-            className="absolute left-0 bottom-0 z-0 pointer-events-none select-none origin-bottom-left" 
-            style={{ 
-              animation: 'swayLeft 11s ease-in-out infinite', 
-              width: 'min(50vw, 35vh, 260px)', 
-              height: 'min(85vw, 60vh, 420px)',
-              bottom: '-5px',
-            }}
+            className="relative z-10 w-full max-w-sm flex flex-col items-center justify-center mt-auto mb-16"
+            style={{ animation: 'riseUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) both' }}
           >
-            <svg viewBox="0 0 280 400" className="w-full h-full" fill="none">
-              <defs>
-                <linearGradient id="palm-left-trunk" x1="50%" y1="100%" x2="50%" y2="0%">
-                  <stop offset="0%" stopColor="#05000e" stopOpacity="1" />
-                  <stop offset="40%" stopColor="#030518" stopOpacity="0.9" />
-                  <stop offset="100%" stopColor="#00e5ff" stopOpacity="1" />
-                </linearGradient>
-                <linearGradient id="palm-left-leaves" x1="0%" y1="100%" x2="100%" y2="0%">
-                  <stop offset="0%" stopColor="#00c2ff" stopOpacity="0.8" />
-                  <stop offset="100%" stopColor="#00f5d4" stopOpacity="0.95" />
-                </linearGradient>
-              </defs>
-              <path d="M 0,400 Q 60,300 100,120 Q 112,120 70,400 Z" fill="url(#palm-left-trunk)" />
-              {/* Contained Leaves with individual rustling centers */}
-              <path d="M 100,120 C 60,80 10,100 0,130 C 20,110 70,110 100,120 Z" fill="url(#palm-left-leaves)" style={{ transformOrigin: '100px 120px', animation: 'rustle 5s ease-in-out infinite' }} />
-              <path d="M 100,120 C 50,110 0,160 -10,210 C 20,170 70,140 100,120 Z" fill="url(#palm-left-leaves)" style={{ transformOrigin: '100px 120px', animation: 'rustle 6s ease-in-out infinite 0.4s' }} />
-              <path d="M 100,120 C 60,170 30,230 10,280 C 40,230 80,180 100,120 Z" fill="url(#palm-left-leaves)" style={{ transformOrigin: '100px 120px', animation: 'rustle 7s ease-in-out infinite 0.8s' }} />
-              <path d="M 100,120 C 110,60 140,40 160,20 C 140,50 120,80 100,120 Z" fill="url(#palm-left-leaves)" style={{ transformOrigin: '100px 120px', animation: 'rustle 5.5s ease-in-out infinite 0.2s' }} />
-              <path d="M 100,120 C 140,80 190,100 210,130 C 180,110 130,110 100,120 Z" fill="url(#palm-left-leaves)" style={{ transformOrigin: '100px 120px', animation: 'rustle 6.5s ease-in-out infinite 0.6s' }} />
-              <path d="M 100,120 C 150,120 200,160 210,210 C 180,170 130,140 100,120 Z" fill="url(#palm-left-leaves)" style={{ transformOrigin: '100px 120px', animation: 'rustle 4.8s ease-in-out infinite 0.1s' }} />
-              <path d="M 100,120 C 130,170 150,220 160,270 C 140,210 120,170 100,120 Z" fill="url(#palm-left-leaves)" style={{ transformOrigin: '100px 120px', animation: 'rustle 6.2s ease-in-out infinite 0.3s' }} />
-            </svg>
-          </div>
-
-          <div 
-            className="absolute right-0 bottom-0 z-0 pointer-events-none select-none origin-bottom-right" 
-            style={{ 
-              animation: 'swayRight 13s ease-in-out infinite', 
-              width: 'min(50vw, 35vh, 260px)', 
-              height: 'min(85vw, 60vh, 420px)',
-              bottom: '-5px',
-            }}
-          >
-            <svg viewBox="0 0 280 400" className="w-full h-full" fill="none">
-              <defs>
-                <linearGradient id="palm-right-trunk" x1="50%" y1="100%" x2="50%" y2="0%">
-                  <stop offset="0%" stopColor="#05000e" stopOpacity="1" />
-                  <stop offset="40%" stopColor="#120018" stopOpacity="0.9" />
-                  <stop offset="100%" stopColor="#fc03a1" stopOpacity="1" />
-                </linearGradient>
-                <linearGradient id="palm-right-leaves" x1="100%" y1="100%" x2="0%" y2="0%">
-                  <stop offset="0%" stopColor="#8c00ff" stopOpacity="0.8" />
-                  <stop offset="100%" stopColor="#fc03a1" stopOpacity="0.95" />
-                </linearGradient>
-              </defs>
-              <path d="M 280,400 Q 220,300 180,120 Q 168,120 210,400 Z" fill="url(#palm-right-trunk)" />
-              {/* Contained Leaves with individual rustling centers */}
-              <path d="M 180,120 C 140,80 90,100 70,130 C 100,110 150,110 180,120 Z" fill="url(#palm-right-leaves)" style={{ transformOrigin: '180px 120px', animation: 'rustle 5s ease-in-out infinite' }} />
-              <path d="M 180,120 C 130,120 80,160 70,210 C 100,170 150,140 180,120 Z" fill="url(#palm-right-leaves)" style={{ transformOrigin: '180px 120px', animation: 'rustle 6s ease-in-out infinite 0.5s' }} />
-              <path d="M 180,120 C 150,170 130,220 120,270 C 140,210 160,170 180,120 Z" fill="url(#palm-right-leaves)" style={{ transformOrigin: '180px 120px', animation: 'rustle 7s ease-in-out infinite 0.9s' }} />
-              <path d="M 180,120 C 170,60 140,40 120,20 C 140,50 160,80 180,120 Z" fill="url(#palm-right-leaves)" style={{ transformOrigin: '180px 120px', animation: 'rustle 5.5s ease-in-out infinite 0.1s' }} />
-              <path d="M 180,120 C 220,80 270,100 280,130 C 260,110 210,110 180,120 Z" fill="url(#palm-right-leaves)" style={{ transformOrigin: '180px 120px', animation: 'rustle 6.5s ease-in-out infinite 0.7s' }} />
-              <path d="M 180,120 C 230,110 280,160 290,210 C 260,170 210,140 180,120 Z" fill="url(#palm-right-leaves)" style={{ transformOrigin: '180px 120px', animation: 'rustle 4.8s ease-in-out infinite 0.2s' }} />
-              <path d="M 180,120 C 220,170 250,230 270,280 C 240,230 200,180 180,120 Z" fill="url(#palm-right-leaves)" style={{ transformOrigin: '180px 120px', animation: 'rustle 6.2s ease-in-out infinite 0.3s' }} />
-            </svg>
-          </div>
-
-          {/* RESPONSIVE LAYOUT CONTAINER */}
-          <div className="relative z-10 w-full max-w-6xl flex flex-col lg:flex-row items-center justify-center gap-8 lg:gap-16 my-auto pt-6 lg:pt-0">
-            
-            {/* COLUMN 1: 3D Medallion (Flyer) with curved CANCÚN text below it */}
-            <div 
-              className="relative shrink-0 flex flex-col items-center justify-center px-4 w-full sm:w-[400px] lg:w-[460px] pb-6 lg:pb-0 pt-2 lg:pt-6"
-              style={{ animation: 'riseUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) both' }}
+            <button
+              onClick={onNext}
+              className="w-full py-5 rounded-2xl font-display text-2xl tracking-[0.2em] font-extrabold hover:scale-[1.03] active:scale-[0.97] transition-all duration-300 relative overflow-hidden group shadow-[0_20px_50px_rgba(252,3,161,0.35)]"
+              style={{
+                background: 'linear-gradient(135deg, rgb(var(--c-primary)) 0%, #ff4b91 50%, #ff8c37 100%)',
+                color: '#ffffff',
+                border: '1px solid rgba(255,255,255,0.35)',
+              }}
             >
-              {/* 3D Tilting Poster wrapper with custom halos */}
-              <div
-                onMouseMove={(e) => {
-                  const card = e.currentTarget;
-                  const rect = card.getBoundingClientRect();
-                  const x = e.clientX - rect.left - rect.width / 2;
-                  const y = e.clientY - rect.top - rect.height / 2;
-                  card.style.transform = `perspective(1000px) rotateX(${-y / 15}deg) rotateY(${x / 15}deg) scale(1.05)`;
-                  card.style.boxShadow = '0 35px 80px rgba(0, 0, 0, 0.9), 0 0 45px rgba(252, 3, 161, 0.45), 0 0 90px rgba(0, 234, 255, 0.25)';
-                }}
-                onMouseLeave={(e) => {
-                  const card = e.currentTarget;
-                  card.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) scale(1)';
-                  card.style.boxShadow = '0 20px 50px rgba(0, 0, 0, 0.75), 0 0 35px rgba(252, 3, 161, 0.25)';
-                }}
-                style={{
-                  width: 'min(68vw, 32vh, 290px)',
-                  height: 'min(68vw, 32vh, 290px)',
-                  transition: 'transform 0.2s ease-out, box-shadow 0.25s ease',
-                  boxShadow: '0 20px 50px rgba(0, 0, 0, 0.75), 0 0 35px rgba(252, 3, 161, 0.25)',
-                  cursor: 'pointer',
-                  position: 'relative',
-                  marginTop: '20px',
-                }}
-                className="group"
-              >
-                {/* Rotating Conic Glow Halo behind the circle */}
+              {/* Sliding Gradient Overlay on Hover */}
+              <div className="absolute inset-0 bg-gradient-to-r from-[#ff4b91] via-[#ff8c37] to-rgb(var(--c-primary)) opacity-0 group-hover:opacity-100 transition-opacity duration-500 ease-out z-0" />
+
+              {/* Sparkling Light Sweep Overlay */}
+              <div className="absolute inset-0 pointer-events-none overflow-hidden z-10">
                 <div 
-                  className="absolute -inset-1.5 rounded-full pointer-events-none opacity-60 group-hover:opacity-90 blur-md transition-opacity duration-300 z-0"
-                  style={{
-                    background: 'conic-gradient(from 0deg, #fc03a1, #00e5ff, #fc03a1)',
-                    animation: 'spinRing 8s linear infinite',
-                  }}
+                  className="absolute inset-y-0 w-1/3 bg-gradient-to-r from-transparent via-white/40 to-transparent -skew-x-25"
+                  style={{ 
+                    left: '-100%',
+                    animation: 'sweep 3.5s infinite ease-in-out',
+                  }} 
                 />
-
-                {/* HUD Framing Brackets behind the flyer */}
-                <div className="absolute -inset-6 border border-white/5 pointer-events-none rounded-2xl scale-[1.01] hidden sm:block">
-                  <div className="absolute top-0 left-0 w-4 h-4 border-t border-l border-white/20 rounded-tl-md" />
-                  <div className="absolute top-0 right-0 w-4 h-4 border-t border-r border-white/20 rounded-tr-md" />
-                  <div className="absolute bottom-0 left-0 w-4 h-4 border-b border-l border-white/20 rounded-bl-md" />
-                  <div className="absolute bottom-0 right-0 w-4 h-4 border-b border-r border-white/20 rounded-br-md" />
-                </div>
-                
-                {/* Real flyer image */}
-                <div className="absolute inset-0 rounded-full border-[5px] border-white/10 overflow-hidden select-none bg-[#090216] z-10">
-                  <img 
-                    src="/grand_national_bg.jpg" 
-                    alt="12th Grand National" 
-                    className="w-full h-full object-cover select-none pointer-events-none scale-[1.01] group-hover:scale-105 transition-transform duration-700"
-                  />
-                  <div className="absolute inset-0 pointer-events-none bg-gradient-to-tr from-white/0 via-white/5 to-white/15 opacity-60 mix-blend-overlay" />
-                </div>
-                
-                {/* Curved CANCÚN Text wrapped BELOW the poster circumference */}
-                <svg 
-                  viewBox="0 0 400 400" 
-                  className="absolute -inset-[28px] w-[calc(100%+56px)] h-[calc(100%+56px)] pointer-events-none z-20 select-none overflow-visible"
-                >
-                  <defs>
-                    <path 
-                      id="curve" 
-                      d="M 60,300 A 160,160 0 0,0 340,300" 
-                      fill="none" 
-                    />
-                    <linearGradient id="cancun-text-grad" x1="0%" y1="0%" x2="100%" y2="0%">
-                      <stop offset="0%" stopColor="#00e5ff" />
-                      <stop offset="50%" stopColor="#ffffff" />
-                      <stop offset="100%" stopColor="#fc03a1" />
-                    </linearGradient>
-                  </defs>
-                  <text className="font-display font-black tracking-[0.26em]" style={{ fontSize: '38px' }}>
-                    <textPath 
-                      href="#curve" 
-                      startOffset="50%" 
-                      textAnchor="middle" 
-                      fill="url(#cancun-text-grad)"
-                      style={{ 
-                        animation: 'textGlow 4s ease-in-out infinite'
-                      }}
-                    >
-                      CANCÚN
-                    </textPath>
-                  </text>
-                </svg>
-              </div>
-            </div>
-
-            {/* COLUMN 2: Info & Action Buttons */}
-            <div 
-              className="flex-1 w-full flex flex-col items-center lg:items-start text-center lg:text-left space-y-5 sm:space-y-7 px-2 max-w-lg justify-center"
-              style={{ animation: 'riseUp 0.7s 0.2s cubic-bezier(0.16, 1, 0.3, 1) both' }}
-            >
-              <div className="space-y-4 w-full">
-                {/* Brand Event Name with modern drop-shadows */}
-                {(() => {
-                  let name = event?.name || '12th GRAND NATIONAL';
-                  name = name
-                    .replace(/gran final/gi, '')
-                    .replace(/final nacional/gi, '')
-                    .replace(/cancún/gi, '')
-                    .replace(/cancun/gi, '')
-                    .replace(/[\s-]+/g, ' ')
-                    .trim();
-                  const displayName = name || '12th GRAND NATIONAL';
-                  return (
-                    <h1 className="font-display font-bold uppercase leading-[1.05] tracking-wider text-3xl sm:text-5xl bg-gradient-to-r from-white via-purple-100 to-fuchsia-200 bg-clip-text text-transparent filter drop-shadow-[0_4px_12px_rgba(0,0,0,0.5)]">
-                      {displayName}
-                    </h1>
-                  );
-                })()}
-
-                {/* DATES ONLY (Stylized premium glassmorphism capsule) */}
-                <div className="pt-2 flex justify-center lg:justify-start w-full">
-                  <div 
-                    className="inline-flex items-center gap-3 px-5 py-2.5 bg-white/[0.03] border border-white/[0.08] rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.05)] backdrop-blur-xl relative overflow-hidden group"
-                  >
-                    {/* Inner sheen overlay on hover */}
-                    <div className="absolute -inset-px bg-gradient-to-r from-transparent via-white/5 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000 ease-out" />
-                    
-                    <div className="flex items-center gap-2">
-                      <span className="flex h-2 w-2 relative">
-                        <span className="animate-[pulseLive_1.5s_infinite] absolute inline-flex h-full w-full rounded-full bg-[rgb(var(--c-primary))] opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-2 w-2 bg-[rgb(var(--c-primary))]"></span>
-                      </span>
-                      <span className="text-[9px] sm:text-[10px] font-bold tracking-[0.2em] text-[rgb(var(--c-primary))] uppercase font-sans">
-                        REGISTRO ABIERTO
-                      </span>
-                    </div>
-                    
-                    <div className="h-4 w-[1px] bg-white/10" />
-
-                    <Calendar className="w-4.5 h-4.5 text-[rgb(var(--c-primary))] filter drop-shadow-[0_0_8px_rgba(252,3,161,0.5)] shrink-0 animate-pulse" />
-                    <span className="font-display font-semibold text-base sm:text-lg text-white/90 tracking-[0.08em] uppercase">
-                      {event?.date ? formatEventDate(event.date) : '26 y 27 de Junio, 2026'}
-                    </span>
-                  </div>
-                </div>
               </div>
 
-              {/* Call to Action Button (Sunset Neon Gradient with Sparkling Sweep) */}
-              <div 
-                className="w-full relative pt-2"
-                style={{ animation: 'riseUp 0.7s 0.35s cubic-bezier(0.16, 1, 0.3, 1) both' }}
-              >
-                <button
-                  onClick={onNext}
-                  className="w-full py-5 rounded-2xl font-display text-2xl tracking-[0.18em] font-extrabold hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 relative overflow-hidden group shadow-2xl"
-                  style={{
-                    background: 'linear-gradient(135deg, rgb(var(--c-primary)) 0%, #ff4b91 50%, #ff8c37 100%)',
-                    color: '#ffffff',
-                    border: '1px solid rgba(255,255,255,0.3)',
-                    boxShadow: '0 10px 40px rgba(252, 3, 161, 0.45), inset 0 1px 0 rgba(255,255,255,0.4)',
-                  }}
-                >
-                  {/* Sliding Gradient Overlay on Hover */}
-                  <div className="absolute inset-0 bg-gradient-to-r from-[#ff4b91] via-[#ff8c37] to-rgb(var(--c-primary)) opacity-0 group-hover:opacity-100 transition-opacity duration-500 ease-out z-0" />
-
-                  {/* Sparkling Light Sweep Overlay */}
-                  <div className="absolute inset-0 pointer-events-none overflow-hidden z-10">
-                    <div 
-                      className="absolute inset-y-0 w-1/3 bg-gradient-to-r from-transparent via-white/40 to-transparent -skew-x-25"
-                      style={{ 
-                        left: '-100%',
-                        animation: 'sweep 3.5s infinite ease-in-out',
-                      }} 
-                    />
-                  </div>
-
-                  <span className="relative z-20 flex items-center justify-center gap-3 uppercase font-black">
-                    COMENZAR REGISTRO
-                    <Sparkles className="w-5.5 h-5.5 text-white animate-bounce shrink-0" />
-                  </span>
-                </button>
-              </div>
-
-            </div>
-
+              <span className="relative z-20 flex items-center justify-center gap-3.5 uppercase font-black">
+                COMENZAR REGISTRO
+                <Sparkles className="w-6 h-6 text-white animate-bounce shrink-0" />
+              </span>
+            </button>
           </div>
         </div>
       )
