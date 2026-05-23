@@ -365,6 +365,40 @@ export default function RegisterPage({ params }: Props) {
     }
   }, [])
 
+  // Salvaguarda para evitar destellos del estado previo o del bfcache de WebKit en iOS Chrome/Safari
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    
+    // 1. Escuchar el evento pageshow (bfcache de WebKit en iOS)
+    const handlePageShow = (event: PageTransitionEvent) => {
+      if (event.persisted) {
+        window.location.reload()
+      }
+    }
+    window.addEventListener('pageshow', handlePageShow)
+
+    // 2. Forzar que el estado en montaje sea estrictamente welcome (o confirmed si ya se completó)
+    try {
+      const raw = localStorage.getItem(LS_KEY(eventId))
+      if (raw) {
+        const saved = JSON.parse(raw) as State
+        if (saved.confirmedRegistrationId) {
+          setStep({ kind: 'confirmed' })
+        } else {
+          setStep({ kind: 'welcome' })
+        }
+      } else {
+        setStep({ kind: 'welcome' })
+      }
+    } catch {
+      setStep({ kind: 'welcome' })
+    }
+
+    return () => {
+      window.removeEventListener('pageshow', handlePageShow)
+    }
+  }, [eventId])
+
   useEffect(() => {
     let cancelled = false
     ;(async () => {
@@ -2552,7 +2586,7 @@ function FullSummary({ state, editMode, confirmed, isEditSave, confirm, saving, 
                   </p>
                   • Costo de <strong>preventa: $500 MXN</strong> por entrada (válido antes del <strong>miércoles 17 de Junio</strong>).<br />
                   • Costo <strong>regular: $600 MXN</strong> por entrada (a partir del 18 de Junio).<br />
-                  <strong className="block text-red-700 font-extrabold uppercase mt-1">⚠️ IMPORTANTE: No se venderán entradas físicas el día del evento en las taquillas del recinto; todos los pases deben adquirirse en línea.</strong>
+                  <strong className="block text-red-700 font-extrabold uppercase mt-1">⚠️ IMPORTANTE: No se venderán entradas el día del evento.</strong>
                 </div>
                 <p className="text-[11px] text-[rgb(var(--c-text)/0.75)]">Costo por Entrada Actual: <strong className="font-bold text-[rgb(var(--c-primary))]">{formatMoney(PRECIO_ENTRADA)} MXN</strong>.</p>
                 {!isBeforeTicketsDeadline(event?.date) && (
@@ -2760,7 +2794,7 @@ function FullSummary({ state, editMode, confirmed, isEditSave, confirm, saving, 
             <div className="bg-purple-50/50 border border-purple-200/50 rounded-xl p-3 text-[11px] leading-relaxed text-purple-950 mb-3">
               • Costo de <strong>preventa: $500 MXN</strong> por entrada (válido antes del <strong>miércoles 17 de Junio</strong>).<br />
               • Costo <strong>regular: $600 MXN</strong> por entrada (a partir del 18 de Junio).<br />
-              <strong className="block text-red-700 font-extrabold uppercase mt-1">⚠️ IMPORTANTE: No se venderán entradas físicas el día del evento en las taquillas del recinto; todos los pases deben adquirirse en línea.</strong>
+              <strong className="block text-red-700 font-extrabold uppercase mt-1">⚠️ IMPORTANTE: No se venderán entradas el día del evento.</strong>
             </div>
             
             {isBeforeTicketsDeadline(event?.date) ? (
