@@ -1196,9 +1196,11 @@ function StepView(props: {
             <source src="/d4e.mp4" type="video/mp4" />
           </video>
 
-          {/* PERMANENT BOTTOM CINEMATIC DARK GRADIENT MASK (Hides Gemini watermark and enhances button contrast) */}
+          {/* LOCALIZED SHIMMERING GOLD FLARE ORB (Camouflages and hides the Gemini watermark responsively) */}
           <div 
-            className="absolute bottom-0 left-0 right-0 h-36 z-10 bg-gradient-to-t from-[#020005] via-[#020005]/95 to-transparent pointer-events-none"
+            className={`absolute bottom-[88px] right-[26px] z-10 w-16 h-16 rounded-full bg-[radial-gradient(circle,rgba(251,191,36,0.38)_0%,rgba(245,158,11,0.15)_50%,transparent_100%)] blur-[5px] pointer-events-none transition-all duration-1000 animate-pulse ${
+              videoEnded ? 'opacity-0 scale-90' : 'opacity-100 scale-100'
+            }`}
           />
 
           {/* CINEMATIC BLURRED OVERLAY WHEN VIDEO ENDS */}
