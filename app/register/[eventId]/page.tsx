@@ -124,8 +124,8 @@ function initialState(): State {
     dancers: [],
     actCount: 0,
     acts: [],
-    costPaquete: PRECIO_PARTICIPACION,
-    costRepeticion: PRECIO_REPETICION,
+    costPaquete: PRECIO_INSCRIPCION,
+    costRepeticion: PRECIO_ADICIONAL_COREOGRAFIA,
     confirmedRegistrationId: null,
     ticketsCount: 0,
     confirmedAt: null,
@@ -143,25 +143,71 @@ function participacionesPorAlumno(state: State): Map<number, number> {
   return counts
 }
 
-const PRECIO_PARTICIPACION = 1700
-const PRECIO_REPETICION = 300
-const PRECIO_ASISTENTE = 1000
-const PRECIO_ENTRADA = 400
+const PRECIO_INSCRIPCION = 2700
+const PRECIO_ADICIONAL_COREOGRAFIA = 500
+const PRECIO_ASISTENTE = 400
+const PRECIO_ENTRADA = 500
 const DANCERS_POR_ENTRADA_GRATIS = 8
+
+function isBeforeJune15(): boolean {
+  const now = new Date()
+  const deadline = new Date(2026, 5, 15) // Mes 5 es Junio en JS (0-indexed)
+  return now < deadline
+}
+
+function getTicketsDeadline(eventDateIso: string | null | undefined): Date | null {
+  if (!eventDateIso) return null
+  try {
+    const eventDate = new Date(eventDateIso + 'T00:00:00')
+    if (isNaN(eventDate.getTime())) return null
+    const dayOfWeek = eventDate.getDay()
+    const diffToWednesday = (dayOfWeek - 3 + 7) % 7
+    const daysToSubtract = diffToWednesday === 0 ? 7 : diffToWednesday
+    const wednesdayBefore = new Date(eventDate)
+    wednesdayBefore.setDate(eventDate.getDate() - daysToSubtract)
+    wednesdayBefore.setHours(23, 59, 59, 999)
+    return wednesdayBefore
+  } catch {
+    return null
+  }
+}
+
+function isBeforeTicketsDeadline(eventDateIso: string | null | undefined): boolean {
+  const deadline = getTicketsDeadline(eventDateIso)
+  if (!deadline) return true
+  return new Date() <= deadline
+}
 
 function costoTotal(state: State): number {
   const counts = participacionesPorAlumno(state)
   let total = 0
-  counts.forEach(n => {
-    if (n >= 1) total += PRECIO_PARTICIPACION
-    if (n > 1) total += (n - 1) * PRECIO_REPETICION
-  })
-  total += PRECIO_ASISTENTE // coach siempre paga
   const filledDancers = state.dancers.filter(d => d.name.trim().length > 0)
+  const beforeJune15 = isBeforeJune15()
+
+  // Cada participante paga la inscripción base y coreografías extras
+  state.dancers.forEach((dancer, idx) => {
+    if (dancer.name.trim().length === 0) return
+    total += PRECIO_INSCRIPCION
+    
+    const n = counts.get(idx) ?? 0
+    if (beforeJune15) {
+      if (n > 1) {
+        total += (n - 1) * PRECIO_ADICIONAL_COREOGRAFIA
+      }
+    } else {
+      total += n * PRECIO_ADICIONAL_COREOGRAFIA
+    }
+  })
+
+  // El coach no paga entrada (Gratis), por lo tanto no se suma costo de coach
+
+  // Asistentes de staff (adicionales)
   const freeEntries = Math.floor(filledDancers.length / DANCERS_POR_ENTRADA_GRATIS)
   const assistants = state.coach.assistants.filter(a => a.trim()).length
   const paidAssistants = Math.max(0, assistants - freeEntries)
   total += paidAssistants * PRECIO_ASISTENTE
+
+  // Entradas para acompañantes
   total += (state.ticketsCount ?? 0) * PRECIO_ENTRADA
   return total
 }
@@ -350,10 +396,10 @@ export default function RegisterPage({ params }: Props) {
             saved.coach.assistants = []
           }
           if (saved.costPaquete === null) {
-            saved.costPaquete = PRECIO_PARTICIPACION
+            saved.costPaquete = PRECIO_INSCRIPCION
           }
           if (saved.costRepeticion === null) {
-            saved.costRepeticion = PRECIO_REPETICION
+            saved.costRepeticion = PRECIO_ADICIONAL_COREOGRAFIA
           }
           // Parse city from academy name if it contains "(city)" and city is not set
           if (saved.city === undefined || saved.city === null) {
@@ -1005,12 +1051,12 @@ export default function RegisterPage({ params }: Props) {
             })()}
             {step.kind === 'acts' && (
               <span className="text-xs font-display text-[rgb(var(--c-primary))] font-bold bg-[rgb(var(--c-primary)/0.1)] border border-[rgb(var(--c-primary)/0.2)] px-3 py-1 rounded-full">
-                {state.acts.length} {state.acts.length === 1 ? 'Acto' : 'Actos'}
+                {state.acts.length} {state.acts.length === 1 ? 'Coreografía' : 'Coreografías'}
               </span>
             )}
             {step.kind === 'summary' && (
               <span className="text-xs font-display text-[rgb(var(--c-primary))] font-bold bg-[rgb(var(--c-primary)/0.1)] border border-[rgb(var(--c-primary)/0.2)] px-3 py-1 rounded-full">
-                {state.dancers.length} Alum. / {state.acts.length} {state.acts.length === 1 ? 'Acto' : 'Actos'}
+                {state.dancers.length} Alum. / {state.acts.length} {state.acts.length === 1 ? 'Coreografía' : 'Coreografías'}
               </span>
             )}
           </div>
@@ -1571,7 +1617,20 @@ function StepView(props: {
                   ))}
                 </div>
               )}
-              <p className="text-[10px] text-[rgb(var(--c-text)/0.5)] text-center">$1,000 por asistente · 1 gratis por cada 8 integrantes</p>
+              <div className="space-y-2 pt-1.5">
+                <p className="text-[10px] text-[rgb(var(--c-text)/0.65)] text-center font-bold">
+                  $400 MXN por asistente de staff · 1 pase gratis por cada 8 integrantes inscritos
+                </p>
+                <div className="bg-amber-50/60 border border-amber-200/40 rounded-2xl p-3 text-[10px] leading-relaxed text-amber-900 font-medium space-y-1">
+                  <p className="flex items-center gap-1.5 font-bold text-amber-950">
+                    <Info className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                    ADVERTENCIA IMPORTANTE DE ACCESO A BACKSTAGE:
+                  </p>
+                  <p>
+                    No existe un límite en el número de asistentes de staff que puedes registrar. No obstante, toma en cuenta que incluso si se liquidan sus entradas, <strong>su ingreso al área de backstage está sujeto a revisión y podría restringirse</strong>. Esto se implementa por razones de espacio limitado y la estricta seguridad de las niñas, dependiendo de si las condiciones del lugar lo hacen viable.
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -1800,7 +1859,7 @@ function StepView(props: {
         <div className="space-y-3 py-1 overflow-visible max-h-none md:overflow-y-auto md:max-h-[82vh] px-0 sm:px-1 flex flex-col md:h-full md:min-h-0" style={{ animation: 'fadeIn 0.3s ease-out' }}>
           <div className="shrink-0 flex items-center justify-between px-4 sm:px-0">
             <div className="text-center lg:text-left space-y-0.5">
-              <h2 className="font-display text-3xl text-[rgb(var(--c-text-strong))]">Paso 3: Constructor de Actos</h2>
+              <h2 className="font-display text-3xl text-[rgb(var(--c-text-strong))]">Paso 3: Registro de Coreografías</h2>
               <p className="text-xs text-[rgb(var(--c-text))]">Registra tus coreografías, modalidades y selecciona a sus integrantes.</p>
             </div>
             
@@ -1809,8 +1868,21 @@ function StepView(props: {
               onClick={handleCreateAct}
               className="inline-flex items-center gap-1 bg-[rgb(var(--c-primary))] hover:bg-[rgb(var(--c-primary-strong))] text-white px-4 py-2.5 rounded-2xl font-display text-sm tracking-wider font-bold shadow-sm active:scale-95 transition-all duration-150 shrink-0"
             >
-              <Plus className="w-4 h-4" /> CREAR ACTO
+              <Plus className="w-4 h-4" /> AGREGAR COREOGRAFÍA
             </button>
+          </div>
+
+          <div className="bg-purple-50/50 border border-purple-200/50 rounded-2xl p-3.5 sm:p-4 text-xs sm:text-sm text-[rgb(var(--c-text))] space-y-1 mx-4 sm:mx-0 animate-fadeIn shrink-0">
+            <div className="flex items-center gap-2 text-purple-800 font-bold mb-1">
+              <Info className="w-4 h-4 text-purple-600 shrink-0" />
+              <span>INFORMACIÓN DE TARIFAS Y COREOGRAFÍAS</span>
+            </div>
+            <p className="leading-relaxed">
+              La inscripción por participante es de <strong>$2,700 MXN</strong> e incluye su <strong>primera coreografía o presentación</strong> (válido únicamente para registros completados antes del <strong>15 de Junio</strong>).
+            </p>
+            <p className="leading-relaxed text-[rgb(var(--c-text)/0.8)]">
+              Si un integrante participa en <strong>coreografías adicionales</strong>, se aplicará un costo de <strong>$500 MXN</strong> por cada coreografía extra en la que colabore. El coach tiene acceso gratuito ($0 MXN).
+            </p>
           </div>
 
           <div className="overflow-visible md:flex-1 md:min-h-0 md:overflow-y-auto">
@@ -1820,9 +1892,9 @@ function StepView(props: {
                   <Sparkles className="w-12 h-12" />
                 </div>
                 <div>
-                  <h4 className="font-display text-xl text-[rgb(var(--c-text-strong))]">Ningún acto creado todavía</h4>
+                  <h4 className="font-display text-xl text-[rgb(var(--c-text-strong))]">Ninguna coreografía registrada todavía</h4>
                   <p className="text-xs text-[rgb(var(--c-text)/0.7)] mt-1 max-w-xs mx-auto">
-                    {'Presiona "Crear Acto" para registrar tu primera coreografía/participación.'}
+                    {'Presiona "Agregar Coreografía" para registrar tu primera coreografía/participación.'}
                   </p>
                 </div>
               </div>
@@ -2001,7 +2073,7 @@ function StepView(props: {
                                 
                                 {act.ageCategory && (
                                   <span className="text-[10px] font-bold font-display bg-[rgb(var(--c-primary))] text-white px-2.5 py-0.5 rounded-lg uppercase">
-                                    Categoría Acto: {AGE_CATEGORY_LABELS[act.ageCategory]}
+                                    Categoría de Coreografía: {AGE_CATEGORY_LABELS[act.ageCategory]}
                                   </span>
                                 )}
                               </div>
@@ -2108,7 +2180,7 @@ function StepView(props: {
                 disabled={!isAllValid}
                 className="w-full bg-[rgb(var(--c-primary))] hover:bg-[rgb(var(--c-primary-strong))] active:bg-[rgb(var(--c-primary-strong))] text-white font-display text-lg tracking-widest py-4 rounded-2xl transition-all shadow-md active:scale-[0.98] duration-150 font-bold disabled:opacity-40 disabled:pointer-events-none"
               >
-                CONFIRMAR CONFIGURACIÓN DE ACTOS ({state.acts.length} {state.acts.length === 1 ? 'Acto' : 'Actos'})
+                CONFIRMAR CONFIGURACIÓN DE COREOGRAFÍAS ({state.acts.length} {state.acts.length === 1 ? 'Coreografía' : 'Coreografías'})
               </button>
             ) : (
               <button
@@ -2117,7 +2189,7 @@ function StepView(props: {
                 disabled={!isAllValid}
                 className="w-full bg-gradient-to-r from-purple-700 via-purple-600 to-pink-600 hover:from-purple-800 hover:to-pink-700 active:scale-[0.98] text-white font-display text-lg sm:text-xl tracking-widest py-4 rounded-2xl transition-all duration-200 shadow-[0_4px_20px_rgba(168,85,247,0.3)] hover:shadow-[0_6px_25px_rgba(168,85,247,0.5)] disabled:opacity-30 disabled:pointer-events-none font-black text-center flex items-center justify-center gap-2"
               >
-                SIGUIENTE: IR A LA REVISIÓN ({state.acts.length} {state.acts.length === 1 ? 'Acto' : 'Actos'})
+                SIGUIENTE: IR A LA REVISIÓN ({state.acts.length} {state.acts.length === 1 ? 'Coreografía' : 'Coreografías'})
                 <ArrowRight className="w-5 h-5 animate-pulse" />
               </button>
             )}
@@ -2229,6 +2301,34 @@ function FullSummary({ state, editMode, confirmed, isEditSave, confirm, saving, 
   const chgDeadline = event?.date ? getChangesDeadline(event.date) : '7 días antes del evento'
 
   const scrollContainerRef = useRef<HTMLDivElement>(null)
+  
+  const [showWhatsAppModal, setShowWhatsAppModal] = useState(false)
+  const [whatsappCountdown, setWhatsappCountdown] = useState(5)
+
+  useEffect(() => {
+    let interval: any = null
+    if (showWhatsAppModal) {
+      setWhatsappCountdown(5)
+      interval = setInterval(() => {
+        setWhatsappCountdown(prev => {
+          if (prev <= 1) {
+            if (interval) clearInterval(interval)
+            return 0
+          }
+          return prev - 1
+        })
+      }, 1000)
+    }
+    return () => {
+      if (interval) clearInterval(interval)
+    }
+  }, [showWhatsAppModal])
+
+  const handleWhatsAppRedirect = () => {
+    setShowWhatsAppModal(false)
+    const messageText = encodeURIComponent(`Hola, acabo de confirmar mi registro en Dance4Ever para el evento ${event?.name || ''}.\n\nAquí adjunto mi comprobante de pago del registro.`)
+    window.open(`https://wa.me/525645415263?text=${messageText}`, '_blank')
+  }
 
   useEffect(() => {
     if (confirmed) {
@@ -2391,9 +2491,9 @@ function FullSummary({ state, editMode, confirmed, isEditSave, confirm, saving, 
                       </div>
                       <div className="text-right shrink-0">
                         {n > 0 ? (
-                          <span className="block text-[10px] text-[rgb(var(--c-primary))] font-bold bg-[rgb(var(--c-primary)/0.03)] px-1.5 py-0.5 rounded-lg border border-[rgb(var(--c-primary)/0.15)] leading-none">{n} Acto{n === 1 ? '' : 's'}</span>
+                          <span className="block text-[10px] text-[rgb(var(--c-primary))] font-bold bg-[rgb(var(--c-primary)/0.03)] px-1.5 py-0.5 rounded-lg border border-[rgb(var(--c-primary)/0.15)] leading-none">{n} Coreografía{n === 1 ? '' : 's'}</span>
                         ) : (
-                          <span className="block text-[9px] text-[rgb(var(--c-text)/0.4)] italic">Sin acto</span>
+                          <span className="block text-[9px] text-[rgb(var(--c-text)/0.4)] italic">Sin coreografía</span>
                         )}
                       </div>
                     </div>
@@ -2466,17 +2566,23 @@ function FullSummary({ state, editMode, confirmed, isEditSave, confirm, saving, 
               <div className="space-y-1 max-w-md">
                 <p className="text-xs font-semibold text-[rgb(var(--c-text-strong))]">Recuerda que por este medio puedes registrar cuántas entradas van a comprar para familiares, papás y acompañantes.</p>
                 <p className="text-[11px] text-[rgb(var(--c-text)/0.75)] italic font-medium text-purple-700 dark:text-purple-400">
-                  Si en este momento ya tienes entradas confirmadas, colócalas aquí. Podrás adquirir más entradas adicionales más adelante después de confirmar tu registro.
+                  La entrada para familiares, papás y conocidos tiene un costo de <strong>{formatMoney(PRECIO_ENTRADA)} MXN</strong>. La preventa en línea está disponible hasta el miércoles anterior al evento.
                 </p>
                 <p className="text-[11px] text-[rgb(var(--c-text)/0.75)]">Costo por Entrada: <strong className="font-bold text-[rgb(var(--c-primary))]">{formatMoney(PRECIO_ENTRADA)} MXN</strong>.</p>
-                {editMode && (
+                {!isBeforeTicketsDeadline(event?.date) && (
+                  <div className="bg-amber-50/80 border border-amber-200/50 rounded-2xl p-3 mt-1.5 text-xs text-amber-950 font-semibold flex items-start gap-2">
+                    <Info className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                    <span>La venta de entradas en línea ha concluido (cerró el miércoles anterior al evento). Las entradas adicionales podrán adquirirse únicamente en la taquilla del recinto el día del evento.</span>
+                  </div>
+                )}
+                {editMode && isBeforeTicketsDeadline(event?.date) && (
                   <p className="text-[10px] text-amber-600 font-bold bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded-xl mt-1.5 inline-block">
                     ⚠️ Para adquirir entradas adicionales, utiliza la opción al confirmar tu registro.
                   </p>
                 )}
               </div>
               <div className="flex items-center gap-4 self-center md:self-auto bg-[rgb(var(--c-surface))] border border-[rgb(var(--c-border)/0.5)] rounded-2xl p-1.5 shadow-xs">
-                {confirmed || editMode ? (
+                {confirmed || editMode || !isBeforeTicketsDeadline(event?.date) ? (
                   <div className="px-4 py-1.5 flex items-center gap-2">
                     <span className="text-sm font-semibold text-[rgb(var(--c-text))]">Compradas:</span>
                     <span className="font-display text-lg font-bold text-[rgb(var(--c-primary))]">{state.ticketsCount ?? 0}</span>
@@ -2514,13 +2620,33 @@ function FullSummary({ state, editMode, confirmed, isEditSave, confirm, saving, 
           const freeEntries = Math.floor(filledDancers.length / DANCERS_POR_ENTRADA_GRATIS)
           const assistants = state.coach.assistants.filter(a => a.trim())
           const paidAssistants = Math.max(0, assistants.length - freeEntries)
-          let participaciones = 0, repeticiones = 0
-          counts.forEach(n => { if (n >= 1) { participaciones++; repeticiones += n - 1 } })
-          const totalDancers = participaciones * PRECIO_PARTICIPACION + repeticiones * PRECIO_REPETICION
-          const totalCoach = PRECIO_ASISTENTE
+          
+          let totalInscripciones = 0
+          let totalAdicionales = 0
+          let totalAdicionalesCount = 0
+          const beforeJune15 = isBeforeJune15()
+
+          state.dancers.forEach((dancer, idx) => {
+            if (dancer.name.trim().length === 0) return
+            totalInscripciones += PRECIO_INSCRIPCION
+            
+            const n = counts.get(idx) ?? 0
+            if (beforeJune15) {
+              if (n > 1) {
+                totalAdicionalesCount += (n - 1)
+                totalAdicionales += (n - 1) * PRECIO_ADICIONAL_COREOGRAFIA
+              }
+            } else {
+              totalAdicionalesCount += n
+              totalAdicionales += n * PRECIO_ADICIONAL_COREOGRAFIA
+            }
+          })
+
+          const totalDancers = totalInscripciones + totalAdicionales
+          const totalCoach = 0
           const totalAsistentes = paidAssistants * PRECIO_ASISTENTE
           const totalEntradas = (state.ticketsCount ?? 0) * PRECIO_ENTRADA
-          const total = totalDancers + totalCoach + totalAsistentes + totalEntradas
+          const total = totalDancers + totalAsistentes + totalEntradas
           return (
             <div className="mt-3 sm:mt-4 px-0 sm:px-0">
               <div className="bg-[rgb(var(--c-surface))] rounded-none sm:rounded-3xl border-t sm:border border-[rgb(var(--c-border)/0.4)] shadow-none sm:shadow-sm overflow-hidden">
@@ -2531,22 +2657,22 @@ function FullSummary({ state, editMode, confirmed, isEditSave, confirm, saving, 
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between items-center">
                       <span className="text-[rgb(var(--c-text))]">Coach <span className="text-[rgb(var(--c-text)/0.5)] text-xs">(entrada)</span></span>
-                      <span className="font-bold text-[rgb(var(--c-text-strong))]">{formatMoney(totalCoach)}</span>
+                      <span className="font-bold text-[rgb(var(--c-success-strong))] bg-[rgb(var(--c-success)/0.08)] px-2.5 py-0.5 rounded-lg border border-[rgb(var(--c-success)/0.15)] text-xs uppercase">Gratis</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-[rgb(var(--c-text))]">Participaciones <span className="text-[rgb(var(--c-text)/0.5)] text-xs">({participaciones} × {formatMoney(PRECIO_PARTICIPACION)})</span></span>
-                      <span className="font-bold text-[rgb(var(--c-text-strong))]">{formatMoney(participaciones * PRECIO_PARTICIPACION)}</span>
+                      <span className="text-[rgb(var(--c-text))]">Inscripción Integrantes <span className="text-[rgb(var(--c-text)/0.5)] text-xs">({filledDancers.length} × {formatMoney(PRECIO_INSCRIPCION)})</span></span>
+                      <span className="font-bold text-[rgb(var(--c-text-strong))]">{formatMoney(totalInscripciones)}</span>
                     </div>
-                    {repeticiones > 0 && (
+                    {totalAdicionalesCount > 0 && (
                       <div className="flex justify-between items-center">
-                        <span className="text-[rgb(var(--c-text))]">Repeticiones <span className="text-[rgb(var(--c-text)/0.5)] text-xs">({repeticiones} × {formatMoney(PRECIO_REPETICION)})</span></span>
-                        <span className="font-bold text-[rgb(var(--c-text-strong))]">{formatMoney(repeticiones * PRECIO_REPETICION)}</span>
+                        <span className="text-[rgb(var(--c-text))]">Coreografías Adicionales <span className="text-[rgb(var(--c-text)/0.5)] text-xs">({totalAdicionalesCount} × {formatMoney(PRECIO_ADICIONAL_COREOGRAFIA)})</span></span>
+                        <span className="font-bold text-[rgb(var(--c-text-strong))]">{formatMoney(totalAdicionales)}</span>
                       </div>
                     )}
                     {assistants.length > 0 && (
                       <div className="flex justify-between items-center">
                         <span className="text-[rgb(var(--c-text))]">
-                          Asistentes <span className="text-[rgb(var(--c-text)/0.5)] text-xs">({paidAssistants} × {formatMoney(PRECIO_ASISTENTE)}{freeEntries > 0 ? `, ${freeEntries} gratis` : ''})</span>
+                          Asistentes Staff <span className="text-[rgb(var(--c-text)/0.5)] text-xs">({paidAssistants} × {formatMoney(PRECIO_ASISTENTE)}{freeEntries > 0 ? `, ${freeEntries} gratis` : ''})</span>
                         </span>
                         <span className="font-bold text-[rgb(var(--c-text-strong))]">{formatMoney(totalAsistentes)}</span>
                       </div>
@@ -2559,9 +2685,18 @@ function FullSummary({ state, editMode, confirmed, isEditSave, confirm, saving, 
                     )}
                     {freeEntries > 0 && (
                       <p className="text-[10px] text-[rgb(var(--c-success-strong))] bg-[rgb(var(--c-success)/0.08)] border border-[rgb(var(--c-success)/0.2)] rounded-xl px-3 py-1.5 font-medium">
-                        1 entrada gratis para asistente por cada {DANCERS_POR_ENTRADA_GRATIS} integrantes
+                        Info: 1 pase de asistente staff gratis por cada {DANCERS_POR_ENTRADA_GRATIS} integrantes inscritos.
                       </p>
                     )}
+                    
+                    <div className="bg-purple-50/60 border border-purple-200/40 rounded-2xl p-3 text-[11px] leading-relaxed text-[rgb(var(--c-text)/0.8)] mt-3">
+                      <p className="font-bold text-purple-950 flex items-center gap-1 mb-1">
+                        <Info className="w-3.5 h-3.5 text-purple-600 shrink-0" />
+                        LÓGICA DE INSCRIPCIÓN Y COREOGRAFÍAS:
+                      </p>
+                      La inscripción es de <strong>$2,700 MXN</strong> por integrante. Incluye su <strong>primera coreografía</strong> si el registro se realiza antes del 15 de Junio. Las participaciones en coreografías adicionales tienen un costo de <strong>$500 MXN</strong> cada una.
+                    </div>
+
                     <div className="flex justify-between items-center border-t border-[rgb(var(--c-border)/0.4)] pt-3 mt-3">
                       <span className="font-display text-base tracking-widest text-[rgb(var(--c-text-strong))]">TOTAL ESTIMADO</span>
                       <span className="font-display text-xl text-[rgb(var(--c-primary))] font-bold">{formatMoney(total)} MXN</span>
@@ -2631,43 +2766,57 @@ function FullSummary({ state, editMode, confirmed, isEditSave, confirm, saving, 
                 <h4 className="font-display text-base sm:text-lg tracking-widest text-[rgb(var(--c-text-strong))] font-black uppercase">ENTRADAS ADICIONALES</h4>
               </div>
               <p className="text-xs sm:text-sm text-[rgb(var(--c-text)/0.6)] font-semibold">
-                Para familiares y acompañantes ($400 pesos c/u).
+                Para familiares y acompañantes ($500 pesos c/u).
               </p>
             </div>
             
-            <div className="flex items-center justify-between gap-4 py-1 my-1">
-              <div className="flex items-center gap-3">
-                <span className="text-[10px] font-bold text-[rgb(var(--c-text-strong))]">CANTIDAD:</span>
-                <div className="flex items-center gap-2">
-                  <button 
-                    onClick={() => setNewExtraTickets(prev => Math.max(1, prev - 1))}
-                    className="w-7 h-7 rounded-lg bg-[rgb(var(--c-surface))] border border-[rgb(var(--c-border)/0.5)] flex items-center justify-center text-xs font-bold hover:bg-[rgb(var(--c-surface-2))] transition-colors active:scale-95 cursor-pointer"
-                  >
-                    -
-                  </button>
-                  <span className="font-display text-sm font-bold text-[rgb(var(--c-text-strong))] w-5 text-center">{newExtraTickets}</span>
-                  <button 
-                    onClick={() => setNewExtraTickets(prev => prev + 1)}
-                    className="w-7 h-7 rounded-lg bg-[rgb(var(--c-surface))] border border-[rgb(var(--c-border)/0.5)] flex items-center justify-center text-xs font-bold hover:bg-[rgb(var(--c-surface-2))] transition-colors active:scale-95 cursor-pointer"
-                  >
-                    +
-                  </button>
+            {isBeforeTicketsDeadline(event?.date) ? (
+              <>
+                <div className="flex items-center justify-between gap-4 py-1 my-1">
+                  <div className="flex items-center gap-3">
+                    <span className="text-[10px] font-bold text-[rgb(var(--c-text-strong))]">CANTIDAD:</span>
+                    <div className="flex items-center gap-2">
+                      <button 
+                        onClick={() => setNewExtraTickets(prev => Math.max(1, prev - 1))}
+                        className="w-7 h-7 rounded-lg bg-[rgb(var(--c-surface))] border border-[rgb(var(--c-border)/0.5)] flex items-center justify-center text-xs font-bold hover:bg-[rgb(var(--c-surface-2))] transition-colors active:scale-95 cursor-pointer"
+                      >
+                        -
+                      </button>
+                      <span className="font-display text-sm font-bold text-[rgb(var(--c-text-strong))] w-5 text-center">{newExtraTickets}</span>
+                      <button 
+                        onClick={() => setNewExtraTickets(prev => prev + 1)}
+                        className="w-7 h-7 rounded-lg bg-[rgb(var(--c-surface))] border border-[rgb(var(--c-border)/0.5)] flex items-center justify-center text-xs font-bold hover:bg-[rgb(var(--c-surface-2))] transition-colors active:scale-95 cursor-pointer"
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <div className="text-right flex items-center gap-2">
+                    <span className="text-xs sm:text-sm text-[rgb(var(--c-text)/0.65)] font-semibold">Total lote:</span>
+                    <span className="font-display text-base sm:text-lg font-black text-purple-600">${(newExtraTickets * PRECIO_ENTRADA).toLocaleString('es-MX')} MXN</span>
+                  </div>
                 </div>
-              </div>
-              
-              <div className="text-right flex items-center gap-2">
-                <span className="text-xs sm:text-sm text-[rgb(var(--c-text)/0.65)] font-semibold">Total lote:</span>
-                <span className="font-display text-base sm:text-lg font-black text-purple-600">${(newExtraTickets * 400).toLocaleString('es-MX')} MXN</span>
-              </div>
-            </div>
 
-            <button
-              onClick={handleBuyExtraTickets}
-              disabled={generatingExtraPDF}
-              className="w-full h-14 bg-gradient-to-r from-purple-600 via-indigo-600 to-violet-600 hover:brightness-105 active:scale-[0.98] disabled:opacity-50 text-white font-display text-lg sm:text-xl tracking-widest rounded-2xl transition-all shadow-md duration-150 font-black flex items-center justify-center gap-2 cursor-pointer"
-            >
-              {generatingExtraPDF ? 'PROCESANDO…' : 'SOLICITAR ENTRADAS ADICIONALES'}
-            </button>
+                <button
+                  onClick={handleBuyExtraTickets}
+                  disabled={generatingExtraPDF}
+                  className="w-full h-14 bg-gradient-to-r from-purple-600 via-indigo-600 to-violet-600 hover:brightness-105 active:scale-[0.98] disabled:opacity-50 text-white font-display text-lg sm:text-xl tracking-widest rounded-2xl transition-all shadow-md duration-150 font-black flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  {generatingExtraPDF ? 'PROCESANDO…' : 'SOLICITAR ENTRADAS ADICIONALES'}
+                </button>
+              </>
+            ) : (
+              <div className="bg-amber-50/70 border border-amber-200/50 rounded-2xl p-4 text-xs text-amber-950 font-semibold leading-relaxed space-y-1 my-2">
+                <p className="flex items-center gap-1.5 font-bold text-amber-950">
+                  <Info className="w-4 h-4 text-amber-600 shrink-0" />
+                  VENTA DE BOLETOS EN LÍNEA CERRADA:
+                </p>
+                <p>
+                  La venta y solicitud de entradas adicionales en línea ha concluido (cierra el miércoles anterior al evento). Ahora podrás adquirir tus pases directamente en la taquilla del evento el día del certamen.
+                </p>
+              </div>
+            )}
 
             {extraTicketsSuccess && (
               <div className="mt-2 space-y-2 animate-fadeIn text-center pt-2">
@@ -2769,13 +2918,33 @@ function FullSummary({ state, editMode, confirmed, isEditSave, confirm, saving, 
           const freeEntries = Math.floor(filledDancers.length / DANCERS_POR_ENTRADA_GRATIS)
           const assistants = state.coach.assistants.filter(a => a.trim())
           const paidAssistants = Math.max(0, assistants.length - freeEntries)
-          let participaciones = 0, repeticiones = 0
-          counts.forEach(n => { if (n >= 1) { participaciones++; repeticiones += n - 1 } })
-          const totalDancers = participaciones * PRECIO_PARTICIPACION + repeticiones * PRECIO_REPETICION
-          const totalCoach = PRECIO_ASISTENTE
+          
+          let totalInscripciones = 0
+          let totalAdicionales = 0
+          let totalAdicionalesCount = 0
+          const beforeJune15 = isBeforeJune15()
+
+          state.dancers.forEach((dancer, idx) => {
+            if (dancer.name.trim().length === 0) return
+            totalInscripciones += PRECIO_INSCRIPCION
+            
+            const n = counts.get(idx) ?? 0
+            if (beforeJune15) {
+              if (n > 1) {
+                totalAdicionalesCount += (n - 1)
+                totalAdicionales += (n - 1) * PRECIO_ADICIONAL_COREOGRAFIA
+              }
+            } else {
+              totalAdicionalesCount += n
+              totalAdicionales += n * PRECIO_ADICIONAL_COREOGRAFIA
+            }
+          })
+
+          const totalDancers = totalInscripciones + totalAdicionales
+          const totalCoach = 0
           const totalAsistentes = paidAssistants * PRECIO_ASISTENTE
           const totalEntradas = (state.ticketsCount ?? 0) * PRECIO_ENTRADA
-          const total = totalDancers + totalCoach + totalAsistentes + totalEntradas
+          const total = totalDancers + totalAsistentes + totalEntradas
           
           return (
             <div className="py-1 text-left animate-fadeIn">
@@ -2789,16 +2958,16 @@ function FullSummary({ state, editMode, confirmed, isEditSave, confirm, saving, 
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between items-center py-0.5 border-b border-[rgb(var(--c-border)/0.15)]">
                   <span className="text-[rgb(var(--c-text)/0.7)]">Coach (entrada base):</span>
-                  <span className="font-bold text-[rgb(var(--c-text-strong))]">{formatMoney(totalCoach)}</span>
+                  <span className="font-bold text-[rgb(var(--c-success-strong))]">Gratis ($0)</span>
                 </div>
                 <div className="flex justify-between items-center py-0.5 border-b border-[rgb(var(--c-border)/0.15)]">
-                  <span className="text-[rgb(var(--c-text)/0.7)]">Participaciones ({participaciones} × {formatMoney(PRECIO_PARTICIPACION)}):</span>
-                  <span className="font-bold text-[rgb(var(--c-text-strong))]">{formatMoney(participaciones * PRECIO_PARTICIPACION)}</span>
+                  <span className="text-[rgb(var(--c-text)/0.7)]">Inscripción Integrantes ({filledDancers.length} × {formatMoney(PRECIO_INSCRIPCION)}):</span>
+                  <span className="font-bold text-[rgb(var(--c-text-strong))]">{formatMoney(totalInscripciones)}</span>
                 </div>
-                {repeticiones > 0 && (
+                {totalAdicionalesCount > 0 && (
                   <div className="flex justify-between items-center py-0.5 border-b border-[rgb(var(--c-border)/0.15)]">
-                    <span className="text-[rgb(var(--c-text)/0.7)]">Repeticiones ({repeticiones} × {formatMoney(PRECIO_REPETICION)}):</span>
-                    <span className="font-bold text-[rgb(var(--c-text-strong))]">{formatMoney(repeticiones * PRECIO_REPETICION)}</span>
+                    <span className="text-[rgb(var(--c-text)/0.7)]">Coreografías Adicionales ({totalAdicionalesCount} × {formatMoney(PRECIO_ADICIONAL_COREOGRAFIA)}):</span>
+                    <span className="font-bold text-[rgb(var(--c-text-strong))]">{formatMoney(totalAdicionales)}</span>
                   </div>
                 )}
                 {assistants.length > 0 && (
@@ -2817,7 +2986,7 @@ function FullSummary({ state, editMode, confirmed, isEditSave, confirm, saving, 
                 )}
                 {freeEntries > 0 && (
                   <p className="text-xs text-[rgb(var(--c-success-strong))] bg-[rgb(var(--c-success)/0.06)] border border-[rgb(var(--c-success)/0.15)] rounded-xl px-3 py-1 font-medium">
-                    Info: 1 entrada gratis para asistente por cada {DANCERS_POR_ENTRADA_GRATIS} integrantes inscritos.
+                    Info: 1 pase de asistente staff gratis por cada {DANCERS_POR_ENTRADA_GRATIS} integrantes inscritos.
                   </p>
                 )}
                 
@@ -2854,6 +3023,13 @@ function FullSummary({ state, editMode, confirmed, isEditSave, confirm, saving, 
             className="w-full h-14 bg-gradient-to-r from-purple-700 via-indigo-700 to-violet-700 hover:brightness-105 active:scale-[0.98] text-white font-display text-lg sm:text-xl tracking-wider rounded-2xl transition-all shadow-lg hover:shadow-indigo-500/10 duration-150 font-black flex items-center justify-center gap-3 cursor-pointer"
           >
             <Pencil className="w-5 h-5 text-white shrink-0" /> MODIFICAR REGISTRO
+          </button>
+
+          <button
+            onClick={() => setShowWhatsAppModal(true)}
+            className="w-full h-14 bg-gradient-to-r from-emerald-600 via-green-600 to-teal-600 hover:brightness-105 active:scale-[0.98] text-white font-display text-lg sm:text-xl tracking-wider rounded-2xl transition-all shadow-lg hover:shadow-green-500/15 duration-150 font-black flex items-center justify-center gap-3 cursor-pointer"
+          >
+            <MessageCircle className="w-6 h-6 text-white shrink-0" /> ENVIAR MENSAJE POR WHATSAPP
           </button>
         </div>
 
@@ -2951,6 +3127,77 @@ function FullSummary({ state, editMode, confirmed, isEditSave, confirm, saving, 
               >
                 {saving ? 'GUARDANDO…' : editMode ? 'GUARDAR CAMBIOS' : 'CONFIRMAR REGISTRO'}
                 <Check className="w-5 h-5 animate-pulse" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showWhatsAppModal && (
+        <div className="fixed inset-0 z-[100000] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-[fadeIn_0.2s_ease-out_forwards]">
+          <div className="w-full max-w-lg bg-amber-50/98 border-4 border-amber-500 rounded-3xl p-6 sm:p-8 shadow-2xl relative text-center space-y-6">
+            {/* Close button */}
+            <button 
+              onClick={() => setShowWhatsAppModal(false)}
+              className="absolute top-4 right-4 text-amber-800 hover:text-amber-950 p-1.5 bg-amber-100/60 hover:bg-amber-200/60 rounded-full transition-colors cursor-pointer"
+            >
+              <X className="w-4 h-4" />
+            </button>
+            
+            {/* Warning Icon & Title */}
+            <div className="flex flex-col items-center gap-3">
+              <div className="bg-amber-100 p-4 rounded-full border border-amber-300 animate-pulse">
+                <Info className="w-12 h-12 text-amber-600" />
+              </div>
+              <h3 className="font-display text-2xl font-black text-amber-950 tracking-wider">
+                ¡ATENCIÓN: CANAL DE SOPORTE!
+              </h3>
+            </div>
+            
+            {/* Warning Message */}
+            <div className="text-amber-900 text-sm sm:text-base leading-relaxed space-y-4 font-medium text-left">
+              <p>
+                Este canal de comunicación vía WhatsApp está habilitado <strong className="font-bold text-amber-950 underline">únicamente para enviar tu comprobante de pago</strong> o para resolver dudas urgentes y casos muy puntuales.
+              </p>
+              <div className="bg-amber-200/40 p-4 rounded-2xl border border-amber-200 text-xs sm:text-sm font-semibold text-amber-950 space-y-2">
+                <p className="flex items-center gap-1.5 text-red-800 font-extrabold uppercase">
+                  <span>⚠️ REGLA CRÍTICA DE MODIFICACIONES:</span>
+                </p>
+                <p>
+                  Si necesitas agregar integrantes, corregir nombres, agregar coreografías o hacer cualquier cambio en tus datos, <strong className="text-red-700 font-extrabold uppercase underline">DEBES hacerlo tú mismo utilizando el botón de "MODIFICAR REGISTRO"</strong>. No se procesarán ni guardarán cambios de rosters o datos solicitados por mensaje de WhatsApp.
+                </p>
+              </div>
+            </div>
+            
+            {/* Action Buttons with Countdown */}
+            <div className="space-y-3 pt-2">
+              <button
+                onClick={handleWhatsAppRedirect}
+                disabled={whatsappCountdown > 0}
+                className={`w-full h-14 rounded-2xl font-display text-base tracking-widest font-black flex items-center justify-center gap-2 transition-all duration-300 shadow-md ${
+                  whatsappCountdown > 0 
+                    ? 'bg-amber-200 text-amber-400 border border-amber-300 cursor-not-allowed'
+                    : 'bg-gradient-to-r from-emerald-600 to-green-600 hover:brightness-105 active:scale-[0.98] text-white cursor-pointer shadow-emerald-500/10'
+                }`}
+              >
+                {whatsappCountdown > 0 ? (
+                  <>
+                    <Clock className="w-5 h-5 animate-spin text-amber-400" />
+                    ENTENDIDO, IR A WHATSAPP ({whatsappCountdown}s)
+                  </>
+                ) : (
+                  <>
+                    <MessageCircle className="w-5 h-5 text-white" />
+                    ENTENDIDO, IR A WHATSAPP
+                  </>
+                )}
+              </button>
+              
+              <button
+                onClick={() => setShowWhatsAppModal(false)}
+                className="w-full py-1 text-xs font-bold text-amber-800 hover:text-amber-950 transition-colors uppercase cursor-pointer"
+              >
+                Cancelar
               </button>
             </div>
           </div>
@@ -3270,27 +3517,34 @@ async function generateReceiptPDF(state: State, event: Event | null) {
     .sort((a, b) => a.dancer.name.localeCompare(b.dancer.name, 'es'))
 
   const countsMap = participacionesPorAlumno(state)
+  const beforeJune15 = isBeforeJune15()
 
   const dancerRows = sortedDancersWithIndex.map(({ dancer, originalIndex }, rank) => {
     const compCat = effectiveCategory(dancer)
     const categoryStr = compCat ? AGE_CATEGORY_LABELS[compCat] : '—'
     const n = countsMap.get(originalIndex) ?? 0
     
-    let cost = 0
-    let breakdownStr = '$0'
-    if (n === 1) {
-      cost = PRECIO_PARTICIPACION
-      breakdownStr = `$${PRECIO_PARTICIPACION.toLocaleString('es-MX')} (Base)`
-    } else if (n > 1) {
-      cost = PRECIO_PARTICIPACION + (n - 1) * PRECIO_REPETICION
-      breakdownStr = `$${PRECIO_PARTICIPACION.toLocaleString('es-MX')} + $${((n - 1) * PRECIO_REPETICION).toLocaleString('es-MX')}`
+    let cost = PRECIO_INSCRIPCION
+    let breakdownStr = `$${PRECIO_INSCRIPCION.toLocaleString('es-MX')} (Insc.)`
+    if (beforeJune15) {
+      if (n > 1) {
+        cost += (n - 1) * PRECIO_ADICIONAL_COREOGRAFIA
+        breakdownStr += ` + $${((n - 1) * PRECIO_ADICIONAL_COREOGRAFIA).toLocaleString('es-MX')} (${n - 1} extra)`
+      } else {
+        breakdownStr += ' (1ª coreo inc.)'
+      }
+    } else {
+      if (n > 0) {
+        cost += n * PRECIO_ADICIONAL_COREOGRAFIA
+        breakdownStr += ` + $${(n * PRECIO_ADICIONAL_COREOGRAFIA).toLocaleString('es-MX')} (${n} coreo${n === 1 ? '' : 's'})`
+      }
     }
     
     return [
       `${rank + 1}`,
       dancer.name.toUpperCase(),
       categoryStr.toUpperCase(),
-      `${n} Acto${n === 1 ? '' : 's'}`,
+      `${n} Coreo${n === 1 ? '' : 's'}`,
       breakdownStr,
       `$${cost.toLocaleString('es-MX')}`
     ]
@@ -3298,7 +3552,7 @@ async function generateReceiptPDF(state: State, event: Event | null) {
 
   autoTable(doc, {
     startY: dancersY,
-    head: [['#', 'INTEGRANTE (ALFABÉTICO)', 'CATEGORÍA', 'ACTOS', 'DESGLOSE DE PAGO', 'TOTAL']],
+    head: [['#', 'INTEGRANTE (ALFABÉTICO)', 'CATEGORÍA', 'COREOGRAFÍAS', 'DESGLOSE DE PAGO', 'TOTAL']],
     body: dancerRows,
     theme: 'striped',
     styles: { fontSize: 8, font: 'helvetica', cellPadding: 2 },
@@ -3386,13 +3640,32 @@ async function generateReceiptPDF(state: State, event: Event | null) {
   const freeEntries = Math.floor(filledDancers.length / DANCERS_POR_ENTRADA_GRATIS)
   const assistantsList = state.coach.assistants.filter(a => a.trim())
   const paidAssistants = Math.max(0, assistantsList.length - freeEntries)
-  let participaciones = 0, repeticiones = 0
-  countsMap.forEach(n => { if (n >= 1) { participaciones++; repeticiones += n - 1 } })
-  const totalDancers = participaciones * PRECIO_PARTICIPACION + repeticiones * PRECIO_REPETICION
-  const totalCoach = PRECIO_ASISTENTE
+
+  let totalInscripciones = 0
+  let totalAdicionales = 0
+  let totalAdicionalesCount = 0
+
+  state.dancers.forEach((dancer, idx) => {
+    if (dancer.name.trim().length === 0) return
+    totalInscripciones += PRECIO_INSCRIPCION
+    
+    const n = countsMap.get(idx) ?? 0
+    if (beforeJune15) {
+      if (n > 1) {
+        totalAdicionalesCount += (n - 1)
+        totalAdicionales += (n - 1) * PRECIO_ADICIONAL_COREOGRAFIA
+      }
+    } else {
+      totalAdicionalesCount += n
+      totalAdicionales += n * PRECIO_ADICIONAL_COREOGRAFIA
+    }
+  })
+
+  const totalDancers = totalInscripciones + totalAdicionales
+  const totalCoach = 0
   const totalAsistentes = paidAssistants * PRECIO_ASISTENTE
   const totalEntradas = (state.ticketsCount ?? 0) * PRECIO_ENTRADA
-  const total = totalDancers + totalCoach + totalAsistentes + totalEntradas
+  const total = totalDancers + totalAsistentes + totalEntradas
 
   // Card details
   const cardWidth = 110
@@ -3425,28 +3698,28 @@ async function generateReceiptPDF(state: State, event: Event | null) {
   doc.text('Coach (entrada):', cardX + 5, itemY)
   doc.setFont('helvetica', 'bold')
   doc.setTextColor(17, 17, 17)
-  doc.text(`$${PRECIO_ASISTENTE.toLocaleString('es-MX')}`, cardX + cardWidth - 5, itemY, { align: 'right' })
+  doc.text('Gratis ($0)', cardX + cardWidth - 5, itemY, { align: 'right' })
   doc.setFont('helvetica', 'normal')
   itemY += 5
 
-  // 2. Participaciones
+  // 2. Inscripción de Participantes
   doc.setTextColor(80, 80, 80)
-  doc.text('Participaciones:', cardX + 5, itemY)
+  doc.text('Inscripción Integrantes:', cardX + 5, itemY)
   doc.setTextColor(17, 17, 17)
-  doc.text(`(${participaciones} x $${PRECIO_PARTICIPACION})`, cardX + 30, itemY)
+  doc.text(`(${filledDancers.length} x $${PRECIO_INSCRIPCION})`, cardX + 38, itemY)
   doc.setFont('helvetica', 'bold')
-  doc.text(`$${(participaciones * PRECIO_PARTICIPACION).toLocaleString('es-MX')}`, cardX + cardWidth - 5, itemY, { align: 'right' })
+  doc.text(`$${totalInscripciones.toLocaleString('es-MX')}`, cardX + cardWidth - 5, itemY, { align: 'right' })
   doc.setFont('helvetica', 'normal')
   itemY += 5
 
-  // 3. Repeticiones
-  if (repeticiones > 0) {
+  // 3. Coreografías adicionales
+  if (totalAdicionalesCount > 0) {
     doc.setTextColor(80, 80, 80)
-    doc.text('Repeticiones:', cardX + 5, itemY)
+    doc.text('Coreografías Adic.:', cardX + 5, itemY)
     doc.setTextColor(17, 17, 17)
-    doc.text(`(${repeticiones} x $${PRECIO_REPETICION})`, cardX + 30, itemY)
+    doc.text(`(${totalAdicionalesCount} x $${PRECIO_ADICIONAL_COREOGRAFIA})`, cardX + 38, itemY)
     doc.setFont('helvetica', 'bold')
-    doc.text(`$${(repeticiones * PRECIO_REPETICION).toLocaleString('es-MX')}`, cardX + cardWidth - 5, itemY, { align: 'right' })
+    doc.text(`$${totalAdicionales.toLocaleString('es-MX')}`, cardX + cardWidth - 5, itemY, { align: 'right' })
     doc.setFont('helvetica', 'normal')
     itemY += 5
   }
@@ -3454,9 +3727,9 @@ async function generateReceiptPDF(state: State, event: Event | null) {
   // 4. Asistentes
   if (assistantsList.length > 0) {
     doc.setTextColor(80, 80, 80)
-    doc.text('Asistentes:', cardX + 5, itemY)
+    doc.text('Asistentes Staff:', cardX + 5, itemY)
     doc.setTextColor(17, 17, 17)
-    doc.text(`(${paidAssistants} x $${PRECIO_ASISTENTE}${freeEntries > 0 ? `, ${freeEntries} gratis` : ''})`, cardX + 30, itemY)
+    doc.text(`(${paidAssistants} x $${PRECIO_ASISTENTE}${freeEntries > 0 ? `, ${freeEntries} gratis` : ''})`, cardX + 38, itemY)
     doc.setFont('helvetica', 'bold')
     doc.text(`$${(totalAsistentes).toLocaleString('es-MX')}`, cardX + cardWidth - 5, itemY, { align: 'right' })
     doc.setFont('helvetica', 'normal')
@@ -3468,7 +3741,7 @@ async function generateReceiptPDF(state: State, event: Event | null) {
     doc.setTextColor(80, 80, 80)
     doc.text('Entradas Familia:', cardX + 5, itemY)
     doc.setTextColor(17, 17, 17)
-    doc.text(`(${state.ticketsCount} x $${PRECIO_ENTRADA})`, cardX + 30, itemY)
+    doc.text(`(${state.ticketsCount} x $${PRECIO_ENTRADA})`, cardX + 38, itemY)
     doc.setFont('helvetica', 'bold')
     doc.text(`$${(totalEntradas).toLocaleString('es-MX')}`, cardX + cardWidth - 5, itemY, { align: 'right' })
     doc.setFont('helvetica', 'normal')
