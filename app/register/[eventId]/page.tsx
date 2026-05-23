@@ -1203,7 +1203,7 @@ export default function RegisterPage({ params }: Props) {
   )
 }
 
-function StepView(props: {
+function StepViewContent(props: {
   step: Step
   state: State
   event: Event | null
@@ -1231,29 +1231,25 @@ function StepView(props: {
   setActsConfirmed: (b: boolean) => void
   activeActIndex: number | null
   setActiveActIndex: (i: number | null) => void
+  videoEnded: boolean
+  videoProgress: number
+  currentTime: number
+  useFallback: boolean
+  startBlurring: boolean
+  videoLoaded: boolean
+  setVideoEnded: React.Dispatch<React.SetStateAction<boolean>>
+  setVideoProgress: React.Dispatch<React.SetStateAction<number>>
+  setCurrentTime: React.Dispatch<React.SetStateAction<number>>
+  setUseFallback: React.Dispatch<React.SetStateAction<boolean>>
+  setStartBlurring: React.Dispatch<React.SetStateAction<boolean>>
+  setVideoLoaded: React.Dispatch<React.SetStateAction<boolean>>
+  videoRef: React.RefObject<HTMLVideoElement | null>
 }) {
-  const { step, state, event, editMode, isEditSave, onNext, goToStep, updateCoach, updateState, updateDancer, addDancer, removeDancer, onOpenSmartPaste, updateAct, addAct, removeAct, confirm, saving, saveErr, startEdit, actsConfirmed, setActsConfirmed, activeActIndex, setActiveActIndex } = props
+  const { step, state, event, editMode, isEditSave, onNext, goToStep, updateCoach, updateState, updateDancer, addDancer, removeDancer, onOpenSmartPaste, updateAct, addAct, removeAct, confirm, saving, saveErr, startEdit, actsConfirmed, setActsConfirmed, activeActIndex, setActiveActIndex, videoEnded, videoProgress, currentTime, useFallback, startBlurring, videoLoaded, setVideoEnded, setVideoProgress, setCurrentTime, setUseFallback, setStartBlurring, setVideoLoaded, videoRef } = props
   const [lastAddedAssistantIndex, setLastAddedAssistantIndex] = useState<number | null>(null)
   const [datePickerIndex, setDatePickerIndex] = useState<number | null>(null)
   const [datePickerVal, setDatePickerVal] = useState({ day: '', month: '', year: '' })
   const [datePickerClosing, setDatePickerClosing] = useState(false)
-  const [videoEnded, setVideoEnded] = useState(false)
-  const [videoProgress, setVideoProgress] = useState(0)
-  const [currentTime, setCurrentTime] = useState(0)
-  const [useFallback, setUseFallback] = useState(false)
-  const [startBlurring, setStartBlurring] = useState(false)
-  const [videoLoaded, setVideoLoaded] = useState(false)
-  const videoRef = useRef<HTMLVideoElement>(null)
-
-  useEffect(() => {
-    // Autoplay safeguard: if after 1.5 seconds the video has not played, show button immediately
-    const timer = setTimeout(() => {
-      if (videoRef.current && (videoRef.current.paused || videoRef.current.currentTime < 0.1)) {
-        setUseFallback(true)
-      }
-    }, 1500)
-    return () => clearTimeout(timer)
-  }, [])
 
   const closeDatePicker = () => {
     document.querySelector('meta[name="theme-color"]')?.setAttribute('content', '#F6F4EF')
@@ -1267,7 +1263,7 @@ function StepView(props: {
         <div 
           className="relative flex flex-col items-center justify-end h-[100dvh] w-full overflow-hidden select-none px-6 pb-4" 
           style={{ 
-            background: '#000000', 
+            background: 'transparent', 
             touchAction: 'none', 
             animation: 'fadeIn 0.5s ease-out' 
           }}
@@ -1346,57 +1342,6 @@ function StepView(props: {
               -webkit-backdrop-filter: blur(12px);
             }
           `}</style>
-
-          {/* BACKGROUND VIDEO (Plays once, blurs on end, top-aligned) */}
-          <video
-            ref={videoRef}
-            autoPlay
-            muted
-            loop={false}
-            onEnded={() => setVideoEnded(true)}
-            onTimeUpdate={(e) => {
-              const video = e.currentTarget
-              if (video.duration) {
-                setVideoProgress((video.currentTime / video.duration) * 100)
-                // Trigger slow blur and brand fade 2.2 seconds before video ends
-                if (video.duration - video.currentTime <= 2.2) {
-                  setStartBlurring(true)
-                }
-              }
-              setCurrentTime(video.currentTime)
-            }}
-            playsInline
-            onPlaying={() => setVideoLoaded(true)}
-            className="absolute top-0 left-0 w-full h-[106dvh] object-contain z-0 pointer-events-none select-none"
-            style={{
-              objectPosition: 'center top',
-              opacity: (videoLoaded || useFallback) ? 1 : 0,
-              visibility: (videoLoaded || useFallback) ? 'visible' : 'hidden',
-              transition: 'opacity 800ms ease-out, visibility 800ms ease-out',
-              backgroundColor: '#000000',
-            }}
-            poster="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII="
-          >
-            <source src="/untitled.mp4#t=0.001" type="video/mp4" />
-          </video>
-
-          {/* CINEMATIC GRADIENT OVERLAY WHEN VIDEO ENDS */}
-          <div 
-            className={`absolute inset-0 z-0 bg-gradient-to-b from-amber-950/20 via-black/80 to-black transition-opacity pointer-events-none ${
-              (videoEnded || useFallback || startBlurring) ? 'opacity-100' : 'opacity-0'
-            }`} 
-            style={{
-              transitionDuration: '2200ms',
-              transitionTimingFunction: 'cubic-bezier(0.25, 1, 0.5, 1)'
-            }}
-          />
-
-          {/* SMOOTH BACKDROP BLUR TRANSITION LAYER */}
-          <div 
-            className={`absolute inset-0 z-0 pointer-events-none blur-transition-layer ${
-              (videoEnded || useFallback || startBlurring) ? 'blurred' : ''
-            }`} 
-          />
 
           {/* CINEMATIC BRAND REVEAL CENTERED (Fades in when video ends) */}
           <div 
@@ -2247,6 +2192,138 @@ function StepView(props: {
   }
 }
 
+function StepView(props: {
+  step: Step
+  state: State
+  event: Event | null
+  isKeyboardOpen: boolean
+  editMode: boolean
+  isEditSave: boolean
+  isMobile: boolean
+  onNext: () => void
+  onBack: () => void
+  goToStep: (s: Step) => void
+  updateCoach: (p: Partial<Coach>) => void
+  updateState: React.Dispatch<React.SetStateAction<State>>
+  updateDancer: (i: number, p: Partial<Dancer>) => void
+  addDancer: () => void
+  removeDancer: (i: number) => void
+  onOpenSmartPaste: () => void
+  updateAct: (i: number, p: Partial<Act>) => void
+  addAct: () => void
+  removeAct: (i: number) => void
+  confirm: () => Promise<void>
+  saving: boolean
+  saveErr: string | null
+  startEdit: () => void
+  actsConfirmed: boolean
+  setActsConfirmed: (b: boolean) => void
+  activeActIndex: number | null
+  setActiveActIndex: (i: number | null) => void
+}) {
+  const [videoEnded, setVideoEnded] = useState(false)
+  const [videoProgress, setVideoProgress] = useState(0)
+  const [currentTime, setCurrentTime] = useState(0)
+  const [useFallback, setUseFallback] = useState(false)
+  const [startBlurring, setStartBlurring] = useState(false)
+  const [videoLoaded, setVideoLoaded] = useState(false)
+  const videoRef = useRef<HTMLVideoElement>(null)
+
+  useEffect(() => {
+    // Autoplay safeguard: if after 1.5 seconds the video has not played, show button immediately
+    const timer = setTimeout(() => {
+      if (videoRef.current && (videoRef.current.paused || videoRef.current.currentTime < 0.1)) {
+        setUseFallback(true)
+      }
+    }, 1500)
+    return () => clearTimeout(timer)
+  }, [])
+
+  const isWelcome = props.step.kind === 'welcome'
+
+  return (
+    <>
+      {/* Background Video Container - kept in DOM during all steps of StepView to prevent WebKit visual flicker */}
+      <div 
+        className="absolute inset-0 pointer-events-none z-0 transition-all duration-1000 ease-out overflow-hidden" 
+        style={{ 
+          opacity: isWelcome ? 1 : 0, 
+          visibility: isWelcome ? 'visible' : 'hidden',
+          background: '#000000',
+        }}
+      >
+        {/* BACKGROUND VIDEO (Plays once, blurs on end, top-aligned) */}
+        <video
+          ref={videoRef}
+          autoPlay
+          muted
+          loop={false}
+          onEnded={() => setVideoEnded(true)}
+          onTimeUpdate={(e) => {
+            const video = e.currentTarget
+            if (video.duration) {
+              setVideoProgress((video.currentTime / video.duration) * 100)
+              // Trigger slow blur and brand fade 2.2 seconds before video ends
+              if (video.duration - video.currentTime <= 2.2) {
+                setStartBlurring(true)
+              }
+            }
+            setCurrentTime(video.currentTime)
+          }}
+          playsInline
+          onPlaying={() => setVideoLoaded(true)}
+          className="absolute top-0 left-0 w-full h-[106dvh] object-contain z-0 pointer-events-none select-none"
+          style={{
+            objectPosition: 'center top',
+            opacity: (videoLoaded || useFallback) ? 1 : 0,
+            visibility: (videoLoaded || useFallback) ? 'visible' : 'hidden',
+            transition: 'opacity 800ms ease-out, visibility 800ms ease-out',
+            backgroundColor: '#000000',
+          }}
+          poster="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII="
+        >
+          <source src="/untitled.mp4#t=0.001" type="video/mp4" />
+        </video>
+
+        {/* CINEMATIC GRADIENT OVERLAY WHEN VIDEO ENDS */}
+        <div 
+          className={`absolute inset-0 z-0 bg-gradient-to-b from-amber-950/20 via-black/80 to-black transition-opacity pointer-events-none ${
+            (videoEnded || useFallback || startBlurring) ? 'opacity-100' : 'opacity-0'
+          }`} 
+          style={{
+            transitionDuration: '2200ms',
+            transitionTimingFunction: 'cubic-bezier(0.25, 1, 0.5, 1)'
+          }}
+        />
+
+        {/* SMOOTH BACKDROP BLUR TRANSITION LAYER */}
+        <div 
+          className={`absolute inset-0 z-0 pointer-events-none blur-transition-layer ${
+            (videoEnded || useFallback || startBlurring) ? 'blurred' : ''
+          }`} 
+        />
+      </div>
+
+      <StepViewContent
+        {...props}
+        videoEnded={videoEnded}
+        videoProgress={videoProgress}
+        currentTime={currentTime}
+        useFallback={useFallback}
+        startBlurring={startBlurring}
+        videoLoaded={videoLoaded}
+        setVideoEnded={setVideoEnded}
+        setVideoProgress={setVideoProgress}
+        setCurrentTime={setCurrentTime}
+        setUseFallback={setUseFallback}
+        setStartBlurring={setStartBlurring}
+        setVideoLoaded={setVideoLoaded}
+        videoRef={videoRef}
+      />
+    </>
+  )
+}
+
 function Centered({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-[100dvh] bg-[rgb(var(--c-surface))] text-[rgb(var(--c-text-strong))] flex flex-col font-sans">
@@ -2582,7 +2659,7 @@ function FullSummary({ state, editMode, confirmed, isEditSave, confirm, saving, 
             </h3>
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 py-2">
               <div className="space-y-1.5 max-w-md">
-                <p className="text-xs font-semibold text-[rgb(var(--c-text-strong))]">Si ya tienes entradas confirmadas para familiares, papás y acompañantes, agrégalas aquí. Si aún no las tienes, no te preocupes: al finalizar tu registro o más adelante podrás adquirir y descargar entradas adicionales.</p>
+                <p className="text-xs font-semibold text-[rgb(var(--c-text-strong))]">Si ya tienes entradas confirmadas para familiares, papás y acompañantes, agrégalas aquí. Si aún no las tienes, no te preocupes: al finalizar tu registro o más adelante podrás solicitar entradas adicionales.</p>
                 <div className="bg-purple-50/50 border border-purple-200/50 rounded-xl p-3 text-[11px] leading-relaxed text-purple-950">
                   <p className="font-bold flex items-center gap-1 mb-0.5">
                     <Info className="w-3.5 h-3.5 text-purple-700 shrink-0" />
@@ -2590,7 +2667,7 @@ function FullSummary({ state, editMode, confirmed, isEditSave, confirm, saving, 
                   </p>
                   • Costo de <strong>preventa: $500 MXN</strong> por entrada (válido antes del <strong>miércoles 17 de Junio</strong>).<br />
                   • Costo <strong>regular: $600 MXN</strong> por entrada (a partir del 18 de Junio).<br />
-                  <strong className="block text-red-700 font-extrabold uppercase mt-1">⚠️ IMPORTANTE: No se venderán entradas el día del evento.</strong>
+                  <strong className="block text-red-700 font-extrabold uppercase mt-1">IMPORTANTE: No se venderán entradas el día del evento.</strong>
                 </div>
                 <p className="text-[11px] text-[rgb(var(--c-text)/0.75)]">Costo por Entrada Actual: <strong className="font-bold text-[rgb(var(--c-primary))]">{formatMoney(PRECIO_ENTRADA)} MXN</strong>.</p>
                 {!isBeforeTicketsDeadline(event?.date) && (
@@ -2798,7 +2875,7 @@ function FullSummary({ state, editMode, confirmed, isEditSave, confirm, saving, 
             <div className="bg-purple-50/50 border border-purple-200/50 rounded-xl p-3 text-[11px] leading-relaxed text-purple-950 mb-3">
               • Costo de <strong>preventa: $500 MXN</strong> por entrada (válido antes del <strong>miércoles 17 de Junio</strong>).<br />
               • Costo <strong>regular: $600 MXN</strong> por entrada (a partir del 18 de Junio).<br />
-              <strong className="block text-red-700 font-extrabold uppercase mt-1">⚠️ IMPORTANTE: No se venderán entradas el día del evento.</strong>
+              <strong className="block text-red-700 font-extrabold uppercase mt-1">IMPORTANTE: No se venderán entradas el día del evento.</strong>
             </div>
             
             {isBeforeTicketsDeadline(event?.date) ? (
