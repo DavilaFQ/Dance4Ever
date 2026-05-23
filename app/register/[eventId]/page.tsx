@@ -2,7 +2,7 @@
 import { useEffect, useState, use, useCallback, useRef } from 'react'
 import Image from 'next/image'
 import { useSearchParams } from 'next/navigation'
-import { ArrowLeft, Check, Plus, Trash2, Pencil, MessageCircle, Info, X, ChevronDown, Sparkles, Users, Clipboard, HeartHandshake, School, Clock, Calendar, Ticket, Download } from 'lucide-react'
+import { ArrowLeft, Check, Plus, Trash2, Pencil, MessageCircle, Info, X, ChevronDown, Sparkles, Users, Clipboard, HeartHandshake, School, Clock, Calendar, Ticket, Download, Eye, DollarSign } from 'lucide-react'
 import { supabase, Modality, AgeCategory, Level, Event, AGE_CATEGORY_ORDER, AGE_CATEGORY_LABELS, AGE_CATEGORY_HINTS, categoryFromBirthdate } from '@/lib/supabase'
 
 type Props = { params: Promise<{ eventId: string }> }
@@ -2184,10 +2184,25 @@ function FullSummary({ state, editMode, confirmed, confirm, saving, saveErr, sta
   const hasCosts = state.costPaquete !== null && state.costPaquete >= 0 && state.costRepeticion !== null && state.costRepeticion >= 0
   const chgDeadline = event?.date ? getChangesDeadline(event.date) : '7 días antes del evento'
 
+  const scrollContainerRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (confirmed) {
+      // Scroll window to top (important on mobile)
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+      // Scroll internal container to top
+      if (scrollContainerRef.current) {
+        scrollContainerRef.current.scrollTo({ top: 0, behavior: 'smooth' })
+      }
+    }
+  }, [confirmed])
+
   const [generatingPDF, setGeneratingPDF] = useState(false)
   const [newExtraTickets, setNewExtraTickets] = useState(1)
   const [copiedField, setCopiedField] = useState<'clabe' | 'card' | null>(null)
   const [generatingExtraPDF, setGeneratingExtraPDF] = useState(false)
+  const [extraTicketsSuccess, setExtraTicketsSuccess] = useState(false)
+  const [lastPurchasedCount, setLastPurchasedCount] = useState(1)
 
   const handleCopyText = (text: string, field: 'clabe' | 'card') => {
     navigator.clipboard.writeText(text)
@@ -2195,17 +2210,25 @@ function FullSummary({ state, editMode, confirmed, confirm, saving, saveErr, sta
     setTimeout(() => setCopiedField(null), 2000)
   }
 
+  const handleViewExtraPDF = async (count: number) => {
+    await generateExtraTicketsPDF(state, event, count, 'view')
+  }
+
+  const handleDownloadExtraPDF = async (count: number) => {
+    await generateExtraTicketsPDF(state, event, count, 'download')
+  }
+
   const handleBuyExtraTickets = async () => {
     try {
       setGeneratingExtraPDF(true)
-      await generateExtraTicketsPDF(state, event, newExtraTickets)
       
       updateState(prev => ({
         ...prev,
         ticketsCount: (prev.ticketsCount ?? 0) + newExtraTickets
       }))
       
-      alert(`¡Compra de entradas extras confirmada exitosamente! Se ha descargado el comprobante de pago por $${(newExtraTickets * 400).toLocaleString('es-MX')} MXN correspondientes a las ${newExtraTickets} nuevas entradas adicionales.`)
+      setLastPurchasedCount(newExtraTickets)
+      setExtraTicketsSuccess(true)
       setNewExtraTickets(1)
     } catch (err) {
       console.error('Error purchasing extra tickets:', err)
@@ -2229,10 +2252,22 @@ function FullSummary({ state, editMode, confirmed, confirm, saving, saveErr, sta
 
   return (
     <div className="w-full flex flex-col min-h-0 md:h-full overflow-visible md:overflow-hidden" style={{ animation: 'fadeIn 0.3s ease-out' }}>
+      <style dangerouslySetInnerHTML={{ __html: `
+        @keyframes arrowFlow {
+          0% { opacity: 0.15; transform: translateY(-3px); }
+          50% { opacity: 1; transform: translateY(0px); }
+          100% { opacity: 0.15; transform: translateY(3px); }
+        }
+        .animate-arrow-1 { animation: arrowFlow 1.6s infinite ease-in-out; animation-delay: 0s; }
+        .animate-arrow-2 { animation: arrowFlow 1.6s infinite ease-in-out; animation-delay: 0.4s; }
+        .animate-arrow-3 { animation: arrowFlow 1.6s infinite ease-in-out; animation-delay: 0.8s; }
+      `}} />
       
-      <div className="flex-1 overflow-visible md:overflow-y-auto px-0 sm:px-4 lg:px-6 py-2 sm:py-4 pb-0 sm:pb-14 max-h-none md:max-h-[75vh]">
+      <div ref={scrollContainerRef} className="flex-1 overflow-visible md:overflow-y-auto px-0 sm:px-4 lg:px-6 py-2 sm:py-4 pb-0 sm:pb-14 max-h-none md:max-h-[75vh]">
         
-        <div className="bg-[rgb(var(--c-surface))] rounded-none sm:rounded-3xl border-t sm:border-b sm:border border-[rgb(var(--c-border)/0.4)] shadow-none sm:shadow-sm divide-y divide-[rgb(var(--c-border)/0.25)] overflow-hidden">
+        {!confirmed ? (
+          <>
+            <div className="bg-[rgb(var(--c-surface))] rounded-none sm:rounded-3xl border-t sm:border-b sm:border border-[rgb(var(--c-border)/0.4)] shadow-none sm:shadow-sm divide-y divide-[rgb(var(--c-border)/0.25)] overflow-hidden">
           {/* COACH, ACADEMY & STAFF */}
           <div className="p-3.5 sm:p-5 relative">
             <h3 className="font-display text-lg tracking-widest text-[rgb(var(--c-primary))] mb-4 border-b border-[rgb(var(--c-border)/0.25)] pb-2 flex justify-between items-center">
@@ -2474,7 +2509,7 @@ function FullSummary({ state, editMode, confirmed, confirm, saving, saveErr, sta
                     )}
                     <div className="flex justify-between items-center border-t border-[rgb(var(--c-border)/0.4)] pt-3 mt-3">
                       <span className="font-display text-base tracking-widest text-[rgb(var(--c-text-strong))]">TOTAL ESTIMADO</span>
-                      <span className="font-display text-2xl text-[rgb(var(--c-primary))] font-bold">{formatMoney(total)}</span>
+                      <span className="font-display text-xl text-[rgb(var(--c-primary))] font-bold">{formatMoney(total)} MXN</span>
                     </div>
                     <p className="text-xs text-[rgb(var(--c-text)/0.7)] text-center pt-1 font-medium">Precio estimado · sujeto a confirmación por los organizadores</p>
                   </div>
@@ -2483,191 +2518,357 @@ function FullSummary({ state, editMode, confirmed, confirm, saving, saveErr, sta
             </div>
           )
         })()}
-
-        {confirmed && (
-          <div className="mt-8 space-y-6 border-t border-[rgb(var(--c-border)/0.35)] pt-8 px-3.5 sm:px-0 animate-fadeIn text-left">
-            
-            {/* 1. MENSAJE DE REGISTRO CONFIRMADO */}
-            <div className="bg-[rgb(var(--c-success))] text-white text-center py-5 px-4 shadow-sm rounded-2xl flex flex-col items-center space-y-3">
-              <div>
-                <p className="font-display text-xl md:text-2xl tracking-widest font-bold">¡REGISTRO CONFIRMADO EXITOSAMENTE!</p>
-                <p className="text-sm opacity-90 mt-1">Tu información ha sido guardada en nuestro sistema.</p>
-              </div>
-              <div className="inline-flex items-center gap-2.5 bg-white/15 backdrop-blur-xs border border-white/20 rounded-xl px-4 py-2 text-xs md:text-sm font-medium max-w-xl mx-auto shadow-xs text-left">
-                <Clock className="w-4 h-4 text-white shrink-0" />
-                <span>
-                  Tienes hasta el <strong className="font-bold">{chgDeadline}</strong> para realizar cambios o editar tu registro.
-                </span>
-              </div>
+      </>
+    ) : (
+      <div className="max-w-3xl mx-auto w-full py-4 px-3.5 sm:px-0 space-y-6 divide-y divide-[rgb(var(--c-border)/0.15)] [&>*]:pt-6 [&>*:first-child]:pt-0">
+        
+        {/* 1. MENSAJE VERDE DE REGISTRO CONFIRMADO (SIN RECUADROS, EN EL FONDO) */}
+        <div className="flex items-center justify-center gap-3 md:gap-6 py-4 animate-fadeIn">
+          {/* Left Arrow Path */}
+          <div className="flex flex-col items-center gap-0.5 md:gap-1 opacity-70 shrink-0 select-none">
+            <ChevronDown className="w-3.5 h-3.5 md:w-4.5 md:h-4.5 text-purple-500 animate-arrow-1" />
+            <ChevronDown className="w-3.5 h-3.5 md:w-4.5 md:h-4.5 text-purple-600 animate-arrow-2" />
+            <ChevronDown className="w-3.5 h-3.5 md:w-4.5 md:h-4.5 text-purple-700 animate-arrow-3" />
+          </div>
+          
+          {/* Center Green Success Message */}
+          <div className="text-center flex-1 py-1">
+            <div className="flex items-center justify-center gap-2 text-[#16A34A] font-display text-lg sm:text-xl md:text-2xl tracking-wider sm:tracking-widest font-bold uppercase">
+              <Check className="w-5 h-5 sm:w-6 sm:h-6 stroke-[3px] shrink-0" /> ¡REGISTRO CONFIRMADO!
             </div>
+            <p className="text-[11px] sm:text-xs text-[rgb(var(--c-text)/0.6)] mt-1.5 font-medium">Tu información ha sido guardada de forma segura en nuestro sistema.</p>
+          </div>
+          
+          {/* Right Arrow Path */}
+          <div className="flex flex-col items-center gap-0.5 md:gap-1 opacity-70 shrink-0 select-none">
+            <ChevronDown className="w-3.5 h-3.5 md:w-4.5 md:h-4.5 text-purple-500 animate-arrow-1" />
+            <ChevronDown className="w-3.5 h-3.5 md:w-4.5 md:h-4.5 text-purple-600 animate-arrow-2" />
+            <ChevronDown className="w-3.5 h-3.5 md:w-4.5 md:h-4.5 text-purple-700 animate-arrow-3" />
+          </div>
+        </div>
 
-            {/* 2. INFORMACIÓN BANCARIA */}
-            <div className="bg-gradient-to-br from-fuchsia-600/[0.04] to-pink-600/[0.04] backdrop-blur-xs border border-fuchsia-500/15 rounded-3xl p-5 shadow-xs relative overflow-hidden flex flex-col justify-between text-left">
-              <div className="absolute top-0 right-0 w-24 h-24 bg-fuchsia-500/10 rounded-bl-full blur-xl pointer-events-none" />
-              <div>
-                <div className="flex items-center gap-3 mb-4 shrink-0">
-                  <div className="w-9 h-9 rounded-2xl bg-fuchsia-500/10 flex items-center justify-center">
-                    <Clipboard className="w-5 h-5 text-fuchsia-500" />
-                  </div>
-                  <div>
-                    <h4 className="font-display text-sm tracking-wider text-[rgb(var(--c-text-strong))] font-bold uppercase">INFORMACIÓN PARA EL PAGO BANCARIO</h4>
-                    <p className="text-[10px] text-[rgb(var(--c-text)/0.6)]">Realiza tu depósito o transferencia</p>
-                  </div>
-                </div>
-                
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 text-xs">
-                  <div className="flex justify-between items-center py-2 border-b border-[rgb(var(--c-border)/0.2)] md:col-span-1">
-                    <span className="text-[rgb(var(--c-text)/0.6)]">Beneficiario:</span>
-                    <span className="font-semibold text-[rgb(var(--c-text-strong))]">JOEL ARTURO GARCIA</span>
-                  </div>
-                  <div className="flex justify-between items-center py-2 border-b border-[rgb(var(--c-border)/0.2)] md:col-span-1">
-                    <span className="text-[rgb(var(--c-text)/0.6)]">Banco:</span>
-                    <span className="font-bold text-[rgb(var(--c-text-strong))]">BBVA</span>
-                  </div>
-                  <div className="flex justify-between items-center py-2 border-b border-[rgb(var(--c-border)/0.2)] md:col-span-1">
-                    <span className="text-[rgb(var(--c-text)/0.6)]">Cuenta:</span>
-                    <span className="font-bold text-[rgb(var(--c-text-strong))]">010 440 2340</span>
-                  </div>
-                  <div className="flex justify-between items-center py-2 border-b border-[rgb(var(--c-border)/0.2)] md:col-span-1 lg:col-span-2">
-                    <span className="text-[rgb(var(--c-text)/0.6)]">CLABE:</span>
-                    <div className="flex items-center gap-2">
-                      <span className="font-bold text-[rgb(var(--c-text-strong))] tracking-wide">012 180 001044023400</span>
-                      <button 
-                        onClick={() => handleCopyText('012 180 001044023400', 'clabe')}
-                        className="p-1 hover:bg-fuchsia-500/10 rounded-lg text-fuchsia-500 transition-colors active:scale-90 cursor-pointer"
-                        title="Copiar CLABE"
-                      >
-                        {copiedField === 'clabe' ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Clipboard className="w-3.5 h-3.5" />}
-                      </button>
-                    </div>
-                  </div>
-                  <div className="flex justify-between items-center py-2 border-b border-[rgb(var(--c-border)/0.2)] md:col-span-1 lg:col-span-1">
-                    <span className="text-[rgb(var(--c-text)/0.6)]">No. de Tarjeta:</span>
-                    <div className="flex items-center gap-2">
-                      <span className="font-bold text-[rgb(var(--c-text-strong))] tracking-wide">4152 3139 6949 9099</span>
-                      <button 
-                        onClick={() => handleCopyText('4152313969499099', 'card')}
-                        className="p-1 hover:bg-fuchsia-500/10 rounded-lg text-fuchsia-500 transition-colors active:scale-90 cursor-pointer"
-                        title="Copiar Tarjeta"
-                      >
-                        {copiedField === 'card' ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Clipboard className="w-3.5 h-3.5" />}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="mt-4 bg-fuchsia-500/5 border border-fuchsia-500/10 rounded-2xl p-3 text-[10px] text-[rgb(var(--c-text)/0.85)] flex items-start gap-2 shrink-0">
-                <Info className="w-3.5 h-3.5 text-fuchsia-500 shrink-0 mt-0.5" />
-                <span>Esta información bancaria también viene detallada en el comprobante PDF de tu registro completo.</span>
-              </div>
+        {/* DEADLINE MESSAGE (TAKEN OUT OF GREEN BLOCK, PLACED BELOW) */}
+        <div className="text-center pb-2 animate-fadeIn pt-4">
+          <p className="text-xs text-[rgb(var(--c-text)/0.65)] font-semibold flex items-center justify-center gap-1.5">
+            <Clock className="w-3.5 h-3.5 text-[rgb(var(--c-primary))]" />
+            Tienes hasta el <span className="text-[rgb(var(--c-text-strong))] font-bold">{chgDeadline}</span> para realizar cambios o editar tu registro.
+          </p>
+        </div>
+
+        {/* 2. ENTRADAS ADICIONALES (SIN CAJA, DIRECTAMENTE EN EL FONDO) */}
+        <div className="py-2 text-left animate-fadeIn">
+          <div className="flex items-center gap-2.5 mb-2.5">
+            <Ticket className="w-5 h-5 text-purple-600 shrink-0" />
+            <div>
+              <h4 className="font-display text-sm tracking-wider text-[rgb(var(--c-text-strong))] font-bold uppercase">ADQUIRIR ENTRADAS ADICIONALES</h4>
+              <p className="text-[10px] text-[rgb(var(--c-text)/0.5)]">Para familiares o acompañantes</p>
             </div>
-
-            {/* 3. ENTRADAS ADICIONALES (SIN CAJA, DIRECTAMENTE EN EL FONDO) */}
-            <div className="pt-6 pb-2 border-t border-[rgb(var(--c-border)/0.25)] text-left">
-              <div className="flex items-center gap-3 mb-2.5">
-                <div className="w-8 h-8 rounded-xl bg-purple-500/10 flex items-center justify-center">
-                  <Ticket className="w-4 h-4 text-purple-600" />
-                </div>
-                <div>
-                  <h4 className="font-display text-sm tracking-wider text-[rgb(var(--c-text-strong))] font-bold uppercase">ADQUIRIR ENTRADAS ADICIONALES</h4>
-                  <p className="text-[10px] text-[rgb(var(--c-text)/0.6)]">Para familiares o acompañantes</p>
-                </div>
-              </div>
-              
-              <p className="text-xs text-[rgb(var(--c-text)/0.75)] mb-4 leading-relaxed">
-                ¿Necesitas comprar más boletos en el futuro? Solicítalos de forma directa desde aquí. Se generará y descargará automáticamente un **PDF comprobante de pago exclusivo** para este lote específico de entradas.
-              </p>
-              
-              <div className="grid md:grid-cols-3 gap-4 items-center bg-[rgb(var(--c-surface-2)/0.3)] border border-[rgb(var(--c-border)/0.45)] rounded-2xl p-4">
-                <div className="flex items-center justify-between md:justify-start gap-4">
-                  <span className="text-[11px] font-bold text-[rgb(var(--c-text-strong))]">CANTIDAD:</span>
-                  <div className="flex items-center gap-3">
-                    <button 
-                      onClick={() => setNewExtraTickets(prev => Math.max(1, prev - 1))}
-                      className="w-7 h-7 rounded-lg bg-[rgb(var(--c-surface))] border border-[rgb(var(--c-border)/0.5)] flex items-center justify-center text-[rgb(var(--c-text-strong))] hover:bg-[rgb(var(--c-surface-2))] transition-colors active:scale-95 cursor-pointer font-bold"
-                    >
-                      -
-                    </button>
-                    <span className="font-display text-base font-bold text-[rgb(var(--c-text-strong))] w-5 text-center">{newExtraTickets}</span>
-                    <button 
-                      onClick={() => setNewExtraTickets(prev => prev + 1)}
-                      className="w-7 h-7 rounded-lg bg-[rgb(var(--c-surface))] border border-[rgb(var(--c-border)/0.5)] flex items-center justify-center text-[rgb(var(--c-text-strong))] hover:bg-[rgb(var(--c-surface-2))] transition-colors active:scale-95 cursor-pointer font-bold"
-                    >
-                      +
-                    </button>
-                  </div>
-                </div>
-                
-                <div className="flex flex-col text-left justify-center">
-                  <span className="text-[10px] text-[rgb(var(--c-text)/0.6)]">Total de este lote ({newExtraTickets} x $400):</span>
-                  <span className="font-display text-base font-bold text-purple-600">${(newExtraTickets * 400).toLocaleString('es-MX')} MXN</span>
-                </div>
-
-                <button
-                  onClick={handleBuyExtraTickets}
-                  disabled={generatingExtraPDF}
-                  className="w-full h-11 bg-gradient-to-r from-purple-600 via-indigo-600 to-violet-600 hover:brightness-105 active:scale-[0.98] disabled:opacity-50 text-white font-display text-[10px] tracking-widest rounded-xl transition-all shadow-md font-bold flex items-center justify-center gap-2 cursor-pointer"
+          </div>
+          
+          <p className="text-xs text-[rgb(var(--c-text)/0.7)] mb-4 leading-relaxed">
+            ¿Necesitas comprar más boletos en el futuro? Solicítalas de forma directa desde aquí. Se registrará un lote específico de entradas para tu comprobante.
+          </p>
+          
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-3.5 border-y border-[rgb(var(--c-border)/0.15)] my-4">
+            <div className="flex items-center gap-4">
+              <span className="text-xs font-bold text-[rgb(var(--c-text-strong))]">CANTIDAD DE BOLETOS:</span>
+              <div className="flex items-center gap-3">
+                <button 
+                  onClick={() => setNewExtraTickets(prev => Math.max(1, prev - 1))}
+                  className="w-8 h-8 rounded-xl bg-[rgb(var(--c-surface))] border border-[rgb(var(--c-border)/0.5)] flex items-center justify-center text-[rgb(var(--c-text-strong))] hover:bg-[rgb(var(--c-surface-2))] transition-colors active:scale-95 cursor-pointer font-bold"
                 >
-                  {generatingExtraPDF ? (
-                    <>
-                      <Clock className="w-3.5 h-3.5 animate-spin" /> GENERANDO RECIBO…
-                    </>
-                  ) : (
-                    <>
-                      <Download className="w-3.5 h-3.5 text-white" /> CONFIRMAR Y DESCARGAR COMPROBANTE
-                    </>
-                  )}
+                  -
+                </button>
+                <span className="font-display text-base font-bold text-[rgb(var(--c-text-strong))] w-6 text-center">{newExtraTickets}</span>
+                <button 
+                  onClick={() => setNewExtraTickets(prev => prev + 1)}
+                  className="w-8 h-8 rounded-xl bg-[rgb(var(--c-surface))] border border-[rgb(var(--c-border)/0.5)] flex items-center justify-center text-[rgb(var(--c-text-strong))] hover:bg-[rgb(var(--c-surface-2))] transition-colors active:scale-95 cursor-pointer font-bold"
+                >
+                  +
                 </button>
               </div>
             </div>
-
+            
+            <div className="flex flex-col text-left justify-center sm:text-right">
+              <span className="text-[10px] text-[rgb(var(--c-text)/0.5)]">Total de este lote ({newExtraTickets} x $400):</span>
+              <span className="font-display text-base font-bold text-purple-600">${(newExtraTickets * 400).toLocaleString('es-MX')} MXN</span>
+            </div>
           </div>
-        )}
 
+          <button
+            onClick={handleBuyExtraTickets}
+            disabled={generatingExtraPDF}
+            className="w-full h-14 bg-gradient-to-r from-purple-600 via-indigo-600 to-violet-600 hover:brightness-105 active:scale-[0.98] disabled:opacity-50 text-white font-display text-base tracking-widest rounded-2xl transition-all shadow-lg hover:shadow-purple-500/20 duration-150 font-bold flex items-center justify-center gap-3 cursor-pointer"
+          >
+            {generatingExtraPDF ? (
+              <>
+                <Clock className="w-5 h-5 animate-spin" /> PROCESANDO…
+              </>
+            ) : (
+              <>
+                <Ticket className="w-5 h-5 text-white" /> SOLICITAR ENTRADAS ADICIONALES
+              </>
+            )}
+          </button>
+
+          {extraTicketsSuccess && (
+            <div className="mt-4 space-y-4 animate-fadeIn text-center">
+              <div className="flex items-center justify-center gap-2 text-green-600 font-bold text-sm">
+                <Check className="w-5 h-5" /> ¡COMPRA DE ENTRADAS CONFIRMADA EXITOSAMENTE!
+              </div>
+              <p className="text-xs text-[rgb(var(--c-text)/0.7)] leading-relaxed">
+                Se han solicitado <strong className="font-bold text-[rgb(var(--c-text-strong))]">{lastPurchasedCount}</strong> nuevas entradas adicionales. Selecciona una opción para tu comprobante:
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <button 
+                  onClick={() => handleViewExtraPDF(lastPurchasedCount)}
+                  className="flex-1 h-14 flex items-center justify-center gap-3 bg-[rgb(var(--c-surface))] border border-[rgb(var(--c-border)/0.5)] hover:bg-[rgb(var(--c-surface-2))] text-[rgb(var(--c-text-strong))] font-display text-base tracking-widest rounded-2xl transition-all shadow-sm active:scale-[0.98] duration-150 font-bold cursor-pointer"
+                >
+                  <Eye className="w-5 h-5 text-[rgb(var(--c-primary))]" /> VER COMPROBANTE ONLINE
+                </button>
+                <button 
+                  onClick={() => handleDownloadExtraPDF(lastPurchasedCount)}
+                  className="flex-1 h-14 bg-gradient-to-r from-purple-600 via-indigo-600 to-violet-600 hover:brightness-105 active:scale-[0.98] disabled:opacity-50 text-white font-display text-base tracking-widest rounded-2xl transition-all shadow-lg hover:shadow-purple-500/20 duration-150 font-bold flex items-center justify-center gap-3 cursor-pointer"
+                >
+                  <Download className="w-5 h-5 text-white" /> DESCARGAR COMPROBANTE
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* 3. INFORMACIÓN BANCARIA (SIN CAJAS, EN EL FONDO) */}
+        <div className="py-2 text-left animate-fadeIn">
+          <div className="flex items-center gap-2.5 mb-4">
+            <Clipboard className="w-5 h-5 text-fuchsia-500 shrink-0" />
+            <div>
+              <h4 className="font-display text-sm tracking-wider text-[rgb(var(--c-text-strong))] font-bold uppercase">INFORMACIÓN PARA EL PAGO BANCARIO</h4>
+              <p className="text-[10px] text-[rgb(var(--c-text)/0.5)]">Realiza tu depósito o transferencia</p>
+            </div>
+          </div>
+          
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-3.5 text-xs py-2">
+            <div className="flex justify-between items-center py-2 border-b border-[rgb(var(--c-border)/0.15)]">
+              <span className="text-[rgb(var(--c-text)/0.6)]">Beneficiario:</span>
+              <span className="font-semibold text-[rgb(var(--c-text-strong))]">JOEL ARTURO GARCIA</span>
+            </div>
+            <div className="flex justify-between items-center py-2 border-b border-[rgb(var(--c-border)/0.15)]">
+              <span className="text-[rgb(var(--c-text)/0.6)]">Banco:</span>
+              <span className="font-bold text-[rgb(var(--c-text-strong))]">BBVA</span>
+            </div>
+            <div className="flex justify-between items-center py-2 border-b border-[rgb(var(--c-border)/0.15)]">
+              <span className="text-[rgb(var(--c-text)/0.6)]">Cuenta:</span>
+              <span className="font-bold text-[rgb(var(--c-text-strong))]">010 440 2340</span>
+            </div>
+            <div className="flex justify-between items-center py-2 border-b border-[rgb(var(--c-border)/0.15)] md:col-span-1 lg:col-span-2">
+              <span className="text-[rgb(var(--c-text)/0.6)]">CLABE:</span>
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-[rgb(var(--c-text-strong))] tracking-wide">012 180 001044023400</span>
+                <button 
+                  onClick={() => handleCopyText('012 180 001044023400', 'clabe')}
+                  className="p-1 hover:bg-fuchsia-500/10 rounded-lg text-fuchsia-500 transition-colors active:scale-90 cursor-pointer"
+                  title="Copiar CLABE"
+                >
+                  {copiedField === 'clabe' ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Clipboard className="w-3.5 h-3.5" />}
+                </button>
+              </div>
+            </div>
+            <div className="flex justify-between items-center py-2 border-b border-[rgb(var(--c-border)/0.15)] md:col-span-1">
+              <span className="text-[rgb(var(--c-text)/0.6)]">No. de Tarjeta:</span>
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-[rgb(var(--c-text-strong))] tracking-wide">4152 3139 6949 9099</span>
+                <button 
+                  onClick={() => handleCopyText('4152313969499099', 'card')}
+                  className="p-1 hover:bg-fuchsia-500/10 rounded-lg text-fuchsia-500 transition-colors active:scale-90 cursor-pointer"
+                  title="Copiar Tarjeta"
+                >
+                  {copiedField === 'card' ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Clipboard className="w-3.5 h-3.5" />}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-3.5 text-[10px] text-[rgb(var(--c-text)/0.5)] flex items-start gap-2">
+            <Info className="w-3.5 h-3.5 text-fuchsia-500 shrink-0 mt-0.5" />
+            <span>Esta información bancaria también viene detallada en el comprobante PDF de tu registro completo.</span>
+          </div>
+        </div>
+
+        {/* 4. TOTAL A PAGAR (DESGLOSE SIN CAJAS) */}
+        {(() => {
+          const counts = participacionesPorAlumno(state)
+          const filledDancers = state.dancers.filter(d => d.name.trim().length > 0)
+          const freeEntries = Math.floor(filledDancers.length / DANCERS_POR_ENTRADA_GRATIS)
+          const assistants = state.coach.assistants.filter(a => a.trim())
+          const paidAssistants = Math.max(0, assistants.length - freeEntries)
+          let participaciones = 0, repeticiones = 0
+          counts.forEach(n => { if (n >= 1) { participaciones++; repeticiones += n - 1 } })
+          const totalDancers = participaciones * PRECIO_PARTICIPACION + repeticiones * PRECIO_REPETICION
+          const totalCoach = PRECIO_ASISTENTE
+          const totalAsistentes = paidAssistants * PRECIO_ASISTENTE
+          const totalEntradas = (state.ticketsCount ?? 0) * PRECIO_ENTRADA
+          const total = totalDancers + totalCoach + totalAsistentes + totalEntradas
+          
+          return (
+            <div className="py-2 text-left animate-fadeIn">
+              <div className="flex items-center gap-2.5 mb-4">
+                <DollarSign className="w-5 h-5 text-[rgb(var(--c-primary))] shrink-0" />
+                <h3 className="font-display text-sm tracking-wider text-[rgb(var(--c-text-strong))] font-bold uppercase">
+                  RESUMEN TOTAL DE TU REGISTRO
+                </h3>
+              </div>
+              
+              <div className="space-y-3 text-xs">
+                <div className="flex justify-between items-center py-1 border-b border-[rgb(var(--c-border)/0.15)]">
+                  <span className="text-[rgb(var(--c-text)/0.7)]">Coach (entrada base):</span>
+                  <span className="font-semibold text-[rgb(var(--c-text-strong))]">{formatMoney(totalCoach)}</span>
+                </div>
+                <div className="flex justify-between items-center py-1 border-b border-[rgb(var(--c-border)/0.15)]">
+                  <span className="text-[rgb(var(--c-text)/0.7)]">Participaciones ({participaciones} × {formatMoney(PRECIO_PARTICIPACION)}):</span>
+                  <span className="font-semibold text-[rgb(var(--c-text-strong))]">{formatMoney(participaciones * PRECIO_PARTICIPACION)}</span>
+                </div>
+                {repeticiones > 0 && (
+                  <div className="flex justify-between items-center py-1 border-b border-[rgb(var(--c-border)/0.15)]">
+                    <span className="text-[rgb(var(--c-text)/0.7)]">Repeticiones ({repeticiones} × {formatMoney(PRECIO_REPETICION)}):</span>
+                    <span className="font-semibold text-[rgb(var(--c-text-strong))]">{formatMoney(repeticiones * PRECIO_REPETICION)}</span>
+                  </div>
+                )}
+                {assistants.length > 0 && (
+                  <div className="flex justify-between items-center py-1 border-b border-[rgb(var(--c-border)/0.15)]">
+                    <span className="text-[rgb(var(--c-text)/0.7)]">
+                      Asistentes Staff ({paidAssistants} × {formatMoney(PRECIO_ASISTENTE)}{freeEntries > 0 ? `, ${freeEntries} gratis` : ''}):
+                    </span>
+                    <span className="font-semibold text-[rgb(var(--c-text-strong))]">{formatMoney(totalAsistentes)}</span>
+                  </div>
+                )}
+                {(state.ticketsCount ?? 0) > 0 && (
+                  <div className="flex justify-between items-center py-1 border-b border-[rgb(var(--c-border)/0.15)]">
+                    <span className="text-[rgb(var(--c-text)/0.7)]">Entradas Familia / Acompañantes ({state.ticketsCount} × {formatMoney(PRECIO_ENTRADA)}):</span>
+                    <span className="font-semibold text-[rgb(var(--c-text-strong))]">{formatMoney(totalEntradas)}</span>
+                  </div>
+                )}
+                {freeEntries > 0 && (
+                  <p className="text-[10px] text-[rgb(var(--c-success-strong))] bg-[rgb(var(--c-success)/0.06)] border border-[rgb(var(--c-success)/0.15)] rounded-xl px-3 py-1.5 font-medium">
+                    Info: 1 entrada gratis para asistente por cada {DANCERS_POR_ENTRADA_GRATIS} bailarines inscritos.
+                  </p>
+                )}
+                
+                <div className="flex justify-between items-center pt-4 mt-2">
+                  <span className="font-display text-base tracking-widest text-[rgb(var(--c-text-strong))] font-bold">TOTAL ESTIMADO A PAGAR</span>
+                  <span className="font-display text-2xl text-[rgb(var(--c-primary))] font-bold">{formatMoney(total)} MXN</span>
+                </div>
+                <p className="text-[10px] text-[rgb(var(--c-text)/0.55)] text-center pt-1 italic font-medium">Precio estimado sujeto a validación final de coordinadores Dance4Ever.</p>
+              </div>
+            </div>
+          )
+        })()}
+
+        {/* 5. ACCIONES AL FINAL (BOTONES DEL MISMO TAMAÑO) */}
+        <div className="flex flex-col sm:flex-row gap-3 pt-4">
+          <button
+            onClick={handleDownloadPDF}
+            disabled={generatingPDF}
+            className="flex-1 h-14 bg-gradient-to-r from-fuchsia-600 via-pink-600 to-rose-600 hover:brightness-105 active:scale-[0.98] disabled:opacity-50 text-white font-display text-base tracking-widest rounded-2xl transition-all shadow-lg hover:shadow-fuchsia-500/20 duration-150 font-bold flex items-center justify-center gap-3 cursor-pointer"
+          >
+            {generatingPDF ? (
+              <>
+                <Clock className="w-5 h-5 animate-spin" /> GENERANDO COMPROBANTE…
+              </>
+            ) : (
+              <>
+                <Download className="w-5 h-5 text-white" /> DESCARGAR COMPROBANTE PDF
+              </>
+            )}
+          </button>
+          
+          <button
+            onClick={startEdit}
+            className="flex-1 h-14 flex items-center justify-center gap-3 bg-[rgb(var(--c-surface))] border border-[rgb(var(--c-border)/0.5)] hover:bg-[rgb(var(--c-surface-2))] text-[rgb(var(--c-text-strong))] font-display text-base tracking-widest rounded-2xl transition-all shadow-sm active:scale-[0.98] duration-150 font-bold cursor-pointer"
+          >
+            <Pencil className="w-3.5 h-3.5 text-[rgb(var(--c-primary))]" /> MODIFICAR REGISTRO
+          </button>
+        </div>
+
+        {/* COLLAPSIBLE DETAILS ACORDION */}
+        <details className="group mt-4 text-left overflow-hidden transition-all">
+          <summary className="flex justify-between items-center py-5 border-y border-[rgb(var(--c-border)/0.15)] font-display text-[10px] sm:text-xs tracking-widest font-bold text-[rgb(var(--c-text-strong))] cursor-pointer select-none">
+            <span>MOSTRAR DETALLES DE BAILARINES Y COREOGRAFÍAS REGISTRADOS</span>
+            <ChevronDown className="w-4 h-4 text-[rgb(var(--c-primary))] transition-transform group-open:rotate-180" />
+          </summary>
+          <div className="divide-y divide-[rgb(var(--c-border)/0.15)] bg-transparent pt-4">
+            {/* Academy & Coach */}
+            <div className="py-4">
+              <h4 className="font-display text-sm tracking-wider text-[rgb(var(--c-primary))] mb-4 uppercase">COACH Y ACADEMIA</h4>
+              <div className="grid md:grid-cols-2 gap-4 text-xs">
+                <div>
+                  <p className="text-[10px] tracking-[0.2em] text-[rgb(var(--c-text)/0.6)] font-bold mb-1">COACH</p>
+                  <p className="font-semibold text-[rgb(var(--c-text-strong))] uppercase">{state.coach.name}</p>
+                  <p className="text-sm text-[rgb(var(--c-text))] mt-1">{state.coach.phone}</p>
+                  {state.coach.email && <p className="text-sm text-[rgb(var(--c-text))] mt-1">{state.coach.email}</p>}
+                </div>
+                <div>
+                  <p className="text-[10px] tracking-[0.2em] text-[rgb(var(--c-text)/0.6)] font-bold mb-1">ACADEMIA / COLEGIO</p>
+                  <p className="font-semibold text-[rgb(var(--c-text-strong))] uppercase">{state.academy}</p>
+                  {state.city && <p className="text-sm text-[rgb(var(--c-text))] mt-1">CIUDAD: {state.city.toUpperCase()}</p>}
+                </div>
+              </div>
+            </div>
+            
+            {/* Dancers */}
+            <div className="py-4">
+              <h4 className="font-display text-sm tracking-wider text-[rgb(var(--c-primary))] mb-4 uppercase">INTEGRANTES REGISTRADOS ({filledDancers.length})</h4>
+              <div className="divide-y divide-[rgb(var(--c-border)/0.1)]">
+                {filledDancers.map((d, idx) => {
+                  const compCat = effectiveCategory(d)
+                  const label = compCat ? AGE_CATEGORY_LABELS[compCat] : '—'
+                  return (
+                    <div key={idx} className="py-2.5 flex justify-between items-center text-xs">
+                      <span className="font-semibold text-[rgb(var(--c-text-strong))] uppercase">{d.name}</span>
+                      <span className="text-[10px] text-[rgb(var(--c-text)/0.6)]">{label} · {ageFromBirthdate(d.birthdate) ?? 0} años</span>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+
+            {/* Acts */}
+            <div className="py-4">
+              <h4 className="font-display text-sm tracking-wider text-[rgb(var(--c-primary))] mb-4 uppercase">COREOGRAFÍAS REGISTRADAS ({state.acts.length})</h4>
+              <div className="divide-y divide-[rgb(var(--c-border)/0.1)]">
+                {state.acts.map((act, idx) => {
+                  const cat = act.ageCategory ? AGE_CATEGORY_LABELS[act.ageCategory] : '—'
+                  const mod = act.modality ? modalityLabel(act.modality) : '—'
+                  const style = act.style ?? '—'
+                  const dancers = act.dancerIndices.map(i => state.dancers[i]?.name).filter(Boolean).join(', ')
+                  return (
+                    <div key={idx} className="py-3.5 space-y-1 text-left text-xs">
+                      <div className="flex justify-between items-center">
+                        <span className="font-display font-bold text-[rgb(var(--c-text-strong))]">ACTO #{idx + 1} - {mod.toUpperCase()}</span>
+                        <span className="text-[10px] text-[rgb(var(--c-primary))] font-bold">{cat.toUpperCase()}</span>
+                      </div>
+                      <p className="text-[11px] text-[rgb(var(--c-text)/0.8)]"><strong className="font-semibold text-[rgb(var(--c-text-strong))]">ESTILO:</strong> {style.toUpperCase()}</p>
+                      <p className="text-[10px] text-[rgb(var(--c-text)/0.6)] leading-relaxed"><strong className="font-semibold text-[rgb(var(--c-text-strong))]">BAILARINES:</strong> {dancers.toUpperCase()}</p>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          </div>
+        </details>
       </div>
+    )}
+  </div>
 
       {/* FLOATING ACTION BAR FOR CONFIRM / SAVE */}
-      <div 
-        className={`shrink-0 bg-[rgb(var(--c-surface))] border-t border-[rgb(var(--c-border)/0.7)] shadow-[0_-10px_40px_rgba(0,0,0,0.05)] z-20 rounded-t-3xl mt-2 ${
-          confirmed ? 'p-3 pb-1 md:p-5' : 'p-4 md:p-5 hidden lg:block'
-        }`}
-        style={{ 
-          paddingBottom: confirmed 
-            ? 'calc(env(safe-area-inset-bottom, 0px) + 2px)' 
-            : 'calc(env(safe-area-inset-bottom, 0px) + 8px)' 
-        }}
-      >
-        <div className="max-w-4xl mx-auto w-full">
-          {saveErr && (
-            <p className="text-[rgb(var(--c-primary))] text-xs bg-[rgb(var(--c-primary)/0.05)] border border-[rgb(var(--c-primary)/0.2)] rounded-xl px-4 py-2.5 mb-3 text-center font-bold">{saveErr}</p>
-          )}
-          {confirmed ? (
-            <div className="flex flex-col gap-3">
-              <button
-                onClick={handleDownloadPDF}
-                disabled={generatingPDF}
-                className="w-full h-14 bg-gradient-to-r from-fuchsia-600 via-pink-600 to-rose-600 hover:brightness-105 active:scale-[0.98] disabled:opacity-50 text-white font-display text-base tracking-widest rounded-2xl transition-all shadow-lg hover:shadow-fuchsia-500/20 duration-150 font-bold flex items-center justify-center gap-3 cursor-pointer"
-              >
-                {generatingPDF ? (
-                  <>
-                    <Clock className="w-5 h-5 animate-spin" /> GENERANDO COMPROBANTE…
-                  </>
-                ) : (
-                  <>
-                    <Download className="w-5 h-5 text-white" /> DESCARGAR COMPROBANTE PDF
-                  </>
-                )}
-              </button>
-              
-              <button
-                onClick={startEdit}
-                className="w-full h-12 flex items-center justify-center gap-3 bg-[rgb(var(--c-surface))] border border-[rgb(var(--c-border)/0.5)] hover:bg-[rgb(var(--c-surface-2))] text-[rgb(var(--c-text-strong))] font-display text-xs tracking-widest rounded-2xl transition-all shadow-sm active:scale-[0.98] duration-150 font-bold cursor-pointer"
-              >
-                <Pencil className="w-3.5 h-3.5 text-[rgb(var(--c-primary))]" /> MODIFICAR REGISTRO
-              </button>
-            </div>
-          ) : (
+      {!confirmed && (
+        <div 
+          className="shrink-0 bg-[rgb(var(--c-surface))] border-t border-[rgb(var(--c-border)/0.7)] shadow-[0_-10px_40px_rgba(0,0,0,0.05)] z-20 rounded-t-3xl mt-2 p-4 md:p-5 hidden lg:block"
+          style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 8px)' }}
+        >
+          <div className="max-w-4xl mx-auto w-full">
+            {saveErr && (
+              <p className="text-[rgb(var(--c-primary))] text-xs bg-[rgb(var(--c-primary)/0.05)] border border-[rgb(var(--c-primary)/0.2)] rounded-xl px-4 py-2.5 mb-3 text-center font-bold">{saveErr}</p>
+            )}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <button
                 onClick={() => goToStep({ kind: 'setup' })}
@@ -2683,9 +2884,9 @@ function FullSummary({ state, editMode, confirmed, confirm, saving, saveErr, sta
                 {saving ? 'GUARDANDO…' : editMode ? 'GUARDAR CAMBIOS' : 'CONFIRMAR REGISTRO'}
               </button>
             </div>
-          )}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   )
 }
@@ -3238,8 +3439,8 @@ async function generateReceiptPDF(state: State, event: Event | null) {
   const filename = `Comprobante_Registro_${state.academy.replace(/\s+/g, '_') || 'Dance4ever'}.pdf`
   doc.save(filename)
 }
-
-async function generateExtraTicketsPDF(state: State, event: Event | null, newTickets: number) {
+ 
+async function generateExtraTicketsPDF(state: State, event: Event | null, newTickets: number, action: 'view' | 'download' = 'download') {
   const jsPDF = (await import('jspdf')).default
   
   let logoImg: HTMLImageElement | null = null
@@ -3498,5 +3699,11 @@ async function generateExtraTicketsPDF(state: State, event: Event | null, newTic
   doc.text('Dance4Ever Nacional · Comprobante de Entradas Extras · www.dance4ever.com.mx', 105, footerY, { align: 'center' })
 
   const filename = `Recibo_Entradas_Extras_${state.academy.replace(/\s+/g, '_') || 'Dance4ever'}.pdf`
-  doc.save(filename)
+  if (action === 'view') {
+    const blob = doc.output('blob')
+    const url = URL.createObjectURL(blob)
+    window.open(url, '_blank')
+  } else {
+    doc.save(filename)
+  }
 }
