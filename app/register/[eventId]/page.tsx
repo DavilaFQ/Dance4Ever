@@ -1619,7 +1619,7 @@ function StepView(props: {
               )}
               <div className="space-y-2 pt-1.5">
                 <p className="text-[10px] text-[rgb(var(--c-text)/0.65)] text-center font-bold">
-                  $400 MXN por asistente de staff · 1 pase gratis por cada 8 integrantes inscritos
+                  $400 MXN por asistente · 1 pase gratis por cada 8 integrantes inscritos
                 </p>
                 <div className="bg-amber-50/60 border border-amber-200/40 rounded-2xl p-3 text-[10px] leading-relaxed text-amber-900 font-medium space-y-1">
                   <p className="flex items-center gap-1.5 font-bold text-amber-950">
@@ -1627,7 +1627,7 @@ function StepView(props: {
                     ADVERTENCIA IMPORTANTE DE ACCESO A BACKSTAGE:
                   </p>
                   <p>
-                    No existe un límite en el número de asistentes de staff que puedes registrar. No obstante, toma en cuenta que incluso si se liquidan sus entradas, <strong>su ingreso al área de backstage está sujeto a revisión y podría restringirse</strong>. Esto se implementa por razones de espacio limitado y la estricta seguridad de las niñas, dependiendo de si las condiciones del lugar lo hacen viable.
+                    No existe un límite en el número de asistentes que puedes registrar. No obstante, toma en cuenta que incluso si se liquidan sus entradas, <strong>su ingreso al área de backstage está sujeto a revisión y podría restringirse</strong>. Esto se implementa por razones de espacio limitado y la estricta seguridad de las niñas, dependiendo de si las condiciones del lugar lo hacen viable.
                   </p>
                 </div>
               </div>
@@ -2672,7 +2672,7 @@ function FullSummary({ state, editMode, confirmed, isEditSave, confirm, saving, 
                     {assistants.length > 0 && (
                       <div className="flex justify-between items-center">
                         <span className="text-[rgb(var(--c-text))]">
-                          Asistentes Staff <span className="text-[rgb(var(--c-text)/0.5)] text-xs">({paidAssistants} × {formatMoney(PRECIO_ASISTENTE)}{freeEntries > 0 ? `, ${freeEntries} gratis` : ''})</span>
+                          Asistentes <span className="text-[rgb(var(--c-text)/0.5)] text-xs">({paidAssistants} × {formatMoney(PRECIO_ASISTENTE)}{freeEntries > 0 ? `, ${freeEntries} gratis` : ''})</span>
                         </span>
                         <span className="font-bold text-[rgb(var(--c-text-strong))]">{formatMoney(totalAsistentes)}</span>
                       </div>
@@ -2685,7 +2685,7 @@ function FullSummary({ state, editMode, confirmed, isEditSave, confirm, saving, 
                     )}
                     {freeEntries > 0 && (
                       <p className="text-[10px] text-[rgb(var(--c-success-strong))] bg-[rgb(var(--c-success)/0.08)] border border-[rgb(var(--c-success)/0.2)] rounded-xl px-3 py-1.5 font-medium">
-                        Info: 1 pase de asistente staff gratis por cada {DANCERS_POR_ENTRADA_GRATIS} integrantes inscritos.
+                        Info: 1 pase de asistente gratis por cada {DANCERS_POR_ENTRADA_GRATIS} integrantes inscritos.
                       </p>
                     )}
                     
@@ -2973,7 +2973,7 @@ function FullSummary({ state, editMode, confirmed, isEditSave, confirm, saving, 
                 {assistants.length > 0 && (
                   <div className="flex justify-between items-center py-0.5 border-b border-[rgb(var(--c-border)/0.15)]">
                     <span className="text-[rgb(var(--c-text)/0.7)]">
-                      Asistentes Staff ({paidAssistants} × {formatMoney(PRECIO_ASISTENTE)}{freeEntries > 0 ? `, ${freeEntries} gratis` : ''}):
+                      Asistentes ({paidAssistants} × {formatMoney(PRECIO_ASISTENTE)}{freeEntries > 0 ? `, ${freeEntries} gratis` : ''}):
                     </span>
                     <span className="font-bold text-[rgb(var(--c-text-strong))]">{formatMoney(totalAsistentes)}</span>
                   </div>
@@ -2986,7 +2986,7 @@ function FullSummary({ state, editMode, confirmed, isEditSave, confirm, saving, 
                 )}
                 {freeEntries > 0 && (
                   <p className="text-xs text-[rgb(var(--c-success-strong))] bg-[rgb(var(--c-success)/0.06)] border border-[rgb(var(--c-success)/0.15)] rounded-xl px-3 py-1 font-medium">
-                    Info: 1 pase de asistente staff gratis por cada {DANCERS_POR_ENTRADA_GRATIS} integrantes inscritos.
+                    Info: 1 pase de asistente gratis por cada {DANCERS_POR_ENTRADA_GRATIS} integrantes inscritos.
                   </p>
                 )}
                 
@@ -3417,7 +3417,7 @@ async function generateReceiptPDF(state: State, event: Event | null) {
   if (assistants) {
     doc.setTextColor(100, 100, 100)
     doc.setFont('helvetica', 'bold')
-    doc.text('ASISTENTES DE STAFF:', 15, y)
+    doc.text('ASISTENTES:', 15, y)
     doc.setTextColor(17, 17, 17)
     doc.setFont('helvetica', 'normal')
     doc.text(assistants.toUpperCase(), 52, y, { maxWidth: 140 })
@@ -3727,7 +3727,7 @@ async function generateReceiptPDF(state: State, event: Event | null) {
   // 4. Asistentes
   if (assistantsList.length > 0) {
     doc.setTextColor(80, 80, 80)
-    doc.text('Asistentes Staff:', cardX + 5, itemY)
+    doc.text('Asistentes:', cardX + 5, itemY)
     doc.setTextColor(17, 17, 17)
     doc.text(`(${paidAssistants} x $${PRECIO_ASISTENTE}${freeEntries > 0 ? `, ${freeEntries} gratis` : ''})`, cardX + 38, itemY)
     doc.setFont('helvetica', 'bold')
