@@ -273,6 +273,7 @@ export default function RegisterPage({ params }: Props) {
     stepKindRef.current = step.kind
   }, [step.kind])
   const [editMode, setEditMode] = useState(false)
+  const [isEditSave, setIsEditSave] = useState(false)
   const [saving, setSaving] = useState(false)
   const [saveErr, setSaveErr] = useState<string | null>(null)
   const [isLargeScreen, setIsLargeScreen] = useState<boolean | null>(null)
@@ -776,6 +777,7 @@ export default function RegisterPage({ params }: Props) {
 
   function startEdit() {
     setEditMode(true)
+    setIsEditSave(true)
     setStep({ kind: 'setup' })
   }
 
@@ -813,10 +815,10 @@ export default function RegisterPage({ params }: Props) {
               </div>
             </div>
             <h1 className="font-display text-4xl lg:text-5xl font-bold tracking-wider leading-tight text-[rgb(var(--c-surface))]">
-              ¡REGISTRO EXITOSO!
+              {isEditSave ? '¡CAMBIOS GUARDADOS!' : '¡REGISTRO EXITOSO!'}
             </h1>
             <p className="text-lg lg:text-xl text-[rgb(var(--c-surface)/0.9)] leading-relaxed font-medium">
-              Registraste con éxito tu academia/equipo.
+              {isEditSave ? 'Cambios al registro guardados con éxito.' : 'Registraste con éxito tu academia/equipo.'}
             </p>
           </div>
         </div>
@@ -910,6 +912,7 @@ export default function RegisterPage({ params }: Props) {
               event={event}
               isKeyboardOpen={isKeyboardOpen}
               editMode={editMode}
+              isEditSave={isEditSave}
               isMobile={isMobile}
               onNext={goNext}
               onBack={goBack}
@@ -1089,6 +1092,7 @@ function StepView(props: {
   event: Event | null
   isKeyboardOpen: boolean
   editMode: boolean
+  isEditSave: boolean
   isMobile: boolean
   onNext: () => void
   onBack: () => void
@@ -1111,7 +1115,7 @@ function StepView(props: {
   activeActIndex: number | null
   setActiveActIndex: (i: number | null) => void
 }) {
-  const { step, state, event, editMode, onNext, goToStep, updateCoach, updateState, updateDancer, addDancer, removeDancer, onOpenSmartPaste, updateAct, addAct, removeAct, confirm, saving, saveErr, startEdit, actsConfirmed, setActsConfirmed, activeActIndex, setActiveActIndex } = props
+  const { step, state, event, editMode, isEditSave, onNext, goToStep, updateCoach, updateState, updateDancer, addDancer, removeDancer, onOpenSmartPaste, updateAct, addAct, removeAct, confirm, saving, saveErr, startEdit, actsConfirmed, setActsConfirmed, activeActIndex, setActiveActIndex } = props
   const [lastAddedAssistantIndex, setLastAddedAssistantIndex] = useState<number | null>(null)
   const [datePickerIndex, setDatePickerIndex] = useState<number | null>(null)
   const [datePickerVal, setDatePickerVal] = useState({ day: '', month: '', year: '' })
@@ -2090,6 +2094,7 @@ function StepView(props: {
         <FullSummary
           state={state}
           editMode={editMode}
+          isEditSave={isEditSave}
           confirm={confirm}
           saving={saving}
           saveErr={saveErr}
@@ -2105,6 +2110,7 @@ function StepView(props: {
           state={state}
           editMode={false}
           confirmed
+          isEditSave={isEditSave}
           startEdit={startEdit}
           updateState={updateState}
           goToStep={goToStep}
@@ -2166,10 +2172,11 @@ function MoneyInput({ value, onChange, onEnter }: {
   )
 }
 
-function FullSummary({ state, editMode, confirmed, confirm, saving, saveErr, startEdit, updateState, goToStep, event }: {
+function FullSummary({ state, editMode, confirmed, isEditSave, confirm, saving, saveErr, startEdit, updateState, goToStep, event }: {
   state: State
   editMode: boolean
   confirmed?: boolean
+  isEditSave?: boolean
   confirm?: () => Promise<void>
   saving?: boolean
   saveErr?: string | null
@@ -2549,9 +2556,13 @@ function FullSummary({ state, editMode, confirmed, confirm, saving, saveErr, sta
               <div className="flex-1 bg-[rgb(var(--c-success))] text-white rounded-2xl p-4 md:p-5 shadow-sm text-center space-y-1 border border-[rgb(var(--c-success-strong)/0.15)]">
                 <div className="flex items-center justify-center gap-2">
                   <Check className="w-6 h-6 stroke-[3px] shrink-0" />
-                  <h2 className="font-display text-lg md:text-xl tracking-widest font-bold uppercase">¡REGISTRO CONFIRMADO!</h2>
+                  <h2 className="font-display text-lg md:text-xl tracking-widest font-bold uppercase">
+                    {isEditSave ? '¡CAMBIOS AL REGISTRO GUARDADOS!' : '¡REGISTRO CONFIRMADO!'}
+                  </h2>
                 </div>
-                <p className="text-[11px] sm:text-xs font-semibold opacity-95">Tu información ha sido guardada de forma segura en nuestro sistema.</p>
+                <p className="text-[11px] sm:text-xs font-semibold opacity-95">
+                  {isEditSave ? 'Cambios al registro guardados con éxito en nuestro sistema.' : 'Tu información ha sido guardada de forma segura en nuestro sistema.'}
+                </p>
               </div>
               
               {/* Right Arrow Path */}
