@@ -156,20 +156,8 @@ function isBeforeJune15(): boolean {
 }
 
 function getTicketsDeadline(eventDateIso: string | null | undefined): Date | null {
-  if (!eventDateIso) return null
-  try {
-    const eventDate = new Date(eventDateIso + 'T00:00:00')
-    if (isNaN(eventDate.getTime())) return null
-    const dayOfWeek = eventDate.getDay()
-    const diffToWednesday = (dayOfWeek - 3 + 7) % 7
-    const daysToSubtract = diffToWednesday === 0 ? 7 : diffToWednesday
-    const wednesdayBefore = new Date(eventDate)
-    wednesdayBefore.setDate(eventDate.getDate() - daysToSubtract)
-    wednesdayBefore.setHours(23, 59, 59, 999)
-    return wednesdayBefore
-  } catch {
-    return null
-  }
+  // La preventa de boletos está disponible hasta el miércoles 17 de Junio de 2026
+  return new Date(2026, 5, 17, 23, 59, 59, 999) // Mes 5 es Junio en JS (0-indexed)
 }
 
 function isBeforeTicketsDeadline(eventDateIso: string | null | undefined): boolean {
@@ -1871,20 +1859,6 @@ function StepView(props: {
               <Plus className="w-4 h-4" /> AGREGAR COREOGRAFÍA
             </button>
           </div>
-
-          <div className="bg-purple-50/50 border border-purple-200/50 rounded-2xl p-3.5 sm:p-4 text-xs sm:text-sm text-[rgb(var(--c-text))] space-y-1 mx-4 sm:mx-0 animate-fadeIn shrink-0">
-            <div className="flex items-center gap-2 text-purple-800 font-bold mb-1">
-              <Info className="w-4 h-4 text-purple-600 shrink-0" />
-              <span>INFORMACIÓN DE TARIFAS Y COREOGRAFÍAS</span>
-            </div>
-            <p className="leading-relaxed">
-              La inscripción por participante es de <strong>$2,700 MXN</strong> e incluye su <strong>primera coreografía o presentación</strong> (válido únicamente para registros completados antes del <strong>15 de Junio</strong>).
-            </p>
-            <p className="leading-relaxed text-[rgb(var(--c-text)/0.8)]">
-              Si un integrante participa en <strong>coreografías adicionales</strong>, se aplicará un costo de <strong>$500 MXN</strong> por cada coreografía extra en la que colabore.
-            </p>
-          </div>
-
           <div className="overflow-visible md:flex-1 md:min-h-0 md:overflow-y-auto">
             {state.acts.length === 0 ? (
               <div className="bg-[rgb(var(--c-surface))] border border-[rgb(var(--c-border)/0.5)] rounded-3xl p-16 text-center space-y-4 shadow-sm mx-4 sm:mx-0">
@@ -2563,16 +2537,16 @@ function FullSummary({ state, editMode, confirmed, isEditSave, confirm, saving, 
               <span>ENTRADAS PARA FAMILIARES / PAPÁS</span>
             </h3>
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 py-2">
-              <div className="space-y-1 max-w-md">
-                <p className="text-xs font-semibold text-[rgb(var(--c-text-strong))]">Recuerda que por este medio puedes registrar cuántas entradas van a comprar para familiares, papás y acompañantes.</p>
+              <div className="space-y-1.5 max-w-md">
+                <p className="text-xs font-semibold text-[rgb(var(--c-text-strong))]">Si ya tienes entradas confirmadas para familiares, papás y acompañantes, agrégalas aquí. Si aún no las tienes, no te preocupes: al finalizar tu registro o más adelante podrás adquirir y descargar entradas adicionales.</p>
                 <p className="text-[11px] text-[rgb(var(--c-text)/0.75)] italic font-medium text-purple-700 dark:text-purple-400">
-                  La entrada para familiares, papás y conocidos tiene un costo de <strong>{formatMoney(PRECIO_ENTRADA)} MXN</strong>. La preventa en línea está disponible hasta el miércoles anterior al evento.
+                  La entrada tiene un costo de <strong>{formatMoney(PRECIO_ENTRADA)} MXN</strong>. La preventa está disponible hasta el miércoles 17 de Junio.
                 </p>
                 <p className="text-[11px] text-[rgb(var(--c-text)/0.75)]">Costo por Entrada: <strong className="font-bold text-[rgb(var(--c-primary))]">{formatMoney(PRECIO_ENTRADA)} MXN</strong>.</p>
                 {!isBeforeTicketsDeadline(event?.date) && (
                   <div className="bg-amber-50/80 border border-amber-200/50 rounded-2xl p-3 mt-1.5 text-xs text-amber-950 font-semibold flex items-start gap-2">
                     <Info className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-                    <span>La venta de entradas en línea ha concluido (cerró el miércoles anterior al evento). Las entradas adicionales podrán adquirirse únicamente en la taquilla del recinto el día del evento.</span>
+                    <span>La preventa ha concluido (cerró el miércoles 17 de Junio). Las entradas adicionales podrán adquirirse únicamente en la taquilla del recinto el día del evento.</span>
                   </div>
                 )}
                 {editMode && isBeforeTicketsDeadline(event?.date) && (
@@ -2648,7 +2622,16 @@ function FullSummary({ state, editMode, confirmed, isEditSave, confirm, saving, 
           const totalEntradas = (state.ticketsCount ?? 0) * PRECIO_ENTRADA
           const total = totalDancers + totalAsistentes + totalEntradas
           return (
-            <div className="mt-3 sm:mt-4 px-0 sm:px-0">
+            <div className="mt-3 sm:mt-4 px-0 sm:px-0 space-y-3.5">
+              {/* LÓGICA DE INSCRIPCIÓN Y COREOGRAFÍAS (Ahora arriba del desglose de costos) */}
+              <div className="bg-purple-50 border border-purple-200 rounded-2xl p-4 text-xs leading-relaxed text-[rgb(var(--c-text)/0.8)] shadow-xs animate-[fadeIn_0.2s_ease-out_forwards] mx-0">
+                <p className="font-bold text-purple-950 flex items-center gap-1.5 mb-1.5 text-[13px]">
+                  <Info className="w-4 h-4 text-purple-600 shrink-0" />
+                  INFORMACIÓN DE TARIFAS Y COREOGRAFÍAS:
+                </p>
+                La inscripción por participante es de <strong>$2,700 MXN</strong> e incluye su <strong>primera coreografía o presentación</strong> (válido únicamente para registros completados antes del <strong>15 de Junio</strong>). Si un integrante participa en <strong>coreografías adicionales</strong>, se aplicará un costo de <strong>$500 MXN</strong> por cada presentación extra.
+              </div>
+
               <div className="bg-[rgb(var(--c-surface))] rounded-none sm:rounded-3xl border-t sm:border border-[rgb(var(--c-border)/0.4)] shadow-none sm:shadow-sm overflow-hidden">
                 <div className="p-3.5 sm:p-5">
                   <h3 className="font-display text-lg tracking-widest text-[rgb(var(--c-primary))] mb-4 border-b border-[rgb(var(--c-border)/0.25)] pb-2">
@@ -2688,14 +2671,6 @@ function FullSummary({ state, editMode, confirmed, isEditSave, confirm, saving, 
                         Info: 1 pase de asistente gratis por cada {DANCERS_POR_ENTRADA_GRATIS} integrantes inscritos.
                       </p>
                     )}
-                    
-                    <div className="bg-purple-50/60 border border-purple-200/40 rounded-2xl p-3 text-[11px] leading-relaxed text-[rgb(var(--c-text)/0.8)] mt-3">
-                      <p className="font-bold text-purple-950 flex items-center gap-1 mb-1">
-                        <Info className="w-3.5 h-3.5 text-purple-600 shrink-0" />
-                        LÓGICA DE INSCRIPCIÓN Y COREOGRAFÍAS:
-                      </p>
-                      La inscripción es de <strong>$2,700 MXN</strong> por integrante. Incluye su <strong>primera coreografía</strong> si el registro se realiza antes del 15 de Junio. Las participaciones en coreografías adicionales tienen un costo de <strong>$500 MXN</strong> cada una.
-                    </div>
 
                     <div className="flex justify-between items-center border-t border-[rgb(var(--c-border)/0.4)] pt-3 mt-3">
                       <span className="font-display text-base tracking-widest text-[rgb(var(--c-text-strong))]">TOTAL ESTIMADO</span>
@@ -2810,10 +2785,10 @@ function FullSummary({ state, editMode, confirmed, isEditSave, confirm, saving, 
               <div className="bg-amber-50/70 border border-amber-200/50 rounded-2xl p-4 text-xs text-amber-950 font-semibold leading-relaxed space-y-1 my-2">
                 <p className="flex items-center gap-1.5 font-bold text-amber-950">
                   <Info className="w-4 h-4 text-amber-600 shrink-0" />
-                  VENTA DE BOLETOS EN LÍNEA CERRADA:
+                  PREVENTA DE BOLETOS CERRADA:
                 </p>
                 <p>
-                  La venta y solicitud de entradas adicionales en línea ha concluido (cierra el miércoles anterior al evento). Ahora podrás adquirir tus pases directamente en la taquilla del evento el día del certamen.
+                  La preventa de pases adicionales ha concluido (cerró el miércoles 17 de Junio). Ahora podrás adquirir tus pases directamente en la taquilla del recinto el día del evento.
                 </p>
               </div>
             )}
@@ -3164,7 +3139,7 @@ function FullSummary({ state, editMode, confirmed, isEditSave, confirm, saving, 
                   <span>⚠️ REGLA CRÍTICA DE MODIFICACIONES:</span>
                 </p>
                 <p>
-                  Si necesitas agregar integrantes, corregir nombres, agregar coreografías o hacer cualquier cambio en tus datos, <strong className="text-red-700 font-extrabold uppercase underline">DEBES hacerlo tú mismo utilizando el botón de "MODIFICAR REGISTRO"</strong>. No se procesarán ni guardarán cambios de rosters o datos solicitados por mensaje de WhatsApp.
+                  Si necesitas agregar integrantes, corregir nombres, agregar coreografías o hacer cualquier cambio en tus datos, <strong className="text-red-700 font-extrabold uppercase underline">DEBES hacerlo tú mismo utilizando el botón de "MODIFICAR REGISTRO"</strong>. No se procesarán ni guardarán cambios o datos solicitados por mensaje de WhatsApp.
                 </p>
               </div>
             </div>
