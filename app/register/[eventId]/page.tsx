@@ -146,7 +146,7 @@ function participacionesPorAlumno(state: State): Map<number, number> {
 const PRECIO_INSCRIPCION = 2700
 const PRECIO_ADICIONAL_COREOGRAFIA = 500
 const PRECIO_ASISTENTE = 400
-const PRECIO_ENTRADA = 500
+const PRECIO_ENTRADA = typeof window !== 'undefined' && new Date() > new Date(2026, 5, 17, 23, 59, 59, 999) ? 600 : 500
 const DANCERS_POR_ENTRADA_GRATIS = 8
 
 function isBeforeJune15(): boolean {
@@ -156,8 +156,14 @@ function isBeforeJune15(): boolean {
 }
 
 function getTicketsDeadline(eventDateIso: string | null | undefined): Date | null {
-  // La preventa de boletos está disponible hasta el miércoles 17 de Junio de 2026
-  return new Date(2026, 5, 17, 23, 59, 59, 999) // Mes 5 es Junio en JS (0-indexed)
+  if (!eventDateIso) return null
+  try {
+    // Las entradas se venden en línea hasta el día del evento a las 23:59:59 (ya que no hay taquilla física ese día)
+    const eventDate = new Date(eventDateIso + 'T23:59:59')
+    return eventDate
+  } catch {
+    return null
+  }
 }
 
 function isBeforeTicketsDeadline(eventDateIso: string | null | undefined): boolean {
@@ -2539,14 +2545,20 @@ function FullSummary({ state, editMode, confirmed, isEditSave, confirm, saving, 
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 py-2">
               <div className="space-y-1.5 max-w-md">
                 <p className="text-xs font-semibold text-[rgb(var(--c-text-strong))]">Si ya tienes entradas confirmadas para familiares, papás y acompañantes, agrégalas aquí. Si aún no las tienes, no te preocupes: al finalizar tu registro o más adelante podrás adquirir y descargar entradas adicionales.</p>
-                <p className="text-[11px] text-[rgb(var(--c-text)/0.75)] italic font-medium text-purple-700 dark:text-purple-400">
-                  La entrada tiene un costo de <strong>{formatMoney(PRECIO_ENTRADA)} MXN</strong>. La preventa está disponible hasta el miércoles 17 de Junio.
-                </p>
-                <p className="text-[11px] text-[rgb(var(--c-text)/0.75)]">Costo por Entrada: <strong className="font-bold text-[rgb(var(--c-primary))]">{formatMoney(PRECIO_ENTRADA)} MXN</strong>.</p>
+                <div className="bg-purple-50/50 border border-purple-200/50 rounded-xl p-3 text-[11px] leading-relaxed text-purple-950">
+                  <p className="font-bold flex items-center gap-1 mb-0.5">
+                    <Info className="w-3.5 h-3.5 text-purple-700 shrink-0" />
+                    TARIFAS Y REGLAS DE ENTRADAS:
+                  </p>
+                  • Costo de <strong>preventa: $500 MXN</strong> por entrada (válido antes del <strong>miércoles 17 de Junio</strong>).<br />
+                  • Costo <strong>regular: $600 MXN</strong> por entrada (a partir del 18 de Junio).<br />
+                  <strong className="block text-red-700 font-extrabold uppercase mt-1">⚠️ IMPORTANTE: No se venderán entradas físicas el día del evento en las taquillas del recinto; todos los pases deben adquirirse en línea.</strong>
+                </div>
+                <p className="text-[11px] text-[rgb(var(--c-text)/0.75)]">Costo por Entrada Actual: <strong className="font-bold text-[rgb(var(--c-primary))]">{formatMoney(PRECIO_ENTRADA)} MXN</strong>.</p>
                 {!isBeforeTicketsDeadline(event?.date) && (
                   <div className="bg-amber-50/80 border border-amber-200/50 rounded-2xl p-3 mt-1.5 text-xs text-amber-950 font-semibold flex items-start gap-2">
                     <Info className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-                    <span>La preventa ha concluido (cerró el miércoles 17 de Junio). Las entradas adicionales podrán adquirirse únicamente en la taquilla del recinto el día del evento.</span>
+                    <span>La venta de entradas en línea ha concluido. Recuerda que no se venderán entradas el día del evento.</span>
                   </div>
                 )}
                 {editMode && isBeforeTicketsDeadline(event?.date) && (
@@ -2741,8 +2753,14 @@ function FullSummary({ state, editMode, confirmed, isEditSave, confirm, saving, 
                 <h4 className="font-display text-base sm:text-lg tracking-widest text-[rgb(var(--c-text-strong))] font-black uppercase">ENTRADAS ADICIONALES</h4>
               </div>
               <p className="text-xs sm:text-sm text-[rgb(var(--c-text)/0.6)] font-semibold">
-                Para familiares y acompañantes ($500 pesos c/u).
+                Costo actual: {formatMoney(PRECIO_ENTRADA)} MXN c/u.
               </p>
+            </div>
+            
+            <div className="bg-purple-50/50 border border-purple-200/50 rounded-xl p-3 text-[11px] leading-relaxed text-purple-950 mb-3">
+              • Costo de <strong>preventa: $500 MXN</strong> por entrada (válido antes del <strong>miércoles 17 de Junio</strong>).<br />
+              • Costo <strong>regular: $600 MXN</strong> por entrada (a partir del 18 de Junio).<br />
+              <strong className="block text-red-700 font-extrabold uppercase mt-1">⚠️ IMPORTANTE: No se venderán entradas físicas el día del evento en las taquillas del recinto; todos los pases deben adquirirse en línea.</strong>
             </div>
             
             {isBeforeTicketsDeadline(event?.date) ? (
@@ -2785,10 +2803,10 @@ function FullSummary({ state, editMode, confirmed, isEditSave, confirm, saving, 
               <div className="bg-amber-50/70 border border-amber-200/50 rounded-2xl p-4 text-xs text-amber-950 font-semibold leading-relaxed space-y-1 my-2">
                 <p className="flex items-center gap-1.5 font-bold text-amber-950">
                   <Info className="w-4 h-4 text-amber-600 shrink-0" />
-                  PREVENTA DE BOLETOS CERRADA:
+                  VENTA DE BOLETOS CERRADA:
                 </p>
                 <p>
-                  La preventa de pases adicionales ha concluido (cerró el miércoles 17 de Junio). Ahora podrás adquirir tus pases directamente en la taquilla del recinto el día del evento.
+                  La venta de entradas adicionales en línea ha concluido. Recuerda que no se venderán entradas el día del evento.
                 </p>
               </div>
             )}
