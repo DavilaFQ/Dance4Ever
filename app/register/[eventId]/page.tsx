@@ -1105,6 +1105,7 @@ function StepView(props: {
   setActiveActIndex: (i: number | null) => void
 }) {
   const { step, state, event, editMode, onNext, goToStep, updateCoach, updateState, updateDancer, addDancer, removeDancer, onOpenSmartPaste, updateAct, addAct, removeAct, confirm, saving, saveErr, startEdit, actsConfirmed, setActsConfirmed, activeActIndex, setActiveActIndex } = props
+  const [lastAddedAssistantIndex, setLastAddedAssistantIndex] = useState<number | null>(null)
   const [datePickerIndex, setDatePickerIndex] = useState<number | null>(null)
   const [datePickerVal, setDatePickerVal] = useState({ day: '', month: '', year: '' })
   const [datePickerClosing, setDatePickerClosing] = useState(false)
@@ -1481,8 +1482,15 @@ function StepView(props: {
                 </h3>
                 <button
                   type="button"
-                  onClick={() => updateCoach({ assistants: [...state.coach.assistants, ''] })}
-                  className="inline-flex items-center gap-1 text-xs text-[rgb(var(--c-primary))] font-bold hover:opacity-85 active:scale-95 transition-all duration-150"
+                  onMouseDown={(e) => {
+                    e.preventDefault()
+                  }}
+                  onClick={() => {
+                    const newIndex = state.coach.assistants.length
+                    setLastAddedAssistantIndex(newIndex)
+                    updateCoach({ assistants: [...state.coach.assistants, ''] })
+                  }}
+                  className="inline-flex items-center gap-1 text-xs text-[rgb(var(--c-primary))] font-bold hover:opacity-85 active:scale-95 transition-all duration-150 cursor-pointer"
                 >
                   <Plus className="w-3.5 h-3.5" /> AGREGAR
                 </button>
@@ -1500,6 +1508,12 @@ function StepView(props: {
                         placeholder={`Nombre del asistente ${idx + 1}`}
                         className="flex-1 bg-[rgb(var(--c-surface))] border border-[rgb(var(--c-border)/0.6)] text-[rgb(var(--c-text-strong))] rounded-xl px-3 py-2 outline-none focus:border-[rgb(var(--c-primary))] text-xs"
                         autoCapitalize="words"
+                        autoFocus={idx === lastAddedAssistantIndex}
+                        onBlur={() => {
+                          if (idx === lastAddedAssistantIndex) {
+                            setLastAddedAssistantIndex(null)
+                          }
+                        }}
                       />
                       <button
                         type="button"
