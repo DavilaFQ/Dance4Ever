@@ -888,7 +888,7 @@ export default function RegisterPage({ params }: Props) {
           visibility: hidden;
         }
       ` }} />
-      <meta name="theme-color" content={(step.kind === 'welcome' || authState === 'loading') ? '#020005' : '#F6F4EF'} />
+      <meta name="theme-color" content={step.kind === 'welcome' ? '#020005' : '#F6F4EF'} />
 
       <main
         className={`flex-1 min-h-0 flex flex-col overflow-y-auto lg:overflow-hidden ${step.kind === 'welcome' ? 'px-0' : 'px-0 sm:px-4 lg:px-8'}`}
