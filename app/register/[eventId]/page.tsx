@@ -1881,7 +1881,7 @@ function StepView(props: {
               La inscripción por participante es de <strong>$2,700 MXN</strong> e incluye su <strong>primera coreografía o presentación</strong> (válido únicamente para registros completados antes del <strong>15 de Junio</strong>).
             </p>
             <p className="leading-relaxed text-[rgb(var(--c-text)/0.8)]">
-              Si un integrante participa en <strong>coreografías adicionales</strong>, se aplicará un costo de <strong>$500 MXN</strong> por cada coreografía extra en la que colabore. El coach tiene acceso gratuito ($0 MXN).
+              Si un integrante participa en <strong>coreografías adicionales</strong>, se aplicará un costo de <strong>$500 MXN</strong> por cada coreografía extra en la que colabore.
             </p>
           </div>
 
@@ -2050,7 +2050,7 @@ function StepView(props: {
                                     key={style}
                                     type="button"
                                     onClick={() => updateAct(i, { style })}
-                                    className={`py-2 px-3.5 rounded-full font-display text-xs tracking-wider font-bold transition-all border active:scale-95 duration-150 ${
+                                    className={`py-2 px-3.5 rounded-xl font-display text-xs tracking-wider font-bold transition-all border active:scale-95 duration-150 ${
                                       isSelected
                                         ? 'bg-[rgb(var(--c-primary))] border-[rgb(var(--c-primary))] text-white shadow-sm'
                                         : 'bg-[rgb(var(--c-surface))] border-[rgb(var(--c-border)/0.5)] text-[rgb(var(--c-text-strong))] hover:bg-[rgb(var(--c-surface-2))]'
