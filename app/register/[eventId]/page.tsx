@@ -3088,6 +3088,20 @@ async function generateReceiptPDF(state: State, event: Event | null) {
   doc.setFont('helvetica', 'normal')
   doc.text(state.coach.phone || 'SIN WHATSAPP', 52, y)
 
+  doc.setTextColor(100, 100, 100)
+  doc.setFont('helvetica', 'bold')
+  doc.text('FECHA REGISTRO:', 120, y)
+  doc.setTextColor(17, 17, 17)
+  doc.setFont('helvetica', 'normal')
+  const confirmTimestamp = new Date().toLocaleString('es-MX', { 
+    day: '2-digit', 
+    month: 'short', 
+    year: 'numeric', 
+    hour: '2-digit', 
+    minute: '2-digit' 
+  }).toUpperCase()
+  doc.text(confirmTimestamp, 150, y)
+
   y += 5
 
   // Row 4
