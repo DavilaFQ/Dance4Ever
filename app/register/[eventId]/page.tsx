@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState, use, useCallback } from 'react'
+import { useEffect, useState, use, useCallback, useRef } from 'react'
 import Image from 'next/image'
 import { useSearchParams } from 'next/navigation'
 import { ArrowLeft, Check, Plus, Trash2, Pencil, MessageCircle, Info, X, ChevronDown, Sparkles, Users, Clipboard, HeartHandshake, School, Clock, Calendar, Ticket, Download } from 'lucide-react'
@@ -268,6 +268,10 @@ export default function RegisterPage({ params }: Props) {
   const [authState, setAuthState] = useState<'loading' | 'ok' | 'invalid'>('loading')
   const [state, setState] = useState<State>(initialState)
   const [step, setStep] = useState<Step>({ kind: 'welcome' })
+  const stepKindRef = useRef(step.kind)
+  useEffect(() => {
+    stepKindRef.current = step.kind
+  }, [step.kind])
   const [editMode, setEditMode] = useState(false)
   const [saving, setSaving] = useState(false)
   const [saveErr, setSaveErr] = useState<string | null>(null)
@@ -485,6 +489,9 @@ export default function RegisterPage({ params }: Props) {
 
     const handleWindowScroll = () => {
       if (typeof window !== 'undefined' && window.scrollY !== 0 && document.activeElement?.closest('main') === null) {
+        if (stepKindRef.current !== 'welcome' && stepKindRef.current !== 'confirmed') {
+          return
+        }
         window.scrollTo(0, 0)
       }
     }
