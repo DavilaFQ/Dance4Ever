@@ -2,7 +2,7 @@
 import { useEffect, useState, use, useCallback, useRef } from 'react'
 import Image from 'next/image'
 import { useSearchParams } from 'next/navigation'
-import { ArrowLeft, Check, Plus, Trash2, Pencil, MessageCircle, Info, X, ChevronDown, Sparkles, Users, Clipboard, HeartHandshake, School, Clock, Calendar, Ticket, Download, Eye, DollarSign } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Check, Plus, Trash2, Pencil, MessageCircle, Info, X, ChevronDown, Sparkles, Users, Clipboard, HeartHandshake, School, Clock, Calendar, Ticket, Download, Eye, DollarSign } from 'lucide-react'
 import { supabase, Modality, AgeCategory, Level, Event, AGE_CATEGORY_ORDER, AGE_CATEGORY_LABELS, AGE_CATEGORY_HINTS, categoryFromBirthdate } from '@/lib/supabase'
 
 type Props = { params: Promise<{ eventId: string }> }
@@ -294,7 +294,11 @@ export default function RegisterPage({ params }: Props) {
   useEffect(() => {
     try {
       const metaTheme = document.querySelector('meta[name="theme-color"]')
-      if (showSuccessSplash) {
+      if (step.kind === 'welcome' || authState === 'loading') {
+        if (metaTheme) metaTheme.setAttribute('content', '#020005')
+        document.body.style.setProperty('background-color', '#020005', 'important')
+        document.documentElement.style.setProperty('background-color', '#020005', 'important')
+      } else if (showSuccessSplash) {
         if (metaTheme) metaTheme.setAttribute('content', '#16A34A')
         document.body.style.setProperty('background-color', '#16A34A', 'important')
         document.documentElement.style.setProperty('background-color', '#16A34A', 'important')
@@ -304,7 +308,7 @@ export default function RegisterPage({ params }: Props) {
         document.documentElement.style.setProperty('background-color', 'rgb(var(--c-surface))', 'important')
       }
     } catch { /* ignore document reference errors on SSR */ }
-  }, [showSuccessSplash])
+  }, [step.kind, authState, showSuccessSplash])
 
   useEffect(() => {
     const check = () => {
@@ -811,9 +815,17 @@ export default function RegisterPage({ params }: Props) {
 
   if (authState === 'loading') {
     return (
-      <Centered>
-        <p className="font-display text-3xl tracking-widest text-[rgb(var(--c-primary))] animate-pulse">CARGANDO…</p>
-      </Centered>
+      <div 
+        className="min-h-[100dvh] flex flex-col items-center justify-center p-6 select-none" 
+        style={{ background: '#020005' }}
+      >
+        <div className="flex flex-col items-center gap-4">
+          <Sparkles className="w-8 h-8 text-amber-400 animate-spin" style={{ animationDuration: '3s' }} />
+          <p className="font-display text-xl tracking-[0.2em] font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-amber-200 to-amber-400 animate-pulse uppercase">
+            CARGANDO...
+          </p>
+        </div>
+      </div>
     )
   }
   if (authState === 'invalid') {
@@ -876,12 +888,12 @@ export default function RegisterPage({ params }: Props) {
           visibility: hidden;
         }
       ` }} />
-      <meta name="theme-color" content="#F6F4EF" />
+      <meta name="theme-color" content={(step.kind === 'welcome' || authState === 'loading') ? '#020005' : '#F6F4EF'} />
 
       <main
         className={`flex-1 min-h-0 flex flex-col overflow-y-auto lg:overflow-hidden ${step.kind === 'welcome' ? 'px-0' : 'px-0 sm:px-4 lg:px-8'}`}
         style={{
-          paddingTop: 'env(safe-area-inset-top, 0px)',
+          paddingTop: step.kind === 'welcome' ? '0px' : 'env(safe-area-inset-top, 0px)',
           paddingBottom: '0px'
         }}
       >
@@ -975,9 +987,9 @@ export default function RegisterPage({ params }: Props) {
         >
           <button
             onClick={goBack}
-            className="flex items-center gap-1.5 text-[rgb(var(--c-primary))] font-display font-bold text-sm bg-[rgb(var(--c-surface-2))] border border-[rgb(var(--c-border)/0.4)] px-4 py-2.5 rounded-2xl active:scale-95 active:bg-[rgb(var(--c-surface-3))] transition-all duration-150"
+            className="flex items-center gap-1.5 text-purple-700 font-display font-bold text-sm bg-purple-50 border border-purple-200/60 px-4 py-2.5 rounded-2xl active:scale-95 hover:bg-purple-100/60 transition-all duration-150 shadow-sm"
           >
-            <ArrowLeft className="w-4 h-4" />
+            <ArrowLeft className="w-4 h-4 text-purple-600" />
             ATRÁS
           </button>
 
@@ -1013,7 +1025,7 @@ export default function RegisterPage({ params }: Props) {
                 disabled={
                   state.acts.length === 0 || state.acts.some(a => !a.modality || !a.style || a.dancerIndices.length === 0)
                 }
-                className="flex items-center gap-1 text-white bg-[rgb(var(--c-primary))] hover:bg-[rgb(var(--c-primary-strong))] font-display font-bold text-sm px-5 py-2.5 rounded-2xl disabled:opacity-40 disabled:pointer-events-none active:scale-95 transition-all duration-150 shadow-md"
+                className="flex items-center gap-1 text-white bg-gradient-to-r from-purple-700 via-purple-600 to-pink-600 hover:from-purple-800 hover:to-pink-700 font-display font-bold text-sm px-5 py-2.5 rounded-2xl disabled:opacity-40 disabled:pointer-events-none active:scale-95 transition-all duration-150 shadow-[0_4px_12px_rgba(168,85,247,0.3)]"
               >
                 CONFIRMAR ACTO
               </button>
@@ -1025,16 +1037,17 @@ export default function RegisterPage({ params }: Props) {
                   || step.kind === 'dancers' && (state.dancers.length === 0 || state.dancers.some(d => d.name.trim().length < 2 || d.birthdate.length !== 10))
                   || step.kind === 'acts' && (state.acts.length === 0 || state.acts.some(a => !a.modality || !a.style || a.dancerIndices.length === 0))
                 }
-                className="flex items-center gap-1 text-[rgb(var(--c-text-strong))] bg-gradient-to-r from-[#16A34A] via-[#82f606] to-[#fff200] hover:brightness-105 font-display font-bold text-sm px-4 py-2.5 rounded-2xl disabled:opacity-40 disabled:pointer-events-none active:scale-95 transition-all duration-150 shadow-md"
+                className="flex items-center gap-1.5 text-white bg-gradient-to-r from-purple-700 via-purple-600 to-pink-600 hover:from-purple-800 hover:to-pink-700 font-display font-bold text-sm px-5 py-2.5 rounded-2xl disabled:opacity-30 disabled:pointer-events-none active:scale-95 transition-all duration-150 shadow-[0_4px_12px_rgba(168,85,247,0.3)]"
               >
                 {step.kind === 'acts' ? 'SIGUIENTE: RESUMEN' : 'SIGUIENTE'}
+                <ArrowRight className="w-4 h-4 animate-pulse" />
               </button>
             )
           ) : (
             <button
               onClick={confirm}
               disabled={saving}
-              className="flex items-center gap-1 text-white bg-[rgb(var(--c-primary))] hover:bg-[rgb(var(--c-primary-strong))] font-display font-bold text-sm px-5 py-2.5 rounded-2xl disabled:opacity-50 active:scale-95 transition-all duration-150 shadow-md"
+              className="flex items-center gap-1.5 text-white bg-gradient-to-r from-purple-700 via-purple-600 to-pink-600 hover:from-purple-800 hover:to-pink-700 font-display font-bold text-sm px-5 py-2.5 rounded-2xl disabled:opacity-30 disabled:pointer-events-none active:scale-95 transition-all duration-150 shadow-[0_4px_12px_rgba(168,85,247,0.3)]"
             >
               {saving ? 'GUARDANDO…' : 'CONFIRMAR'}
             </button>
@@ -1149,6 +1162,23 @@ function StepView(props: {
   const [datePickerVal, setDatePickerVal] = useState({ day: '', month: '', year: '' })
   const [datePickerClosing, setDatePickerClosing] = useState(false)
   const [videoEnded, setVideoEnded] = useState(false)
+  const [videoProgress, setVideoProgress] = useState(0)
+  const [currentTime, setCurrentTime] = useState(0)
+  const [useFallback, setUseFallback] = useState(false)
+  const [startBlurring, setStartBlurring] = useState(false)
+  const [videoLoaded, setVideoLoaded] = useState(false)
+  const videoRef = useRef<HTMLVideoElement>(null)
+
+  useEffect(() => {
+    // Autoplay safeguard: if after 1.5 seconds the video has not played, show button immediately
+    const timer = setTimeout(() => {
+      if (videoRef.current && (videoRef.current.paused || videoRef.current.currentTime < 0.1)) {
+        setUseFallback(true)
+      }
+    }, 1500)
+    return () => clearTimeout(timer)
+  }, [])
+
   const closeDatePicker = () => {
     document.querySelector('meta[name="theme-color"]')?.setAttribute('content', '#F6F4EF')
     setDatePickerClosing(true)
@@ -1159,7 +1189,7 @@ function StepView(props: {
     case 'welcome': {
       return (
         <div 
-          className="relative flex flex-col items-center justify-end h-[100dvh] w-full overflow-hidden select-none px-6 pb-12" 
+          className="relative flex flex-col items-center justify-end h-[100dvh] w-full overflow-hidden select-none px-6 pb-4" 
           style={{ 
             background: '#020005', 
             touchAction: 'none', 
@@ -1176,62 +1206,212 @@ function StepView(props: {
               50% { left: 160%; }
               100% { left: 160%; }
             }
+            @keyframes slideFromLeft {
+              0% {
+                opacity: 0;
+                transform: translateX(-150px) scale(0.9);
+                filter: blur(4px);
+              }
+              100% {
+                opacity: 1;
+                transform: translateX(0) scale(1);
+                filter: blur(0px);
+              }
+            }
+            @keyframes textReveal {
+              0% {
+                opacity: 0;
+                letter-spacing: -0.05em;
+                filter: blur(8px);
+                transform: translateY(20px);
+              }
+              50% {
+                opacity: 0.5;
+                filter: blur(3px);
+              }
+              100% {
+                opacity: 1;
+                letter-spacing: 0.08em;
+                filter: blur(0px);
+                transform: translateY(0);
+              }
+            }
+            @keyframes logoPremiumEffect {
+              0% {
+                transform: translateY(0px);
+                filter: drop-shadow(0 0 20px rgba(245, 158, 11, 0.15));
+              }
+              50% {
+                transform: translateY(-8px);
+                filter: drop-shadow(0 0 45px rgba(245, 158, 11, 0.45));
+              }
+              100% {
+                transform: translateY(0px);
+                filter: drop-shadow(0 0 20px rgba(245, 158, 11, 0.15));
+              }
+            }
+            @keyframes arrowPulse {
+              0%, 100% {
+                transform: translateX(0px);
+                filter: drop-shadow(0 0 3px rgba(245, 158, 11, 0.4));
+              }
+              50% {
+                transform: translateX(5px);
+                filter: drop-shadow(0 0 12px rgba(245, 158, 11, 0.85));
+              }
+            }
+            .blur-transition-layer {
+              backdrop-filter: blur(0px);
+              -webkit-backdrop-filter: blur(0px);
+              transition: backdrop-filter 2200ms cubic-bezier(0.25, 1, 0.5, 1), -webkit-backdrop-filter 2200ms cubic-bezier(0.25, 1, 0.5, 1);
+            }
+            .blur-transition-layer.blurred {
+              backdrop-filter: blur(12px);
+              -webkit-backdrop-filter: blur(12px);
+            }
           `}</style>
 
           {/* BACKGROUND VIDEO (Plays once, blurs on end, top-aligned) */}
           <video
+            ref={videoRef}
             autoPlay
             muted
             loop={false}
             onEnded={() => setVideoEnded(true)}
+            onTimeUpdate={(e) => {
+              const video = e.currentTarget
+              if (video.duration) {
+                setVideoProgress((video.currentTime / video.duration) * 100)
+                // Trigger slow blur and brand fade 2.2 seconds before video ends
+                if (video.duration - video.currentTime <= 2.2) {
+                  setStartBlurring(true)
+                }
+              }
+              setCurrentTime(video.currentTime)
+            }}
             playsInline
-            className="absolute top-0 left-0 w-full h-[106dvh] object-cover z-0 pointer-events-none select-none"
-            poster="/grand_national_bg.jpg"
+            onPlaying={() => setVideoLoaded(true)}
+            className="absolute top-0 left-0 w-full h-[106dvh] object-contain z-0 pointer-events-none select-none"
             style={{
-              filter: videoEnded ? 'blur(12px) brightness(0.45)' : 'none',
-              transition: 'filter 1.5s cubic-bezier(0.25, 1, 0.5, 1), brightness 1.5s cubic-bezier(0.25, 1, 0.5, 1)',
               objectPosition: 'center top',
+              opacity: (videoLoaded || useFallback) ? 1 : 0,
+              transition: 'opacity 800ms ease-out',
+              backgroundColor: '#020005',
             }}
           >
             <source src="/d4e.mp4" type="video/mp4" />
           </video>
 
-          {/* CINEMATIC BLURRED OVERLAY WHEN VIDEO ENDS */}
+          {/* CINEMATIC GRADIENT OVERLAY WHEN VIDEO ENDS */}
           <div 
-            className={`absolute inset-0 z-0 bg-gradient-to-b from-amber-950/15 via-[#020005]/70 to-[#020005] transition-opacity duration-1500 pointer-events-none ${
-              videoEnded ? 'opacity-100' : 'opacity-0'
+            className={`absolute inset-0 z-0 bg-gradient-to-b from-amber-950/20 via-[#020005]/80 to-[#020005] transition-opacity pointer-events-none ${
+              (videoEnded || useFallback || startBlurring) ? 'opacity-100' : 'opacity-0'
+            }`} 
+            style={{
+              transitionDuration: '2200ms',
+              transitionTimingFunction: 'cubic-bezier(0.25, 1, 0.5, 1)'
+            }}
+          />
+
+          {/* SMOOTH BACKDROP BLUR TRANSITION LAYER */}
+          <div 
+            className={`absolute inset-0 z-0 pointer-events-none blur-transition-layer ${
+              (videoEnded || useFallback || startBlurring) ? 'blurred' : ''
             }`} 
           />
 
-          {/* BOTTOM-CENTER FLOATING CTA BUTTON WRAPPER (Fades in when video ends) */}
+          {/* CINEMATIC BRAND REVEAL CENTERED (Fades in when video ends) */}
           <div 
-            className={`relative z-10 w-full max-w-sm flex flex-col items-center justify-center mb-4 transition-all duration-1200 ease-[cubic-bezier(0.16,1,0.3,1)] ${
-              videoEnded ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-6 scale-95 pointer-events-none'
+            className={`absolute inset-0 z-10 flex flex-col items-center justify-center pointer-events-none px-6 pb-28 transition-all pointer-events-none ${
+              (videoEnded || useFallback || startBlurring) ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-6 scale-95'
+            }`}
+            style={{
+              transitionDuration: '2200ms',
+              transitionTimingFunction: 'cubic-bezier(0.25, 1, 0.5, 1)'
+            }}
+          >
+            {/* Super Large Logo with Gold Pulsing Glow */}
+            <img 
+              src="/logo.png" 
+              alt="Dance4Ever" 
+              className="w-11/12 max-w-[340px] sm:max-w-[480px] md:max-w-[580px] h-auto object-contain shrink-0"
+              style={{
+                animation: (videoEnded || useFallback || startBlurring) ? 'logoPremiumEffect 6s ease-in-out infinite' : 'none'
+              }}
+            />
+          </div>
+
+          {/* BOTTOM-CENTER FLOATING CARD CONTAINER */}
+          <div 
+            className={`relative z-10 w-full max-w-sm flex flex-col items-center justify-center mb-0 transition-opacity duration-300 ${
+              (videoEnded || useFallback || currentTime >= 1.8 || startBlurring) ? 'opacity-100' : 'opacity-0 pointer-events-none'
             }`}
           >
-            <button
-              onClick={onNext}
-              className="w-full py-5 rounded-2xl font-display text-2xl tracking-[0.2em] font-extrabold hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 relative overflow-hidden group shadow-[0_15px_40px_rgba(245,158,11,0.15),inset_0_1px_1px_rgba(255,255,255,0.08)] border border-amber-500/35 bg-amber-500/[0.04] backdrop-blur-xl text-amber-400 hover:text-yellow-200 hover:border-amber-500/50"
+            {/* Cinematic Typography Reveal (Super Large & Placed Directly Above Button/Card) */}
+            <h1 
+              className="mb-6 sm:mb-8 font-display text-4xl sm:text-6xl md:text-7xl font-black text-center uppercase tracking-[0.06em] text-transparent bg-clip-text bg-gradient-to-b from-white via-amber-100 to-amber-400 drop-shadow-[0_4px_20px_rgba(245,158,11,0.45)] leading-tight w-[140%] max-w-[92vw] shrink-0 opacity-0"
+              style={{
+                animation: (videoEnded || useFallback || startBlurring) ? 'textReveal 2.2s cubic-bezier(0.16, 1, 0.3, 1) forwards' : 'none'
+              }}
             >
-              {/* Sliding Gold Sheen Overlay on Hover */}
-              <div className="absolute inset-0 bg-gradient-to-r from-amber-500/10 via-yellow-500/5 to-amber-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 ease-out z-0" />
+              ¿Listos para las nacionales?
+            </h1>
 
-              {/* Sparkling Light Sweep Overlay */}
-              <div className="absolute inset-0 pointer-events-none overflow-hidden z-10">
-                <div 
-                  className="absolute inset-y-0 w-1/3 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-25"
-                  style={{ 
-                    left: '-100%',
-                    animation: 'sweep 3.5s infinite ease-in-out',
-                  }} 
-                />
+            {!(videoEnded || useFallback) ? (
+              /* EXPECTATION / PROGRESS LOADER CARD */
+              <div 
+                className="w-full h-[88px] px-6 rounded-2xl border border-amber-500/20 bg-black/40 backdrop-blur-md shadow-[0_10px_30px_rgba(0,0,0,0.5)] flex flex-col items-center justify-center relative overflow-hidden"
+                style={{ animation: 'slideFromLeft 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)' }}
+              >
+                <div className="flex items-center gap-2 mb-2.5">
+                  <Sparkles className="w-4 h-4 text-amber-400/80 animate-pulse" />
+                  <span className="font-display text-[10px] sm:text-xs tracking-[0.25em] font-extrabold text-amber-400/80 uppercase animate-pulse">
+                    Sincronizando Experiencia...
+                  </span>
+                </div>
+                
+                {/* Thin Premium Loading Bar */}
+                <div className="w-full h-[3px] bg-white/10 rounded-full overflow-hidden relative">
+                  <div 
+                    className="h-full bg-gradient-to-r from-amber-600 via-amber-400 to-yellow-300 transition-all duration-100 ease-out shadow-[0_0_8px_#f59e0b]"
+                    style={{ width: `${Math.min(videoProgress, 100)}%` }}
+                  />
+                </div>
+                
+                <span className="mt-2 text-[9px] tracking-[0.15em] font-medium text-white/40 uppercase">
+                  Dance4Ever • La Gran Nacional 2026
+                </span>
               </div>
+            ) : (
+              /* CLICKABLE CTA BUTTON */
+              <button
+                onClick={onNext}
+                className="w-full h-[88px] rounded-2xl font-display text-2xl tracking-[0.2em] font-extrabold hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 relative overflow-hidden group shadow-[0_15px_40px_rgba(245,158,11,0.15),inset_0_1px_1px_rgba(255,255,255,0.08)] border border-amber-500/35 bg-amber-500/[0.04] backdrop-blur-xl text-amber-400 hover:text-yellow-200 hover:border-amber-500/50 flex items-center justify-center"
+                style={{ animation: 'riseUp 0.5s cubic-bezier(0.16, 1, 0.3, 1)' }}
+              >
+                {/* Sliding Gold Sheen Overlay on Hover */}
+                <div className="absolute inset-0 bg-gradient-to-r from-amber-500/10 via-yellow-500/5 to-amber-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 ease-out z-0" />
 
-              <span className="relative z-20 flex items-center justify-center gap-3.5 uppercase font-black tracking-[0.16em] filter drop-shadow-[0_0_8px_rgba(245,158,11,0.4)]">
-                COMENZAR REGISTRO
-                <Sparkles className="w-5.5 h-5.5 text-amber-400 group-hover:text-yellow-200 animate-bounce shrink-0 filter drop-shadow-[0_0_5px_rgba(245,158,11,0.5)]" />
-              </span>
-            </button>
+                {/* Sparkling Light Sweep Overlay */}
+                <div className="absolute inset-0 pointer-events-none overflow-hidden z-10">
+                  <div 
+                    className="absolute inset-y-0 w-1/3 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-25"
+                    style={{ 
+                      left: '-100%',
+                      animation: 'sweep 3.5s infinite ease-in-out',
+                    }} 
+                  />
+                </div>
+
+                <span className="relative z-20 flex items-center justify-center gap-3.5 uppercase font-black tracking-[0.16em] filter drop-shadow-[0_0_8px_rgba(245,158,11,0.4)]">
+                  COMENZAR REGISTRO
+                  <ArrowRight 
+                    className="w-5.5 h-5.5 text-amber-400 group-hover:text-yellow-200 shrink-0" 
+                    style={{ animation: 'arrowPulse 1.4s infinite ease-in-out' }}
+                  />
+                </span>
+              </button>
+            )}
           </div>
         </div>
       )
@@ -1266,7 +1446,7 @@ function StepView(props: {
                       value={state.coach.name}
                       onChange={e => updateCoach({ name: e.target.value })}
                       placeholder="Nombre del coach"
-                      className="w-full bg-[rgb(var(--c-surface))] border border-[rgb(var(--c-border)/0.6)] text-[rgb(var(--c-text-strong))] rounded-2xl px-4 py-3 outline-none focus:border-[rgb(var(--c-primary))] focus:ring-1 focus:ring-[rgb(var(--c-primary))] transition-all text-sm"
+                      className="w-full bg-white border border-[rgb(var(--c-border)/0.5)] text-[rgb(var(--c-text-strong))] rounded-2xl px-4 py-3 outline-none focus:border-[rgb(var(--c-primary))] focus:ring-1 focus:ring-[rgb(var(--c-primary))] transition-all text-sm shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)]"
                       autoCapitalize="words"
                       autoComplete="name"
                       autoCorrect="off"
@@ -1282,7 +1462,7 @@ function StepView(props: {
                         value={state.coach.phone}
                         onChange={e => updateCoach({ phone: e.target.value.replace(/\D/g, '') })}
                         placeholder="Números sin espacios ni guiones"
-                        className="w-full bg-[rgb(var(--c-surface))] border border-[rgb(var(--c-border)/0.6)] text-[rgb(var(--c-text-strong))] rounded-2xl px-4 py-3 outline-none focus:border-[rgb(var(--c-primary))] focus:ring-1 focus:ring-[rgb(var(--c-primary))] transition-all text-sm"
+                        className="w-full bg-white border border-[rgb(var(--c-border)/0.5)] text-[rgb(var(--c-text-strong))] rounded-2xl px-4 py-3 outline-none focus:border-[rgb(var(--c-primary))] focus:ring-1 focus:ring-[rgb(var(--c-primary))] transition-all text-sm shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)]"
                         autoComplete="one-time-code"
                         autoCorrect="off"
                         spellCheck={false}
@@ -1295,7 +1475,7 @@ function StepView(props: {
                         value={state.coach.email}
                         onChange={e => updateCoach({ email: e.target.value })}
                         placeholder="correo@ejemplo.com"
-                        className="w-full bg-[rgb(var(--c-surface))] border border-[rgb(var(--c-border)/0.6)] text-[rgb(var(--c-text-strong))] rounded-2xl px-4 py-3 outline-none focus:border-[rgb(var(--c-primary))] focus:ring-1 focus:ring-[rgb(var(--c-primary))] transition-all text-sm"
+                        className="w-full bg-white border border-[rgb(var(--c-border)/0.5)] text-[rgb(var(--c-text-strong))] rounded-2xl px-4 py-3 outline-none focus:border-[rgb(var(--c-primary))] focus:ring-1 focus:ring-[rgb(var(--c-primary))] transition-all text-sm shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)]"
                         autoCapitalize="off"
                         autoComplete="email"
                         autoCorrect="off"
@@ -1320,7 +1500,7 @@ function StepView(props: {
                         value={state.city}
                         onChange={e => updateState(s => ({ ...s, city: e.target.value }))}
                         placeholder="Ej. Monterrey"
-                        className="w-full bg-[rgb(var(--c-surface))] border border-[rgb(var(--c-border)/0.6)] text-[rgb(var(--c-text-strong))] rounded-2xl px-4 py-3 outline-none focus:border-[rgb(var(--c-primary))] focus:ring-1 focus:ring-[rgb(var(--c-primary))] transition-all text-sm"
+                        className="w-full bg-white border border-[rgb(var(--c-border)/0.5)] text-[rgb(var(--c-text-strong))] rounded-2xl px-4 py-3 outline-none focus:border-[rgb(var(--c-primary))] focus:ring-1 focus:ring-[rgb(var(--c-primary))] transition-all text-sm shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)]"
                         autoCapitalize="words"
                       />
                     </div>
@@ -1331,7 +1511,7 @@ function StepView(props: {
                         value={state.academy}
                         onChange={e => updateState(s => ({ ...s, academy: e.target.value }))}
                         placeholder="Ej. Escuela de Danza Ritmo"
-                        className="w-full bg-[rgb(var(--c-surface))] border border-[rgb(var(--c-border)/0.6)] text-[rgb(var(--c-text-strong))] rounded-2xl px-4 py-3 outline-none focus:border-[rgb(var(--c-primary))] focus:ring-1 focus:ring-[rgb(var(--c-primary))] transition-all text-sm"
+                        className="w-full bg-white border border-[rgb(var(--c-border)/0.5)] text-[rgb(var(--c-text-strong))] rounded-2xl px-4 py-3 outline-none focus:border-[rgb(var(--c-primary))] focus:ring-1 focus:ring-[rgb(var(--c-primary))] transition-all text-sm shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)]"
                         autoCapitalize="sentences"
                       />
                     </div>
@@ -1372,7 +1552,7 @@ function StepView(props: {
                         value={ast}
                         onChange={ev => updateCoach({ assistants: state.coach.assistants.map((x, j) => j === idx ? ev.target.value : x) })}
                         placeholder={`Nombre del asistente ${idx + 1}`}
-                        className="flex-1 bg-[rgb(var(--c-surface))] border border-[rgb(var(--c-border)/0.6)] text-[rgb(var(--c-text-strong))] rounded-xl px-3 py-2 outline-none focus:border-[rgb(var(--c-primary))] text-xs"
+                        className="flex-1 bg-white border border-[rgb(var(--c-border)/0.5)] text-[rgb(var(--c-text-strong))] rounded-xl px-3 py-2 outline-none focus:border-[rgb(var(--c-primary))] text-xs shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)]"
                         autoCapitalize="words"
                         autoFocus={idx === lastAddedAssistantIndex}
                         onBlur={() => {
@@ -1400,9 +1580,10 @@ function StepView(props: {
             <button
               onClick={onNext}
               disabled={!isValid}
-              className="w-full bg-gradient-to-r from-[#16A34A] via-[#82f606] to-[#fff200] hover:brightness-105 active:brightness-95 text-[rgb(var(--c-text-strong))] font-display text-xl tracking-widest py-4 rounded-2xl transition-all shadow-md active:scale-[0.98] duration-150 font-bold disabled:opacity-40 disabled:pointer-events-none"
+              className="w-full bg-gradient-to-r from-purple-700 via-purple-600 to-pink-600 hover:from-purple-800 hover:to-pink-700 active:scale-[0.98] text-white font-display text-lg sm:text-xl tracking-widest py-4 rounded-2xl transition-all duration-200 shadow-[0_4px_20px_rgba(168,85,247,0.3)] hover:shadow-[0_6px_25px_rgba(168,85,247,0.5)] disabled:opacity-30 disabled:pointer-events-none font-black text-center flex items-center justify-center gap-2"
             >
               CONTINUAR AL PASO 2: INTEGRANTES
+              <ArrowRight className="w-5 h-5 animate-pulse" />
             </button>
           </div>
         </div>
@@ -1496,9 +1677,9 @@ function StepView(props: {
                             setDatePickerIndex(i)
                             document.querySelector('meta[name="theme-color"]')?.setAttribute('content', '#000000')
                           }}
-                          className="w-full bg-[rgb(var(--c-surface-2))] border border-[rgb(var(--c-border)/0.5)] rounded-xl px-3 py-2 text-sm font-semibold text-left flex items-center gap-2 active:border-[rgb(var(--c-primary))] transition-all"
+                          className="w-full bg-white border border-[rgb(var(--c-border)/0.5)] rounded-xl px-3 py-2 text-sm font-semibold text-left flex items-center gap-2 active:border-[rgb(var(--c-primary))] transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)]"
                         >
-                          <span className="text-[rgb(var(--c-primary)/0.7)]">📅</span>
+                          <Calendar className="w-4 h-4 text-[rgb(var(--c-primary)/0.7)]" />
                           <span className={d.birthdate && d.birthdate.length === 10 ? 'text-[rgb(var(--c-text-strong))]' : 'text-[rgb(var(--c-text)/0.35)]'}>
                             {d.birthdate && d.birthdate.length === 10
                               ? (() => { const [y,m,day] = d.birthdate.split('-'); return `${day}/${m}/${y}` })()
@@ -1512,7 +1693,7 @@ function StepView(props: {
                         {compCat && (
                           <div className="flex-1 min-w-0">
                             <p className="text-[9px] font-bold tracking-widest text-[rgb(var(--c-text)/0.4)] mb-1.5">CATEGORÍA</p>
-                            <div className="bg-[rgb(var(--c-surface-2))] border border-[rgb(var(--c-border)/0.5)] rounded-xl px-2 py-2 text-sm font-bold text-[rgb(var(--c-text-strong))]">
+                            <div className="bg-white border border-[rgb(var(--c-border)/0.5)] rounded-xl px-2 py-2 text-sm font-bold text-[rgb(var(--c-text-strong))] shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)]">
                               {AGE_CATEGORY_LABELS[compCat]}
                             </div>
                           </div>
@@ -1546,9 +1727,10 @@ function StepView(props: {
             <button
               onClick={onNext}
               disabled={!isAllValid}
-              className="w-full bg-gradient-to-r from-[#16A34A] via-[#82f606] to-[#fff200] hover:brightness-105 active:brightness-95 text-[rgb(var(--c-text-strong))] font-display text-xl tracking-widest py-4 rounded-2xl transition-all shadow-md active:scale-[0.98] duration-150 font-bold disabled:opacity-40 disabled:pointer-events-none"
+              className="w-full bg-gradient-to-r from-purple-700 via-purple-600 to-pink-600 hover:from-purple-800 hover:to-pink-700 active:scale-[0.98] text-white font-display text-lg sm:text-xl tracking-widest py-4 rounded-2xl transition-all duration-200 shadow-[0_4px_20px_rgba(168,85,247,0.3)] hover:shadow-[0_6px_25px_rgba(168,85,247,0.5)] disabled:opacity-30 disabled:pointer-events-none font-black text-center flex items-center justify-center gap-2"
             >
               CONTINUAR AL PASO 3: REGISTRO DE ACTOS ({state.dancers.length} Integrantes)
+              <ArrowRight className="w-5 h-5 animate-pulse" />
             </button>
           </div>
         </div>
@@ -1934,9 +2116,10 @@ function StepView(props: {
                 type="button"
                 onClick={onNext}
                 disabled={!isAllValid}
-                className="w-full bg-gradient-to-r from-[#16A34A] via-[#82f606] to-[#fff200] hover:brightness-105 active:brightness-95 text-[rgb(var(--c-text-strong))] font-display text-xl tracking-widest py-4 rounded-2xl transition-all shadow-md active:scale-[0.98] duration-150 font-bold disabled:opacity-40 disabled:pointer-events-none"
+                className="w-full bg-gradient-to-r from-purple-700 via-purple-600 to-pink-600 hover:from-purple-800 hover:to-pink-700 active:scale-[0.98] text-white font-display text-lg sm:text-xl tracking-widest py-4 rounded-2xl transition-all duration-200 shadow-[0_4px_20px_rgba(168,85,247,0.3)] hover:shadow-[0_6px_25px_rgba(168,85,247,0.5)] disabled:opacity-30 disabled:pointer-events-none font-black text-center flex items-center justify-center gap-2"
               >
                 SIGUIENTE: IR A LA REVISIÓN ({state.acts.length} {state.acts.length === 1 ? 'Acto' : 'Actos'})
+                <ArrowRight className="w-5 h-5 animate-pulse" />
               </button>
             )}
           </div>
@@ -2020,8 +2203,8 @@ function MoneyInput({ value, onChange, onEnter }: {
           }
         }}
         onKeyDown={e => { if (e.key === 'Enter' && onEnter) onEnter() }}
-        placeholder="0"
-        className="w-full bg-[rgb(var(--c-surface))] border border-[rgb(var(--c-border)/0.5)] text-[rgb(var(--c-text-strong))] text-2xl lg:text-3xl text-center rounded-2xl h-12 lg:h-16 outline-none focus:border-[rgb(var(--c-primary))] focus:ring-1 focus:ring-[rgb(var(--c-primary))] font-display pl-10 lg:pl-12 pr-10 lg:pr-12 placeholder:text-[rgb(var(--c-text)/0.6)] transition-all shadow-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none font-bold"
+        placeholder="0.00"
+        className="w-full bg-white border border-[rgb(var(--c-border)/0.5)] text-[rgb(var(--c-text-strong))] text-2xl lg:text-3xl text-center rounded-2xl h-12 lg:h-16 outline-none focus:border-[rgb(var(--c-primary))] focus:ring-1 focus:ring-[rgb(var(--c-primary))] font-display pl-10 lg:pl-12 pr-10 lg:pr-12 placeholder:text-[rgb(var(--c-text)/0.6)] transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none font-bold"
       />
     </div>
   )
@@ -2432,21 +2615,23 @@ function FullSummary({ state, editMode, confirmed, isEditSave, confirm, saving, 
 
             {/* DEADLINE MESSAGE (SUBTLE AND EXTREMELY CLOSE UNDERNEATH) */}
             <div className="text-center">
-              <p className="text-[10px] sm:text-[11px] text-[rgb(var(--c-text)/0.55)] font-semibold flex items-center justify-center gap-1.5">
-                <Clock className="w-3.5 h-3.5 text-[rgb(var(--c-primary))]" />
-                Tienes hasta el <span className="text-[rgb(var(--c-text-strong))] font-bold">{chgDeadline}</span> para realizar cambios o editar tu registro.
-              </p>
+              <div className="inline-flex items-center gap-2 bg-orange-600 border border-orange-700/20 px-4 py-2.5 rounded-2xl shadow-sm">
+                <p className="text-[10px] sm:text-[11px] text-white font-bold flex items-center gap-1.5 leading-none">
+                  <Clock className="w-3.5 h-3.5 text-white shrink-0" />
+                  Límite para cambios y edición: <span className="text-orange-100 font-black">{chgDeadline}</span>
+                </p>
+              </div>
             </div>
           </div>
 
           {/* 2. ENTRADAS ADICIONALES (COMPACTO Y PEGADO) */}
           <div className="text-left pt-0.5">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-1">
+            <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-1 mb-1">
               <div className="flex items-center gap-2">
-                <Ticket className="w-4.5 h-4.5 text-purple-600 shrink-0" />
-                <h4 className="font-display text-xs tracking-wider text-[rgb(var(--c-text-strong))] font-bold uppercase">ENTRADAS ADICIONALES</h4>
+                <Ticket className="w-5.5 h-5.5 text-purple-600 shrink-0" />
+                <h4 className="font-display text-base sm:text-lg tracking-widest text-[rgb(var(--c-text-strong))] font-black uppercase">ENTRADAS ADICIONALES</h4>
               </div>
-              <p className="text-[10.5px] text-[rgb(var(--c-text)/0.6)]">
+              <p className="text-xs sm:text-sm text-[rgb(var(--c-text)/0.6)] font-semibold">
                 Para familiares y acompañantes ($400 pesos c/u).
               </p>
             </div>
@@ -2471,9 +2656,9 @@ function FullSummary({ state, editMode, confirmed, isEditSave, confirm, saving, 
                 </div>
               </div>
               
-              <div className="text-right flex items-center gap-1.5">
-                <span className="text-[10px] text-[rgb(var(--c-text)/0.5)]">Total lote:</span>
-                <span className="font-display text-sm font-bold text-purple-600">${(newExtraTickets * 400).toLocaleString('es-MX')} MXN</span>
+              <div className="text-right flex items-center gap-2">
+                <span className="text-xs sm:text-sm text-[rgb(var(--c-text)/0.65)] font-semibold">Total lote:</span>
+                <span className="font-display text-base sm:text-lg font-black text-purple-600">${(newExtraTickets * 400).toLocaleString('es-MX')} MXN</span>
               </div>
             </div>
 
@@ -2513,67 +2698,67 @@ function FullSummary({ state, editMode, confirmed, isEditSave, confirm, saving, 
         </div>
 
         {/* 3. INFORMACIÓN BANCARIA (SIN CAJAS, EN EL FONDO) */}
-        <div className="py-1 text-left animate-fadeIn">
-          <div className="flex items-center gap-2 mb-2">
-            <Clipboard className="w-4.5 h-4.5 text-fuchsia-500 shrink-0" />
+        <div className="py-2 text-left animate-fadeIn">
+          <div className="flex items-center gap-2 mb-2.5">
+            <Clipboard className="w-5.5 h-5.5 text-fuchsia-500 shrink-0" />
             <div>
-              <h4 className="font-display text-xs tracking-wider text-[rgb(var(--c-text-strong))] font-bold uppercase">INFORMACIÓN PARA EL PAGO BANCARIO</h4>
-              <p className="text-[9.5px] text-[rgb(var(--c-text)/0.5)] leading-tight">Realiza tu depósito o transferencia</p>
+              <h4 className="font-display text-base sm:text-lg tracking-widest text-[rgb(var(--c-text-strong))] font-black uppercase">INFORMACIÓN PARA EL PAGO BANCARIO</h4>
+              <p className="text-xs sm:text-sm text-[rgb(var(--c-text)/0.6)] font-semibold">Realiza tu depósito o transferencia</p>
             </div>
           </div>
           
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-1.5 text-xs py-1">
-            <div className="flex justify-between items-center py-1 border-b border-[rgb(var(--c-border)/0.15)]">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-2 text-sm py-2">
+            <div className="flex justify-between items-center py-1.5 border-b border-[rgb(var(--c-border)/0.15)]">
               <span className="text-[rgb(var(--c-text)/0.6)]">Beneficiario:</span>
-              <span className="font-semibold text-[rgb(var(--c-text-strong))]">JOEL ARTURO GARCIA</span>
+              <span className="font-bold text-[rgb(var(--c-text-strong))]">JOEL ARTURO GARCIA</span>
             </div>
-            <div className="flex justify-between items-center py-1 border-b border-[rgb(var(--c-border)/0.15)]">
+            <div className="flex justify-between items-center py-1.5 border-b border-[rgb(var(--c-border)/0.15)]">
               <span className="text-[rgb(var(--c-text)/0.6)]">Banco:</span>
-              <span className="font-bold text-[rgb(var(--c-text-strong))]">BBVA</span>
+              <span className="font-black text-[rgb(var(--c-text-strong))]">BBVA</span>
             </div>
-            <div className="flex justify-between items-center py-1 border-b border-[rgb(var(--c-border)/0.15)]">
+            <div className="flex justify-between items-center py-1.5 border-b border-[rgb(var(--c-border)/0.15)]">
               <span className="text-[rgb(var(--c-text)/0.6)]">Cuenta:</span>
               <div className="flex items-center gap-2">
-                <span className="font-bold text-[rgb(var(--c-text-strong))]">010 440 2340</span>
+                <span className="font-black text-base text-[rgb(var(--c-text-strong))] tracking-wide">010 440 2340</span>
                 <button 
                   onClick={() => handleCopyText('010 440 2340', 'account')}
                   className="p-1 hover:bg-fuchsia-500/10 rounded-lg text-fuchsia-500 transition-colors active:scale-90 cursor-pointer"
                   title="Copiar Cuenta"
                 >
-                  {copiedField === 'account' ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Clipboard className="w-3.5 h-3.5" />}
+                  {copiedField === 'account' ? <Check className="w-4 h-4 text-green-500" /> : <Clipboard className="w-4 h-4" />}
                 </button>
               </div>
             </div>
-            <div className="flex justify-between items-center py-1 border-b border-[rgb(var(--c-border)/0.15)] md:col-span-1 lg:col-span-2">
+            <div className="flex justify-between items-center py-1.5 border-b border-[rgb(var(--c-border)/0.15)] md:col-span-1 lg:col-span-2">
               <span className="text-[rgb(var(--c-text)/0.6)]">CLABE:</span>
               <div className="flex items-center gap-2">
-                <span className="font-bold text-[rgb(var(--c-text-strong))] tracking-wide">012 180 001044023400</span>
+                <span className="font-black text-base text-[rgb(var(--c-text-strong))] tracking-wide">012 180 001044023400</span>
                 <button 
                   onClick={() => handleCopyText('012 180 001044023400', 'clabe')}
                   className="p-1 hover:bg-fuchsia-500/10 rounded-lg text-fuchsia-500 transition-colors active:scale-90 cursor-pointer"
                   title="Copiar CLABE"
                 >
-                  {copiedField === 'clabe' ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Clipboard className="w-3.5 h-3.5" />}
+                  {copiedField === 'clabe' ? <Check className="w-4 h-4 text-green-500" /> : <Clipboard className="w-4 h-4" />}
                 </button>
               </div>
             </div>
-            <div className="flex justify-between items-center py-1 border-b border-[rgb(var(--c-border)/0.15)] md:col-span-1">
+            <div className="flex justify-between items-center py-1.5 border-b border-[rgb(var(--c-border)/0.15)] md:col-span-1">
               <span className="text-[rgb(var(--c-text)/0.6)]">No. de Tarjeta:</span>
               <div className="flex items-center gap-2">
-                <span className="font-bold text-[rgb(var(--c-text-strong))] tracking-wide">4152 3139 6949 9099</span>
+                <span className="font-black text-base text-[rgb(var(--c-text-strong))] tracking-wide">4152 3139 6949 9099</span>
                 <button 
                   onClick={() => handleCopyText('4152313969499099', 'card')}
                   className="p-1 hover:bg-fuchsia-500/10 rounded-lg text-fuchsia-500 transition-colors active:scale-90 cursor-pointer"
                   title="Copiar Tarjeta"
                 >
-                  {copiedField === 'card' ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Clipboard className="w-3.5 h-3.5" />}
+                  {copiedField === 'card' ? <Check className="w-4 h-4 text-green-500" /> : <Clipboard className="w-4 h-4" />}
                 </button>
               </div>
             </div>
           </div>
 
-          <div className="mt-1.5 text-[9.5px] text-[rgb(var(--c-text)/0.5)] flex items-start gap-2">
-            <Info className="w-3.5 h-3.5 text-fuchsia-500 shrink-0 mt-0.5" />
+          <div className="mt-2 text-xs text-[rgb(var(--c-text)/0.5)] flex items-start gap-2">
+            <Info className="w-4 h-4 text-fuchsia-500 shrink-0 mt-0.5" />
             <span>Esta información bancaria también viene detallada en el comprobante PDF de tu registro completo.</span>
           </div>
         </div>
@@ -2595,26 +2780,26 @@ function FullSummary({ state, editMode, confirmed, isEditSave, confirm, saving, 
           
           return (
             <div className="py-1 text-left animate-fadeIn">
-              <div className="flex items-center gap-2 mb-2">
-                <DollarSign className="w-5 h-5 text-[rgb(var(--c-primary))] shrink-0" />
-                <h3 className="font-display text-xs sm:text-sm tracking-wider text-[rgb(var(--c-text-strong))] font-bold uppercase">
+              <div className="flex items-center gap-2 mb-2.5">
+                <DollarSign className="w-5.5 h-5.5 text-[rgb(var(--c-primary))] shrink-0" />
+                <h3 className="font-display text-base sm:text-lg tracking-widest text-[rgb(var(--c-text-strong))] font-black uppercase">
                   RESUMEN TOTAL DE TU REGISTRO
                 </h3>
               </div>
               
-              <div className="space-y-2 text-xs">
+              <div className="space-y-2 text-sm">
                 <div className="flex justify-between items-center py-0.5 border-b border-[rgb(var(--c-border)/0.15)]">
                   <span className="text-[rgb(var(--c-text)/0.7)]">Coach (entrada base):</span>
-                  <span className="font-semibold text-[rgb(var(--c-text-strong))]">{formatMoney(totalCoach)}</span>
+                  <span className="font-bold text-[rgb(var(--c-text-strong))]">{formatMoney(totalCoach)}</span>
                 </div>
                 <div className="flex justify-between items-center py-0.5 border-b border-[rgb(var(--c-border)/0.15)]">
                   <span className="text-[rgb(var(--c-text)/0.7)]">Participaciones ({participaciones} × {formatMoney(PRECIO_PARTICIPACION)}):</span>
-                  <span className="font-semibold text-[rgb(var(--c-text-strong))]">{formatMoney(participaciones * PRECIO_PARTICIPACION)}</span>
+                  <span className="font-bold text-[rgb(var(--c-text-strong))]">{formatMoney(participaciones * PRECIO_PARTICIPACION)}</span>
                 </div>
                 {repeticiones > 0 && (
                   <div className="flex justify-between items-center py-0.5 border-b border-[rgb(var(--c-border)/0.15)]">
                     <span className="text-[rgb(var(--c-text)/0.7)]">Repeticiones ({repeticiones} × {formatMoney(PRECIO_REPETICION)}):</span>
-                    <span className="font-semibold text-[rgb(var(--c-text-strong))]">{formatMoney(repeticiones * PRECIO_REPETICION)}</span>
+                    <span className="font-bold text-[rgb(var(--c-text-strong))]">{formatMoney(repeticiones * PRECIO_REPETICION)}</span>
                   </div>
                 )}
                 {assistants.length > 0 && (
@@ -2622,26 +2807,26 @@ function FullSummary({ state, editMode, confirmed, isEditSave, confirm, saving, 
                     <span className="text-[rgb(var(--c-text)/0.7)]">
                       Asistentes Staff ({paidAssistants} × {formatMoney(PRECIO_ASISTENTE)}{freeEntries > 0 ? `, ${freeEntries} gratis` : ''}):
                     </span>
-                    <span className="font-semibold text-[rgb(var(--c-text-strong))]">{formatMoney(totalAsistentes)}</span>
+                    <span className="font-bold text-[rgb(var(--c-text-strong))]">{formatMoney(totalAsistentes)}</span>
                   </div>
                 )}
                 {(state.ticketsCount ?? 0) > 0 && (
                   <div className="flex justify-between items-center py-0.5 border-b border-[rgb(var(--c-border)/0.15)]">
                     <span className="text-[rgb(var(--c-text)/0.7)]">Entradas Familia / Acompañantes ({state.ticketsCount} × {formatMoney(PRECIO_ENTRADA)}):</span>
-                    <span className="font-semibold text-[rgb(var(--c-text-strong))]">{formatMoney(totalEntradas)}</span>
+                    <span className="font-bold text-[rgb(var(--c-text-strong))]">{formatMoney(totalEntradas)}</span>
                   </div>
                 )}
                 {freeEntries > 0 && (
-                  <p className="text-[10px] text-[rgb(var(--c-success-strong))] bg-[rgb(var(--c-success)/0.06)] border border-[rgb(var(--c-success)/0.15)] rounded-xl px-3 py-1 font-medium">
-                    Info: 1 entrada gratis para asistente por cada {DANCERS_POR_ENTRADA_GRATIS} bailarines inscritos.
+                  <p className="text-xs text-[rgb(var(--c-success-strong))] bg-[rgb(var(--c-success)/0.06)] border border-[rgb(var(--c-success)/0.15)] rounded-xl px-3 py-1 font-medium">
+                    Info: 1 entrada gratis para asistente por cada {DANCERS_POR_ENTRADA_GRATIS} integrantes inscritos.
                   </p>
                 )}
                 
                 <div className="flex justify-between items-center pt-2 mt-1.5">
-                  <span className="font-display text-sm sm:text-base tracking-widest text-[rgb(var(--c-text-strong))] font-bold">TOTAL ESTIMADO A PAGAR</span>
-                  <span className="font-display text-xl sm:text-2xl text-[rgb(var(--c-primary))] font-bold">{formatMoney(total)} MXN</span>
+                  <span className="font-display text-base sm:text-lg tracking-widest text-[rgb(var(--c-text-strong))] font-black">TOTAL ESTIMADO A PAGAR</span>
+                  <span className="font-display text-2xl sm:text-3xl text-[rgb(var(--c-primary))] font-black">{formatMoney(total)} MXN</span>
                 </div>
-                <p className="text-[9.5px] text-[rgb(var(--c-text)/0.55)] text-center pt-0.5 italic font-medium">Precio estimado sujeto a validación final de coordinadores Dance4Ever.</p>
+                <p className="text-xs text-[rgb(var(--c-text)/0.55)] text-center pt-0.5 italic font-medium">Precio estimado sujeto a validación final de coordinadores Dance4Ever.</p>
               </div>
             </div>
           )
@@ -2674,41 +2859,41 @@ function FullSummary({ state, editMode, confirmed, isEditSave, confirm, saving, 
         </div>
 
         {/* COLLAPSIBLE DETAILS ACORDION (COMPRESS SPACE) */}
-        <details className="group mt-1.5 text-left overflow-hidden transition-all">
-          <summary className="flex justify-between items-center py-3 border-y border-[rgb(var(--c-border)/0.15)] font-display text-[10px] sm:text-xs tracking-widest font-bold text-[rgb(var(--c-text-strong))] cursor-pointer select-none">
-            <span>MOSTRAR DETALLES DE BAILARINES Y COREOGRAFÍAS REGISTRADOS</span>
-            <ChevronDown className="w-4 h-4 text-[rgb(var(--c-primary))] transition-transform group-open:rotate-180" />
+        <details className="group mt-2.5 text-left overflow-hidden transition-all">
+          <summary className="flex justify-between items-center py-6 border-y-2 border-[rgb(var(--c-border)/0.25)] font-display text-base sm:text-lg md:text-xl lg:text-2xl xl:text-3xl tracking-widest font-black text-[rgb(var(--c-text-strong))] cursor-pointer select-none">
+            <span>MOSTRAR DETALLES DE INTEGRANTES Y COREOGRAFÍAS REGISTRADOS</span>
+            <ChevronDown className="w-7 h-7 sm:w-8 sm:h-8 text-[rgb(var(--c-primary))] transition-transform group-open:rotate-180 stroke-[3px]" />
           </summary>
           <div className="divide-y divide-[rgb(var(--c-border)/0.15)] bg-transparent pt-4">
             {/* Academy & Coach */}
             <div className="py-4">
-              <h4 className="font-display text-sm tracking-wider text-[rgb(var(--c-primary))] mb-4 uppercase">COACH Y ACADEMIA</h4>
-              <div className="grid md:grid-cols-2 gap-4 text-xs">
+              <h4 className="font-display text-lg sm:text-xl tracking-widest text-[rgb(var(--c-primary))] mb-5 uppercase font-black">COACH Y ACADEMIA</h4>
+              <div className="grid md:grid-cols-2 gap-4 text-sm sm:text-base">
                 <div>
-                  <p className="text-[10px] tracking-[0.2em] text-[rgb(var(--c-text)/0.6)] font-bold mb-1">COACH</p>
-                  <p className="font-semibold text-[rgb(var(--c-text-strong))] uppercase">{state.coach.name}</p>
-                  <p className="text-sm text-[rgb(var(--c-text))] mt-1">{state.coach.phone}</p>
-                  {state.coach.email && <p className="text-sm text-[rgb(var(--c-text))] mt-1">{state.coach.email}</p>}
+                  <p className="text-xs sm:text-sm tracking-[0.2em] text-[rgb(var(--c-text)/0.6)] font-bold mb-1.5">COACH</p>
+                  <p className="font-black text-[rgb(var(--c-text-strong))] uppercase text-base sm:text-lg">{state.coach.name}</p>
+                  <p className="text-sm sm:text-base text-[rgb(var(--c-text))] mt-1 font-semibold">{state.coach.phone}</p>
+                  {state.coach.email && <p className="text-sm sm:text-base text-[rgb(var(--c-text))] mt-1 font-semibold">{state.coach.email}</p>}
                 </div>
                 <div>
-                  <p className="text-[10px] tracking-[0.2em] text-[rgb(var(--c-text)/0.6)] font-bold mb-1">ACADEMIA / COLEGIO</p>
-                  <p className="font-semibold text-[rgb(var(--c-text-strong))] uppercase">{state.academy}</p>
-                  {state.city && <p className="text-sm text-[rgb(var(--c-text))] mt-1">CIUDAD: {state.city.toUpperCase()}</p>}
+                  <p className="text-xs sm:text-sm tracking-[0.2em] text-[rgb(var(--c-text)/0.6)] font-bold mb-1.5">ACADEMIA / COLEGIO</p>
+                  <p className="font-black text-[rgb(var(--c-text-strong))] uppercase text-base sm:text-lg">{state.academy}</p>
+                  {state.city && <p className="text-sm sm:text-base text-[rgb(var(--c-text))] mt-1 font-semibold">CIUDAD: {state.city.toUpperCase()}</p>}
                 </div>
               </div>
             </div>
             
             {/* Dancers */}
             <div className="py-4">
-              <h4 className="font-display text-sm tracking-wider text-[rgb(var(--c-primary))] mb-4 uppercase">INTEGRANTES REGISTRADOS ({filledDancers.length})</h4>
+              <h4 className="font-display text-lg sm:text-xl tracking-widest text-[rgb(var(--c-primary))] mb-5 uppercase font-black">INTEGRANTES REGISTRADOS ({filledDancers.length})</h4>
               <div className="divide-y divide-[rgb(var(--c-border)/0.1)]">
                 {filledDancers.map((d, idx) => {
                   const compCat = effectiveCategory(d)
                   const label = compCat ? AGE_CATEGORY_LABELS[compCat] : '—'
                   return (
-                    <div key={idx} className="py-2.5 flex justify-between items-center text-xs">
-                      <span className="font-semibold text-[rgb(var(--c-text-strong))] uppercase">{d.name}</span>
-                      <span className="text-[10px] text-[rgb(var(--c-text)/0.6)]">{label} · {ageFromBirthdate(d.birthdate) ?? 0} años</span>
+                    <div key={idx} className="py-3.5 flex justify-between items-center text-sm sm:text-base">
+                      <span className="font-black text-[rgb(var(--c-text-strong))] uppercase">{d.name}</span>
+                      <span className="text-xs sm:text-sm text-[rgb(var(--c-text)/0.6)] font-bold">{label} · {ageFromBirthdate(d.birthdate) ?? 0} años</span>
                     </div>
                   )
                 })}
@@ -2717,7 +2902,7 @@ function FullSummary({ state, editMode, confirmed, isEditSave, confirm, saving, 
 
             {/* Acts */}
             <div className="py-4">
-              <h4 className="font-display text-sm tracking-wider text-[rgb(var(--c-primary))] mb-4 uppercase">COREOGRAFÍAS REGISTRADAS ({state.acts.length})</h4>
+              <h4 className="font-display text-lg sm:text-xl tracking-widest text-[rgb(var(--c-primary))] mb-5 uppercase font-black">COREOGRAFÍAS REGISTRADAS ({state.acts.length})</h4>
               <div className="divide-y divide-[rgb(var(--c-border)/0.1)]">
                 {state.acts.map((act, idx) => {
                   const cat = act.ageCategory ? AGE_CATEGORY_LABELS[act.ageCategory] : '—'
@@ -2725,13 +2910,13 @@ function FullSummary({ state, editMode, confirmed, isEditSave, confirm, saving, 
                   const style = act.style ?? '—'
                   const dancers = act.dancerIndices.map(i => state.dancers[i]?.name).filter(Boolean).join(', ')
                   return (
-                    <div key={idx} className="py-3.5 space-y-1 text-left text-xs">
+                    <div key={idx} className="py-4.5 space-y-2 text-left text-sm sm:text-base">
                       <div className="flex justify-between items-center">
-                        <span className="font-display font-bold text-[rgb(var(--c-text-strong))]">ACTO #{idx + 1} - {mod.toUpperCase()}</span>
-                        <span className="text-[10px] text-[rgb(var(--c-primary))] font-bold">{cat.toUpperCase()}</span>
+                        <span className="font-display text-lg sm:text-xl tracking-wider font-black text-[rgb(var(--c-text-strong))]">ACTO #{idx + 1} - {mod.toUpperCase()}</span>
+                        <span className="text-xs sm:text-sm text-[rgb(var(--c-primary))] font-black">{cat.toUpperCase()}</span>
                       </div>
-                      <p className="text-[11px] text-[rgb(var(--c-text)/0.8)]"><strong className="font-semibold text-[rgb(var(--c-text-strong))]">ESTILO:</strong> {style.toUpperCase()}</p>
-                      <p className="text-[10px] text-[rgb(var(--c-text)/0.6)] leading-relaxed"><strong className="font-semibold text-[rgb(var(--c-text-strong))]">BAILARINES:</strong> {dancers.toUpperCase()}</p>
+                      <p className="text-sm sm:text-base text-[rgb(var(--c-text)/0.8)]"><strong className="font-black text-[rgb(var(--c-text-strong))]">ESTILO:</strong> {style.toUpperCase()}</p>
+                      <p className="text-xs sm:text-sm text-[rgb(var(--c-text)/0.6)] leading-relaxed"><strong className="font-bold text-[rgb(var(--c-text-strong))]">INTEGRANTES:</strong> {dancers.toUpperCase()}</p>
                     </div>
                   )
                 })}
@@ -2763,9 +2948,10 @@ function FullSummary({ state, editMode, confirmed, isEditSave, confirm, saving, 
               <button
                 onClick={confirm}
                 disabled={saving}
-                className="w-full h-14 md:h-16 bg-gradient-to-r from-[#16A34A] via-[#82f606] to-[#fff200] hover:brightness-105 active:brightness-95 text-[rgb(var(--c-text-strong))] font-display text-lg tracking-widest rounded-2xl disabled:opacity-50 disabled:pointer-events-none transition-all shadow-lg active:scale-[0.98] duration-150 md:col-span-2 font-bold"
+                className="w-full h-14 md:h-16 bg-gradient-to-r from-purple-700 via-purple-600 to-pink-600 hover:from-purple-800 hover:to-pink-700 active:scale-[0.98] text-white font-display text-lg tracking-widest rounded-2xl disabled:opacity-50 disabled:pointer-events-none transition-all shadow-[0_4px_20px_rgba(168,85,247,0.3)] hover:shadow-[0_6px_25px_rgba(168,85,247,0.5)] md:col-span-2 font-black flex items-center justify-center gap-2"
               >
                 {saving ? 'GUARDANDO…' : editMode ? 'GUARDAR CAMBIOS' : 'CONFIRMAR REGISTRO'}
+                <Check className="w-5 h-5 animate-pulse" />
               </button>
             </div>
           </div>
@@ -2817,7 +3003,7 @@ async function generateReceiptPDF(state: State, event: Event | null) {
   const filledDancers = state.dancers.filter(d => d.name.trim().length > 0)
 
   // Header Background
-  doc.setFillColor(18, 18, 18) // Slate dark `#121212`
+  doc.setFillColor(76, 29, 149) // Royal deep purple gala color `#4C1D95`
   doc.rect(0, 0, 210, 42, 'F')
 
   // Accent line
@@ -2997,7 +3183,7 @@ async function generateReceiptPDF(state: State, event: Event | null) {
   // Unified page footer/header hooks
   const pageFooterHook = (data: any) => {
     if (data.pageNumber > 1) {
-      doc.setFillColor(18, 18, 18)
+      doc.setFillColor(76, 29, 149) // Royal deep purple gala color `#4C1D95`
       doc.rect(0, 0, 210, 15, 'F')
       doc.setFillColor(217, 70, 239)
       doc.rect(0, 15, 210, 1, 'F')
@@ -3016,7 +3202,7 @@ async function generateReceiptPDF(state: State, event: Event | null) {
     doc.setTextColor(120, 120, 120)
     doc.setFontSize(7)
     doc.setFont('helvetica', 'italic')
-    doc.text(`Dance4Ever Nacional · Página ${data.pageNumber} · www.dance4ever.com.mx`, 105, footerY, { align: 'center' })
+    doc.text(`Dance4Ever · Página ${data.pageNumber} · www.dance4ever.com.mx`, 105, footerY, { align: 'center' })
   }
 
   // Section: Acts
@@ -3052,7 +3238,7 @@ async function generateReceiptPDF(state: State, event: Event | null) {
     body: actRows,
     theme: 'striped',
     styles: { fontSize: 8.5, font: 'helvetica', cellPadding: 2.5 },
-    headStyles: { fillColor: [17, 17, 17], textColor: [255, 255, 255], fontStyle: 'bold' },
+    headStyles: { fillColor: [76, 29, 149], textColor: [255, 255, 255], fontStyle: 'bold' },
     alternateRowStyles: { fillColor: [250, 245, 255] },
     margin: { left: 15, right: 15 },
     didDrawPage: pageFooterHook
@@ -3354,7 +3540,7 @@ async function generateExtraTicketsPDF(state: State, event: Event | null, newTic
   const doc = new jsPDF('p', 'mm', 'a4')
   
   // Header Background
-  doc.setFillColor(18, 18, 18) // Slate dark
+  doc.setFillColor(76, 29, 149) // Royal deep purple gala color `#4C1D95`
   doc.rect(0, 0, 210, 42, 'F')
 
   // Accent line
@@ -3489,7 +3675,7 @@ async function generateExtraTicketsPDF(state: State, event: Event | null, newTic
   y += 34
 
   // Bank Info Card
-  doc.setFillColor(255, 254, 242) // Cream soft yellow background
+  doc.setFillColor(250, 245, 255) // Soft cream/lavender tint
   doc.setDrawColor(217, 70, 239)
   doc.setLineWidth(0.4)
   doc.rect(15, y, 180, 22, 'FD')
@@ -3597,7 +3783,7 @@ async function generateExtraTicketsPDF(state: State, event: Event | null, newTic
   doc.setTextColor(120, 120, 120)
   doc.setFontSize(7)
   doc.setFont('helvetica', 'italic')
-  doc.text('Dance4Ever Nacional · Comprobante de Entradas Extras · www.dance4ever.com.mx', 105, footerY, { align: 'center' })
+  doc.text('Dance4Ever · Comprobante de Entradas Extras · www.dance4ever.com.mx', 105, footerY, { align: 'center' })
 
   const filename = `Recibo_Entradas_Extras_${state.academy.replace(/\s+/g, '_') || 'Dance4ever'}.pdf`
   const blob = doc.output('blob')

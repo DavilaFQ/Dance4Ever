@@ -505,9 +505,11 @@ export async function exportPdf(event: Event, participants: Participant[], coach
   const pageWidth = doc.internal.pageSize.getWidth()
   const pageHeight = doc.internal.pageSize.getHeight()
 
-  // Header band — black with yellow text
-  doc.setFillColor(0, 0, 0)
-  doc.rect(0, 0, pageWidth, 130, 'F')
+  // Header band — Royal deep purple gala color with fuchsia accent line
+  doc.setFillColor(76, 29, 149)
+  doc.rect(0, 0, pageWidth, 127, 'F')
+  doc.setFillColor(217, 70, 239)
+  doc.rect(0, 127, pageWidth, 3, 'F')
 
   const logo = await loadImageAsDataURL('/logo.png')
   if (logo) {
@@ -582,7 +584,7 @@ export async function exportPdf(event: Event, participants: Participant[], coach
       statusFor(p, currentPos),
     ]),
     theme: 'striped',
-    headStyles: { fillColor: [0, 0, 0], textColor: [245, 200, 0], fontStyle: 'bold', fontSize: 10 },
+    headStyles: { fillColor: [76, 29, 149], textColor: [245, 200, 0], fontStyle: 'bold', fontSize: 10 },
     bodyStyles: { fontSize: 9, textColor: [30, 30, 30] },
     alternateRowStyles: { fillColor: [248, 248, 245] },
     columnStyles: {
