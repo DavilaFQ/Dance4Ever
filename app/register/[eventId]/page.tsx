@@ -2421,7 +2421,7 @@ function FullSummary({ state, editMode, confirmed, isEditSave, confirm, saving, 
 
   const handleWhatsAppRedirect = () => {
     setShowWhatsAppModal(false)
-    const messageText = encodeURIComponent(`Hola, acabo de confirmar mi registro en Dance4Ever para el evento ${event?.name || ''}.\n\nAquí adjunto mi comprobante de pago del registro.`)
+    const messageText = encodeURIComponent(`Hola, acabo de confirmar mi registro en Dance4Ever para el evento ${event?.name || ''}.`)
     window.open(`https://wa.me/525645415263?text=${messageText}`, '_blank')
   }
 
