@@ -1198,9 +1198,13 @@ function StepView(props: {
 
           {/* LOCALIZED SHIMMERING GOLD FLARE ORB (Camouflages and hides the Gemini watermark responsively) */}
           <div 
-            className={`absolute bottom-[88px] right-[26px] z-10 w-16 h-16 rounded-full bg-[radial-gradient(circle,rgba(251,191,36,0.38)_0%,rgba(245,158,11,0.15)_50%,transparent_100%)] blur-[5px] pointer-events-none transition-all duration-1000 animate-pulse ${
+            className={`absolute bottom-[88px] right-[26px] z-10 w-16 h-16 rounded-full pointer-events-none transition-all duration-1000 animate-pulse ${
               videoEnded ? 'opacity-0 scale-90' : 'opacity-100 scale-100'
             }`}
+            style={{
+              background: 'radial-gradient(circle, rgba(251,191,36,0.7) 0%, rgba(245,158,11,0.25) 45%, transparent 70%)',
+              filter: 'blur(5px)',
+            }}
           />
 
           {/* CINEMATIC BLURRED OVERLAY WHEN VIDEO ENDS */}
