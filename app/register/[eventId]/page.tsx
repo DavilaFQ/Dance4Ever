@@ -756,12 +756,12 @@ export default function RegisterPage({ params }: Props) {
         setShowSuccessSplash(false)
       }, 3500)
 
-      // Auto-scroll to the bottom so they immediately see the "DESCARGAR COMPROBANTE PDF" button!
+      // Auto-scroll to the top so they immediately see the big success banner!
       setTimeout(() => {
         try {
-          window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })
+          window.scrollTo({ top: 0, behavior: 'smooth' })
           document.querySelectorAll('.overflow-y-auto').forEach(el => {
-            el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' })
+            el.scrollTo({ top: 0, behavior: 'smooth' })
           })
         } catch (err) {
           console.error('Scroll error:', err)
@@ -2199,12 +2199,12 @@ function FullSummary({ state, editMode, confirmed, confirm, saving, saveErr, sta
 
   const [generatingPDF, setGeneratingPDF] = useState(false)
   const [newExtraTickets, setNewExtraTickets] = useState(1)
-  const [copiedField, setCopiedField] = useState<'clabe' | 'card' | null>(null)
+  const [copiedField, setCopiedField] = useState<'clabe' | 'card' | 'account' | null>(null)
   const [generatingExtraPDF, setGeneratingExtraPDF] = useState(false)
   const [extraTicketsSuccess, setExtraTicketsSuccess] = useState(false)
   const [lastPurchasedCount, setLastPurchasedCount] = useState(1)
 
-  const handleCopyText = (text: string, field: 'clabe' | 'card') => {
+  const handleCopyText = (text: string, field: 'clabe' | 'card' | 'account') => {
     navigator.clipboard.writeText(text)
     setCopiedField(field)
     setTimeout(() => setCopiedField(null), 2000)
@@ -2254,13 +2254,14 @@ function FullSummary({ state, editMode, confirmed, confirm, saving, saveErr, sta
     <div className="w-full flex flex-col min-h-0 md:h-full overflow-visible md:overflow-hidden" style={{ animation: 'fadeIn 0.3s ease-out' }}>
       <style dangerouslySetInnerHTML={{ __html: `
         @keyframes arrowFlow {
-          0% { opacity: 0.15; transform: translateY(-3px); }
+          0% { opacity: 0.15; transform: translateY(-4px); }
           50% { opacity: 1; transform: translateY(0px); }
-          100% { opacity: 0.15; transform: translateY(3px); }
+          100% { opacity: 0.15; transform: translateY(4px); }
         }
         .animate-arrow-1 { animation: arrowFlow 1.6s infinite ease-in-out; animation-delay: 0s; }
-        .animate-arrow-2 { animation: arrowFlow 1.6s infinite ease-in-out; animation-delay: 0.4s; }
-        .animate-arrow-3 { animation: arrowFlow 1.6s infinite ease-in-out; animation-delay: 0.8s; }
+        .animate-arrow-2 { animation: arrowFlow 1.6s infinite ease-in-out; animation-delay: 0.3s; }
+        .animate-arrow-3 { animation: arrowFlow 1.6s infinite ease-in-out; animation-delay: 0.6s; }
+        .animate-arrow-4 { animation: arrowFlow 1.6s infinite ease-in-out; animation-delay: 0.9s; }
       `}} />
       
       <div ref={scrollContainerRef} className="flex-1 overflow-visible md:overflow-y-auto px-0 sm:px-4 lg:px-6 py-2 sm:py-4 pb-0 sm:pb-14 max-h-none md:max-h-[75vh]">
@@ -2520,117 +2521,112 @@ function FullSummary({ state, editMode, confirmed, confirm, saving, saveErr, sta
         })()}
       </>
     ) : (
-      <div className="max-w-3xl mx-auto w-full py-4 px-3.5 sm:px-0 space-y-6 divide-y divide-[rgb(var(--c-border)/0.15)] [&>*]:pt-6 [&>*:first-child]:pt-0">
+      <div className="max-w-3xl mx-auto w-full py-2 px-3.5 sm:px-0 space-y-4 divide-y divide-[rgb(var(--c-border)/0.12)] [&>*]:pt-4 [&>*:first-child]:pt-0">
         
-        {/* 1. MENSAJE VERDE DE REGISTRO CONFIRMADO (SIN RECUADROS, EN EL FONDO) */}
-        <div className="flex items-center justify-center gap-3 md:gap-6 py-4 animate-fadeIn">
-          {/* Left Arrow Path */}
-          <div className="flex flex-col items-center gap-0.5 md:gap-1 opacity-70 shrink-0 select-none">
-            <ChevronDown className="w-3.5 h-3.5 md:w-4.5 md:h-4.5 text-purple-500 animate-arrow-1" />
-            <ChevronDown className="w-3.5 h-3.5 md:w-4.5 md:h-4.5 text-purple-600 animate-arrow-2" />
-            <ChevronDown className="w-3.5 h-3.5 md:w-4.5 md:h-4.5 text-purple-700 animate-arrow-3" />
-          </div>
-          
-          {/* Center Green Success Message */}
-          <div className="text-center flex-1 py-1">
-            <div className="flex items-center justify-center gap-2 text-[#16A34A] font-display text-lg sm:text-xl md:text-2xl tracking-wider sm:tracking-widest font-bold uppercase">
-              <Check className="w-5 h-5 sm:w-6 sm:h-6 stroke-[3px] shrink-0" /> ¡REGISTRO CONFIRMADO!
+        {/* 1. MENSAJE VERDE DE REGISTRO CONFIRMADO + FECHA LÍMITE (PEGADOS Y EN CABECERA) */}
+        <div className="flex flex-col gap-2.5 animate-fadeIn">
+          <div className="flex items-center justify-center gap-3 sm:gap-6 py-1 select-none">
+            {/* Left Arrow Path */}
+            <div className="flex flex-col items-center gap-0.5 opacity-90 shrink-0 text-purple-600">
+              <ChevronDown className="w-5 h-5 text-purple-500 animate-arrow-1 stroke-[2.5px]" />
+              <ChevronDown className="w-5 h-5 text-purple-600 animate-arrow-2 stroke-[2.5px]" />
+              <ChevronDown className="w-5 h-5 text-purple-700 animate-arrow-3 stroke-[2.5px]" />
+              <ChevronDown className="w-5 h-5 text-purple-800 animate-arrow-4 stroke-[2.5px]" />
             </div>
-            <p className="text-[11px] sm:text-xs text-[rgb(var(--c-text)/0.6)] mt-1.5 font-medium">Tu información ha sido guardada de forma segura en nuestro sistema.</p>
+            
+            {/* Center Green Success Recuadro Grande */}
+            <div className="flex-1 bg-[rgb(var(--c-success))] text-white rounded-2xl p-4 md:p-5 shadow-sm text-center space-y-1.5 border border-[rgb(var(--c-success-strong)/0.15)]">
+              <div className="flex items-center justify-center gap-2">
+                <Check className="w-6 h-6 stroke-[3px] shrink-0" />
+                <h2 className="font-display text-lg md:text-xl tracking-widest font-bold uppercase">¡REGISTRO CONFIRMADO!</h2>
+              </div>
+              <p className="text-[11px] sm:text-xs font-semibold opacity-95">Tu información ha sido guardada de forma segura en nuestro sistema.</p>
+            </div>
+            
+            {/* Right Arrow Path */}
+            <div className="flex flex-col items-center gap-0.5 opacity-90 shrink-0 text-purple-600">
+              <ChevronDown className="w-5 h-5 text-purple-500 animate-arrow-1 stroke-[2.5px]" />
+              <ChevronDown className="w-5 h-5 text-purple-600 animate-arrow-2 stroke-[2.5px]" />
+              <ChevronDown className="w-5 h-5 text-purple-700 animate-arrow-3 stroke-[2.5px]" />
+              <ChevronDown className="w-5 h-5 text-purple-800 animate-arrow-4 stroke-[2.5px]" />
+            </div>
           </div>
-          
-          {/* Right Arrow Path */}
-          <div className="flex flex-col items-center gap-0.5 md:gap-1 opacity-70 shrink-0 select-none">
-            <ChevronDown className="w-3.5 h-3.5 md:w-4.5 md:h-4.5 text-purple-500 animate-arrow-1" />
-            <ChevronDown className="w-3.5 h-3.5 md:w-4.5 md:h-4.5 text-purple-600 animate-arrow-2" />
-            <ChevronDown className="w-3.5 h-3.5 md:w-4.5 md:h-4.5 text-purple-700 animate-arrow-3" />
+
+          {/* DEADLINE MESSAGE (SUBTLE AND EXTREMELY CLOSE UNDERNEATH) */}
+          <div className="text-center">
+            <p className="text-[10px] sm:text-[11px] text-[rgb(var(--c-text)/0.55)] font-semibold flex items-center justify-center gap-1.5">
+              <Clock className="w-3.5 h-3.5 text-[rgb(var(--c-primary))]" />
+              Tienes hasta el <span className="text-[rgb(var(--c-text-strong))] font-bold">{chgDeadline}</span> para realizar cambios o editar tu registro.
+            </p>
           </div>
         </div>
 
-        {/* DEADLINE MESSAGE (TAKEN OUT OF GREEN BLOCK, PLACED BELOW) */}
-        <div className="text-center pb-2 animate-fadeIn pt-4">
-          <p className="text-xs text-[rgb(var(--c-text)/0.65)] font-semibold flex items-center justify-center gap-1.5">
-            <Clock className="w-3.5 h-3.5 text-[rgb(var(--c-primary))]" />
-            Tienes hasta el <span className="text-[rgb(var(--c-text-strong))] font-bold">{chgDeadline}</span> para realizar cambios o editar tu registro.
-          </p>
-        </div>
-
-        {/* 2. ENTRADAS ADICIONALES (SIN CAJA, DIRECTAMENTE EN EL FONDO) */}
-        <div className="py-2 text-left animate-fadeIn">
-          <div className="flex items-center gap-2.5 mb-2.5">
-            <Ticket className="w-5 h-5 text-purple-600 shrink-0" />
-            <div>
-              <h4 className="font-display text-sm tracking-wider text-[rgb(var(--c-text-strong))] font-bold uppercase">ADQUIRIR ENTRADAS ADICIONALES</h4>
-              <p className="text-[10px] text-[rgb(var(--c-text)/0.5)]">Para familiares o acompañantes</p>
+        {/* 2. ENTRADAS ADICIONALES (COMPACTO) */}
+        <div className="py-1 text-left animate-fadeIn">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 mb-2">
+            <div className="flex items-center gap-2">
+              <Ticket className="w-4.5 h-4.5 text-purple-600 shrink-0" />
+              <h4 className="font-display text-xs tracking-wider text-[rgb(var(--c-text-strong))] font-bold uppercase">ENTRADAS ADICIONALES</h4>
             </div>
+            <p className="text-[10.5px] text-[rgb(var(--c-text)/0.6)]">
+              Para familiares y acompañantes ($400 pesos c/u).
+            </p>
           </div>
           
-          <p className="text-xs text-[rgb(var(--c-text)/0.7)] mb-4 leading-relaxed">
-            ¿Necesitas comprar más boletos en el futuro? Solicítalas de forma directa desde aquí. Se registrará un lote específico de entradas para tu comprobante.
-          </p>
-          
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-3.5 border-y border-[rgb(var(--c-border)/0.15)] my-4">
-            <div className="flex items-center gap-4">
-              <span className="text-xs font-bold text-[rgb(var(--c-text-strong))]">CANTIDAD DE BOLETOS:</span>
-              <div className="flex items-center gap-3">
+          <div className="flex items-center justify-between gap-4 py-2 border-y border-[rgb(var(--c-border)/0.1)] my-2">
+            <div className="flex items-center gap-3">
+              <span className="text-[10px] font-bold text-[rgb(var(--c-text-strong))]">CANTIDAD:</span>
+              <div className="flex items-center gap-2">
                 <button 
                   onClick={() => setNewExtraTickets(prev => Math.max(1, prev - 1))}
-                  className="w-8 h-8 rounded-xl bg-[rgb(var(--c-surface))] border border-[rgb(var(--c-border)/0.5)] flex items-center justify-center text-[rgb(var(--c-text-strong))] hover:bg-[rgb(var(--c-surface-2))] transition-colors active:scale-95 cursor-pointer font-bold"
+                  className="w-7 h-7 rounded-lg bg-[rgb(var(--c-surface))] border border-[rgb(var(--c-border)/0.5)] flex items-center justify-center text-xs font-bold hover:bg-[rgb(var(--c-surface-2))] transition-colors active:scale-95 cursor-pointer"
                 >
                   -
                 </button>
-                <span className="font-display text-base font-bold text-[rgb(var(--c-text-strong))] w-6 text-center">{newExtraTickets}</span>
+                <span className="font-display text-sm font-bold text-[rgb(var(--c-text-strong))] w-5 text-center">{newExtraTickets}</span>
                 <button 
                   onClick={() => setNewExtraTickets(prev => prev + 1)}
-                  className="w-8 h-8 rounded-xl bg-[rgb(var(--c-surface))] border border-[rgb(var(--c-border)/0.5)] flex items-center justify-center text-[rgb(var(--c-text-strong))] hover:bg-[rgb(var(--c-surface-2))] transition-colors active:scale-95 cursor-pointer font-bold"
+                  className="w-7 h-7 rounded-lg bg-[rgb(var(--c-surface))] border border-[rgb(var(--c-border)/0.5)] flex items-center justify-center text-xs font-bold hover:bg-[rgb(var(--c-surface-2))] transition-colors active:scale-95 cursor-pointer"
                 >
                   +
                 </button>
               </div>
             </div>
             
-            <div className="flex flex-col text-left justify-center sm:text-right">
-              <span className="text-[10px] text-[rgb(var(--c-text)/0.5)]">Total de este lote ({newExtraTickets} x $400):</span>
-              <span className="font-display text-base font-bold text-purple-600">${(newExtraTickets * 400).toLocaleString('es-MX')} MXN</span>
+            <div className="text-right flex items-center gap-1.5">
+              <span className="text-[10px] text-[rgb(var(--c-text)/0.5)]">Total lote:</span>
+              <span className="font-display text-sm font-bold text-purple-600">${(newExtraTickets * 400).toLocaleString('es-MX')} MXN</span>
             </div>
           </div>
 
           <button
             onClick={handleBuyExtraTickets}
             disabled={generatingExtraPDF}
-            className="w-full h-14 bg-gradient-to-r from-purple-600 via-indigo-600 to-violet-600 hover:brightness-105 active:scale-[0.98] disabled:opacity-50 text-white font-display text-base tracking-widest rounded-2xl transition-all shadow-lg hover:shadow-purple-500/20 duration-150 font-bold flex items-center justify-center gap-3 cursor-pointer"
+            className="w-full h-10 bg-gradient-to-r from-purple-600 via-indigo-600 to-violet-600 hover:brightness-105 active:scale-[0.98] disabled:opacity-50 text-white font-display text-xs tracking-widest rounded-xl transition-all shadow-md duration-150 font-bold flex items-center justify-center gap-2 cursor-pointer"
           >
-            {generatingExtraPDF ? (
-              <>
-                <Clock className="w-5 h-5 animate-spin" /> PROCESANDO…
-              </>
-            ) : (
-              <>
-                <Ticket className="w-5 h-5 text-white" /> SOLICITAR ENTRADAS ADICIONALES
-              </>
-            )}
+            {generatingExtraPDF ? 'PROCESANDO…' : 'SOLICITAR ENTRADAS ADICIONALES'}
           </button>
 
           {extraTicketsSuccess && (
-            <div className="mt-4 space-y-4 animate-fadeIn text-center">
-              <div className="flex items-center justify-center gap-2 text-green-600 font-bold text-sm">
-                <Check className="w-5 h-5" /> ¡COMPRA DE ENTRADAS CONFIRMADA EXITOSAMENTE!
+            <div className="mt-3.5 space-y-3 animate-fadeIn text-center py-1 border-t border-[rgb(var(--c-border)/0.08)] pt-3">
+              <div className="flex items-center justify-center gap-1.5 text-green-600 font-bold text-[11px]">
+                <Check className="w-4 h-4" /> ¡SOLICITUD CONFIRMADA CON ÉXITO!
               </div>
-              <p className="text-xs text-[rgb(var(--c-text)/0.7)] leading-relaxed">
-                Se han solicitado <strong className="font-bold text-[rgb(var(--c-text-strong))]">{lastPurchasedCount}</strong> nuevas entradas adicionales. Selecciona una opción para tu comprobante:
+              <p className="text-[10px] text-[rgb(var(--c-text)/0.7)] leading-relaxed">
+                Se han solicitado <strong className="font-bold text-[rgb(var(--c-text-strong))]">{lastPurchasedCount}</strong> entradas adicionales. Selecciona una opción:
               </p>
-              <div className="flex flex-col sm:flex-row gap-3">
+              <div className="flex gap-2.5">
                 <button 
                   onClick={() => handleViewExtraPDF(lastPurchasedCount)}
-                  className="flex-1 h-14 flex items-center justify-center gap-3 bg-[rgb(var(--c-surface))] border border-[rgb(var(--c-border)/0.5)] hover:bg-[rgb(var(--c-surface-2))] text-[rgb(var(--c-text-strong))] font-display text-base tracking-widest rounded-2xl transition-all shadow-sm active:scale-[0.98] duration-150 font-bold cursor-pointer"
+                  className="flex-1 h-10 flex items-center justify-center gap-2 bg-[rgb(var(--c-surface))] border border-[rgb(var(--c-border)/0.5)] hover:bg-[rgb(var(--c-surface-2))] text-[rgb(var(--c-text-strong))] font-display text-[10px] tracking-wider rounded-xl transition-all font-bold cursor-pointer"
                 >
-                  <Eye className="w-5 h-5 text-[rgb(var(--c-primary))]" /> VER COMPROBANTE ONLINE
+                  <Eye className="w-4 h-4 text-[rgb(var(--c-primary))]" /> VER ONLINE
                 </button>
                 <button 
                   onClick={() => handleDownloadExtraPDF(lastPurchasedCount)}
-                  className="flex-1 h-14 bg-gradient-to-r from-purple-600 via-indigo-600 to-violet-600 hover:brightness-105 active:scale-[0.98] disabled:opacity-50 text-white font-display text-base tracking-widest rounded-2xl transition-all shadow-lg hover:shadow-purple-500/20 duration-150 font-bold flex items-center justify-center gap-3 cursor-pointer"
+                  className="flex-1 h-10 bg-gradient-to-r from-purple-600 via-indigo-600 to-violet-600 hover:brightness-105 active:scale-[0.98] disabled:opacity-50 text-white font-display text-[10px] tracking-wider rounded-xl transition-all font-bold flex items-center justify-center gap-2 cursor-pointer"
                 >
-                  <Download className="w-5 h-5 text-white" /> DESCARGAR COMPROBANTE
+                  <Download className="w-4 h-4 text-white" /> DESCARGAR PDF
                 </button>
               </div>
             </div>
@@ -2658,7 +2654,16 @@ function FullSummary({ state, editMode, confirmed, confirm, saving, saveErr, sta
             </div>
             <div className="flex justify-between items-center py-2 border-b border-[rgb(var(--c-border)/0.15)]">
               <span className="text-[rgb(var(--c-text)/0.6)]">Cuenta:</span>
-              <span className="font-bold text-[rgb(var(--c-text-strong))]">010 440 2340</span>
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-[rgb(var(--c-text-strong))]">010 440 2340</span>
+                <button 
+                  onClick={() => handleCopyText('010 440 2340', 'account')}
+                  className="p-1 hover:bg-fuchsia-500/10 rounded-lg text-fuchsia-500 transition-colors active:scale-90 cursor-pointer"
+                  title="Copiar Cuenta"
+                >
+                  {copiedField === 'account' ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Clipboard className="w-3.5 h-3.5" />}
+                </button>
+              </div>
             </div>
             <div className="flex justify-between items-center py-2 border-b border-[rgb(var(--c-border)/0.15)] md:col-span-1 lg:col-span-2">
               <span className="text-[rgb(var(--c-text)/0.6)]">CLABE:</span>
@@ -2763,12 +2768,12 @@ function FullSummary({ state, editMode, confirmed, confirm, saving, saveErr, sta
           )
         })()}
 
-        {/* 5. ACCIONES AL FINAL (BOTONES DEL MISMO TAMAÑO) */}
-        <div className="flex flex-col sm:flex-row gap-3 pt-4">
+        {/* 5. ACCIONES AL FINAL (BOTONES A ANCHO COMPLETO, APILADOS) */}
+        <div className="flex flex-col gap-2.5 pt-2">
           <button
             onClick={handleDownloadPDF}
             disabled={generatingPDF}
-            className="flex-1 h-14 bg-gradient-to-r from-fuchsia-600 via-pink-600 to-rose-600 hover:brightness-105 active:scale-[0.98] disabled:opacity-50 text-white font-display text-base tracking-widest rounded-2xl transition-all shadow-lg hover:shadow-fuchsia-500/20 duration-150 font-bold flex items-center justify-center gap-3 cursor-pointer"
+            className="w-full h-14 bg-gradient-to-r from-fuchsia-600 via-pink-600 to-rose-600 hover:brightness-105 active:scale-[0.98] disabled:opacity-50 text-white font-display text-base tracking-widest rounded-2xl transition-all shadow-lg hover:shadow-fuchsia-500/20 duration-150 font-bold flex items-center justify-center gap-3 cursor-pointer"
           >
             {generatingPDF ? (
               <>
@@ -2783,7 +2788,7 @@ function FullSummary({ state, editMode, confirmed, confirm, saving, saveErr, sta
           
           <button
             onClick={startEdit}
-            className="flex-1 h-14 flex items-center justify-center gap-3 bg-[rgb(var(--c-surface))] border border-[rgb(var(--c-border)/0.5)] hover:bg-[rgb(var(--c-surface-2))] text-[rgb(var(--c-text-strong))] font-display text-base tracking-widest rounded-2xl transition-all shadow-sm active:scale-[0.98] duration-150 font-bold cursor-pointer"
+            className="w-full h-14 flex items-center justify-center gap-3 bg-[rgb(var(--c-surface))] border border-[rgb(var(--c-border)/0.5)] hover:bg-[rgb(var(--c-surface-2))] text-[rgb(var(--c-text-strong))] font-display text-base tracking-widest rounded-2xl transition-all shadow-sm active:scale-[0.98] duration-150 font-bold cursor-pointer"
           >
             <Pencil className="w-3.5 h-3.5 text-[rgb(var(--c-primary))]" /> MODIFICAR REGISTRO
           </button>
