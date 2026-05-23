@@ -1178,32 +1178,23 @@ function StepView(props: {
             }
           `}</style>
 
-          {/* BACKGROUND VIDEO (Plays once, blurs on end, positioned below notch) */}
+          {/* BACKGROUND VIDEO (Plays once, blurs on end, bottom 6% cropped to hide watermark on all devices) */}
           <video
             autoPlay
             muted
             loop={false}
             onEnded={() => setVideoEnded(true)}
             playsInline
-            className="absolute inset-0 w-full h-full object-cover z-0 pointer-events-none select-none"
+            className="absolute top-0 left-0 w-full h-[106dvh] object-cover z-0 pointer-events-none select-none"
             poster="/grand_national_bg.jpg"
             style={{
               filter: videoEnded ? 'blur(12px) brightness(0.45)' : 'none',
               transition: 'filter 1.5s cubic-bezier(0.25, 1, 0.5, 1), brightness 1.5s cubic-bezier(0.25, 1, 0.5, 1)',
-              objectPosition: 'center 8%',
+              objectPosition: 'center 4%',
             }}
           >
             <source src="/d4e.mp4" type="video/mp4" />
           </video>
-
-          {/* ELEGANT GOLD CHIP TO COVER GEMINI WATERMARK */}
-          <div 
-            className={`absolute bottom-5 right-5 z-10 px-3.5 py-1.5 bg-amber-500/[0.05] border border-amber-500/25 rounded-full backdrop-blur-xl text-[9px] font-bold tracking-[0.22em] text-amber-400/90 uppercase pointer-events-none shadow-[0_5px_15px_rgba(245,158,11,0.1)] transition-opacity duration-1000 ${
-              videoEnded ? 'opacity-0 scale-95' : 'opacity-100 scale-100'
-            }`}
-          >
-            CANCÚN 2026
-          </div>
 
           {/* CINEMATIC BLURRED OVERLAY WHEN VIDEO ENDS */}
           <div 
