@@ -1103,7 +1103,7 @@ export default function RegisterPage({ params }: Props) {
                 }
                 className="flex items-center gap-1 text-white bg-gradient-to-r from-purple-700 via-purple-600 to-pink-600 hover:from-purple-800 hover:to-pink-700 font-display font-bold text-sm px-5 py-2.5 rounded-2xl disabled:opacity-40 disabled:pointer-events-none active:scale-95 transition-all duration-150 shadow-[0_4px_12px_rgba(168,85,247,0.3)]"
               >
-                CONFIRMAR COREOGRAFÍAS
+                CONFIRMAR COREOGRAFÍA
               </button>
             ) : (
               <button
@@ -2658,61 +2658,87 @@ function FullSummary({ state, editMode, confirmed, isEditSave, confirm, saving, 
 
           {/* ENTRADAS PARA ACOMPAÑANTES */}
           <div className="p-3.5 sm:p-5">
-            <h3 className="font-display text-lg tracking-widest text-[rgb(var(--c-primary))] mb-4 border-b border-[rgb(var(--c-border)/0.25)] pb-2 flex items-center gap-2">
-              <Ticket className="w-5 h-5 text-[rgb(var(--c-primary))]" />
-              <span>ENTRADAS PARA FAMILIARES / PAPÁS</span>
-            </h3>
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 py-2">
-              <div className="space-y-1.5 max-w-md">
-                <p className="text-xs font-semibold text-[rgb(var(--c-text-strong))]">Si ya tienes entradas confirmadas para familiares, papás y acompañantes, agrégalas aquí. Si aún no las tienes, no te preocupes: al finalizar tu registro o más adelante podrás solicitar entradas adicionales.</p>
-                <div className="bg-purple-50/50 border border-purple-200/50 rounded-xl p-3 text-[11px] leading-relaxed text-purple-950">
-                  <p className="font-bold flex items-center gap-1 mb-0.5">
-                    <Info className="w-3.5 h-3.5 text-purple-700 shrink-0" />
-                    TARIFAS Y REGLAS DE ENTRADAS:
+            <div className="bg-[rgb(var(--c-surface-2)/0.35)] border border-[rgb(var(--c-border)/0.45)] rounded-2xl p-4 sm:p-5 shadow-xs space-y-4">
+              {/* Header and selector in one compact row */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[rgb(var(--c-border)/0.2)] pb-4">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <Ticket className="w-5 h-5 text-[rgb(var(--c-primary))]" />
+                    <span className="font-display text-sm tracking-wider font-bold text-[rgb(var(--c-primary))] uppercase">
+                      Entradas para Papás / Familiares
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-[rgb(var(--c-text-strong))] leading-relaxed max-w-xl">
+                    Si ya tienes entradas confirmadas, agrégalas aquí. Si aún no las tienes, podrás solicitarlas al finalizar tu registro.
                   </p>
-                  • Costo de <strong>preventa: $500 MXN</strong> por entrada (válido antes del <strong>miércoles 17 de Junio</strong>).<br />
-                  • Costo <strong>regular: $600 MXN</strong> por entrada (a partir del 18 de Junio).<br />
-                  <strong className="block text-red-700 font-extrabold uppercase mt-1">IMPORTANTE: No se venderán entradas el día del evento.</strong>
                 </div>
-                <p className="text-[11px] text-[rgb(var(--c-text)/0.75)]">Costo por Entrada Actual: <strong className="font-bold text-[rgb(var(--c-primary))]">{formatMoney(PRECIO_ENTRADA)} MXN</strong>.</p>
+
+                {/* Selector */}
+                <div className="flex items-center gap-3 bg-[rgb(var(--c-surface))] border border-[rgb(var(--c-border)/0.5)] rounded-xl p-1 shadow-xs self-start sm:self-auto shrink-0">
+                  {confirmed || editMode || !isBeforeTicketsDeadline(event?.date) ? (
+                    <div className="px-3.5 py-1.5 flex items-center gap-1.5">
+                      <span className="text-xs font-semibold text-[rgb(var(--c-text)/0.7)]">Compradas:</span>
+                      <span className="font-display text-base font-bold text-[rgb(var(--c-primary))]">{state.ticketsCount ?? 0}</span>
+                    </div>
+                  ) : (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => updateState(prev => ({ ...prev, ticketsCount: Math.max(0, (prev.ticketsCount ?? 0) - 1) }))}
+                        className="w-8 h-8 rounded-lg flex items-center justify-center bg-[rgb(var(--c-surface-2))] border border-[rgb(var(--c-border)/0.4)] hover:bg-[rgb(var(--c-border)/0.15)] active:scale-95 transition-all text-base font-bold text-[rgb(var(--c-text))]"
+                      >
+                        -
+                      </button>
+                      <span className="font-display text-base font-bold w-6 text-center text-[rgb(var(--c-text-strong))]">
+                        {state.ticketsCount ?? 0}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => updateState(prev => ({ ...prev, ticketsCount: (prev.ticketsCount ?? 0) + 1 }))}
+                        className="w-8 h-8 rounded-lg flex items-center justify-center bg-[rgb(var(--c-surface-2))] border border-[rgb(var(--c-border)/0.4)] hover:bg-[rgb(var(--c-border)/0.15)] active:scale-95 transition-all text-base font-bold text-[rgb(var(--c-text))]"
+                      >
+                        +
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* Bottom information row: Grid layout on desktop, stacked on mobile */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-[11px] leading-relaxed pt-1">
+                <div className="space-y-1.5">
+                  <div className="flex items-center gap-1.5 font-bold text-[rgb(var(--c-primary))]">
+                    <Info className="w-3.5 h-3.5 shrink-0" />
+                    <span>TARIFAS Y REGLAS DE ENTRADAS:</span>
+                  </div>
+                  <ul className="list-disc pl-4 space-y-0.5 text-[rgb(var(--c-text)/0.8)]">
+                    <li>Costo de <strong>preventa: $500 MXN</strong> (antes del <strong>miércoles 17 de Junio</strong>).</li>
+                    <li>Costo <strong>regular: $600 MXN</strong> (a partir del 18 de Junio).</li>
+                  </ul>
+                </div>
+
+                <div className="flex flex-col justify-center space-y-1.5 md:items-end">
+                  <div className="text-[rgb(var(--c-text)/0.75)]">
+                    Costo por Entrada Actual: <strong className="font-bold text-sm text-[rgb(var(--c-primary))]">{formatMoney(PRECIO_ENTRADA)} MXN</strong>
+                  </div>
+                  <span className="text-red-700 font-extrabold uppercase tracking-wide text-[10px]">
+                    IMPORTANTE: No se venderán entradas el día del evento.
+                  </span>
+                </div>
+
+                {/* Deadlines or status changes */}
                 {!isBeforeTicketsDeadline(event?.date) && (
-                  <div className="bg-amber-50/80 border border-amber-200/50 rounded-2xl p-3 mt-1.5 text-xs text-amber-950 font-semibold flex items-start gap-2">
-                    <Info className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                  <div className="col-span-full bg-amber-500/10 border border-amber-500/20 rounded-xl p-2.5 text-[11px] text-amber-800 font-semibold flex items-start gap-2">
+                    <Info className="w-3.5 h-3.5 text-amber-600 shrink-0 mt-0.5" />
                     <span>La venta de entradas en línea ha concluido. Recuerda que no se venderán entradas el día del evento.</span>
                   </div>
                 )}
                 {editMode && isBeforeTicketsDeadline(event?.date) && (
-                  <p className="text-[10px] text-amber-600 font-bold bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded-xl mt-1.5 inline-block">
-                    ⚠️ Para adquirir entradas adicionales, utiliza la opción al confirmar tu registro.
-                  </p>
-                )}
-              </div>
-              <div className="flex items-center gap-4 self-center md:self-auto bg-[rgb(var(--c-surface))] border border-[rgb(var(--c-border)/0.5)] rounded-2xl p-1.5 shadow-xs">
-                {confirmed || editMode || !isBeforeTicketsDeadline(event?.date) ? (
-                  <div className="px-4 py-1.5 flex items-center gap-2">
-                    <span className="text-sm font-semibold text-[rgb(var(--c-text))]">Compradas:</span>
-                    <span className="font-display text-lg font-bold text-[rgb(var(--c-primary))]">{state.ticketsCount ?? 0}</span>
-                  </div>
-                ) : (
-                  <>
-                    <button
-                      type="button"
-                      onClick={() => updateState(prev => ({ ...prev, ticketsCount: Math.max(0, (prev.ticketsCount ?? 0) - 1) }))}
-                      className="w-9 h-9 rounded-xl flex items-center justify-center bg-[rgb(var(--c-surface-2))] border border-[rgb(var(--c-border)/0.4)] hover:bg-[rgb(var(--c-border)/0.15)] active:scale-95 transition-all text-lg font-bold text-[rgb(var(--c-text))]"
-                    >
-                      -
-                    </button>
-                    <span className="font-display text-xl font-bold w-8 text-center text-[rgb(var(--c-text-strong))]">
-                      {state.ticketsCount ?? 0}
+                  <div className="col-span-full">
+                    <span className="text-[10px] text-amber-600 font-bold bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded-xl inline-block">
+                      Para adquirir entradas adicionales, utiliza la opción al confirmar tu registro.
                     </span>
-                    <button
-                      type="button"
-                      onClick={() => updateState(prev => ({ ...prev, ticketsCount: (prev.ticketsCount ?? 0) + 1 }))}
-                      className="w-9 h-9 rounded-xl flex items-center justify-center bg-[rgb(var(--c-surface-2))] border border-[rgb(var(--c-border)/0.4)] hover:bg-[rgb(var(--c-border)/0.15)] active:scale-95 transition-all text-lg font-bold text-[rgb(var(--c-text))]"
-                    >
-                      +
-                    </button>
-                  </>
+                  </div>
                 )}
               </div>
             </div>
