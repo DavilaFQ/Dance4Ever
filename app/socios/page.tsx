@@ -90,6 +90,18 @@ function formatDate(iso: string | null): string {
   return new Date(iso).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })
 }
 
+function safeFormatDate(iso: string | null | undefined, options?: Intl.DateTimeFormatOptions): string {
+  if (!iso) return 'Sin fecha'
+  try {
+    const dateStr = iso.includes('T') ? iso : iso + 'T00:00:00'
+    const d = new Date(dateStr)
+    if (isNaN(d.getTime())) return iso
+    return d.toLocaleDateString('es-MX', options || { dateStyle: 'long' })
+  } catch {
+    return iso
+  }
+}
+
 function costForRegistration(acts: RegistrationAct[], dancers: RegistrationDancer[], paq: number | null, rep: number | null): number {
   if (paq == null) return 0
   const counts = new Map<number, number>()
@@ -1017,7 +1029,7 @@ export default function SociosPage() {
               <div>
                 <h1 className="font-display text-2xl tracking-wider text-[rgb(var(--c-text-strong))] uppercase">Panel de Control Ejecutivo</h1>
                 <p className="text-xs text-[rgb(var(--c-text)/0.7)] mt-0.5">
-                  {event ? `Evento activo: ${event.name} · ${event.date ? new Date(event.date + 'T00:00:00').toLocaleDateString('es-MX', { day: '2-digit', month: 'long', year: 'numeric' }) : 'Sin fecha'}` : 'Seleccione un evento'}
+                  {event ? `Evento activo: ${event.name} · ${safeFormatDate(event.date, { day: '2-digit', month: 'long', year: 'numeric' })}` : 'Seleccione un evento'}
                 </p>
               </div>
               
@@ -1226,7 +1238,7 @@ export default function SociosPage() {
                         <h3 className="font-display text-xl tracking-wide uppercase text-[rgb(var(--c-text-strong))]">{e.name}</h3>
                         <p className="text-xs text-[rgb(var(--c-text)/0.7)] flex items-center gap-1 mt-0.5">
                           <Calendar className="w-3.5 h-3.5" />
-                          {e.date ? new Date(e.date + 'T00:00:00').toLocaleDateString('es-MX', { dateStyle: 'long' }) : 'Sin fecha'}
+                          {safeFormatDate(e.date, { dateStyle: 'long' })}
                         </p>
                       </div>
                       
