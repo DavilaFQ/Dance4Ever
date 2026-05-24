@@ -53,6 +53,7 @@ import {
   RefreshCw,
   Clock,
   ChevronUp,
+  Copy,
 } from 'lucide-react'
 
 // ============================================================================
@@ -201,6 +202,39 @@ export default function SociosPage() {
   const [eventDate, setEventDate] = useState('')
   const [onDeckInput, setOnDeckInput] = useState(5)
   const [isSavingEvent, setIsSavingEvent] = useState(false)
+
+  const [copiedEventId, setCopiedEventId] = useState<string | null>(null)
+  
+  const handleCopyLink = useCallback((e: Event) => {
+    if (!e.registration_token) return
+    const url = `${window.location.origin}/register/${e.id}?t=${e.registration_token}`
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(url)
+        .then(() => {
+          setCopiedEventId(e.id)
+          setTimeout(() => setCopiedEventId(null), 2000)
+        })
+        .catch(() => {
+          const el = document.createElement('textarea')
+          el.value = url
+          document.body.appendChild(el)
+          el.select()
+          document.execCommand('copy')
+          document.body.removeChild(el)
+          setCopiedEventId(e.id)
+          setTimeout(() => setCopiedEventId(null), 2000)
+        })
+    } else {
+      const el = document.createElement('textarea')
+      el.value = url
+      document.body.appendChild(el)
+      el.select()
+      document.execCommand('copy')
+      document.body.removeChild(el)
+      setCopiedEventId(e.id)
+      setTimeout(() => setCopiedEventId(null), 2000)
+    }
+  }, [])
 
   // Edit Event State
   const [editEventName, setEditEventName] = useState('')
@@ -1302,11 +1336,22 @@ export default function SociosPage() {
                         <span className="text-[rgb(var(--c-text)/0.55)] uppercase block text-[9px] tracking-wider">Actos en Deck</span>
                         <span className="font-semibold font-display text-sm">{e.on_deck_count}</span>
                       </div>
-                      <div className="col-span-2 border-t border-[rgb(var(--c-border)/0.25)] pt-1.5 mt-1">
-                        <span className="text-[rgb(var(--c-text)/0.55)] uppercase block text-[9px] tracking-wider">Enlace de Registro</span>
-                        <span className="font-mono text-[9px] break-all block text-[rgb(var(--c-primary))] font-semibold">
-                          {e.registration_token ? `/register/${e.id}?t=${e.registration_token}` : 'BLOQUEADO/CERRADO'}
-                        </span>
+                      <div className="col-span-2 border-t border-[rgb(var(--c-border)/0.25)] pt-1.5 mt-1 flex items-center justify-between gap-2">
+                        <div className="min-w-0 flex-1">
+                          <span className="text-[rgb(var(--c-text)/0.55)] uppercase block text-[9px] tracking-wider">Enlace de Registro</span>
+                          <span className="font-mono text-[10px] break-all block text-[rgb(var(--c-primary))] font-semibold">
+                            {e.registration_token ? `/register/${e.id}?t=${e.registration_token}` : 'BLOQUEADO/CERRADO'}
+                          </span>
+                        </div>
+                        {e.registration_token && (
+                          <button
+                            onClick={() => handleCopyLink(e)}
+                            className={`shrink-0 flex items-center gap-1 px-2.5 py-1.5 text-[10px] font-bold tracking-wider rounded-lg transition-all active:scale-95 border ${copiedEventId === e.id ? 'bg-[rgb(var(--c-success)/0.15)] text-[rgb(var(--c-success-strong))] border-[rgb(var(--c-success)/0.3)]' : 'bg-[rgb(var(--c-primary)/0.05)] text-[rgb(var(--c-primary))] border-[rgb(var(--c-primary)/0.2)] hover:bg-[rgb(var(--c-primary)/0.15)]'}`}
+                          >
+                            {copiedEventId === e.id ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                            {copiedEventId === e.id ? 'COPIADO' : 'COPIAR'}
+                          </button>
+                        )}
                       </div>
                     </div>
 
