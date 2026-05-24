@@ -1017,7 +1017,7 @@ export default function SociosPage() {
               <div>
                 <h1 className="font-display text-2xl tracking-wider text-[rgb(var(--c-text-strong))] uppercase">Panel de Control Ejecutivo</h1>
                 <p className="text-xs text-[rgb(var(--c-text)/0.7)] mt-0.5">
-                  {event ? `Evento activo: ${event.name} · ${new Date(event.date).toLocaleDateString('es-MX', { day: '2-digit', month: 'long', year: 'numeric' })}` : 'Seleccione un evento'}
+                  {event ? `Evento activo: ${event.name} · ${new Date(event.date + 'T00:00:00').toLocaleDateString('es-MX', { day: '2-digit', month: 'long', year: 'numeric' })}` : 'Seleccione un evento'}
                 </p>
               </div>
               
@@ -1226,7 +1226,7 @@ export default function SociosPage() {
                         <h3 className="font-display text-xl tracking-wide uppercase text-[rgb(var(--c-text-strong))]">{e.name}</h3>
                         <p className="text-xs text-[rgb(var(--c-text)/0.7)] flex items-center gap-1 mt-0.5">
                           <Calendar className="w-3.5 h-3.5" />
-                          {new Date(e.date).toLocaleDateString('es-MX', { dateStyle: 'long' })}
+                          {new Date(e.date + 'T00:00:00').toLocaleDateString('es-MX', { dateStyle: 'long' })}
                         </p>
                       </div>
                       
