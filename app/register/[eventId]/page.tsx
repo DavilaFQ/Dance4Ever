@@ -3873,39 +3873,7 @@ async function generateReceiptPDF(state: State, event: Event | null) {
   doc.setFontSize(11)
   doc.text(`$${total.toLocaleString('es-MX')} MXN`, cardX + cardWidth - 5, cardY + cardHeight - 4.5, { align: 'right' })
 
-  // QR Code on right side
-  const qrX = 145
-  const qrY = costY
-  const qrSize = 40
 
-  // Draw frame
-  doc.setFillColor(250, 248, 255) // Soft lavander tint
-  doc.setDrawColor(217, 70, 239) // Fuchsia
-  doc.setLineWidth(0.4)
-  doc.rect(qrX, qrY, qrSize, qrSize + 10, 'FD')
-
-  try {
-    const qrString = `D4E-EVENT-${event?.id || 'EVENT'}-REG-${state.confirmedRegistrationId || 'TEMP'}-TOTAL-${total}`
-    const QRCode = (await import('qrcode')).default
-    const qrDataUrl = await QRCode.toDataURL(qrString, {
-      margin: 1,
-      color: {
-        dark: '#111111',
-        light: '#FAFAFA'
-      }
-    })
-    doc.addImage(qrDataUrl, 'PNG', qrX + 2, qrY + 2, qrSize - 4, qrSize - 4)
-  } catch (e) {
-    doc.setTextColor(150, 150, 150)
-    doc.setFontSize(7)
-    doc.text('[ CÓDIGO QR ]', qrX + qrSize/2, qrY + qrSize/2, { align: 'center' })
-  }
-
-  // Label under the QR Code
-  doc.setTextColor(120, 120, 120)
-  doc.setFontSize(7.5)
-  doc.setFont('helvetica', 'bold')
-  doc.text('ESCANEAR PARA VALIDAR', qrX + qrSize/2, qrY + qrSize + 6, { align: 'center' })
 
   // Output / Download
   const filename = `Comprobante_Registro_${state.academy.replace(/\s+/g, '_') || 'Dance4ever'}.pdf`
@@ -4125,39 +4093,7 @@ async function generateExtraTicketsPDF(state: State, event: Event | null, newTic
 
   y += 18
 
-  // QR Code or validation
-  const qrX = 85
-  const qrSize = 40
-  const qrY = y
 
-  // Draw frame
-  doc.setFillColor(250, 248, 255)
-  doc.setDrawColor(217, 70, 239)
-  doc.setLineWidth(0.4)
-  doc.rect(qrX, qrY, qrSize, qrSize + 10, 'FD')
-
-  try {
-    const qrString = `D4E-EVENT-${event?.id || 'EVENT'}-REG-${state.confirmedRegistrationId || 'TEMP'}-EXTRA-TICKETS-${newTickets}-TOTAL-${extraTotal}`
-    const QRCode = (await import('qrcode')).default
-    const qrDataUrl = await QRCode.toDataURL(qrString, {
-      margin: 1,
-      color: {
-        dark: '#111111',
-        light: '#FAFAFA'
-      }
-    })
-    doc.addImage(qrDataUrl, 'PNG', qrX + 2, qrY + 2, qrSize - 4, qrSize - 4)
-  } catch (e) {
-    doc.setTextColor(150, 150, 150)
-    doc.setFontSize(7)
-    doc.text('[ CÓDIGO QR ]', qrX + qrSize/2, qrY + qrSize/2, { align: 'center' })
-  }
-
-  // Label under the QR Code
-  doc.setTextColor(120, 120, 120)
-  doc.setFontSize(7.5)
-  doc.setFont('helvetica', 'bold')
-  doc.text('ESCANEAR PARA VALIDAR', qrX + qrSize/2, qrY + qrSize + 6, { align: 'center' })
 
   // Footer
   const footerY = 287
