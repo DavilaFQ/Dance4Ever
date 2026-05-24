@@ -158,6 +158,11 @@ function generateToken(len = 10): string {
 type Tab = 'inicio' | 'eventos' | 'registros' | 'programa' | 'finanzas'
 
 export default function SociosPage() {
+  const [origin, setOrigin] = useState('')
+  useEffect(() => {
+    setOrigin(window.location.origin)
+  }, [])
+
   const [events, setEvents] = useState<Event[]>([])
   const [eventId, setEventId] = useState<string | null>(null)
   const [registrations, setRegistrations] = useState<CoachRegistration[]>([])
@@ -1339,8 +1344,8 @@ export default function SociosPage() {
                       <div className="col-span-2 border-t border-[rgb(var(--c-border)/0.25)] pt-1.5 mt-1 flex items-center justify-between gap-2">
                         <div className="min-w-0 flex-1">
                           <span className="text-[rgb(var(--c-text)/0.55)] uppercase block text-[9px] tracking-wider">Enlace de Registro</span>
-                          <span className="font-mono text-[10px] break-all block text-[rgb(var(--c-primary))] font-semibold">
-                            {e.registration_token ? `/register/${e.id}?t=${e.registration_token}` : 'BLOQUEADO/CERRADO'}
+                          <span className="font-mono text-[10px] break-all block text-[rgb(var(--c-primary))] font-semibold select-all">
+                            {e.registration_token ? `${origin || 'https://dance4ever.mx'}/register/${e.id}?t=${e.registration_token}` : 'BLOQUEADO/CERRADO'}
                           </span>
                         </div>
                         {e.registration_token && (
