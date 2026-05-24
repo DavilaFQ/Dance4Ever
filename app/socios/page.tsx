@@ -130,6 +130,15 @@ type EnrichedRegistration = CoachRegistration & {
   total: number
 }
 
+// Un registro está "editado" si confirmed_at es notablemente posterior a submitted_at
+// (margen de 60 segundos para cubrir el delay entre insert y update inicial)
+function isEditedAfterConfirm(r: CoachRegistration): boolean {
+  if (!r.confirmed_at || !r.submitted_at) return false
+  const confirmed = new Date(r.confirmed_at).getTime()
+  const submitted = new Date(r.submitted_at).getTime()
+  return confirmed - submitted > 60_000 // más de 1 minuto de diferencia
+}
+
 function useLocalState<T>(key: string, initial: T): [T, (next: T | ((p: T) => T)) => void] {
   const [v, setV] = useState<T>(initial)
   useEffect(() => {
@@ -420,6 +429,7 @@ export default function SociosPage() {
       if (r.coach_name) allCoaches.add(r.coach_name.trim().toLowerCase())
       r.extra_coaches?.forEach(x => x && allCoaches.add(x.trim().toLowerCase()))
     })
+    const editedCount = confirmed.filter(r => isEditedAfterConfirm(r)).length
     return {
       academias: academies.size,
       coaches: allCoaches.size,
@@ -429,6 +439,7 @@ export default function SociosPage() {
       ingresoConfirmado: confirmedIncome,
       confirmadas: confirmed.length,
       enProgreso: enriched.length - confirmed.length,
+      editados: editedCount,
     }
   }, [enriched, confirmed])
 
@@ -510,19 +521,21 @@ export default function SociosPage() {
   }, [enriched])
 
   const [query, setQuery] = useState('')
+  const [showOnlyEdited, setShowOnlyEdited] = useState(false)
+
   const filteredRegs = useMemo(() => {
     const q = query.trim().toLowerCase()
-    if (!q) return enriched
-    return enriched.filter(r =>
+    let base = enriched
+    if (showOnlyEdited) base = base.filter(r => isEditedAfterConfirm(r))
+    if (!q) return base
+    return base.filter(r =>
       r.coach_name?.toLowerCase().includes(q) ||
       r.academy?.toLowerCase().includes(q) ||
       r.team_name?.toLowerCase().includes(q) ||
       r.dancers.some(d => d.name.toLowerCase().includes(q)) ||
       r.extra_coaches?.some(x => x.toLowerCase().includes(q))
     )
-  }, [enriched, query])
-
-
+  }, [enriched, query, showOnlyEdited])
 
   // Deadlines and lock local backups
   const [frozen, setFrozen] = useLocalState<boolean>(`d4e:socios:frozen:${eventId ?? ''}`, false)
@@ -1161,6 +1174,27 @@ export default function SociosPage() {
               <KPI label="Cobrado (Ledger)" value={formatMoney(cobrado)} sub={`Resta ${formatMoney(kpis.ingresoProyectado - cobrado)}`} accent="success" />
             </div>
 
+            {/* Alerta de registros editados post-confirmación */}
+            {kpis.editados > 0 && (
+              <div className="flex items-start gap-3 bg-orange-50 border border-orange-300 rounded-2xl px-4 py-3">
+                <span className="text-2xl shrink-0">✏️</span>
+                <div className="min-w-0">
+                  <p className="font-bold text-orange-800 text-sm">
+                    {kpis.editados} registro{kpis.editados !== 1 ? 's' : ''} confirmado{kpis.editados !== 1 ? 's' : ''} {kpis.editados !== 1 ? 'fueron editados' : 'fue editado'} después de confirmar
+                  </p>
+                  <p className="text-xs text-orange-600 mt-0.5">
+                    Ve a la pestaña <strong>REGISTROS</strong> para ver cuáles y revisar los cambios en detalle.
+                  </p>
+                </div>
+                <button
+                  onClick={() => setTab('registros')}
+                  className="shrink-0 text-xs font-bold text-orange-700 bg-orange-100 hover:bg-orange-200 border border-orange-300 px-3 py-1.5 rounded-lg transition-all"
+                >
+                  VER REGISTROS
+                </button>
+              </div>
+            )}
+
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
               
               {/* Registration growth curve */}
@@ -1589,40 +1623,66 @@ export default function SociosPage() {
                   className="w-full pl-11 pr-4 py-3 rounded-xl border border-[rgb(var(--c-border))] bg-[rgb(var(--c-surface)/0.2)] text-base focus:outline-none focus:border-[rgb(var(--c-primary))] focus:bg-white transition-all"
                 />
               </div>
+              {kpis.editados > 0 && (
+                <button
+                  onClick={() => setShowOnlyEdited(v => !v)}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold tracking-wider border transition-all ${showOnlyEdited ? 'bg-orange-500 text-white border-orange-500 shadow-sm' : 'bg-orange-50 text-orange-700 border-orange-300 hover:bg-orange-100'}`}
+                >
+                  <span>✏️</span>
+                  {showOnlyEdited ? `MOSTRANDO EDITADOS (${kpis.editados})` : `VER SOLO EDITADOS (${kpis.editados})`}
+                </button>
+              )}
             </div>
 
             {/* Registrations List Grid */}
             <div className="space-y-3">
               <div className="flex items-center justify-between text-xs text-[rgb(var(--c-text)/0.6)] px-2">
                 <span>Mostrando {filteredRegs.length} de {enriched.length} registros</span>
-                <span>Borrador ({kpis.enProgreso}) · Confirmados ({kpis.confirmadas})</span>
+                <span>Borrador ({kpis.enProgreso}) · Confirmados ({kpis.confirmadas}) · Editados ({kpis.editados})</span>
               </div>
 
               {filteredRegs.length === 0 ? <Empty>No se encontraron registros que coincidan con la búsqueda.</Empty> : (
                 <div className="grid grid-cols-1 gap-3">
                   {filteredRegs.map(r => {
                     const isConfirmed = !!r.confirmed_at
+                    const wasEdited = isEditedAfterConfirm(r)
                     return (
-                      <div key={r.id} className="bg-white rounded-2xl border border-[rgb(var(--c-border)/0.5)] p-4 shadow-sm space-y-3 hover:border-[rgb(var(--c-primary)/0.6)] transition-all">
+                      <div key={r.id} className={`bg-white rounded-2xl border p-4 shadow-sm space-y-3 hover:border-[rgb(var(--c-primary)/0.6)] transition-all ${wasEdited ? 'border-orange-300 shadow-orange-100' : 'border-[rgb(var(--c-border)/0.5)]'}`}>
                         
                         <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2.5">
                           <div className="flex items-start gap-2.5">
-                            <span className={`mt-1.5 inline-block w-3.5 h-3.5 rounded-full shrink-0 ${isConfirmed ? 'bg-[rgb(var(--c-success))]' : 'bg-[rgb(var(--c-accent))]'}`} />
+                            <span className={`mt-1.5 inline-block w-3.5 h-3.5 rounded-full shrink-0 ${wasEdited ? 'bg-orange-400' : isConfirmed ? 'bg-[rgb(var(--c-success))]' : 'bg-[rgb(var(--c-accent))]'}`} />
                             <div>
-                              <h3 className="font-display text-lg tracking-wide uppercase leading-tight text-[rgb(var(--c-text-strong))]">
-                                {r.academy || '(sin academia)'}
-                              </h3>
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <h3 className="font-display text-lg tracking-wide uppercase leading-tight text-[rgb(var(--c-text-strong))]">
+                                  {r.academy || '(sin academia)'}
+                                </h3>
+                                {wasEdited && (
+                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-orange-100 border border-orange-300 text-orange-700 text-[10px] font-bold uppercase tracking-wider">
+                                    ✏️ EDITADO · {formatRelative(r.confirmed_at)}
+                                  </span>
+                                )}
+                              </div>
                               <p className="text-sm text-[rgb(var(--c-text)/0.8)] mt-0.5">
                                 Coach: <span className="font-semibold">{r.coach_name}</span> · Tel: {r.coach_phone}
                               </p>
                               {r.team_name && <p className="text-xs text-[rgb(var(--c-text)/0.6)] mt-0.5">Equipo: <strong>{r.team_name}</strong></p>}
+                              {wasEdited && r.submitted_at && (
+                                <p className="text-[10px] text-orange-600 mt-0.5">
+                                  Registro original: {formatDate(r.submitted_at)} · Última edición: {formatDate(r.confirmed_at)}
+                                </p>
+                              )}
                             </div>
                           </div>
 
                           <div className="text-right shrink-0 flex sm:flex-col items-baseline sm:items-end justify-between sm:justify-start gap-2">
                             <p className="font-display text-xl text-[rgb(var(--c-primary))] tabular-nums">{formatMoney(r.total)}</p>
-                            <span className={`inline-block text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${isConfirmed ? 'bg-[rgb(var(--c-success)/0.15)] text-[rgb(var(--c-success-strong))]' : 'bg-[rgb(var(--c-accent)/0.15)] text-[rgb(var(--c-accent-strong))]'}`}>
-                              {isConfirmed ? 'CONFIRMADA' : 'BORRADOR'}
+                            <span className={`inline-block text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
+                              wasEdited ? 'bg-orange-100 text-orange-700 border border-orange-300' :
+                              isConfirmed ? 'bg-[rgb(var(--c-success)/0.15)] text-[rgb(var(--c-success-strong))]' :
+                              'bg-[rgb(var(--c-accent)/0.15)] text-[rgb(var(--c-accent-strong))]'
+                            }`}>
+                              {wasEdited ? 'EDITADO' : isConfirmed ? 'CONFIRMADA' : 'BORRADOR'}
                             </span>
                           </div>
                         </div>
@@ -1911,11 +1971,16 @@ export default function SociosPage() {
                         const paid = payments[r.id]?.paid ?? 0
                         const rest = r.total - paid
                         return (
-                          <tr key={r.id} className="hover:bg-[rgb(var(--c-surface)/0.25)] border-b border-[rgb(var(--c-border)/0.2)]">
+                          <tr key={r.id} className={`hover:bg-[rgb(var(--c-surface)/0.25)] border-b border-[rgb(var(--c-border)/0.2)] ${isEditedAfterConfirm(r) ? 'bg-orange-50' : ''}`}>
                             <td className="py-3">
-                              <span className="font-semibold text-sm block text-[rgb(var(--c-text-strong))] leading-tight">
-                                {r.academy || '(sin academia)'}
-                              </span>
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <span className="font-semibold text-sm text-[rgb(var(--c-text-strong))] leading-tight">
+                                  {r.academy || '(sin academia)'}
+                                </span>
+                                {isEditedAfterConfirm(r) && (
+                                  <span className="inline-block px-1.5 py-0.5 rounded bg-orange-200 text-orange-800 text-[9px] font-bold uppercase tracking-wider">✏️ EDITADO</span>
+                                )}
+                              </div>
                               <span className="text-[10px] text-[rgb(var(--c-text)/0.65)] block">Coach: {r.coach_name}</span>
                               <input
                                 type="text"
@@ -2336,6 +2401,84 @@ export default function SociosPage() {
               {/* TAB ROSTER: COACH INFO */}
               {rosterTab === 'info' && (
                 <div className="space-y-4 animate-[fadeIn_0.15s_ease-out]">
+
+                  {/* Panel de cambios post-confirmación */}
+                  {isEditedAfterConfirm(selectedReg) && (
+                    <div className="rounded-2xl border border-orange-300 bg-orange-50 p-4 space-y-3">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xl">✏️</span>
+                        <div>
+                          <p className="font-bold text-orange-800 text-sm uppercase tracking-wide">Este registro fue editado después de confirmarse</p>
+                          <p className="text-xs text-orange-600">
+                            Original: {formatDate(selectedReg.submitted_at)} · Última edición: {formatDate(selectedReg.confirmed_at)}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Resumen de lo que tiene actualmente */}
+                      <div className="bg-white rounded-xl border border-orange-200 divide-y divide-orange-100 text-sm">
+                        <div className="flex items-center justify-between px-4 py-2.5">
+                          <span className="text-orange-700 font-semibold">👥 Alumnos registrados</span>
+                          <span className="font-bold text-orange-900">{selectedReg.dancers.length}</span>
+                        </div>
+                        <div className="flex items-center justify-between px-4 py-2.5">
+                          <span className="text-orange-700 font-semibold">🎭 Coreografías</span>
+                          <span className="font-bold text-orange-900">{selectedReg.acts.length}</span>
+                        </div>
+                        <div className="flex items-center justify-between px-4 py-2.5">
+                          <span className="text-orange-700 font-semibold">🎟️ Boletos acompañantes</span>
+                          <span className="font-bold text-orange-900">{selectedReg.tickets_count ?? 0}</span>
+                        </div>
+                        {(selectedReg.extra_coaches ?? []).filter(s => s.startsWith('Asistente:')).length > 0 && (
+                          <div className="px-4 py-2.5">
+                            <span className="text-orange-700 font-semibold block mb-1">🧑‍🏫 Asistentes de staff</span>
+                            <ul className="list-disc list-inside text-xs text-orange-800 space-y-0.5">
+                              {(selectedReg.extra_coaches ?? []).filter(s => s.startsWith('Asistente:')).map((a, i) => (
+                                <li key={i}>{a.replace(/^Asistente:\s*/, '')}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                        <div className="flex items-center justify-between px-4 py-2.5 bg-orange-50 rounded-b-xl">
+                          <span className="text-orange-800 font-bold">💰 Total a pagar</span>
+                          <span className="font-black text-orange-900 text-base">{formatMoney(selectedReg.total)}</span>
+                        </div>
+                      </div>
+
+                      {/* Lista de alumnos actuales */}
+                      {selectedReg.dancers.length > 0 && (
+                        <div className="bg-white rounded-xl border border-orange-200 p-3">
+                          <p className="text-xs font-bold text-orange-700 uppercase tracking-wider mb-2">Alumnos actuales</p>
+                          <div className="flex flex-wrap gap-1.5">
+                            {selectedReg.dancers.map((d, i) => (
+                              <span key={i} className="inline-block bg-orange-100 text-orange-800 text-xs px-2.5 py-1 rounded-full font-medium">
+                                {d.name}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Lista de coreografías actuales */}
+                      {selectedReg.acts.length > 0 && (
+                        <div className="bg-white rounded-xl border border-orange-200 p-3">
+                          <p className="text-xs font-bold text-orange-700 uppercase tracking-wider mb-2">Coreografías actuales</p>
+                          <div className="space-y-1.5">
+                            {selectedReg.acts.map((a, i) => (
+                              <div key={i} className="flex items-center gap-2 text-xs text-orange-800">
+                                <span className="font-bold w-4 text-center">{i + 1}</span>
+                                <span className="capitalize">{a.modality}</span>
+                                {a.age_category && <span className="bg-orange-100 px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase">{AGE_CATEGORY_LABELS[a.age_category]}</span>}
+                                {a.style && <span className="text-orange-600">– {a.style}</span>}
+                                {a.level && a.modality === 'grupal' && <span className="text-orange-500 text-[10px] capitalize">({a.level})</span>}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   <h4 className="font-display text-lg tracking-wider text-[rgb(var(--c-primary))] uppercase border-b pb-1">Datos Operativos de la Academia</h4>
                   
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">

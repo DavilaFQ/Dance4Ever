@@ -4,16 +4,61 @@ import ExcelJS from 'exceljs'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 
+// ─── Precios (mirror exacto de page.tsx) ───────────────────────────────────
+const PRECIO_INSCRIPCION = 2700
+const PRECIO_ADICIONAL_COREOGRAFIA = 500
+const PRECIO_ASISTENTE = 400
+const PRECIO_ENTRADA_TEMPRANA = 500   // antes del 17 jun 2026
+const PRECIO_ENTRADA_TARDIA  = 600   // desde el 18 jun 2026
+const DANCERS_POR_ENTRADA_GRATIS = 8
+const DEADLINE_PRECIO_ENTRADA = new Date(2026, 5, 17, 23, 59, 59, 999) // 17-Jun-2026
+
+// ─── Tipos de base de datos ─────────────────────────────────────────────────
 type Status = 'PRESENTADO' | 'EN ESCENARIO' | 'PENDIENTE'
 
-function statusFor(p: Participant, currentPos: number): Status {
-  if (p.position < currentPos) return 'PRESENTADO'
-  if (p.position === currentPos) return 'EN ESCENARIO'
-  return 'PENDIENTE'
+type DancerRow = {
+  id: number
+  registration_id: number
+  name: string
+  birthdate: string
+  category: AgeCategory | null
+  category_manual: boolean | null
+  order_idx: number
 }
 
+type ActRow = {
+  id: number
+  registration_id: number
+  modality: Modality
+  age_category: AgeCategory | null
+  level: Level | null
+  style: string
+  order_idx: number
+  dancer_ids: number[]
+}
+
+type RegRow = {
+  id: number
+  coach_name: string
+  coach_phone: string
+  coach_email: string | null
+  // extra_coaches contiene asistentes codificados como "Asistente: Nombre"
+  extra_coaches: string[]
+  // academy en BD = "NombreAcademia (Ciudad)"
+  academy: string
+  // team_name en BD = solo el nombre de la academia (sin ciudad)
+  team_name: string
+  cost_paquete: number | null
+  cost_repeticion: number | null
+  confirmed_at: string | null
+  tickets_count: number | null
+  dancers: DancerRow[]
+  acts: ActRow[]
+}
+
+// ─── Helpers genéricos ───────────────────────────────────────────────────────
 function safeFilename(s: string): string {
-  return s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+  return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
     .replace(/[^\w-]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '') || 'evento'
 }
 
@@ -32,8 +77,8 @@ function ageAtDate(birthdate: string, refDate: Date): number {
   const b = new Date(birthdate)
   if (isNaN(b.getTime())) return 0
   let age = refDate.getFullYear() - b.getFullYear()
-  const m = refDate.getMonth() - b.getMonth()
-  if (m < 0 || (m === 0 && refDate.getDate() < b.getDate())) age--
+  const mo = refDate.getMonth() - b.getMonth()
+  if (mo < 0 || (mo === 0 && refDate.getDate() < b.getDate())) age--
   return Math.max(0, age)
 }
 
@@ -55,34 +100,144 @@ function nivelOf(m: Modality, level: Level | null): string {
   return 'Avanzado'
 }
 
+function autoCategoryFromAge(age: number): AgeCategory {
+  if (age <= 5) return 'tiny'
+  if (age <= 8) return 'mini'
+  if (age <= 11) return 'elementary'
+  if (age <= 14) return 'junior'
+  if (age <= 17) return 'senior'
+  if (age <= 21) return 'college'
+  return 'open'
+}
+
+function formatDateLong(iso: string): string {
+  try {
+    return new Date(iso).toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' })
+  } catch {
+    return iso
+  }
+}
+
+function formatBirthdate(iso: string): string {
+  if (!iso) return ''
+  try {
+    const [y, m, d] = iso.split('-')
+    return `${d}/${m}/${y}`
+  } catch {
+    return iso
+  }
+}
+
+function statusFor(p: Participant, currentPos: number): Status {
+  if (p.position < currentPos) return 'PRESENTADO'
+  if (p.position === currentPos) return 'EN ESCENARIO'
+  return 'PENDIENTE'
+}
+
+// ─── Parsear academia y ciudad desde el string guardado en BD ───────────────
+// BD guarda: "Academia (Ciudad)" en el campo academy
+// team_name guarda: sólo el nombre de academia
+function parseAcademyCity(academyField: string, teamName: string): { academy: string; city: string } {
+  const match = academyField.match(/^(.*?)\s*\(([^)]+)\)$/)
+  if (match) {
+    return { academy: match[1].trim(), city: match[2].trim() }
+  }
+  // Fallback: si no hay ciudad entre paréntesis, usar team_name como academia
+  return { academy: teamName || academyField, city: '' }
+}
+
+// ─── Parsear asistentes desde extra_coaches ──────────────────────────────────
+// extra_coaches contiene strings como "Asistente: Nombre"
+function parseAssistants(extraCoaches: string[]): string[] {
+  return extraCoaches
+    .filter(s => s.startsWith('Asistente:'))
+    .map(s => s.replace(/^Asistente:\s*/, '').trim())
+    .filter(Boolean)
+}
+
+// ─── Cálculo de costo total por registro (espejo de page.tsx) ────────────────
+function regTotalCost(r: RegRow, refDate: Date): number {
+  const paq = r.cost_paquete ?? PRECIO_INSCRIPCION
+  const rep = r.cost_repeticion ?? PRECIO_ADICIONAL_COREOGRAFIA
+  const isBeforeJune15 = refDate < new Date(2026, 5, 15)
+  const precioEntrada = refDate <= DEADLINE_PRECIO_ENTRADA ? PRECIO_ENTRADA_TEMPRANA : PRECIO_ENTRADA_TARDIA
+
+  // Participaciones por alumno
+  const counts = new Map<number, number>()
+  r.acts.forEach(a => {
+    if (a.modality === 'grupal') {
+      r.dancers.forEach(d => counts.set(d.id, (counts.get(d.id) ?? 0) + 1))
+    } else {
+      a.dancer_ids.forEach(id => counts.set(id, (counts.get(id) ?? 0) + 1))
+    }
+  })
+
+  let total = 0
+  // Costo por alumno
+  r.dancers.forEach(d => {
+    const n = counts.get(d.id) ?? 0
+    if (n === 0) return
+    total += paq
+    if (isBeforeJune15) {
+      if (n > 1) total += (n - 1) * rep
+    } else {
+      total += n * rep
+    }
+  })
+
+  // Asistentes
+  const filledDancers = r.dancers.length
+  const assistants = parseAssistants(r.extra_coaches)
+  const freeEntries = Math.floor(filledDancers / DANCERS_POR_ENTRADA_GRATIS)
+  const paidAssistants = Math.max(0, assistants.length - freeEntries)
+  total += paidAssistants * PRECIO_ASISTENTE
+
+  // Boletos de acompañantes
+  const tickets = r.tickets_count ?? 0
+  total += tickets * precioEntrada
+
+  return total
+}
+
+// ─── Costo por alumno (espejo de page.tsx) ───────────────────────────────────
+function dancerCost(dancerId: number, counts: Map<number, number>, paq: number, rep: number, isBeforeJune15: boolean): number {
+  const n = counts.get(dancerId) ?? 0
+  if (n === 0) return 0
+  if (isBeforeJune15) {
+    return paq + (n > 1 ? (n - 1) * rep : 0)
+  } else {
+    return paq + n * rep
+  }
+}
+
 const MODALITY_ORDER: Modality[] = ['solista', 'dueto', 'trio', 'grupal']
 const LEVEL_ORDER: Level[] = ['basico', 'avanzado']
 
-type DancerRow = { id: number, registration_id: number, name: string, birthdate: string, category: AgeCategory | null, category_manual: boolean | null, order_idx: number }
-type ActRow = { id: number, registration_id: number, modality: Modality, age_category: AgeCategory | null, level: Level | null, style: string, order_idx: number, dancer_ids: number[] }
-type RegRow = {
-  id: number
-  coach_name: string
-  coach_phone: string
-  coach_email: string | null
-  extra_coaches: string[]
-  academy: string
-  team_name: string
-  cost_paquete: number | null
-  cost_repeticion: number | null
-  confirmed_at: string | null
-  dancers: DancerRow[]
-  acts: ActRow[]
-}
-
+// ════════════════════════════════════════════════════════════════════════════
+// exportRegistrations — Excel de registros (4 hojas)
+// ════════════════════════════════════════════════════════════════════════════
 export async function exportRegistrations(event: Event): Promise<void> {
+  // ── 1. Cargar datos de BD ─────────────────────────────────────────────────
   const { data: regsRaw, error: regsErr } = await supabase
     .from('coach_registrations')
     .select('*')
     .eq('event_id', event.id)
   if (regsErr || !regsRaw) throw new Error(`No se pudieron cargar registros: ${regsErr?.message ?? 'desconocido'}`)
 
-  const regs = (regsRaw as Array<{ id: number, coach_name: string, coach_phone: string, coach_email: string | null, extra_coaches: string[] | null, academy: string, team_name: string, cost_paquete: number | null, cost_repeticion: number | null, confirmed_at: string | null }>).filter(r => r.confirmed_at)
+  const regs = (regsRaw as Array<{
+    id: number
+    coach_name: string
+    coach_phone: string
+    coach_email: string | null
+    extra_coaches: string[] | null
+    academy: string
+    team_name: string
+    cost_paquete: number | null
+    cost_repeticion: number | null
+    confirmed_at: string | null
+    tickets_count: number | null
+  }>).filter(r => r.confirmed_at)
+
   if (regs.length === 0) throw new Error('No hay registros confirmados todavía.')
 
   const regIds = regs.map(r => r.id)
@@ -115,9 +270,13 @@ export async function exportRegistrations(event: Event): Promise<void> {
     cost_paquete: r.cost_paquete,
     cost_repeticion: r.cost_repeticion,
     confirmed_at: r.confirmed_at,
+    tickets_count: r.tickets_count,
     dancers: (dancersByReg.get(r.id) ?? []).sort((a, b) => a.order_idx - b.order_idx),
     acts: (actsByReg.get(r.id) ?? []).sort((a, b) => a.order_idx - b.order_idx),
   }))
+
+  // ── 2. Construir lista plana de actos ─────────────────────────────────────
+  const refDate = event.date ? new Date(event.date + 'T00:00:00') : new Date()
 
   type FlatAct = {
     modality: Modality
@@ -128,14 +287,17 @@ export async function exportRegistrations(event: Event): Promise<void> {
     nameOrEquipo: string
     coach: string
     academy: string
+    city: string
     dancerNames: string
+    dancerCount: number
     teamName: string
   }
-  const refDate = event.date ? new Date(event.date) : new Date()
 
   const flat: FlatAct[] = []
   for (const reg of fullRegs) {
+    const { academy, city } = parseAcademyCity(reg.academy, reg.team_name)
     const dancerById = new Map(reg.dancers.map(d => [d.id, d]))
+
     for (const act of reg.acts) {
       const isSDT = act.modality === 'solista' || act.modality === 'dueto' || act.modality === 'trio'
       let dancersInAct: DancerRow[]
@@ -152,23 +314,26 @@ export async function exportRegistrations(event: Event): Promise<void> {
 
       const nameOrEquipo = isSDT
         ? dancersInAct.map(d => firstAndApellido(d.name)).join(' & ')
-        : reg.team_name
+        : reg.team_name || academy
 
       flat.push({
         modality: act.modality,
         ageCategory: act.age_category,
         level: act.level,
-        style: act.style,
+        style: act.style ?? '',
         avgAge,
         nameOrEquipo,
         coach: reg.coach_name,
-        academy: reg.academy,
+        academy,
+        city,
         dancerNames: dancersInAct.map(d => d.name).join(', '),
-        teamName: reg.team_name,
+        dancerCount: dancersInAct.length,
+        teamName: reg.team_name || academy,
       })
     }
   }
 
+  // Ordenar: Categoría → Modalidad → Nivel → Edad promedio
   flat.sort((a, b) => {
     const ca = a.ageCategory ? AGE_CATEGORY_ORDER.indexOf(a.ageCategory) : 99
     const cb = b.ageCategory ? AGE_CATEGORY_ORDER.indexOf(b.ageCategory) : 99
@@ -184,71 +349,78 @@ export async function exportRegistrations(event: Event): Promise<void> {
     return a.avgAge - b.avgAge
   })
 
+  // ── 3. Hoja PROGRAMA (vista limpia para el MC / coordinador de escenario) ──
   const programa = flat.map((a, i) => ({
-    Numero: i + 1,
-    Coach: a.coach,
-    Modalidad: modalidadOf(a.modality),
-    Estilo: a.style,
-    Categoría: a.ageCategory ? AGE_CATEGORY_LABELS[a.ageCategory] : '',
-    Nivel: nivelOf(a.modality, a.level),
-    'Nombre/Equipo': a.nameOrEquipo,
-    Academia: a.academy,
-    Ciudad: '',
+    '#': i + 1,
+    'Modalidad': modalidadOf(a.modality),
+    'Categoría': a.ageCategory ? AGE_CATEGORY_LABELS[a.ageCategory] : '',
+    'Nivel': nivelOf(a.modality, a.level),
+    'Estilo': a.style,
+    'Nombre / Equipo': a.nameOrEquipo,
+    'Academia': a.academy,
+    'Ciudad': a.city,
+    'Coach': a.coach,
   }))
 
+  // ── 4. Hoja DETALLE (información completa de cada acto) ────────────────────
   const detalle = flat.map((a, i) => ({
-    Numero: i + 1,
-    Coach: a.coach,
-    Modalidad: modalidadOf(a.modality),
-    Estilo: a.style,
-    Categoría: a.ageCategory ? AGE_CATEGORY_LABELS[a.ageCategory] : '',
-    Nivel: nivelOf(a.modality, a.level),
-    'Nombre/Equipo': a.nameOrEquipo,
-    Academia: a.academy,
-    Equipo: a.teamName,
-    'Edad promedio': Math.round(a.avgAge * 10) / 10,
+    '#': i + 1,
+    'Modalidad': modalidadOf(a.modality),
+    'Categoría': a.ageCategory ? AGE_CATEGORY_LABELS[a.ageCategory] : '',
+    'Nivel': nivelOf(a.modality, a.level),
+    'Estilo': a.style,
+    'Nombre / Equipo': a.nameOrEquipo,
+    'Academia': a.academy,
+    'Ciudad': a.city,
+    'Coach': a.coach,
+    'No. Integrantes': a.dancerCount,
+    'Edad promedio': a.avgAge > 0 ? Math.round(a.avgAge * 10) / 10 : '',
     'Integrantes del acto': a.dancerNames,
   }))
 
-  // Compute total cost per registration
-  function regTotalCost(r: RegRow): number {
-    const paq = r.cost_paquete ?? 0
-    const rep = r.cost_repeticion ?? 0
-    const counts = new Map<number, number>()
-    r.acts.forEach(a => {
-      if (a.modality === 'grupal') {
-        r.dancers.forEach(d => counts.set(d.id, (counts.get(d.id) ?? 0) + 1))
-      } else {
-        a.dancer_ids.forEach(id => counts.set(id, (counts.get(id) ?? 0) + 1))
-      }
-    })
-    let total = 0
-    counts.forEach(n => {
-      if (n >= 1) total += paq
-      if (n > 1) total += (n - 1) * rep
-    })
-    return total
-  }
+  // ── 5. Hoja EQUIPOS (una fila por registro / academia) ────────────────────
+  const isBeforeJune15 = new Date() < new Date(2026, 5, 15)
+  const precioEntrada = new Date() <= DEADLINE_PRECIO_ENTRADA ? PRECIO_ENTRADA_TEMPRANA : PRECIO_ENTRADA_TARDIA
 
-  const equipos = fullRegs.map(r => ({
-    Coach: r.coach_name,
-    'WhatsApp': r.coach_phone,
-    'Correo': r.coach_email ?? '',
-    'Otros coaches': r.extra_coaches.join(', '),
-    Academia: r.academy,
-    Equipo: r.team_name,
-    'Integrantes': r.dancers.length,
-    'Actos registrados': r.acts.length,
-    'Costo paquete': r.cost_paquete ?? '',
-    'Costo repetición': r.cost_repeticion ?? '',
-    'Total a pagar': regTotalCost(r),
-  }))
+  const equipos = fullRegs.map(r => {
+    const { academy, city } = parseAcademyCity(r.academy, r.team_name)
+    const assistants = parseAssistants(r.extra_coaches)
+    const freeEntries = Math.floor(r.dancers.length / DANCERS_POR_ENTRADA_GRATIS)
+    const paidAssistants = Math.max(0, assistants.length - freeEntries)
+    const tickets = r.tickets_count ?? 0
+    const total = regTotalCost(r, refDate)
+    const confirmedDate = r.confirmed_at
+      ? new Date(r.confirmed_at).toLocaleDateString('es-MX', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+      : ''
 
-  // Integrantes con override de categoría y costo por alumno
+    return {
+      'Coach': r.coach_name,
+      'WhatsApp': r.coach_phone,
+      'Correo': r.coach_email ?? '',
+      'Asistentes': assistants.join(', '),
+      'Asistentes gratuitos': freeEntries,
+      'Asistentes a pagar': paidAssistants,
+      'Academia': academy,
+      'Ciudad': city,
+      'No. Alumnos': r.dancers.length,
+      'No. Coreografías': r.acts.length,
+      'Boletos acompañantes': tickets,
+      'Precio inscripción': r.cost_paquete ?? PRECIO_INSCRIPCION,
+      'Precio coreog. extra': r.cost_repeticion ?? PRECIO_ADICIONAL_COREOGRAFIA,
+      'Precio asistente': PRECIO_ASISTENTE,
+      'Precio boleto': precioEntrada,
+      'Total a pagar': total,
+      'Registrado el': confirmedDate,
+    }
+  })
+
+  // ── 6. Hoja INTEGRANTES (una fila por alumno, con costo individual) ────────
   const integrantes = fullRegs.flatMap(r => {
-    const paq = r.cost_paquete ?? 0
-    const rep = r.cost_repeticion ?? 0
-    // Per-dancer participation count
+    const { academy, city } = parseAcademyCity(r.academy, r.team_name)
+    const paq = r.cost_paquete ?? PRECIO_INSCRIPCION
+    const rep = r.cost_repeticion ?? PRECIO_ADICIONAL_COREOGRAFIA
+
+    // Participaciones por alumno (ID)
     const counts = new Map<number, number>()
     r.acts.forEach(a => {
       if (a.modality === 'grupal') {
@@ -257,59 +429,86 @@ export async function exportRegistrations(event: Event): Promise<void> {
         a.dancer_ids.forEach(id => counts.set(id, (counts.get(id) ?? 0) + 1))
       }
     })
+
+    // Nombres de actos en los que participa cada alumno
+    const actNamesByDancer = new Map<number, string[]>()
+    r.acts.forEach(act => {
+      const isSDT = act.modality !== 'grupal'
+      const participantes = isSDT ? act.dancer_ids : r.dancers.map(d => d.id)
+      participantes.forEach(id => {
+        const list = actNamesByDancer.get(id) ?? []
+        const label = `${modalidadOf(act.modality)}${act.age_category ? ` ${AGE_CATEGORY_LABELS[act.age_category]}` : ''}${act.style ? ` – ${act.style}` : ''}`
+        list.push(label)
+        actNamesByDancer.set(id, list)
+      })
+    })
+
     return r.dancers.map(d => {
       const age = ageAtDate(d.birthdate, refDate)
       const autoCat = age > 0 ? autoCategoryFromAge(age) : null
-      const effective = d.category as AgeCategory | null
+      const effectiveCat = d.category as AgeCategory | null
       const manual = d.category_manual === true
       const n = counts.get(d.id) ?? 0
-      const cost = n >= 1 ? paq + Math.max(0, n - 1) * rep : 0
+      const cost = dancerCost(d.id, counts, paq, rep, isBeforeJune15)
+      const actNames = actNamesByDancer.get(d.id) ?? []
+
       return {
-        Coach: r.coach_name,
-        Academia: r.academy,
-        Equipo: r.team_name,
-        Alumno: d.name,
-        'Fecha de nacimiento': d.birthdate,
-        Edad: age,
+        'Coach': r.coach_name,
+        'Academia': academy,
+        'Ciudad': city,
+        'Alumno': d.name,
+        'Fecha de nacimiento': formatBirthdate(d.birthdate),
+        'Edad': age > 0 ? age : '',
         'Categoría calculada': autoCat ? AGE_CATEGORY_LABELS[autoCat] : '—',
-        'Categoría usada': effective ? AGE_CATEGORY_LABELS[effective] : '—',
-        'Modificada manualmente': manual ? 'SÍ' : 'No',
-        'Participaciones': n,
+        'Categoría usada': effectiveCat ? AGE_CATEGORY_LABELS[effectiveCat] : '—',
+        'Categoría modificada': manual ? 'SÍ' : 'No',
+        'No. participaciones': n,
+        'Actos en los que participa': actNames.join(' | '),
         'Costo a pagar': cost,
       }
     })
   })
 
-  // Build styled workbook
+  // ── 7. Construir workbook y descargar ─────────────────────────────────────
   const wb = new ExcelJS.Workbook()
   wb.creator = 'Dance4ever'
   wb.created = new Date()
 
-  const moneyCols = new Map<string, string[]>([
-    ['Programa', []],
-    ['Detalle', []],
-    ['Integrantes', ['Costo a pagar']],
-    ['Equipos', ['Costo paquete', 'Costo repetición', 'Total a pagar']],
-  ])
+  const moneyCols: Record<string, string[]> = {
+    'Programa':     [],
+    'Detalle':      [],
+    'Equipos':      ['Precio inscripción', 'Precio coreog. extra', 'Precio asistente', 'Precio boleto', 'Total a pagar'],
+    'Integrantes':  ['Costo a pagar'],
+  }
 
-  addStyledSheet(wb, 'Programa', event.name, 'Programa del evento', programa, moneyCols.get('Programa')!)
-  addStyledSheet(wb, 'Detalle', event.name, 'Detalle de actos', detalle, moneyCols.get('Detalle')!)
-  addStyledSheet(wb, 'Integrantes', event.name, 'Integrantes registrados', integrantes, moneyCols.get('Integrantes')!)
-  addStyledSheet(wb, 'Equipos', event.name, 'Equipos / academias', equipos, moneyCols.get('Equipos')!)
+  addStyledSheet(wb, 'Programa',    event.name, 'Programa del evento',         programa,    moneyCols['Programa'])
+  addStyledSheet(wb, 'Detalle',     event.name, 'Detalle completo de actos',   detalle,     moneyCols['Detalle'])
+  addStyledSheet(wb, 'Equipos',     event.name, 'Equipos / academias',         equipos,     moneyCols['Equipos'])
+  addStyledSheet(wb, 'Integrantes', event.name, 'Integrantes registrados',     integrantes, moneyCols['Integrantes'])
 
   const buf = await wb.xlsx.writeBuffer()
   const blob = new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
-  a.download = `Registro del Nacional - ${safeFilename(event.name)}.xlsx`
+  a.download = `Registro Dance4ever - ${safeFilename(event.name)}.xlsx`
   document.body.appendChild(a)
   a.click()
   document.body.removeChild(a)
   URL.revokeObjectURL(url)
 }
 
-function addStyledSheet(wb: ExcelJS.Workbook, name: string, eventName: string, subtitle: string, data: Record<string, unknown>[], moneyColumnLabels: string[]): void {
+// ════════════════════════════════════════════════════════════════════════════
+// addStyledSheet — helper de formato
+// ════════════════════════════════════════════════════════════════════════════
+function addStyledSheet(
+  wb: ExcelJS.Workbook,
+  name: string,
+  eventName: string,
+  subtitle: string,
+  data: Record<string, unknown>[],
+  moneyColumnLabels: string[],
+): void {
   const ws = wb.addWorksheet(name, {
     properties: { tabColor: { argb: 'FFFBBF24' } },
     views: [{ state: 'frozen', ySplit: 3 }],
@@ -317,24 +516,27 @@ function addStyledSheet(wb: ExcelJS.Workbook, name: string, eventName: string, s
 
   const headers = data.length > 0 ? Object.keys(data[0]) : []
   const colCount = Math.max(1, headers.length)
-  const lastCol = String.fromCharCode(64 + colCount)
+  // ExcelJS usa letras para columnas; para >26 cols usamos índices
+  const lastColLetter = colCount <= 26
+    ? String.fromCharCode(64 + colCount)
+    : `A${String.fromCharCode(64 + colCount - 26)}`
 
-  // Title row
-  ws.mergeCells(`A1:${lastCol}1`)
-  const title = ws.getCell('A1')
-  title.value = `DANCE4EVER · ${eventName.toUpperCase()}`
-  title.font = { name: 'Calibri', size: 18, bold: true, color: { argb: 'FFFBBF24' } }
-  title.alignment = { horizontal: 'center', vertical: 'middle' }
-  title.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF000000' } }
+  // Fila 1 — título
+  ws.mergeCells(`A1:${lastColLetter}1`)
+  const titleCell = ws.getCell('A1')
+  titleCell.value = `DANCE4EVER · ${eventName.toUpperCase()}`
+  titleCell.font = { name: 'Calibri', size: 18, bold: true, color: { argb: 'FFFBBF24' } }
+  titleCell.alignment = { horizontal: 'center', vertical: 'middle' }
+  titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF000000' } }
   ws.getRow(1).height = 32
 
-  // Subtitle row
-  ws.mergeCells(`A2:${lastCol}2`)
-  const sub = ws.getCell('A2')
-  sub.value = subtitle.toUpperCase()
-  sub.font = { name: 'Calibri', size: 11, bold: true, color: { argb: 'FFCCCCCC' } }
-  sub.alignment = { horizontal: 'center', vertical: 'middle' }
-  sub.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1F1F1F' } }
+  // Fila 2 — subtítulo
+  ws.mergeCells(`A2:${lastColLetter}2`)
+  const subCell = ws.getCell('A2')
+  subCell.value = subtitle.toUpperCase()
+  subCell.font = { name: 'Calibri', size: 11, bold: true, color: { argb: 'FFCCCCCC' } }
+  subCell.alignment = { horizontal: 'center', vertical: 'middle' }
+  subCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1F1F1F' } }
   ws.getRow(2).height = 22
 
   if (headers.length === 0) {
@@ -342,8 +544,8 @@ function addStyledSheet(wb: ExcelJS.Workbook, name: string, eventName: string, s
     return
   }
 
-  // Header row (row 3)
-  ws.addRow([]) // skip — addRow appends so we need to ensure row 3 is the header
+  // Fila 3 — encabezados
+  ws.addRow([]) // fila placeholder para que addRow siguiente sea fila 3
   const headerRow = ws.getRow(3)
   headers.forEach((h, i) => {
     const cell = headerRow.getCell(i + 1)
@@ -352,15 +554,15 @@ function addStyledSheet(wb: ExcelJS.Workbook, name: string, eventName: string, s
     cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true }
     cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFBBF24' } }
     cell.border = {
-      top: { style: 'thin', color: { argb: 'FF000000' } },
+      top:    { style: 'thin',   color: { argb: 'FF000000' } },
       bottom: { style: 'medium', color: { argb: 'FF000000' } },
-      left: { style: 'thin', color: { argb: 'FF999999' } },
-      right: { style: 'thin', color: { argb: 'FF999999' } },
+      left:   { style: 'thin',   color: { argb: 'FF999999' } },
+      right:  { style: 'thin',   color: { argb: 'FF999999' } },
     }
   })
   headerRow.height = 28
 
-  // Data rows
+  // Filas de datos
   const moneyColIndices = new Set(
     moneyColumnLabels.map(label => headers.indexOf(label)).filter(i => i >= 0)
   )
@@ -369,27 +571,33 @@ function addStyledSheet(wb: ExcelJS.Workbook, name: string, eventName: string, s
     const r = ws.addRow(headers.map(h => row[h]))
     const isAlt = ri % 2 === 1
     r.eachCell({ includeEmpty: true }, (cell, colNumber) => {
+      const colIdx = colNumber - 1
+      const val = row[headers[colIdx]]
       cell.font = { name: 'Calibri', size: 10, color: { argb: 'FF1F1F1F' } }
-      cell.alignment = { vertical: 'middle', wrapText: true, horizontal: typeof row[headers[colNumber - 1]] === 'number' ? 'right' : 'left' }
+      cell.alignment = {
+        vertical: 'middle',
+        wrapText: true,
+        horizontal: typeof val === 'number' ? 'right' : 'left',
+      }
       cell.fill = {
         type: 'pattern',
         pattern: 'solid',
         fgColor: { argb: isAlt ? 'FFF6F4EC' : 'FFFFFFFF' },
       }
       cell.border = {
-        top: { style: 'thin', color: { argb: 'FFE5E5E5' } },
+        top:    { style: 'thin', color: { argb: 'FFE5E5E5' } },
         bottom: { style: 'thin', color: { argb: 'FFE5E5E5' } },
-        left: { style: 'thin', color: { argb: 'FFE5E5E5' } },
-        right: { style: 'thin', color: { argb: 'FFE5E5E5' } },
+        left:   { style: 'thin', color: { argb: 'FFE5E5E5' } },
+        right:  { style: 'thin', color: { argb: 'FFE5E5E5' } },
       }
-      if (moneyColIndices.has(colNumber - 1) && typeof cell.value === 'number') {
+      if (moneyColIndices.has(colIdx) && typeof cell.value === 'number') {
         cell.numFmt = '"$"#,##0.00'
       }
     })
     r.height = 22
   })
 
-  // Auto-fit column widths
+  // Auto-ajuste de anchos
   headers.forEach((h, i) => {
     const col = ws.getColumn(i + 1)
     let maxLen = h.length
@@ -398,42 +606,27 @@ function addStyledSheet(wb: ExcelJS.Workbook, name: string, eventName: string, s
       const s = v == null ? '' : String(v)
       if (s.length > maxLen) maxLen = s.length
     })
-    col.width = Math.min(50, Math.max(10, maxLen + 3))
+    col.width = Math.min(60, Math.max(12, maxLen + 3))
   })
 }
 
-function autoCategoryFromAge(age: number): AgeCategory {
-  if (age <= 5) return 'tiny'
-  if (age <= 8) return 'mini'
-  if (age <= 11) return 'elementary'
-  if (age <= 14) return 'junior'
-  if (age <= 17) return 'senior'
-  if (age <= 21) return 'college'
-  return 'open'
-}
-
-function formatDateLong(iso: string): string {
-  try {
-    return new Date(iso).toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' })
-  } catch {
-    return iso
-  }
-}
-
+// ════════════════════════════════════════════════════════════════════════════
+// exportExcel — Excel simple del programa en vivo (para el MC)
+// ════════════════════════════════════════════════════════════════════════════
 export function exportExcel(event: Event, participants: Participant[], coaches: Coach[]): void {
   const coachMap = new Map(coaches.map(c => [c.id, c.name]))
   const currentPos = event.current_position
 
   const programaData = participants.map(p => ({
-    Posición: p.position,
-    'Nombre/Equipo': p.name,
-    Academia: p.academy ?? '',
-    Categoría: p.category ?? '',
-    Modalidad: p.type ?? '',
-    Estilo: p.style ?? '',
-    Coach: p.coach_id ? coachMap.get(p.coach_id) ?? '' : '',
-    Ciudad: p.city ?? '',
-    Estado: statusFor(p, currentPos),
+    'Posición': p.position,
+    'Nombre / Equipo': p.name,
+    'Academia': p.academy ?? '',
+    'Categoría': p.category ?? '',
+    'Modalidad': p.type ?? '',
+    'Estilo': p.style ?? '',
+    'Coach': p.coach_id ? coachMap.get(p.coach_id) ?? '' : '',
+    'Ciudad': p.city ?? '',
+    'Estado': statusFor(p, currentPos),
   }))
 
   const presented = participants.filter(p => p.position < currentPos).length
@@ -443,15 +636,15 @@ export function exportExcel(event: Event, participants: Participant[], coaches: 
   const avgMs = currentPos > 0 && startedAt ? elapsedMs / currentPos : 0
 
   const resumenData = [
-    { Campo: 'Evento', Valor: event.name },
-    { Campo: 'Fecha', Valor: event.date },
-    { Campo: 'Hora de inicio', Valor: startedAt ? startedAt.toLocaleString('es-MX') : '—' },
+    { Campo: 'Evento',              Valor: event.name },
+    { Campo: 'Fecha',               Valor: event.date },
+    { Campo: 'Hora de inicio',      Valor: startedAt ? startedAt.toLocaleString('es-MX') : '—' },
     { Campo: 'Hora de exportación', Valor: new Date().toLocaleString('es-MX') },
-    { Campo: 'Total turnos', Valor: participants.length },
-    { Campo: 'Presentados', Valor: presented },
-    { Campo: 'Pendientes', Valor: pending },
+    { Campo: 'Total turnos',        Valor: participants.length },
+    { Campo: 'Presentados',         Valor: presented },
+    { Campo: 'Pendientes',          Valor: pending },
     { Campo: 'Tiempo transcurrido', Valor: startedAt ? formatDuration(elapsedMs) : '—' },
-    { Campo: 'Promedio por turno', Valor: avgMs > 0 ? formatDuration(avgMs) : '—' },
+    { Campo: 'Promedio por turno',  Valor: avgMs > 0 ? formatDuration(avgMs) : '—' },
   ]
 
   const coachData = coaches.map(c => {
@@ -466,17 +659,20 @@ export function exportExcel(event: Event, participants: Participant[], coaches: 
   }).sort((a, b) => b.Total - a.Total)
 
   const wb = XLSX.utils.book_new()
-  const wsProg = XLSX.utils.json_to_sheet(programaData)
-  const wsRes = XLSX.utils.json_to_sheet(resumenData)
+  const wsProg  = XLSX.utils.json_to_sheet(programaData)
+  const wsRes   = XLSX.utils.json_to_sheet(resumenData)
   const wsCoach = XLSX.utils.json_to_sheet(coachData)
-  XLSX.utils.book_append_sheet(wb, wsProg, 'Programa')
-  XLSX.utils.book_append_sheet(wb, wsRes, 'Resumen')
+  XLSX.utils.book_append_sheet(wb, wsProg,  'Programa')
+  XLSX.utils.book_append_sheet(wb, wsRes,   'Resumen')
   XLSX.utils.book_append_sheet(wb, wsCoach, 'Por Coach')
 
   const date = new Date().toISOString().slice(0, 10)
   XLSX.writeFile(wb, `dance4ever-${safeFilename(event.name)}-${date}.xlsx`)
 }
 
+// ════════════════════════════════════════════════════════════════════════════
+// loadImageAsDataURL — helper para PDF
+// ════════════════════════════════════════════════════════════════════════════
 async function loadImageAsDataURL(url: string): Promise<string | null> {
   try {
     const res = await fetch(url)
@@ -492,6 +688,9 @@ async function loadImageAsDataURL(url: string): Promise<string | null> {
   }
 }
 
+// ════════════════════════════════════════════════════════════════════════════
+// exportPdf — PDF del programa en vivo
+// ════════════════════════════════════════════════════════════════════════════
 export async function exportPdf(event: Event, participants: Participant[], coaches: Coach[]): Promise<void> {
   const coachMap = new Map(coaches.map(c => [c.id, c.name]))
   const currentPos = event.current_position
@@ -505,7 +704,7 @@ export async function exportPdf(event: Event, participants: Participant[], coach
   const pageWidth = doc.internal.pageSize.getWidth()
   const pageHeight = doc.internal.pageSize.getHeight()
 
-  // Header band — Royal deep purple gala color with fuchsia accent line
+  // Banda de encabezado
   doc.setFillColor(76, 29, 149)
   doc.rect(0, 0, pageWidth, 127, 'F')
   doc.setFillColor(217, 70, 239)
@@ -529,7 +728,7 @@ export async function exportPdf(event: Event, participants: Participant[], coach
   doc.setTextColor(170, 170, 170)
   doc.text('Dance4ever · Programa del evento', 120, 105)
 
-  // Summary box
+  // Resumen
   let y = 160
   doc.setTextColor(20, 20, 20)
   doc.setFont('helvetica', 'bold')
@@ -545,12 +744,12 @@ export async function exportPdf(event: Event, participants: Participant[], coach
   doc.setFontSize(11)
   doc.setTextColor(40, 40, 40)
   const rows: [string, string][] = [
-    ['Total turnos:', String(participants.length)],
-    ['Presentados:', String(presented)],
-    ['Pendientes:', String(pending)],
-    ['Hora de inicio:', startedAt ? startedAt.toLocaleString('es-MX') : '—'],
+    ['Total turnos:',        String(participants.length)],
+    ['Presentados:',         String(presented)],
+    ['Pendientes:',          String(pending)],
+    ['Hora de inicio:',      startedAt ? startedAt.toLocaleString('es-MX') : '—'],
     ['Tiempo transcurrido:', startedAt ? formatDuration(elapsedMs) : '—'],
-    ['Promedio por turno:', avgMs > 0 ? formatDuration(avgMs) : '—'],
+    ['Promedio por turno:',  avgMs > 0 ? formatDuration(avgMs) : '—'],
   ]
   for (const [label, value] of rows) {
     doc.setFont('helvetica', 'bold')
@@ -561,7 +760,7 @@ export async function exportPdf(event: Event, participants: Participant[], coach
   }
   y += 14
 
-  // Programa table
+  // Tabla del programa
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(13)
   doc.setTextColor(20, 20, 20)
@@ -573,7 +772,7 @@ export async function exportPdf(event: Event, participants: Participant[], coach
 
   autoTable(doc, {
     startY: y,
-    head: [['#', 'Nombre/Equipo', 'Academia', 'Categoría', 'Modalidad', 'Coach', 'Estado']],
+    head: [['#', 'Nombre / Equipo', 'Academia', 'Categoría', 'Modalidad', 'Coach', 'Estado']],
     body: participants.map(p => [
       String(p.position),
       p.name ?? '',
@@ -584,9 +783,9 @@ export async function exportPdf(event: Event, participants: Participant[], coach
       statusFor(p, currentPos),
     ]),
     theme: 'striped',
-    headStyles: { fillColor: [76, 29, 149], textColor: [245, 200, 0], fontStyle: 'bold', fontSize: 10 },
-    bodyStyles: { fontSize: 9, textColor: [30, 30, 30] },
-    alternateRowStyles: { fillColor: [248, 248, 245] },
+    headStyles:          { fillColor: [76, 29, 149], textColor: [245, 200, 0], fontStyle: 'bold', fontSize: 10 },
+    bodyStyles:          { fontSize: 9, textColor: [30, 30, 30] },
+    alternateRowStyles:  { fillColor: [248, 248, 245] },
     columnStyles: {
       0: { halign: 'center', cellWidth: 32, fontStyle: 'bold' },
       1: { fontStyle: 'bold' },
@@ -600,13 +799,12 @@ export async function exportPdf(event: Event, participants: Participant[], coach
         else if (v === 'EN ESCENARIO') {
           data.cell.styles.fillColor = [245, 200, 0]
           data.cell.styles.fontStyle = 'bold'
-        }
-        else if (v === 'PENDIENTE') data.cell.styles.textColor = [120, 120, 120]
+        } else if (v === 'PENDIENTE') data.cell.styles.textColor = [120, 120, 120]
       }
     },
   })
 
-  // Footer on each page
+  // Pie de página
   const totalPages = doc.getNumberOfPages()
   for (let i = 1; i <= totalPages; i++) {
     doc.setPage(i)
