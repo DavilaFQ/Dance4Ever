@@ -806,8 +806,18 @@ export default function RegisterPage({ params }: Props) {
           .update(regPayload)
           .eq('id', registrationId)
         if (updErr) throw updErr
-        await supabase.from('registration_acts').delete().eq('registration_id', registrationId)
-        await supabase.from('registration_dancers').delete().eq('registration_id', registrationId)
+
+        const { error: delActErr } = await supabase
+          .from('registration_acts')
+          .delete()
+          .eq('registration_id', registrationId)
+        if (delActErr) throw delActErr
+
+        const { error: delDancerErr } = await supabase
+          .from('registration_dancers')
+          .delete()
+          .eq('registration_id', registrationId)
+        if (delDancerErr) throw delDancerErr
       } else {
         const { data: regData, error: regErr } = await supabase
           .from('coach_registrations')
@@ -1448,6 +1458,15 @@ function StepViewContent(props: {
 
       return (
         <div className="space-y-2.5 py-1 sm:space-y-3 overflow-visible max-h-none md:overflow-y-auto md:max-h-[80vh] px-0 sm:px-1" style={{ animation: 'fadeIn 0.3s ease-out' }}>
+          {editMode && (
+            <div className="mb-4 bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-red-500/10 border border-amber-500/30 text-amber-800 rounded-2xl p-4 flex items-start gap-3 shadow-sm backdrop-blur-sm animate-[fadeIn_0.3s_ease-out] mx-4 sm:mx-0">
+              <span className="text-xl shrink-0">⚠️</span>
+              <div className="text-xs sm:text-sm leading-relaxed text-left">
+                <span className="font-bold text-amber-950 block mb-0.5">MODO EDICIÓN ACTIVO</span>
+                Tienes cambios sin guardar en la base de datos. Para que se apliquen y se actualicen en la consola de socios, debes avanzar al paso final <strong className="text-amber-900 font-bold">(CONFIRMAR)</strong> y hacer clic en <strong className="text-amber-900 font-bold bg-amber-500/20 px-1.5 py-0.5 rounded-lg inline-block">GUARDAR CAMBIOS</strong>.
+              </div>
+            </div>
+          )}
           <div className="text-center lg:text-left space-y-0.5 px-4 sm:px-0">
             <h2 className="font-display text-3xl lg:text-4xl text-[rgb(var(--c-text-strong))]">Paso 1: Coach y Academia</h2>
             <p className="text-xs text-[rgb(var(--c-text))]">Completa tu información organizativa general</p>
@@ -1630,6 +1649,15 @@ function StepViewContent(props: {
 
       return (
         <><div className="space-y-3 py-1 sm:space-y-4 overflow-visible max-h-none md:overflow-y-auto md:max-h-[82vh] px-0 sm:px-1 flex flex-col md:h-full md:min-h-0" style={{ animation: 'fadeIn 0.3s ease-out' }}>
+          {editMode && (
+            <div className="mb-4 bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-red-500/10 border border-amber-500/30 text-amber-800 rounded-2xl p-4 flex items-start gap-3 shadow-sm backdrop-blur-sm animate-[fadeIn_0.3s_ease-out] mx-4 sm:mx-0">
+              <span className="text-xl shrink-0">⚠️</span>
+              <div className="text-xs sm:text-sm leading-relaxed text-left">
+                <span className="font-bold text-amber-950 block mb-0.5">MODO EDICIÓN ACTIVO</span>
+                Tienes cambios sin guardar en la base de datos. Para que se apliquen y se actualicen en la consola de socios, debes avanzar al paso final <strong className="text-amber-900 font-bold">(CONFIRMAR)</strong> y hacer clic en <strong className="text-amber-900 font-bold bg-amber-500/20 px-1.5 py-0.5 rounded-lg inline-block">GUARDAR CAMBIOS</strong>.
+              </div>
+            </div>
+          )}
           <div className="shrink-0 flex flex-col md:flex-row md:items-center justify-between gap-3 px-4 sm:px-0">
             <div className="text-center md:text-left space-y-0.5">
               <h2 className="font-display text-3xl text-[rgb(var(--c-text-strong))]">Paso 2: Registro de Integrantes</h2>
@@ -1834,6 +1862,15 @@ function StepViewContent(props: {
 
       return (
         <div className="space-y-3 py-1 overflow-visible max-h-none md:overflow-y-auto md:max-h-[82vh] px-0 sm:px-1 flex flex-col md:h-full md:min-h-0" style={{ animation: 'fadeIn 0.3s ease-out' }}>
+          {editMode && (
+            <div className="mb-4 bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-red-500/10 border border-amber-500/30 text-amber-800 rounded-2xl p-4 flex items-start gap-3 shadow-sm backdrop-blur-sm animate-[fadeIn_0.3s_ease-out] mx-4 sm:mx-0">
+              <span className="text-xl shrink-0">⚠️</span>
+              <div className="text-xs sm:text-sm leading-relaxed text-left">
+                <span className="font-bold text-amber-950 block mb-0.5">MODO EDICIÓN ACTIVO</span>
+                Tienes cambios sin guardar en la base de datos. Para que se apliquen y se actualicen en la consola de socios, debes avanzar al paso final <strong className="text-amber-900 font-bold">(CONFIRMAR)</strong> y hacer clic en <strong className="text-amber-900 font-bold bg-amber-500/20 px-1.5 py-0.5 rounded-lg inline-block">GUARDAR CAMBIOS</strong>.
+              </div>
+            </div>
+          )}
           <div className="shrink-0 flex items-center justify-between px-4 sm:px-0">
             <div className="text-center lg:text-left space-y-0.5">
               <h2 className="font-display text-3xl text-[rgb(var(--c-text-strong))]">Paso 3: Registro de Coreografías</h2>

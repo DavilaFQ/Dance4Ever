@@ -722,6 +722,7 @@ export default function SociosPage() {
       alert('Error al guardar datos del coach: ' + error.message)
     } else {
       alert('Datos del coach actualizados correctamente.')
+      if (eventId) loadAll(eventId)
     }
   }
 
@@ -734,6 +735,8 @@ export default function SociosPage() {
 
     if (error) {
       alert('Error al actualizar confirmación: ' + error.message)
+    } else {
+      if (eventId) loadAll(eventId)
     }
   }
 
@@ -775,6 +778,7 @@ export default function SociosPage() {
         setEditingDancer(null)
         setDancerName('')
         setDancerBirthdate('')
+        if (eventId) loadAll(eventId)
       }
     } else {
       // Create mode
@@ -792,6 +796,7 @@ export default function SociosPage() {
       } else {
         setDancerName('')
         setDancerBirthdate('')
+        if (eventId) loadAll(eventId)
       }
     }
   }
@@ -809,6 +814,8 @@ export default function SociosPage() {
     const { error } = await supabase.from('registration_dancers').delete().eq('id', dancerId)
     if (error) {
       alert('Error al eliminar bailarín: ' + error.message)
+    } else {
+      if (eventId) loadAll(eventId)
     }
   }
 
@@ -867,6 +874,7 @@ export default function SociosPage() {
         setEditingAct(null)
         setActStyle('')
         setActDancers([])
+        if (eventId) loadAll(eventId)
       }
     } else {
       // Create
@@ -886,6 +894,7 @@ export default function SociosPage() {
       } else {
         setActStyle('')
         setActDancers([])
+        if (eventId) loadAll(eventId)
       }
     }
   }
@@ -895,6 +904,8 @@ export default function SociosPage() {
     const { error } = await supabase.from('registration_acts').delete().eq('id', actId)
     if (error) {
       alert('Error al eliminar acto: ' + error.message)
+    } else {
+      if (eventId) loadAll(eventId)
     }
   }
 
@@ -1038,12 +1049,27 @@ export default function SociosPage() {
         </nav>
 
         {/* Sync Status Info */}
-        <div className="p-4 border-t border-[rgb(var(--c-border)/0.4)] text-xs text-[rgb(var(--c-text)/0.6)] space-y-1.5 bg-[rgb(var(--c-surface)/0.3)]">
-          <div className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-[rgb(var(--c-success))] animate-pulse" />
-            <span className="font-semibold text-[rgb(var(--c-text-strong))]">Sincronización en vivo</span>
+        <div className="p-4 border-t border-[rgb(var(--c-border)/0.4)] text-xs text-[rgb(var(--c-text)/0.6)] space-y-2 bg-[rgb(var(--c-surface)/0.3)]">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-[rgb(var(--c-success))] animate-pulse" />
+              <span className="font-semibold text-[rgb(var(--c-text-strong))]">Sincronización en vivo</span>
+            </div>
+            <button
+              onClick={() => eventId && loadAll(eventId)}
+              className="text-[rgb(var(--c-primary))] hover:text-purple-700 active:scale-95 transition-all p-1"
+              title="Sincronizar ahora"
+            >
+              <RefreshCw className="w-4 h-4" />
+            </button>
           </div>
           <p>Último sync: {formatRelative(lastSync)}</p>
+          <button
+            onClick={() => eventId && loadAll(eventId)}
+            className="w-full mt-1 flex py-2 border border-purple-200 hover:bg-purple-50 active:scale-[0.98] text-[rgb(var(--c-primary))] font-display text-[10px] tracking-wider rounded-xl transition-all font-bold items-center justify-center gap-1.5 bg-white shadow-sm"
+          >
+            <RefreshCw className="w-3.5 h-3.5" /> SINCRONIZAR AHORA
+          </button>
         </div>
       </aside>
 
@@ -1070,12 +1096,21 @@ export default function SociosPage() {
           </div>
           
           {/* Quick sync display */}
-          <div className="text-right text-[10px] text-[rgb(var(--c-text)/0.6)] leading-tight shrink-0 flex flex-col items-end">
-            <div className="flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-[rgb(var(--c-success))]" />
-              <span className="font-medium text-[rgb(var(--c-text-strong))]">En vivo</span>
+          <div className="flex items-center gap-2.5 shrink-0">
+            <div className="text-right text-[10px] text-[rgb(var(--c-text)/0.6)] leading-tight flex flex-col items-end">
+              <div className="flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-[rgb(var(--c-success))]" />
+                <span className="font-medium text-[rgb(var(--c-text-strong))]">En vivo</span>
+              </div>
+              <p className="mt-0.5">{formatRelative(lastSync)}</p>
             </div>
-            <p className="mt-0.5">{formatRelative(lastSync)}</p>
+            <button
+              onClick={() => eventId && loadAll(eventId)}
+              className="w-9 h-9 flex items-center justify-center rounded-xl bg-purple-50 border border-purple-100 text-[rgb(var(--c-primary))] active:scale-90 transition-all shrink-0 shadow-sm"
+              title="Sincronizar ahora"
+            >
+              <RefreshCw className="w-4 h-4" />
+            </button>
           </div>
         </div>
       </header>
