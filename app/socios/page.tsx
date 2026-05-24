@@ -105,7 +105,7 @@ function safeFormatDate(iso: any, options?: Intl.DateTimeFormatOptions): string 
   }
 }
 
-function costForRegistration(acts: RegistrationAct[], dancers: RegistrationDancer[], paq: number | null, rep: number | null): number {
+function costForRegistration(acts: RegistrationAct[], dancers: RegistrationDancer[], paq: number | null, rep: number | null, ticketsCount: number = 0): number {
   if (paq == null) return 0
   const counts = new Map<number, number>()
   acts.forEach(a => {
@@ -120,6 +120,7 @@ function costForRegistration(acts: RegistrationAct[], dancers: RegistrationDance
     if (n >= 1) total += paq
     if (n > 1) total += (n - 1) * (rep ?? 0)
   })
+  total += ticketsCount * 500
   return total
 }
 
@@ -267,6 +268,7 @@ export default function SociosPage() {
   const [regCoachEmail, setRegCoachEmail] = useState('')
   const [regCostPaq, setRegCostPaq] = useState(1000)
   const [regCostRep, setRegCostRep] = useState(300)
+  const [regTicketsCount, setRegTicketsCount] = useState(0)
 
   // Fetch initial events
   const loadEvents = useCallback(async () => {
@@ -394,7 +396,7 @@ export default function SociosPage() {
   const enriched: EnrichedRegistration[] = useMemo(() => registrations.map(r => {
     const ds = dancers.filter(d => d.registration_id === r.id)
     const as = acts.filter(a => a.registration_id === r.id)
-    return { ...r, dancers: ds, acts: as, total: costForRegistration(as, ds, r.cost_paquete, r.cost_repeticion) }
+    return { ...r, dancers: ds, acts: as, total: costForRegistration(as, ds, r.cost_paquete, r.cost_repeticion, r.tickets_count ?? 0) }
   }), [registrations, dancers, acts])
 
   // Keep selected registration updated in real-time when underlying data syncs
@@ -716,6 +718,7 @@ export default function SociosPage() {
       coach_email: regCoachEmail || null,
       cost_paquete: regCostPaq,
       cost_repeticion: regCostRep,
+      tickets_count: regTicketsCount,
     }).eq('id', selectedReg.id)
 
     if (error) {
@@ -1625,14 +1628,18 @@ export default function SociosPage() {
                         </div>
 
                         {/* Stats mini grid */}
-                        <div className="grid grid-cols-3 gap-2 py-2 px-3 rounded-xl bg-[rgb(var(--c-surface)/0.45)] text-xs">
+                        <div className="grid grid-cols-4 gap-2 py-2 px-3 rounded-xl bg-[rgb(var(--c-surface)/0.45)] text-xs">
                           <div>
                             <span className="text-[rgb(var(--c-text)/0.55)] block uppercase text-[9px] tracking-widest">Integrantes</span>
                             <span className="font-semibold font-display text-sm">{r.dancers.length} alumnos</span>
                           </div>
                           <div>
                             <span className="text-[rgb(var(--c-text)/0.55)] block uppercase text-[9px] tracking-widest">Actos</span>
-                            <span className="font-semibold font-display text-sm">{r.acts.length} coreografías</span>
+                            <span className="font-semibold font-display text-sm">{r.acts.length} coreo.</span>
+                          </div>
+                          <div>
+                            <span className="text-[rgb(var(--c-text)/0.55)] block uppercase text-[9px] tracking-widest">Boletos</span>
+                            <span className="font-semibold font-display text-sm text-purple-700">{r.tickets_count ?? 0} pases</span>
                           </div>
                           <div>
                             <span className="text-[rgb(var(--c-text)/0.55)] block uppercase text-[9px] tracking-widest">Abono Ledger</span>
@@ -1674,6 +1681,7 @@ export default function SociosPage() {
                                 setRegCoachEmail(r.coach_email || '')
                                 setRegCostPaq(r.cost_paquete ?? 1000)
                                 setRegCostRep(r.cost_repeticion ?? 300)
+                                setRegTicketsCount(r.tickets_count ?? 0)
                                 setRosterTab('info')
                                 setShowRosterEditor(true)
                               }}
@@ -1892,6 +1900,7 @@ export default function SociosPage() {
                       <tr className="border-b border-[rgb(var(--c-border)/0.5)] pb-2 text-[rgb(var(--c-text)/0.6)] uppercase tracking-wider">
                         <th className="py-2.5 font-semibold">Academia / Roster</th>
                         <th className="py-2.5 font-semibold text-center">Actos</th>
+                        <th className="py-2.5 font-semibold text-center">Boletos</th>
                         <th className="py-2.5 font-semibold text-right">Costo Total</th>
                         <th className="py-2.5 font-semibold text-center px-4">Abono Registrado</th>
                         <th className="py-2.5 font-semibold text-right">Saldo Restante</th>
@@ -1928,6 +1937,8 @@ export default function SociosPage() {
                             </td>
                             
                             <td className="py-3 text-center font-display text-base">{r.acts.length}</td>
+                            
+                            <td className="py-3 text-center font-display text-base text-purple-700 font-bold">{r.tickets_count ?? 0}</td>
                             
                             <td className="py-3 text-right font-semibold text-sm tabular-nums">{formatMoney(r.total)}</td>
                             
@@ -2361,6 +2372,11 @@ export default function SociosPage() {
                     <label className="block text-xs uppercase font-bold text-[rgb(var(--c-text)/0.7)]">
                       Costo repetición coreografía
                       <input type="number" value={regCostRep} onChange={e => setRegCostRep(Number(e.target.value) || 0)} className="mt-1 w-full px-3 py-2 bg-white rounded-lg border border-[rgb(var(--c-border)/0.7)] text-sm focus:outline-none" />
+                    </label>
+
+                    <label className="block text-xs uppercase font-bold text-purple-700 sm:col-span-2">
+                      Boletos Acompañantes
+                      <input type="number" value={regTicketsCount} onChange={e => setRegTicketsCount(Number(e.target.value) || 0)} className="mt-1 w-full px-3 py-2 bg-purple-50 rounded-lg border border-purple-200 text-purple-900 sm:text-sm focus:outline-none focus:border-purple-500 font-black" />
                     </label>
                   </div>
 

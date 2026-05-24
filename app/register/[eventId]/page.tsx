@@ -797,6 +797,7 @@ export default function RegisterPage({ params }: Props) {
         cost_paquete: state.costPaquete,
         cost_repeticion: state.costRepeticion,
         confirmed_at: new Date().toISOString(),
+        tickets_count: state.ticketsCount ?? 0,
       }
 
       if (isUpdate) {
@@ -2507,9 +2508,21 @@ function FullSummary({ state, editMode, confirmed, isEditSave, confirm, saving, 
     try {
       setGeneratingExtraPDF(true)
       
+      const nextTicketsCount = (state.ticketsCount ?? 0) + newExtraTickets
+
+      if (state.confirmedRegistrationId) {
+        const { error: updErr } = await supabase
+          .from('coach_registrations')
+          .update({
+            tickets_count: nextTicketsCount
+          })
+          .eq('id', state.confirmedRegistrationId)
+        if (updErr) throw updErr
+      }
+
       updateState(prev => ({
         ...prev,
-        ticketsCount: (prev.ticketsCount ?? 0) + newExtraTickets
+        ticketsCount: nextTicketsCount
       }))
       
       setLastPurchasedCount(newExtraTickets)

@@ -97,6 +97,7 @@ export type CoachRegistration = {
   cost_repeticion: number | null
   confirmed_at: string | null
   submitted_at: string
+  tickets_count: number | null
 }
 
 export type RegistrationDancer = {
