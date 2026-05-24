@@ -2275,9 +2275,6 @@ function StepView(props: {
           className="absolute top-0 left-0 w-full h-[106dvh] object-contain z-0 pointer-events-none select-none"
           style={{
             objectPosition: 'center top',
-            opacity: (videoLoaded || useFallback) ? 1 : 0,
-            visibility: (videoLoaded || useFallback) ? 'visible' : 'hidden',
-            transition: 'opacity 800ms ease-out, visibility 800ms ease-out',
             backgroundColor: '#000000',
           }}
           poster="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII="
@@ -2285,9 +2282,17 @@ function StepView(props: {
           <source src="/untitled.mp4#t=0.001" type="video/mp4" />
         </video>
 
+        {/* SOLID BLACK COVER OVERLAY (Fades out when video starts playing) */}
+        <div 
+          className="absolute inset-0 z-10 bg-black pointer-events-none transition-opacity duration-[800ms] ease-out"
+          style={{
+            opacity: (videoLoaded || useFallback) ? 0 : 1,
+          }}
+        />
+
         {/* CINEMATIC GRADIENT OVERLAY WHEN VIDEO ENDS */}
         <div 
-          className={`absolute inset-0 z-0 bg-gradient-to-b from-amber-950/20 via-black/80 to-black transition-opacity pointer-events-none ${
+          className={`absolute inset-0 z-20 bg-gradient-to-b from-amber-950/20 via-black/80 to-black transition-opacity pointer-events-none ${
             (videoEnded || useFallback || startBlurring) ? 'opacity-100' : 'opacity-0'
           }`} 
           style={{
@@ -2298,7 +2303,7 @@ function StepView(props: {
 
         {/* SMOOTH BACKDROP BLUR TRANSITION LAYER */}
         <div 
-          className={`absolute inset-0 z-0 pointer-events-none blur-transition-layer ${
+          className={`absolute inset-0 z-20 pointer-events-none blur-transition-layer ${
             (videoEnded || useFallback || startBlurring) ? 'blurred' : ''
           }`} 
         />
