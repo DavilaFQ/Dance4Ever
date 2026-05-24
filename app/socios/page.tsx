@@ -90,15 +90,17 @@ function formatDate(iso: string | null): string {
   return new Date(iso).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })
 }
 
-function safeFormatDate(iso: string | null | undefined, options?: Intl.DateTimeFormatOptions): string {
+function safeFormatDate(iso: any, options?: Intl.DateTimeFormatOptions): string {
   if (!iso) return 'Sin fecha'
   try {
-    const dateStr = iso.includes('T') ? iso : iso + 'T00:00:00'
+    const str = String(iso).trim()
+    if (!str || str === 'null' || str === 'undefined') return 'Sin fecha'
+    const dateStr = str.includes('T') ? str : str + 'T00:00:00'
     const d = new Date(dateStr)
-    if (isNaN(d.getTime())) return iso
+    if (isNaN(d.getTime())) return str
     return d.toLocaleDateString('es-MX', options || { dateStyle: 'long' })
   } catch {
-    return iso
+    return typeof iso === 'string' ? iso : 'Sin fecha'
   }
 }
 
@@ -229,10 +231,26 @@ export default function SociosPage() {
 
   // Fetch initial events
   const loadEvents = useCallback(async () => {
-    const { data } = await supabase.from('events').select('*').order('created_at', { ascending: false })
-    if (data) {
-      setEvents(data)
-      if (data.length > 0 && !eventId) setEventId(data[0].id)
+    try {
+      const { data, error } = await supabase.from('events').select('*').order('created_at', { ascending: false })
+      if (error) {
+        console.error('Error loading events:', error)
+        setLoading(false)
+        return
+      }
+      if (data) {
+        setEvents(data)
+        if (data.length > 0 && !eventId) {
+          setEventId(data[0].id)
+        } else if (data.length === 0) {
+          setLoading(false)
+        }
+      } else {
+        setLoading(false)
+      }
+    } catch (e) {
+      console.error('Exception loading events:', e)
+      setLoading(false)
     }
   }, [eventId])
 
@@ -242,21 +260,31 @@ export default function SociosPage() {
 
   const loadAll = useCallback(async (id: string) => {
     setLoading(true)
-    const [{ data: regs }, { data: dans }, { data: acs }, { data: parts }, { data: cos }] = await Promise.all([
-      supabase.from('coach_registrations').select('*').eq('event_id', id),
-      supabase.from('registration_dancers').select('*'),
-      supabase.from('registration_acts').select('*'),
-      supabase.from('participants').select('*').eq('event_id', id).order('position'),
-      supabase.from('coaches').select('*').eq('event_id', id),
-    ])
-    const regIds = new Set((regs ?? []).map(r => r.id))
-    setRegistrations(regs ?? [])
-    setDancers((dans ?? []).filter(d => regIds.has(d.registration_id)))
-    setActs((acs ?? []).filter(a => regIds.has(a.registration_id)))
-    setParticipants(parts ?? [])
-    setCoaches(cos ?? [])
-    setLastSync(new Date().toISOString())
-    setLoading(false)
+    try {
+      const [{ data: regs, error: errRegs }, { data: dans, error: errDans }, { data: acs, error: errAcs }, { data: parts, error: errParts }, { data: cos, error: errCos }] = await Promise.all([
+        supabase.from('coach_registrations').select('*').eq('event_id', id),
+        supabase.from('registration_dancers').select('*'),
+        supabase.from('registration_acts').select('*'),
+        supabase.from('participants').select('*').eq('event_id', id).order('position'),
+        supabase.from('coaches').select('*').eq('event_id', id),
+      ])
+
+      if (errRegs || errDans || errAcs || errParts || errCos) {
+        console.error('Supabase fetch error in loadAll:', { errRegs, errDans, errAcs, errParts, errCos })
+      }
+
+      const regIds = new Set((regs ?? []).map(r => r.id))
+      setRegistrations(regs ?? [])
+      setDancers((dans ?? []).filter(d => regIds.has(d.registration_id)))
+      setActs((acs ?? []).filter(a => regIds.has(a.registration_id)))
+      setParticipants(parts ?? [])
+      setCoaches(cos ?? [])
+    } catch (err) {
+      console.error('Exception in loadAll:', err)
+    } finally {
+      setLastSync(new Date().toISOString())
+      setLoading(false)
+    }
   }, [])
 
   useEffect(() => { if (eventId) loadAll(eventId) }, [eventId, loadAll])
