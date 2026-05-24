@@ -998,7 +998,7 @@ export default function RegisterPage({ params }: Props) {
               {[
                 { label: 'COACH', kind: 'setup' },
                 { label: 'INTEGRANTES', kind: 'dancers' },
-                { label: 'ACTOS', kind: 'acts' },
+                { label: 'COREOGRAFÍAS', kind: 'acts' },
                 { label: 'CONFIRMAR', kind: 'summary' }
               ].map((tab, idx) => {
                 const isCurrent = step.kind === tab.kind
@@ -1103,7 +1103,7 @@ export default function RegisterPage({ params }: Props) {
                 }
                 className="flex items-center gap-1 text-white bg-gradient-to-r from-purple-700 via-purple-600 to-pink-600 hover:from-purple-800 hover:to-pink-700 font-display font-bold text-sm px-5 py-2.5 rounded-2xl disabled:opacity-40 disabled:pointer-events-none active:scale-95 transition-all duration-150 shadow-[0_4px_12px_rgba(168,85,247,0.3)]"
               >
-                CONFIRMAR ACTO
+                CONFIRMAR COREOGRAFÍAS
               </button>
             ) : (
               <button
@@ -1764,7 +1764,7 @@ function StepViewContent(props: {
               disabled={!isAllValid}
               className="w-full bg-gradient-to-r from-purple-700 via-purple-600 to-pink-600 hover:from-purple-800 hover:to-pink-700 active:scale-[0.98] text-white font-display text-lg sm:text-xl tracking-widest py-4 rounded-2xl transition-all duration-200 shadow-[0_4px_20px_rgba(168,85,247,0.3)] hover:shadow-[0_6px_25px_rgba(168,85,247,0.5)] disabled:opacity-30 disabled:pointer-events-none font-black text-center flex items-center justify-center gap-2"
             >
-              CONTINUAR AL PASO 3: REGISTRO DE ACTOS ({state.dancers.length} Integrantes)
+              CONTINUAR AL PASO 3: REGISTRO DE COREOGRAFÍAS ({state.dancers.length} Integrantes)
               <ArrowRight className="w-5 h-5 animate-pulse" />
             </button>
           </div>
@@ -2606,7 +2606,7 @@ function FullSummary({ state, editMode, confirmed, isEditSave, confirm, saving, 
           {/* ACTS SUMMARY */}
           <div className="p-3.5 sm:p-5">
             <h3 className="font-display text-lg tracking-widest text-[rgb(var(--c-primary))] mb-4 border-b border-[rgb(var(--c-border)/0.25)] pb-2 flex justify-between items-center">
-              <span>ACTOS REGISTRADOS</span>
+              <span>COREOGRAFÍAS REGISTRADAS</span>
               <div className="flex items-center gap-3">
                 <span className="text-[rgb(var(--c-text))] opacity-60 text-xs font-semibold">{state.acts.length} {state.acts.length === 1 ? 'Coreografía' : 'Coreografías'}</span>
                 {!confirmed && (
@@ -2618,7 +2618,7 @@ function FullSummary({ state, editMode, confirmed, isEditSave, confirm, saving, 
             </h3>
             <div className="divide-y divide-[rgb(var(--c-border)/0.25)] bg-transparent">
               {state.acts.length === 0 ? (
-                <p className="text-[rgb(var(--c-text)/0.5)] italic text-sm py-4">Sin actos registrados</p>
+                <p className="text-[rgb(var(--c-text)/0.5)] italic text-sm py-4">Sin coreografías registradas</p>
               ) : state.acts.map((a, idx) => {
                 const cat = a.ageCategory ? AGE_CATEGORY_LABELS[a.ageCategory] : '—'
                 const mod = a.modality ? modalityLabel(a.modality) : '—'
@@ -3200,7 +3200,7 @@ function FullSummary({ state, editMode, confirmed, isEditSave, confirm, saving, 
                   return (
                     <div key={idx} className="py-4.5 space-y-2 text-left text-sm sm:text-base">
                       <div className="flex justify-between items-center">
-                        <span className="font-display text-lg sm:text-xl tracking-wider font-black text-[rgb(var(--c-text-strong))]">ACTO #{idx + 1} - {mod.toUpperCase()}</span>
+                        <span className="font-display text-lg sm:text-xl tracking-wider font-black text-[rgb(var(--c-text-strong))]">COREOGRAFÍA #{idx + 1} - {mod.toUpperCase()}</span>
                         <span className="text-xs sm:text-sm text-[rgb(var(--c-primary))] font-black">{cat.toUpperCase()}</span>
                       </div>
                       <p className="text-sm sm:text-base text-[rgb(var(--c-text)/0.8)]"><strong className="font-black text-[rgb(var(--c-text-strong))]">ESTILO:</strong> {style.toUpperCase()}</p>
