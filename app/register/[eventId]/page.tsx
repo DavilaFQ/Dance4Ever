@@ -2660,23 +2660,23 @@ function FullSummary({ state, editMode, confirmed, isEditSave, confirm, saving, 
           <div className="p-3.5 sm:p-5">
             <div className="bg-[rgb(var(--c-surface-2)/0.35)] border border-[rgb(var(--c-border)/0.45)] rounded-2xl p-4 sm:p-5 shadow-xs space-y-4">
               {/* Header and selector in one compact row */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[rgb(var(--c-border)/0.2)] pb-4">
-                <div className="space-y-1">
+              <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 border-b border-[rgb(var(--c-border)/0.2)] pb-4">
+                <div className="space-y-2">
                   <div className="flex items-center gap-2">
                     <Ticket className="w-5 h-5 text-[rgb(var(--c-primary))]" />
                     <span className="font-display text-sm tracking-wider font-bold text-[rgb(var(--c-primary))] uppercase">
                       Entradas para Papás / Familiares
                     </span>
                   </div>
-                  <p className="text-[11px] text-[rgb(var(--c-text-strong))] leading-relaxed max-w-xl">
-                    Si ya tienes entradas confirmadas, agrégalas aquí. Si aún no las tienes, podrás solicitarlas al finalizar tu registro.
+                  <p className="text-xs font-semibold text-[rgb(var(--c-text-strong))] leading-relaxed max-w-xl">
+                    Si ya tienes entradas confirmadas para papás, familiares y acompañantes, agrégalas aquí. Si aún no las tienes, no te preocupes: al finalizar tu registro o más adelante podrás solicitar entradas adicionales por este medio.
                   </p>
                 </div>
 
                 {/* Selector */}
-                <div className="flex items-center gap-3 bg-[rgb(var(--c-surface))] border border-[rgb(var(--c-border)/0.5)] rounded-xl p-1 shadow-xs self-start sm:self-auto shrink-0">
+                <div className="flex items-center gap-3 bg-[rgb(var(--c-surface))] border border-[rgb(var(--c-border)/0.5)] rounded-xl p-1.5 shadow-xs self-start sm:self-auto shrink-0 sm:mt-1">
                   {confirmed || editMode || !isBeforeTicketsDeadline(event?.date) ? (
-                    <div className="px-3.5 py-1.5 flex items-center gap-1.5">
+                    <div className="px-4 py-1.5 flex items-center gap-2">
                       <span className="text-xs font-semibold text-[rgb(var(--c-text)/0.7)]">Compradas:</span>
                       <span className="font-display text-base font-bold text-[rgb(var(--c-primary))]">{state.ticketsCount ?? 0}</span>
                     </div>
@@ -2685,7 +2685,7 @@ function FullSummary({ state, editMode, confirmed, isEditSave, confirm, saving, 
                       <button
                         type="button"
                         onClick={() => updateState(prev => ({ ...prev, ticketsCount: Math.max(0, (prev.ticketsCount ?? 0) - 1) }))}
-                        className="w-8 h-8 rounded-lg flex items-center justify-center bg-[rgb(var(--c-surface-2))] border border-[rgb(var(--c-border)/0.4)] hover:bg-[rgb(var(--c-border)/0.15)] active:scale-95 transition-all text-base font-bold text-[rgb(var(--c-text))]"
+                        className="w-9 h-9 rounded-lg flex items-center justify-center bg-[rgb(var(--c-surface-2))] border border-[rgb(var(--c-border)/0.4)] hover:bg-[rgb(var(--c-border)/0.15)] active:scale-95 transition-all text-lg font-bold text-[rgb(var(--c-text))]"
                       >
                         -
                       </button>
@@ -2695,7 +2695,7 @@ function FullSummary({ state, editMode, confirmed, isEditSave, confirm, saving, 
                       <button
                         type="button"
                         onClick={() => updateState(prev => ({ ...prev, ticketsCount: (prev.ticketsCount ?? 0) + 1 }))}
-                        className="w-8 h-8 rounded-lg flex items-center justify-center bg-[rgb(var(--c-surface-2))] border border-[rgb(var(--c-border)/0.4)] hover:bg-[rgb(var(--c-border)/0.15)] active:scale-95 transition-all text-base font-bold text-[rgb(var(--c-text))]"
+                        className="w-9 h-9 rounded-lg flex items-center justify-center bg-[rgb(var(--c-surface-2))] border border-[rgb(var(--c-border)/0.4)] hover:bg-[rgb(var(--c-border)/0.15)] active:scale-95 transition-all text-lg font-bold text-[rgb(var(--c-text))]"
                       >
                         +
                       </button>
@@ -2705,37 +2705,37 @@ function FullSummary({ state, editMode, confirmed, isEditSave, confirm, saving, 
               </div>
 
               {/* Bottom information row: Grid layout on desktop, stacked on mobile */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-[11px] leading-relaxed pt-1">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs leading-relaxed pt-1">
                 <div className="space-y-1.5">
                   <div className="flex items-center gap-1.5 font-bold text-[rgb(var(--c-primary))]">
                     <Info className="w-3.5 h-3.5 shrink-0" />
                     <span>TARIFAS Y REGLAS DE ENTRADAS:</span>
                   </div>
-                  <ul className="list-disc pl-4 space-y-0.5 text-[rgb(var(--c-text)/0.8)]">
-                    <li>Costo de <strong>preventa: $500 MXN</strong> (antes del <strong>miércoles 17 de Junio</strong>).</li>
-                    <li>Costo <strong>regular: $600 MXN</strong> (a partir del 18 de Junio).</li>
+                  <ul className="list-disc pl-4 space-y-0.5 text-[rgb(var(--c-text)/0.85)] font-medium">
+                    <li>Costo de <strong>preventa: $500 MXN</strong> por entrada (válido antes del <strong>miércoles 17 de Junio</strong>).</li>
+                    <li>Costo <strong>regular: $600 MXN</strong> por entrada (a partir del 18 de Junio).</li>
                   </ul>
                 </div>
 
                 <div className="flex flex-col justify-center space-y-1.5 md:items-end">
-                  <div className="text-[rgb(var(--c-text)/0.75)]">
+                  <div className="text-[rgb(var(--c-text)/0.75)] font-medium">
                     Costo por Entrada Actual: <strong className="font-bold text-sm text-[rgb(var(--c-primary))]">{formatMoney(PRECIO_ENTRADA)} MXN</strong>
                   </div>
-                  <span className="text-red-700 font-extrabold uppercase tracking-wide text-[10px]">
+                  <span className="text-red-700 font-extrabold uppercase tracking-wide text-xs">
                     IMPORTANTE: No se venderán entradas el día del evento.
                   </span>
                 </div>
 
                 {/* Deadlines or status changes */}
                 {!isBeforeTicketsDeadline(event?.date) && (
-                  <div className="col-span-full bg-amber-500/10 border border-amber-500/20 rounded-xl p-2.5 text-[11px] text-amber-800 font-semibold flex items-start gap-2">
-                    <Info className="w-3.5 h-3.5 text-amber-600 shrink-0 mt-0.5" />
+                  <div className="col-span-full bg-amber-500/10 border border-amber-500/20 rounded-xl p-3 text-xs text-amber-800 font-semibold flex items-start gap-2">
+                    <Info className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
                     <span>La venta de entradas en línea ha concluido. Recuerda que no se venderán entradas el día del evento.</span>
                   </div>
                 )}
                 {editMode && isBeforeTicketsDeadline(event?.date) && (
                   <div className="col-span-full">
-                    <span className="text-[10px] text-amber-600 font-bold bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded-xl inline-block">
+                    <span className="text-xs text-amber-600 font-bold bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded-xl inline-block">
                       Para adquirir entradas adicionales, utiliza la opción al confirmar tu registro.
                     </span>
                   </div>
