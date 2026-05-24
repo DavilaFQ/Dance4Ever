@@ -230,10 +230,10 @@ function getRegistrationDeadline(eventDateIso: string): string {
 function getChangesDeadline(eventDateIso: string): string {
   try {
     const d = new Date(eventDateIso + 'T00:00:00')
-    d.setDate(d.getDate() - 7)
+    d.setDate(d.getDate() - 6)
     return d.toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' })
   } catch {
-    return '7 días antes del evento'
+    return '6 días antes del evento'
   }
 }
 
@@ -2398,7 +2398,7 @@ function FullSummary({ state, editMode, confirmed, isEditSave, confirm, saving, 
   const counts = participacionesPorAlumno(state)
   const total = costoTotal(state)
   const hasCosts = state.costPaquete !== null && state.costPaquete >= 0 && state.costRepeticion !== null && state.costRepeticion >= 0
-  const chgDeadline = event?.date ? getChangesDeadline(event.date) : '7 días antes del evento'
+  const chgDeadline = event?.date ? getChangesDeadline(event.date) : '6 días antes del evento'
 
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   
