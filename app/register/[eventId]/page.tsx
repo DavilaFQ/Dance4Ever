@@ -1464,7 +1464,7 @@ function StepViewContent(props: {
               <span className="text-xl shrink-0">⚠️</span>
               <div className="text-xs sm:text-sm leading-relaxed text-left">
                 <span className="font-bold text-amber-950 block mb-0.5">MODO EDICIÓN ACTIVO</span>
-                Tienes cambios sin guardar en la base de datos. Para que se apliquen y se actualicen en la consola de socios, debes avanzar al paso final <strong className="text-amber-900 font-bold">(CONFIRMAR)</strong> y hacer clic en <strong className="text-amber-900 font-bold bg-amber-500/20 px-1.5 py-0.5 rounded-lg inline-block">GUARDAR CAMBIOS</strong>.
+                Tienes cambios sin guardar en la base de datos. Para que se apliquen, debes avanzar al paso final <strong className="text-amber-900 font-bold">(CONFIRMAR)</strong> y hacer clic en <strong className="text-amber-900 font-bold bg-amber-500/20 px-1.5 py-0.5 rounded-lg inline-block">GUARDAR CAMBIOS</strong>.
               </div>
             </div>
           )}
@@ -1655,7 +1655,7 @@ function StepViewContent(props: {
               <span className="text-xl shrink-0">⚠️</span>
               <div className="text-xs sm:text-sm leading-relaxed text-left">
                 <span className="font-bold text-amber-950 block mb-0.5">MODO EDICIÓN ACTIVO</span>
-                Tienes cambios sin guardar en la base de datos. Para que se apliquen y se actualicen en la consola de socios, debes avanzar al paso final <strong className="text-amber-900 font-bold">(CONFIRMAR)</strong> y hacer clic en <strong className="text-amber-900 font-bold bg-amber-500/20 px-1.5 py-0.5 rounded-lg inline-block">GUARDAR CAMBIOS</strong>.
+                Tienes cambios sin guardar en la base de datos. Para que se apliquen, debes avanzar al paso final <strong className="text-amber-900 font-bold">(CONFIRMAR)</strong> y hacer clic en <strong className="text-amber-900 font-bold bg-amber-500/20 px-1.5 py-0.5 rounded-lg inline-block">GUARDAR CAMBIOS</strong>.
               </div>
             </div>
           )}
@@ -1868,7 +1868,7 @@ function StepViewContent(props: {
               <span className="text-xl shrink-0">⚠️</span>
               <div className="text-xs sm:text-sm leading-relaxed text-left">
                 <span className="font-bold text-amber-950 block mb-0.5">MODO EDICIÓN ACTIVO</span>
-                Tienes cambios sin guardar en la base de datos. Para que se apliquen y se actualicen en la consola de socios, debes avanzar al paso final <strong className="text-amber-900 font-bold">(CONFIRMAR)</strong> y hacer clic en <strong className="text-amber-900 font-bold bg-amber-500/20 px-1.5 py-0.5 rounded-lg inline-block">GUARDAR CAMBIOS</strong>.
+                Tienes cambios sin guardar en la base de datos. Para que se apliquen, debes avanzar al paso final <strong className="text-amber-900 font-bold">(CONFIRMAR)</strong> y hacer clic en <strong className="text-amber-900 font-bold bg-amber-500/20 px-1.5 py-0.5 rounded-lg inline-block">GUARDAR CAMBIOS</strong>.
               </div>
             </div>
           )}

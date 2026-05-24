@@ -105,7 +105,11 @@ function safeFormatDate(iso: any, options?: Intl.DateTimeFormatOptions): string 
   }
 }
 
-function costForRegistration(acts: RegistrationAct[], dancers: RegistrationDancer[], paq: number | null, rep: number | null, ticketsCount: number = 0): number {
+const PRECIO_ASISTENTE_SOCIOS = 400
+const PRECIO_ENTRADA_SOCIOS = new Date() > new Date(2026, 5, 17, 23, 59, 59, 999) ? 600 : 500
+const DANCERS_POR_ENTRADA_GRATIS_SOCIOS = 8
+
+function costForRegistration(acts: RegistrationAct[], dancers: RegistrationDancer[], paq: number | null, rep: number | null, ticketsCount: number = 0, extraCoaches: string[] = []): number {
   if (paq == null) return 0
   const counts = new Map<number, number>()
   acts.forEach(a => {
@@ -120,7 +124,15 @@ function costForRegistration(acts: RegistrationAct[], dancers: RegistrationDance
     if (n >= 1) total += paq
     if (n > 1) total += (n - 1) * (rep ?? 0)
   })
-  total += ticketsCount * 500
+
+  // Asistentes de staff: 1 entrada gratis por cada 8 alumnos, el resto paga $400
+  const assistants = extraCoaches.filter(s => s.startsWith('Asistente:')).length
+  const freeEntries = Math.floor(dancers.length / DANCERS_POR_ENTRADA_GRATIS_SOCIOS)
+  const paidAssistants = Math.max(0, assistants - freeEntries)
+  total += paidAssistants * PRECIO_ASISTENTE_SOCIOS
+
+  // Boletos de acompañantes
+  total += ticketsCount * PRECIO_ENTRADA_SOCIOS
   return total
 }
 
@@ -405,7 +417,7 @@ export default function SociosPage() {
   const enriched: EnrichedRegistration[] = useMemo(() => registrations.map(r => {
     const ds = dancers.filter(d => d.registration_id === r.id)
     const as = acts.filter(a => a.registration_id === r.id)
-    return { ...r, dancers: ds, acts: as, total: costForRegistration(as, ds, r.cost_paquete, r.cost_repeticion, r.tickets_count ?? 0) }
+    return { ...r, dancers: ds, acts: as, total: costForRegistration(as, ds, r.cost_paquete, r.cost_repeticion, r.tickets_count ?? 0, r.extra_coaches ?? []) }
   }), [registrations, dancers, acts])
 
   // Keep selected registration updated in real-time when underlying data syncs
