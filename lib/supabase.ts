@@ -36,6 +36,16 @@ export type Event = {
   started_at: string | null
   registration_token: string | null
   created_at: string
+  default_cost_paquete: number
+  default_cost_repeticion: number
+  cost_asistente: number
+  cost_entrada_temprana: number
+  cost_entrada_tardia: number
+  deadline_precio_entrada: string | null
+  deadline_registro: string | null
+  deadline_cambios: string | null
+  fecha_cambio_tarifa_coreo: string | null
+  dancers_por_asistente_gratis: number
 }
 
 export type Modality = 'solista' | 'dueto' | 'trio' | 'grupal'
@@ -55,13 +65,13 @@ export const AGE_CATEGORY_LABELS: Record<AgeCategory, string> = {
 }
 
 export const AGE_CATEGORY_HINTS: Record<AgeCategory, string> = {
-  tiny: 'Kinder · 3–5 años',
-  mini: '1° a 3° Primaria · 6–8 años',
-  elementary: '4° a 6° Primaria · 9–11 años',
-  junior: 'Secundaria · 12–14 años',
-  senior: 'Preparatoria · 15–17 años',
-  college: 'Universidad · 18–21 años',
-  open: 'Mayores de 21 años',
+  tiny: 'Kinder - 3-5 anos',
+  mini: '1 a 3 Primaria - 6-8 anos',
+  elementary: '4 a 6 Primaria - 9-11 anos',
+  junior: 'Secundaria - 12-14 anos',
+  senior: 'Preparatoria - 15-17 anos',
+  college: 'Universidad - 18-21 anos',
+  open: 'Mayores de 21 anos',
 }
 
 export function categoryFromAge(age: number): AgeCategory {
@@ -98,6 +108,7 @@ export type CoachRegistration = {
   confirmed_at: string | null
   submitted_at: string
   tickets_count: number | null
+  notes: string | null
 }
 
 export type RegistrationDancer = {
@@ -106,6 +117,7 @@ export type RegistrationDancer = {
   name: string
   birthdate: string
   category: AgeCategory | null
+  category_manual: boolean | null
   order_idx: number
 }
 
@@ -118,4 +130,16 @@ export type RegistrationAct = {
   style: string
   order_idx: number
   dancer_ids: number[]
+}
+
+export type EditLog = {
+  id: number
+  registration_id: number
+  edited_by: string
+  action: string
+  entity_type: string | null
+  entity_id: number | null
+  changes: Record<string, { old: unknown; new: unknown }>
+  snapshot: Record<string, unknown> | null
+  created_at: string
 }

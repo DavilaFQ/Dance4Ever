@@ -3,6 +3,7 @@ import * as XLSX from 'xlsx'
 import ExcelJS from 'exceljs'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
+import JSZip from 'jszip'
 
 // ─── Precios (mirror exacto de page.tsx) ───────────────────────────────────
 const PRECIO_INSCRIPCION = 2700
@@ -817,4 +818,124 @@ export async function exportPdf(event: Event, participants: Participant[], coach
 
   const date = new Date().toISOString().slice(0, 10)
   doc.save(`dance4ever-${safeFilename(event.name)}-${date}.pdf`)
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// exportAllRegistrationsZip — Zip con Excel por cada registro confirmado
+// ════════════════════════════════════════════════════════════════════════════
+export async function exportAllRegistrationsZip(event: Event): Promise<void> {
+  const { data: regsRaw, error: regsErr } = await supabase
+    .from('coach_registrations')
+    .select('*')
+    .eq('event_id', event.id)
+  if (regsErr || !regsRaw) throw new Error(`No se pudieron cargar registros: ${regsErr?.message ?? 'desconocido'}`)
+
+  const regs = regsRaw.filter((r: { confirmed_at: string | null }) => r.confirmed_at)
+  if (regs.length === 0) throw new Error('No hay registros confirmados.')
+
+  const regIds = regs.map((r: { id: number }) => r.id)
+  const [{ data: dancersData }, { data: actsData }] = await Promise.all([
+    supabase.from('registration_dancers').select('*').in('registration_id', regIds),
+    supabase.from('registration_acts').select('*').in('registration_id', regIds),
+  ])
+
+  const dancersByReg = new Map<number, DancerRow[]>()
+  ;(dancersData ?? []).forEach((d: DancerRow) => {
+    const arr = dancersByReg.get(d.registration_id) ?? []
+    arr.push(d); dancersByReg.set(d.registration_id, arr)
+  })
+  const actsByReg = new Map<number, ActRow[]>()
+  ;(actsData ?? []).forEach((a: ActRow) => {
+    const arr = actsByReg.get(a.registration_id) ?? []
+    arr.push(a); actsByReg.set(a.registration_id, arr)
+  })
+
+  const zip = new JSZip()
+  const refDate = event.date ? new Date(event.date + 'T00:00:00') : new Date()
+  const isBeforeJune15 = new Date() < new Date(2026, 5, 15)
+
+  for (const reg of regsRaw) {
+    if (!reg.confirmed_at) continue
+    const r = reg as unknown as RegRow
+    r.dancers = (dancersByReg.get(r.id) ?? []).sort((a, b) => a.order_idx - b.order_idx)
+    r.acts = (actsByReg.get(r.id) ?? []).sort((a, b) => a.order_idx - b.order_idx)
+    if (r.dancers.length === 0 && r.acts.length === 0) continue
+
+    const wb = new ExcelJS.Workbook()
+    wb.creator = 'Dance4ever'
+
+    const { academy, city } = parseAcademyCity(r.academy, r.team_name)
+    const paq = r.cost_paquete ?? PRECIO_INSCRIPCION
+    const rep = r.cost_repeticion ?? PRECIO_ADICIONAL_COREOGRAFIA
+
+    // Hoja Alumnos
+    const counts = new Map<number, number>()
+    r.acts.forEach(a => {
+      if (a.modality === 'grupal') r.dancers.forEach(d => counts.set(d.id, (counts.get(d.id) ?? 0) + 1))
+      else a.dancer_ids.forEach(id => counts.set(id, (counts.get(id) ?? 0) + 1))
+    })
+
+    const alumnosData = r.dancers.map(d => {
+      const age = ageAtDate(d.birthdate, refDate)
+      const n = counts.get(d.id) ?? 0
+      const cost = dancerCost(d.id, counts, paq, rep, isBeforeJune15)
+      return {
+        'Nombre': d.name,
+        'Fecha Nacimiento': formatBirthdate(d.birthdate),
+        'Edad': age > 0 ? age : '',
+        'Categoria': d.category ? AGE_CATEGORY_LABELS[d.category as AgeCategory] : '',
+        'Participaciones': n,
+        'Costo': cost,
+      }
+    })
+    addStyledSheet(wb, 'Alumnos', `${academy}`, 'Alumnos', alumnosData, ['Costo'])
+
+    // Hoja Actos
+    const actosData = r.acts.map(a => {
+      const isSDT = a.modality !== 'grupal'
+      const dancerById = new Map(r.dancers.map(d => [d.id, d]))
+      const dancersInAct = isSDT ? a.dancer_ids.map(id => dancerById.get(id)).filter(Boolean) : r.dancers
+      const nameOrEquipo = isSDT ? dancersInAct.map(d => d!.name.split(' ').slice(0, 2).join(' ')).join(' & ') : (r.team_name || academy)
+      return {
+        'Modalidad': modalidadOf(a.modality),
+        'Categoria': a.age_category ? AGE_CATEGORY_LABELS[a.age_category] : '',
+        'Nivel': nivelOf(a.modality, a.level),
+        'Estilo': a.style,
+        'Nombre / Equipo': nameOrEquipo,
+        'Integrantes': dancersInAct.length,
+        'Nombres': dancersInAct.map(d => d!.name).join(', '),
+      }
+    })
+    addStyledSheet(wb, 'Actos', `${academy}`, 'Coreografias', actosData, [])
+
+    // Hoja Resumen
+    const total = regTotalCost(r, refDate)
+    const resumenData = [{
+      'Academia': academy,
+      'Ciudad': city,
+      'Coach': r.coach_name,
+      'Telefono': r.coach_phone,
+      'Email': r.coach_email ?? '',
+      'Equipo': r.team_name || academy,
+      'Alumnos': r.dancers.length,
+      'Actos': r.acts.length,
+      'Boletos': r.tickets_count ?? 0,
+      'Total': total,
+    }]
+    addStyledSheet(wb, 'Resumen', `${academy}`, 'Datos generales', resumenData, ['Total'])
+
+    const buf = await wb.xlsx.writeBuffer()
+    const safeName = safeFilename(academy).slice(0, 40)
+    zip.file(`${safeName}.xlsx`, buf)
+  }
+
+  const zipBlob = await zip.generateAsync({ type: 'blob' })
+  const url = URL.createObjectURL(zipBlob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `Registros Dance4ever - ${safeFilename(event.name)}.zip`
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  URL.revokeObjectURL(url)
 }

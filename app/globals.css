@@ -6,21 +6,37 @@
 }
 
 :root {
-  /* Brand palette — channel values so Tailwind opacity modifiers work via rgb(var(--c-x)/<alpha>) */
-  --c-primary: 252 3 161;          /* exact logo fuchsia #fc03a1 */
-  --c-primary-strong: 190 0 110;   /* exact logo fuchsia darker */
-  --c-accent: 234 88 12;           /* readable orange (replaces fluorescent lime) */
-  --c-accent-strong: 154 52 18;    /* orange darker */
-  --c-success: 22 163 74;          /* logo green */
-  --c-success-strong: 22 101 52;   /* logo green darker */
-  --c-text: 51 65 85;              /* slate */
-  --c-text-strong: 0 0 0;          /* exact logo pure black */
-  --c-text-darker: 0 0 0;          /* logo near-black */
-  --c-text-darkest: 0 0 0;         /* deepest black */
-  --c-surface: 246 244 239;        /* cream canvas background */
-  --c-surface-2: 232 227 213;      /* cream card surface */
-  --c-surface-3: 221 216 202;      /* cream card hover state */
-  --c-border: 194 188 176;         /* cream borders */
+  --c-primary: 252 3 161;
+  --c-primary-strong: 190 0 110;
+  --c-accent: 234 88 12;
+  --c-accent-strong: 154 52 18;
+  --c-success: 22 163 74;
+  --c-success-strong: 22 101 52;
+  --c-text: 51 65 85;
+  --c-text-strong: 0 0 0;
+  --c-text-darker: 0 0 0;
+  --c-text-darkest: 0 0 0;
+  --c-surface: 246 244 239;
+  --c-surface-2: 232 227 213;
+  --c-surface-3: 221 216 202;
+  --c-border: 194 188 176;
+}
+
+.socios-dark {
+  --c-primary: 217 70 239;
+  --c-primary-strong: 192 38 211;
+  --c-accent: 250 204 21;
+  --c-accent-strong: 202 138 4;
+  --c-success: 74 222 128;
+  --c-success-strong: 34 197 94;
+  --c-text: 163 163 163;
+  --c-text-strong: 255 255 255;
+  --c-text-darker: 229 229 229;
+  --c-text-darkest: 245 245 245;
+  --c-surface: 23 23 23;
+  --c-surface-2: 38 38 38;
+  --c-surface-3: 64 64 64;
+  --c-border: 82 82 82;
 }
 
 html, body {
