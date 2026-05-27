@@ -1,0 +1,24 @@
+{
+  "name": "Partners Platform - Dance4ever",
+  "short_name": "Socios D4E",
+  "description": "Plataforma de socios en tiempo real para Dance4ever",
+  "start_url": "/staff",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#171717",
+  "theme_color": "#171717",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

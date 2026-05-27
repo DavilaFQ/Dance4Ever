@@ -14,9 +14,18 @@ import {
   QrCode,
   X,
   RefreshCw,
+  ClipboardList,
 } from 'lucide-react'
 import QRCode from 'qrcode'
-import { formatRelative } from '@/lib/format'
+
+// Import all subpages statically as components of the SPA
+import ResumenPage from '@/app/socios/resumen/page'
+import RegistrosPage from '@/app/socios/registros/page'
+import RegistrationDetailPage from '@/app/socios/registros/[registrationId]/page'
+import FinanzasPage from '@/app/socios/finanzas/page'
+import ProgramaPage from '@/app/socios/programa/page'
+import ChecklistPage from '@/app/socios/checklist/page'
+import EventosPage from '@/app/socios/eventos/page'
 
 type EventContextType = {
   events: Event[]
@@ -41,16 +50,18 @@ export function useEventContext() {
 }
 
 const TABS = [
-  { id: 'resumen', label: 'Resumen', icon: Home, path: '/socios/resumen' },
-  { id: 'registros', label: 'Registros', icon: Users, path: '/socios/registros' },
-  { id: 'finanzas', label: 'Finanzas', icon: DollarSign, path: '/socios/finanzas' },
-  { id: 'programa', label: 'Programa', icon: ListOrdered, path: '/socios/programa' },
-  { id: 'eventos', label: 'Ajustes', icon: Settings, path: '/socios/eventos' },
+  { id: 'resumen', label: 'Resumen', icon: Home },
+  { id: 'registros', label: 'Registros', icon: Users },
+  { id: 'finanzas', label: 'Finanzas', icon: DollarSign },
+  { id: 'programa', label: 'Programa', icon: ListOrdered },
+  { id: 'checklist', label: 'Checklist', icon: ClipboardList },
+  { id: 'eventos', label: 'Ajustes', icon: Settings },
 ] as const
 
 export default function SociosLayout({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname()
-  const router = useRouter()
+  const [activeTab, setActiveTab] = useState<'resumen' | 'registros' | 'finanzas' | 'programa' | 'checklist' | 'eventos'>('resumen')
+  const [selectedRegistrationId, setSelectedRegistrationId] = useState<string | null>(null)
+  
   const [events, setEvents] = useState<Event[]>([])
   const [event, setEvent] = useState<Event | null>(null)
   const [lastSync, setLastSync] = useState<string>(new Date().toISOString())
@@ -81,7 +92,8 @@ export default function SociosLayout({ children }: { children: React.ReactNode }
 
   const loadAll = useCallback(async () => {
     setLastSync(new Date().toISOString())
-  }, [])
+    await loadEvents()
+  }, [loadEvents])
 
   useEffect(() => { loadEvents() }, [])
 
@@ -100,15 +112,11 @@ export default function SociosLayout({ children }: { children: React.ReactNode }
     QRCode.toDataURL(url, { width: 400, margin: 2 }).then(setQrUrl).catch(() => {})
   }, [event?.registration_token, event?.id, origin])
 
-  const activeTab = TABS.find(t => pathname.startsWith(t.path))?.id ?? 'resumen'
-
   return (
     <EventContext.Provider value={{ events, event, lastSync, loadAll, loadEvents, refreshEvent }}>
       <div className="socios-dark h-[100dvh] flex flex-col bg-neutral-900 text-white overflow-hidden select-none">
-        <div className="shrink-0 bg-neutral-900" style={{ height: 'env(safe-area-inset-top, 0px)' }} />
-
-        <header className="shrink-0 backdrop-blur-xl bg-neutral-900/85 border-b border-neutral-800 z-30">
-          <div className="flex items-center justify-between px-4 py-2.5 gap-3">
+        <header className="shrink-0 backdrop-blur-xl bg-neutral-900/85 border-b border-neutral-800 z-30" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
+          <div className="flex items-center justify-between px-4 py-3.5 gap-3">
             <div className="flex items-center gap-2.5 min-w-0">
               <Image src="/logo.png" alt="Dance4ever" width={36} height={27} priority className="shrink-0" />
               <div className="min-w-0">
@@ -141,20 +149,36 @@ export default function SociosLayout({ children }: { children: React.ReactNode }
         </header>
 
         <main className="flex-1 min-h-0 overflow-y-auto">
-          {children}
+          {activeTab === 'resumen' && <ResumenPage />}
+          {activeTab === 'registros' && (
+            selectedRegistrationId ? (
+              <RegistrationDetailPage
+                registrationIdProp={selectedRegistrationId}
+                onBack={() => setSelectedRegistrationId(null)}
+              />
+            ) : (
+              <RegistrosPage onSelectRegistration={(id) => setSelectedRegistrationId(id)} />
+            )
+          )}
+          {activeTab === 'finanzas' && <FinanzasPage />}
+          {activeTab === 'programa' && <ProgramaPage />}
+          {activeTab === 'checklist' && <ChecklistPage />}
+          {activeTab === 'eventos' && <EventosPage />}
         </main>
 
         <nav
           className="shrink-0 backdrop-blur-xl bg-neutral-900/85 border-t border-neutral-800 z-30"
-          style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
         >
-          <div className="grid grid-cols-5 h-14">
+          <div className="grid grid-cols-6 h-16">
             {TABS.map(tab => {
               const active = tab.id === activeTab
               return (
                 <button
                   key={tab.id}
-                  onClick={() => router.push(tab.path)}
+                  onClick={() => {
+                    setActiveTab(tab.id)
+                    setSelectedRegistrationId(null)
+                  }}
                   className={`flex flex-col items-center justify-center gap-0.5 transition-colors active:bg-neutral-800/50 ${
                     active ? 'text-fuchsia-500' : 'text-neutral-600'
                   }`}

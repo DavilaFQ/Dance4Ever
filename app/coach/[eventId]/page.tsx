@@ -57,8 +57,9 @@ export default function CoachPage({ params }: Props) {
   }, [eventId, loadAll])
 
   useEffect(() => {
+    const channelId = `coach-${eventId}-${Math.random().toString(36).slice(2, 9)}`
     const channel = supabase
-      .channel('coach-' + eventId)
+      .channel(channelId)
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'events', filter: `id=eq.${eventId}` },
         (payload) => setEvent(payload.new as Event))
       .on('postgres_changes', { event: '*', schema: 'public', table: 'participants', filter: `event_id=eq.${eventId}` },
@@ -79,8 +80,12 @@ export default function CoachPage({ params }: Props) {
       setActiveAnnouncement(text)
       if (text) {
         // Physical haptic haptics double-vibration
-        if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
-          navigator.vibrate([200, 100, 200])
+        try {
+          if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+            navigator.vibrate([200, 100, 200])
+          }
+        } catch (e) {
+          console.warn('Vibration failed:', e)
         }
       }
     })
@@ -103,7 +108,11 @@ export default function CoachPage({ params }: Props) {
 
   useEffect(() => {
     if (!onDeck || !nextMine || alertedAt === nextMine.id) return
-    if ('vibrate' in navigator) navigator.vibrate([300, 100, 300])
+    try {
+      if ('vibrate' in navigator) navigator.vibrate([300, 100, 300])
+    } catch (e) {
+      console.warn('Vibration failed:', e)
+    }
     setAlertedAt(nextMine.id)
   }, [onDeck, nextMine, alertedAt])
 

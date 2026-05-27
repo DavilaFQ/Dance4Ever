@@ -314,6 +314,9 @@ export default function StaffPage() {
 
   return (
     <div className="h-[100dvh] bg-neutral-900 text-white flex flex-col overflow-hidden select-none">
+      {/* Spacer for iOS Notch */}
+      <div className="shrink-0 bg-black" style={{ height: 'env(safe-area-inset-top, 0px)' }} />
+
       {/* Header: LOGO izq | STAFF centro | iconos derecha */}
       <header className="bg-black px-3 py-2 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-3 min-w-0 shrink-0">

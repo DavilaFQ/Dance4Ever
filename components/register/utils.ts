@@ -182,6 +182,14 @@ export function formatBirthdate(iso: string): string {
   return `${d}/${m}/${y}`
 }
 
+export function isValidDate(y: number, m: number, d: number): boolean {
+  if (isNaN(y) || isNaN(m) || isNaN(d)) return false
+  if (m < 1 || m > 12) return false
+  if (d < 1 || d > 31) return false
+  const date = new Date(y, m - 1, d)
+  return date.getFullYear() === y && date.getMonth() === m - 1 && date.getDate() === d
+}
+
 export function getDancerDisplayName(dancer: Dancer, _index?: number, _allDancers?: Dancer[]): string {
   const name = dancer.name.trim()
   if (!name) return 'SIN NOMBRE'
@@ -201,19 +209,29 @@ export function parseSmartList(text: string): Dancer[] {
 
     let match = line.match(regexDMY)
     if (match) {
-      const d = match[1].padStart(2, '0')
-      const m = match[2].padStart(2, '0')
-      const y = match[3]
-      birthdate = `${y}-${m}-${d}`
-      name = line.replace(match[0], '')
+      const dNum = Number(match[1])
+      const mNum = Number(match[2])
+      const yNum = Number(match[3])
+      if (isValidDate(yNum, mNum, dNum)) {
+        const d = match[1].padStart(2, '0')
+        const m = match[2].padStart(2, '0')
+        const y = match[3]
+        birthdate = `${y}-${m}-${d}`
+        name = line.replace(match[0], '')
+      }
     } else {
       match = line.match(regexYMD)
       if (match) {
-        const y = match[1]
-        const m = match[2].padStart(2, '0')
-        const d = match[3].padStart(2, '0')
-        birthdate = `${y}-${m}-${d}`
-        name = line.replace(match[0], '')
+        const yNum = Number(match[1])
+        const mNum = Number(match[2])
+        const dNum = Number(match[3])
+        if (isValidDate(yNum, mNum, dNum)) {
+          const y = match[1]
+          const m = match[2].padStart(2, '0')
+          const d = match[3].padStart(2, '0')
+          birthdate = `${y}-${m}-${d}`
+          name = line.replace(match[0], '')
+        }
       }
     }
 

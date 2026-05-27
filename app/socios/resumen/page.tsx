@@ -8,20 +8,12 @@ import { costoRegistro } from '@/lib/cost'
 import { Building2, Users, Activity, AlertTriangle, TrendingUp, DollarSign } from 'lucide-react'
 
 export default function ResumenPage() {
-  const { event } = useEventContext()
+  const { event, lastSync } = useEventContext()
 
   const [registrations, setRegistrations] = useState<CoachRegistration[]>([])
   const [dancers, setDancers] = useState<RegistrationDancer[]>([])
   const [acts, setActs] = useState<RegistrationAct[]>([])
   const [loading, setLoading] = useState(true)
-  const [payments, setPayments] = useState<Record<number, { paid: number }>>({})
-
-  const loadPayments = useCallback(() => {
-    try {
-      const raw = localStorage.getItem('d4e:socios:payments')
-      if (raw) setPayments(JSON.parse(raw))
-    } catch {}
-  }, [])
 
   const loadAll = useCallback(async () => {
     if (!event) return
@@ -40,8 +32,7 @@ export default function ResumenPage() {
     } finally { setLoading(false) }
   }, [event])
 
-  useEffect(() => { loadAll() }, [loadAll])
-  useEffect(() => { loadPayments() }, [loadPayments])
+  useEffect(() => { loadAll() }, [loadAll, lastSync])
 
   useEffect(() => {
     if (!event) return
@@ -52,12 +43,8 @@ export default function ResumenPage() {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'registration_acts' }, () => loadAll())
       .subscribe()
 
-    const bc = supabase.channel(`broadcast-${event.id}`, { config: { broadcast: { self: true } } })
-    bc.on('broadcast', { event: 'ledger_update' }, () => { loadPayments() })
-    bc.subscribe()
-
-    return () => { supabase.removeChannel(ch); supabase.removeChannel(bc) }
-  }, [event, loadAll, loadPayments])
+    return () => { supabase.removeChannel(ch) }
+  }, [event, loadAll])
 
   const enriched = useMemo(() =>
     registrations.map(r => ({
@@ -92,9 +79,9 @@ export default function ResumenPage() {
       confirmadas: confirmed.length,
       enProgreso: enriched.length - confirmed.length,
       editados: confirmed.filter(r => isEditedAfterConfirm(r)).length,
-      cobrado: enriched.reduce((s, r) => s + (payments[r.id]?.paid ?? 0), 0),
+      cobrado: enriched.reduce((s, r) => s + (r.paid ?? 0), 0),
     }
-  }, [enriched, confirmed, payments])
+  }, [enriched, confirmed])
 
   const curve = useMemo(() => {
     if (enriched.length === 0) return null
@@ -118,8 +105,8 @@ export default function ResumenPage() {
       const incompleteActs = r.acts.some(a => !a.level || !a.style || !a.age_category)
       const missingName = !r.team_name?.trim()
       if (stale) out.push({ id: r.id, coach: r.coach_name, academy: r.academy, phone: r.coach_phone, issue: 'Sin confirmar por mas de 6 horas', severity: 'high' })
-      if (missingBirthdate) out.push({ id: r.id, coach: r.coach_name, academy: r.academy, phone: r.coach_phone, issue: 'Alumno sin fecha de nacimiento', severity: 'med' })
-      if (incompleteActs) out.push({ id: r.id, coach: r.coach_name, academy: r.academy, phone: r.coach_phone, issue: 'Acto sin nivel/estilo/categoria', severity: 'med' })
+      if (missingBirthdate) out.push({ id: r.id, coach: r.coach_name, academy: r.academy, phone: r.coach_phone, issue: 'Integrante sin fecha de nacimiento', severity: 'med' })
+      if (incompleteActs) out.push({ id: r.id, coach: r.coach_name, academy: r.academy, phone: r.coach_phone, issue: 'Coreografía sin nivel/estilo/categoría', severity: 'med' })
       if (missingName) out.push({ id: r.id, coach: r.coach_name, academy: r.academy, phone: r.coach_phone, issue: 'Equipo sin nombre', severity: 'low' })
     })
     return out
@@ -160,8 +147,8 @@ export default function ResumenPage() {
       <div className="grid grid-cols-2 gap-2.5">
         <KpiCard label="Academias" value={kpis.academias} icon={Building2} />
         <KpiCard label="Coaches" value={kpis.coaches} icon={Users} />
-        <KpiCard label="Alumnos" value={kpis.alumnos} icon={Users} />
-        <KpiCard label="Actos" value={kpis.actos} icon={Activity} />
+        <KpiCard label="Integrantes" value={kpis.alumnos} icon={Users} />
+        <KpiCard label="Coreografías" value={kpis.actos} icon={Activity} />
         <KpiCard label="Confirmados" value={kpis.confirmadas} sub={`${kpis.enProgreso} borrador`} accent="success" />
         <KpiCard label="Borrador" value={kpis.enProgreso} accent="accent" />
         <KpiCard label="Proyectado" value={formatMoney(kpis.ingresoProyectado)} accent="primary" />
@@ -210,7 +197,7 @@ export default function ResumenPage() {
                   <span className="font-display text-lg text-fuchsia-500 w-6 text-right">{i + 1}</span>
                   <div className="min-w-0">
                     <p className="text-sm font-semibold truncate">{a.name}</p>
-                    <p className="text-xs text-neutral-400">{a.dancers} alumnos / {a.acts} actos</p>
+                    <p className="text-xs text-neutral-400">{a.dancers} integrantes / {a.acts} coreografías</p>
                   </div>
                 </div>
                 <span className="font-display text-base text-green-400 shrink-0">{formatMoney(a.income)}</span>

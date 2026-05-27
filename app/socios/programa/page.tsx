@@ -102,7 +102,7 @@ function buildItems(
 }
 
 export default function ProgramaPage() {
-  const { event } = useEventContext()
+  const { event, lastSync } = useEventContext()
 
   const [registrations, setRegistrations] = useState<CoachRegistration[]>([])
   const [dancers, setDancers] = useState<RegistrationDancer[]>([])
@@ -160,7 +160,7 @@ export default function ProgramaPage() {
     } finally { setLoading(false) }
   }, [event])
 
-  useEffect(() => { loadAll() }, [loadAll])
+  useEffect(() => { loadAll() }, [loadAll, lastSync])
 
   useEffect(() => {
     if (!event) return
@@ -241,39 +241,60 @@ export default function ProgramaPage() {
 
   async function handlePublish() {
     if (!event || items.length === 0) return
-    if (!confirm(`Publicar ${items.length} actos en el orden actual? Esto reemplazara el programa oficial.`)) return
+    if (!confirm(`Publicar ${items.length} coreografías en el orden actual? Esto reemplazará el programa oficial.`)) return
 
     setPublishing(true)
     try {
+      // Fetch existing participants to preserve their "present" status
+      const { data: existingParts } = await supabase
+        .from('participants')
+        .select('name, style, category, present')
+        .eq('event_id', event.id)
+
+      const presentMap = new Map<string, boolean>()
+      existingParts?.forEach(p => {
+        // Normalize name, style, category as unique key
+        const key = `${p.name ?? ''}|${p.style ?? ''}|${p.category ?? ''}`.toLowerCase().trim()
+        presentMap.set(key, !!p.present)
+      })
+
       await supabase.from('participants').delete().eq('event_id', event.id)
 
       const rows = items.map((item, idx) => {
         const { act, reg } = item
-        const dancersInAct = act.modality === 'grupal' ? reg.dancers : reg.dancers.filter(d => act.dancer_ids.includes(d.id))
+        const dancersInAct = reg.dancers.filter(d => (act.dancer_ids || []).includes(d.id))
         const dancerNames = dancersInAct.map(d => d.name.split(' ').slice(0, 2).join(' ')).join(', ')
         const actName = reg.team_name
           ? `${reg.academy} (${reg.team_name})`
           : `${reg.academy} - ${dancerNames}`
         const ageCatCode = act.age_category ? AGE_CATEGORY_LABELS[act.age_category].toUpperCase() : 'OPEN'
+        const categoryCode = `${ageCatCode} | ${act.level?.toUpperCase() || 'AVANZADO'}`
+
+        const key = `${actName}|${act.style || ''}|${categoryCode}`.toLowerCase().trim()
+        const isPresent = presentMap.get(key) ?? false
 
         return {
           event_id: event.id,
           position: idx + 1,
           type: act.modality,
           style: act.style,
-          category: `${ageCatCode} | ${act.level?.toUpperCase() || 'AVANZADO'}`,
+          category: categoryCode,
           name: actName,
           academy: reg.academy,
           city: '',
           coach_id: null,
-          present: false,
+          present: isPresent,
         }
       })
 
       await supabase.from('participants').insert(rows)
-      await supabase.from('events').update({
-        current_position: 0, started_at: null, awards_mode: false,
-      }).eq('id', event.id)
+
+      // Only reset event control fields if it has NOT been started yet
+      if (!event.started_at) {
+        await supabase.from('events').update({
+          current_position: 0, started_at: null, awards_mode: false,
+        }).eq('id', event.id)
+      }
 
       alert('Programa publicado exitosamente.')
     } catch (err) {
@@ -313,7 +334,7 @@ export default function ProgramaPage() {
         <div>
           <h1 className="font-display text-xl tracking-wider uppercase">Programa Borrador</h1>
           <p className="text-xs text-neutral-500 mt-0.5">
-            {items.length} actos · Arrastra para reordenar
+            {items.length} coreografías · Arrastra para reordenar
           </p>
         </div>
         <button
@@ -327,7 +348,7 @@ export default function ProgramaPage() {
 
       {items.length === 0 ? (
         <div className="text-center text-neutral-500 py-16 space-y-2">
-          <p className="text-lg font-display tracking-wider">Sin actos confirmados</p>
+          <p className="text-lg font-display tracking-wider">Sin coreografías confirmadas</p>
           <p className="text-sm">Espera a que los coaches confirmen sus registros para armar el programa.</p>
         </div>
       ) : (
@@ -440,7 +461,7 @@ function ActCard({ item, index, dragHandle, isDragOverlay }: {
   const catLabel = act.age_category ? AGE_CATEGORY_LABELS[act.age_category].toUpperCase() : 'OPEN'
   const colors = act.age_category ? CATEGORY_COLORS[act.age_category] : CATEGORY_COLORS.open
   const mod = MODALITY_LABELS[act.modality].toUpperCase()
-  const dancersInAct = act.modality === 'grupal' ? reg.dancers : reg.dancers.filter(d => act.dancer_ids.includes(d.id))
+  const dancersInAct = reg.dancers.filter(d => (act.dancer_ids || []).includes(d.id))
   const names = dancersInAct.map(d => d.name.split(' ').slice(0, 2).join(' ')).join(', ')
 
   return (

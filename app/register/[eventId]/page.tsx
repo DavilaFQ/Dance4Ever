@@ -503,50 +503,53 @@ export default function RegisterPage({ params }: Props) {
 
       if (isUpdate) {
         registrationId = state.confirmedRegistrationId!
-        // On update, fetch current confirmed_at to preserve it
+        // On update, fetch current extra coaches to preserve them
         const { data: existing } = await supabase
           .from('coach_registrations')
-          .select('confirmed_at, extra_coaches')
+          .select('extra_coaches')
           .eq('id', registrationId)
           .single()
 
         const existingExtras = (existing?.extra_coaches as string[] | null) ?? []
-        const existingConfirmedAt = existing?.confirmed_at as string | null ?? null
         const mergedExtras = [...new Set([
           ...existingExtras.filter((s: string) => !s.startsWith('Asistente:')),
           ...extrasMerged,
         ])]
 
-        const { error: updErr } = await supabase
-          .from('coach_registrations')
-          .update({
-            coach_name: state.coach.name.trim(),
-            coach_phone: state.coach.phone.trim(),
-            coach_email: state.coach.email.trim() || null,
-            extra_coaches: mergedExtras,
-            academy: state.city.trim() ? `${state.academy.trim()} (${state.city.trim()})` : state.academy.trim(),
-            team_name: state.academy.trim(),
-            cost_paquete: costPaquete,
-            cost_repeticion: costRepeticion,
-            confirmed_at: existingConfirmedAt,
-            submitted_at: submittedAt,
-            tickets_count: state.ticketsCount ?? 0,
-            notes: state.notes?.trim() || null,
-          })
-          .eq('id', registrationId)
-        if (updErr) throw updErr
+        const dancerRows = state.dancers.map((d, i) => ({
+          name: d.name.trim(),
+          birthdate: d.birthdate,
+          category: effectiveCategory(d),
+          category_manual: d.categoryOverride !== null,
+          order_idx: i,
+        }))
 
-        const { error: delActErr } = await supabase
-          .from('registration_acts')
-          .delete()
-          .eq('registration_id', registrationId)
-        if (delActErr) throw delActErr
+        const actRows = state.acts.map((a, i) => ({
+          modality: a.modality,
+          age_category: a.ageCategory,
+          level: a.modality === 'grupal' ? a.level : 'avanzado',
+          style: a.style,
+          order_idx: i,
+          dancer_indices: a.dancerIndices,
+        }))
 
-        const { error: delDancerErr } = await supabase
-          .from('registration_dancers')
-          .delete()
-          .eq('registration_id', registrationId)
-        if (delDancerErr) throw delDancerErr
+        const { error: rpcErr } = await supabase.rpc('resubmit_registration', {
+          p_registration_id: registrationId,
+          p_coach_name: state.coach.name.trim(),
+          p_coach_phone: state.coach.phone.trim(),
+          p_coach_email: state.coach.email.trim() || null,
+          p_extra_coaches: mergedExtras,
+          p_academy: state.city.trim() ? `${state.academy.trim()} (${state.city.trim()})` : state.academy.trim(),
+          p_team_name: state.academy.trim(),
+          p_cost_paquete: costPaquete,
+          p_cost_repeticion: costRepeticion,
+          p_tickets_count: state.ticketsCount ?? 0,
+          p_notes: state.notes?.trim() || null,
+          p_submitted_at: submittedAt,
+          p_dancers: dancerRows,
+          p_acts: actRows,
+        })
+        if (rpcErr) throw rpcErr
       } else {
         const { data: regData, error: regErr } = await supabase
           .from('coach_registrations')
@@ -568,40 +571,40 @@ export default function RegisterPage({ params }: Props) {
           .single()
         if (regErr || !regData) throw regErr ?? new Error('No data')
         registrationId = regData.id as number
+
+        const dancerRows = state.dancers.map((d, i) => ({
+          registration_id: registrationId,
+          name: d.name.trim(),
+          birthdate: d.birthdate,
+          category: effectiveCategory(d),
+          category_manual: d.categoryOverride !== null,
+          order_idx: i,
+        }))
+        const { data: dData, error: dErr } = await supabase
+          .from('registration_dancers')
+          .insert(dancerRows)
+          .select()
+        if (dErr || !dData) throw dErr ?? new Error('No dancers data')
+
+        const dancerIdByIndex = new Map<number, number>()
+        dData.forEach((row: { id: number, order_idx: number }) => {
+          dancerIdByIndex.set(row.order_idx, row.id)
+        })
+
+        const actRows = state.acts.map((a, i) => ({
+          registration_id: registrationId,
+          modality: a.modality,
+          age_category: a.ageCategory,
+          level: a.modality === 'grupal' ? a.level : 'avanzado',
+          style: a.style,
+          order_idx: i,
+          dancer_ids: a.dancerIndices
+            .map(idx => dancerIdByIndex.get(idx))
+            .filter((x): x is number => typeof x === 'number'),
+        }))
+        const { error: aErr } = await supabase.from('registration_acts').insert(actRows)
+        if (aErr) throw aErr
       }
-
-      const dancerRows = state.dancers.map((d, i) => ({
-        registration_id: registrationId,
-        name: d.name.trim(),
-        birthdate: d.birthdate,
-        category: effectiveCategory(d),
-        category_manual: d.categoryOverride !== null,
-        order_idx: i,
-      }))
-      const { data: dData, error: dErr } = await supabase
-        .from('registration_dancers')
-        .insert(dancerRows)
-        .select()
-      if (dErr || !dData) throw dErr ?? new Error('No dancers data')
-
-      const dancerIdByIndex = new Map<number, number>()
-      dData.forEach((row: { id: number, order_idx: number }) => {
-        dancerIdByIndex.set(row.order_idx, row.id)
-      })
-
-      const actRows = state.acts.map((a, i) => ({
-        registration_id: registrationId,
-        modality: a.modality,
-        age_category: a.ageCategory,
-        level: a.modality === 'grupal' ? a.level : 'avanzado',
-        style: a.style,
-        order_idx: i,
-        dancer_ids: a.dancerIndices
-          .map(idx => dancerIdByIndex.get(idx))
-          .filter((x): x is number => typeof x === 'number'),
-      }))
-      const { error: aErr } = await supabase.from('registration_acts').insert(actRows)
-      if (aErr) throw aErr
 
       // Write audit log for coach submission
       try {

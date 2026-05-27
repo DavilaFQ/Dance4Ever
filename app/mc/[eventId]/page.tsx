@@ -16,6 +16,40 @@ export default function MCPage({ params }: Props) {
   const [showProgram, setShowProgram] = useState(false)
   const [search, setSearch] = useState('')
   const [activeAnnouncement, setActiveAnnouncement] = useState('')
+  const [audioUnlocked, setAudioUnlocked] = useState(false)
+
+  useEffect(() => {
+    const unlock = () => {
+      try {
+        const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext
+        if (AudioContextClass) {
+          const tempCtx = new AudioContextClass()
+          if (tempCtx.state === 'suspended') {
+            tempCtx.resume()
+          }
+          const osc = tempCtx.createOscillator()
+          const gain = tempCtx.createGain()
+          gain.gain.setValueAtTime(0, tempCtx.currentTime)
+          osc.connect(gain)
+          gain.connect(tempCtx.destination)
+          osc.start()
+          osc.stop(tempCtx.currentTime + 0.01)
+        }
+        setAudioUnlocked(true)
+        window.removeEventListener('click', unlock)
+        window.removeEventListener('touchstart', unlock)
+      } catch (e) {
+        console.warn('Failed to unlock audio context:', e)
+      }
+    }
+
+    window.addEventListener('click', unlock)
+    window.addEventListener('touchstart', unlock)
+    return () => {
+      window.removeEventListener('click', unlock)
+      window.removeEventListener('touchstart', unlock)
+    }
+  }, [])
 
   // Subscribing to live broadcast channel for voiceovers and announcements
   useEffect(() => {
@@ -79,8 +113,9 @@ export default function MCPage({ params }: Props) {
   useEffect(() => { loadAll() }, [loadAll])
 
   useEffect(() => {
+    const channelId = `mc-${eventId}-${Math.random().toString(36).slice(2, 9)}`
     const channel = supabase
-      .channel('mc-' + eventId)
+      .channel(channelId)
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'events', filter: `id=eq.${eventId}` },
         (payload) => setEvent(payload.new as Event))
       .on('postgres_changes', { event: '*', schema: 'public', table: 'participants', filter: `event_id=eq.${eventId}` },
@@ -137,7 +172,14 @@ export default function MCPage({ params }: Props) {
       )}
 
       <header className="bg-black px-3 py-2 flex items-center justify-between shrink-0">
-        <h1 className="font-display text-3xl tracking-[0.2em] text-fuchsia-500 leading-none">PRESENTADOR</h1>
+        <div className="flex items-center gap-3">
+          <h1 className="font-display text-3xl tracking-[0.2em] text-fuchsia-500 leading-none">PRESENTADOR</h1>
+          {!audioUnlocked && (
+            <span className="text-[10px] font-bold bg-yellow-500 text-black px-2 py-0.5 rounded-full uppercase animate-pulse">
+              🔊 Toca para sonido
+            </span>
+          )}
+        </div>
         <Image src="/logo.png" alt="Dance4ever" width={56} height={40} priority className="shrink-0" />
       </header>
 

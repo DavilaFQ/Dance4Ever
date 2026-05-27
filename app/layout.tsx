@@ -19,7 +19,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     title: "Dance4ever",
-    statusBarStyle: "black-translucent",
+    statusBarStyle: "black",
   },
   icons: {
     apple: "/logo.png",

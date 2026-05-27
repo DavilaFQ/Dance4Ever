@@ -9,7 +9,7 @@ import { Search, DollarSign, Download, FileSpreadsheet } from 'lucide-react'
 import { exportRegistrations } from '@/lib/export'
 
 export default function FinanzasPage() {
-  const { event } = useEventContext()
+  const { event, lastSync } = useEventContext()
 
   const [registrations, setRegistrations] = useState<CoachRegistration[]>([])
   const [dancers, setDancers] = useState<RegistrationDancer[]>([])
@@ -35,14 +35,15 @@ export default function FinanzasPage() {
       setDancers((dr.data ?? []).filter(d => regIds.has(d.registration_id)))
       setActs((ar.data ?? []).filter(a => regIds.has(a.registration_id)))
 
-      try {
-        const raw = localStorage.getItem('d4e:socios:payments')
-        if (raw) setPayments(JSON.parse(raw))
-      } catch {}
+      const dbPayments: Record<number, { paid: number; note?: string }> = {}
+      regs.forEach((r: any) => {
+        dbPayments[r.id] = { paid: r.paid ?? 0, note: r.payment_notes ?? '' }
+      })
+      setPayments(dbPayments)
     } finally { setLoading(false) }
   }, [event])
 
-  useEffect(() => { loadAll() }, [loadAll])
+  useEffect(() => { loadAll() }, [loadAll, lastSync])
 
   useEffect(() => {
     if (!event) return
@@ -101,15 +102,16 @@ export default function FinanzasPage() {
     return { facturado, cobrado, pendiente: facturado - cobrado }
   }, [enriched, payments])
 
-  function updatePayment(regId: number, paid: number) {
-    setPayments(prev => {
-      const next = { ...prev, [regId]: { ...prev[regId], paid: Math.max(0, paid) } }
-      try { localStorage.setItem('d4e:socios:payments', JSON.stringify(next)) } catch {}
-      if (broadcastRef.current) {
-        broadcastRef.current.send({ type: 'broadcast', event: 'ledger_update', payload: { regId, paid } }).catch(() => {})
-      }
-      return next
-    })
+  async function updatePayment(regId: number, paid: number) {
+    const val = Math.max(0, paid)
+    setPayments(prev => ({
+      ...prev,
+      [regId]: { ...prev[regId], paid: val }
+    }))
+    await supabase.from('coach_registrations').update({ paid: val }).eq('id', regId)
+    if (broadcastRef.current) {
+      broadcastRef.current.send({ type: 'broadcast', event: 'ledger_update', payload: { regId, paid: val } }).catch(() => {})
+    }
   }
 
   if (loading && !event) {
@@ -181,7 +183,7 @@ export default function FinanzasPage() {
                   <div className="min-w-0">
                     <p className="font-bold text-sm truncate text-white">{r.academy || '(sin academia)'}</p>
                     <p className="text-xs text-neutral-400">Coach: {r.coach_name}</p>
-                    <p className="text-xs text-neutral-500">{r.dancers.length} alumnos / {r.acts.length} actos / {r.tickets_count ?? 0} boletos</p>
+                    <p className="text-xs text-neutral-500">{r.dancers.length} integrantes / {r.acts.length} coreografías / {r.tickets_count ?? 0} boletos</p>
                   </div>
                   <div className="text-right shrink-0">
                     <p className="font-display text-base text-green-400">{formatMoney(r.total)}</p>

@@ -40,8 +40,8 @@
 }
 
 html, body {
-  height: 100%;
-  background: #000;
+  height: 100dvh;
+  background: #171717;
   color: #ededed;
   font-family: var(--font-geist), Arial, sans-serif;
   overscroll-behavior: none;

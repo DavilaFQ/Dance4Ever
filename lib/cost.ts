@@ -34,10 +34,10 @@ function getPrecioEntrada(event: Event | null): number {
     : (event?.cost_entrada_temprana ?? DEFAULT_COST_ENTRADA_TEMPRANA)
 }
 
-function buildActCounts(acts: RegistrationAct[], dancers: RegistrationDancer[]): Map<number, number> {
+function buildActCounts(acts: RegistrationAct[], _dancers: RegistrationDancer[]): Map<number, number> {
   const counts = new Map<number, number>()
   acts.forEach(a => {
-    const participantIds = a.modality === 'grupal' ? dancers.map(d => d.id) : a.dancer_ids
+    const participantIds = a.dancer_ids || []
     participantIds.forEach(id => counts.set(id, (counts.get(id) ?? 0) + 1))
   })
   return counts

@@ -355,9 +355,9 @@ export default function EventosPage() {
                     <span className="text-[10px] text-neutral-600 mt-0.5 block">Antes: 1ra coreo incluida. Despues: todas se cobran.</span>
                   </label>
                   <label className="text-xs text-neutral-400 font-bold uppercase">
-                    Alumnos por asistente gratis
+                    Integrantes por asistente gratis
                     <input type="number" value={dancersPorAsistente} onChange={e => setDancersPorAsistente(Number(e.target.value) || 1)} className="mt-1 w-full px-3 py-2 bg-neutral-700/50 rounded-lg border border-neutral-600 text-sm text-white focus:outline-none focus:border-fuchsia-500" />
-                    <span className="text-[10px] text-neutral-600 mt-0.5 block">Cada X alumnos = 1 pase de staff gratis.</span>
+                    <span className="text-[10px] text-neutral-600 mt-0.5 block">Cada X integrantes = 1 pase de staff gratis.</span>
                   </label>
                 </div>
               </div>

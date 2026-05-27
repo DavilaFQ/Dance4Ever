@@ -61,10 +61,11 @@ function actIsViable(modality: string, dancerCount: number): boolean {
   return dancerCount >= min
 }
 
-export default function RegistrationDetailPage() {
+export default function RegistrationDetailPage({ registrationIdProp, onBack }: { registrationIdProp?: string; onBack?: () => void }) {
   const router = useRouter()
-  const { registrationId } = useParams<{ registrationId: string }>()
-  const { event } = useEventContext()
+  const params = useParams<{ registrationId: string }>()
+  const registrationId = registrationIdProp ?? params?.registrationId
+  const { event, lastSync } = useEventContext()
 
   const [reg, setReg] = useState<CoachRegistration | null>(null)
   const [dancers, setDancers] = useState<RegistrationDancer[]>([])
@@ -75,6 +76,7 @@ export default function RegistrationDetailPage() {
 
   const [paid, setPaid] = useState(0)
   const [note, setNote] = useState('')
+  const [broadcastChannel, setBroadcastChannel] = useState<any>(null)
 
   const [editingCoach, setEditingCoach] = useState(false)
   const [editAcademy, setEditAcademy] = useState('')
@@ -96,6 +98,57 @@ export default function RegistrationDetailPage() {
   const [actStyle, setActStyle] = useState('')
   const [actDancerIds, setActDancerIds] = useState<number[]>([])
 
+  // Gestos de iOS: Deslizar desde el borde izquierdo para regresar
+  useEffect(() => {
+    if (!onBack) return
+
+    let startX = 0
+    let startY = 0
+    let isSwiping = false
+
+    const handleTouchStart = (e: TouchEvent) => {
+      const touch = e.touches[0]
+      if (touch.clientX < 40) {
+        startX = touch.clientX
+        startY = touch.clientY
+        isSwiping = true
+      }
+    }
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (!isSwiping) return
+      const touch = e.touches[0]
+      const deltaX = touch.clientX - startX
+      const deltaY = Math.abs(touch.clientY - startY)
+
+      if (deltaY > deltaX || deltaX < 0) {
+        isSwiping = false
+      }
+    }
+
+    const handleTouchEnd = (e: TouchEvent) => {
+      if (!isSwiping) return
+      const touch = e.changedTouches[0]
+      const deltaX = touch.clientX - startX
+      const deltaY = Math.abs(touch.clientY - startY)
+
+      if (deltaX > 90 && deltaX > deltaY) {
+        onBack()
+      }
+      isSwiping = false
+    }
+
+    window.addEventListener('touchstart', handleTouchStart, { passive: true })
+    window.addEventListener('touchmove', handleTouchMove, { passive: true })
+    window.addEventListener('touchend', handleTouchEnd, { passive: true })
+
+    return () => {
+      window.removeEventListener('touchstart', handleTouchStart)
+      window.removeEventListener('touchmove', handleTouchMove)
+      window.removeEventListener('touchend', handleTouchEnd)
+    }
+  }, [onBack])
+
   const loadData = useCallback(async () => {
     if (!registrationId) return
     setLoading(true)
@@ -115,21 +168,15 @@ export default function RegistrationDetailPage() {
         setActs(ar.data ?? [])
         setEditLogs((logs ?? []) as unknown as EditLog[])
 
-        try {
-          const raw = localStorage.getItem('d4e:socios:payments')
-          if (raw) {
-            const payments = JSON.parse(raw)
-            setPaid(payments[id]?.paid ?? 0)
-            setNote(payments[id]?.note ?? '')
-          }
-        } catch {}
+        setPaid(r.paid ?? 0)
+        setNote(r.payment_notes ?? '')
       } else {
         setReg(null)
       }
     } finally { setLoading(false) }
   }, [registrationId])
 
-  useEffect(() => { loadData() }, [loadData])
+  useEffect(() => { loadData() }, [loadData, lastSync])
 
   useEffect(() => {
     if (!registrationId || !reg) return
@@ -143,17 +190,49 @@ export default function RegistrationDetailPage() {
     return () => { supabase.removeChannel(ch) }
   }, [registrationId, reg, loadData])
 
+  useEffect(() => {
+    if (!event?.id) return
+    const bc = supabase.channel(`broadcast-${event.id}`, { config: { broadcast: { self: true } } })
+    bc.subscribe((status) => {
+      if (status === 'SUBSCRIBED') setBroadcastChannel(bc)
+    })
+    return () => { supabase.removeChannel(bc) }
+  }, [event?.id])
+
   const total = useMemo(() => reg ? costoRegistro(acts, dancers, reg.cost_paquete, reg.cost_repeticion, reg.tickets_count ?? 0, reg.extra_coaches ?? [], event) : 0, [acts, dancers, reg, event])
   const breakdown = useMemo(() => reg ? costBreakdown(acts, dancers, reg.cost_paquete, reg.cost_repeticion, reg.tickets_count ?? 0, reg.extra_coaches ?? [], event) : null, [acts, dancers, reg, event])
 
   const counts = useMemo(() => {
     const c = new Map<number, number>()
     acts.forEach(a => {
-      if (a.modality === 'grupal') dancers.forEach(d => c.set(d.id, (c.get(d.id) ?? 0) + 1))
-      else a.dancer_ids.forEach(id => c.set(id, (c.get(id) ?? 0) + 1))
+      const ids = a.dancer_ids || []
+      ids.forEach(id => c.set(id, (c.get(id) ?? 0) + 1))
     })
     return c
-  }, [acts, dancers])
+  }, [acts])
+
+  const handlePaidBlur = async () => {
+    if (!reg) return
+    const val = Math.max(0, paid)
+    const { error } = await supabase.from('coach_registrations').update({ paid: val }).eq('id', reg.id)
+    if (!error) {
+      await logEdit(reg.id, { action: 'update', changes: { paid: { old: reg.paid, new: val } } })
+      if (broadcastChannel) {
+        broadcastChannel.send({ type: 'broadcast', event: 'ledger_update', payload: { regId: reg.id, paid: val } }).catch(() => {})
+      }
+    }
+  }
+
+  const handleNoteBlur = async () => {
+    if (!reg) return
+    const { error } = await supabase.from('coach_registrations').update({ payment_notes: note.trim() || null }).eq('id', reg.id)
+    if (!error) {
+      await logEdit(reg.id, { action: 'update', changes: { payment_notes: { old: reg.payment_notes, new: note.trim() || null } } })
+      if (broadcastChannel) {
+        broadcastChannel.send({ type: 'broadcast', event: 'ledger_update', payload: { regId: reg.id, note: note.trim() || null } }).catch(() => {})
+      }
+    }
+  }
 
   if (loading) {
     return (
@@ -167,7 +246,7 @@ export default function RegistrationDetailPage() {
     return (
       <div className="p-6 text-center">
         <p className="text-neutral-400">Registro no encontrado.</p>
-        <button onClick={() => router.back()} className="mt-3 text-fuchsia-500 font-bold text-sm">Volver</button>
+        <button onClick={() => onBack ? onBack() : router.back()} className="mt-3 text-fuchsia-500 font-bold text-sm">Volver</button>
       </div>
     )
   }
@@ -177,7 +256,7 @@ export default function RegistrationDetailPage() {
 
   return (
     <div className="p-4 pb-8 space-y-6">
-      <button onClick={() => router.back()} className="flex items-center gap-1.5 text-neutral-400 hover:text-white transition-colors text-sm">
+      <button onClick={() => onBack ? onBack() : router.back()} className="flex items-center gap-1.5 text-neutral-400 hover:text-white transition-colors text-sm">
         <ArrowLeft className="w-4 h-4" /> Regresar
       </button>
 
@@ -253,14 +332,27 @@ export default function RegistrationDetailPage() {
               <Check className="w-3.5 h-3.5" /> Confirmar registro
             </button>
           )}
+          {isConfirmed && wasEdited && (
+            <button
+              onClick={async () => {
+                const now = new Date().toISOString()
+                await supabase.from('coach_registrations').update({ confirmed_at: now }).eq('id', reg.id)
+                await logEdit(reg.id, { action: 'update', entity_type: 'registration', changes: { confirmed_at: { old: reg.confirmed_at, new: now } } })
+                loadData()
+              }}
+              className="flex items-center gap-1.5 text-xs font-bold bg-fuchsia-500/10 text-fuchsia-400 px-3 py-1.5 rounded-lg border border-fuchsia-500/20 hover:bg-fuchsia-500/20 active:scale-95 transition-all"
+            >
+              <Check className="w-3.5 h-3.5" /> Aprobar cambios
+            </button>
+          )}
         </div>
       </div>
 
       {/* Metricas */}
       <Section title="Metricas">
         <div className="grid grid-cols-4 gap-2 text-center">
-          <MetricItem label="Alumnos" value={dancers.length} />
-          <MetricItem label="Actos" value={acts.length} />
+          <MetricItem label="Integrantes" value={dancers.length} />
+          <MetricItem label="Coreografías" value={acts.length} />
           <MetricItem label="Boletos" value={reg.tickets_count ?? 0} accent />
           <MetricItem label="Pagado" value={formatMoney(paid)} accent="success" />
         </div>
@@ -346,11 +438,11 @@ export default function RegistrationDetailPage() {
         )}
       </Section>
 
-      {/* Alumnos */}
-      <Section title={`Alumnos (${dancers.length})`}>
+      {/* Integrantes */}
+      <Section title={`Integrantes (${dancers.length})`}>
         <button onClick={() => { setEditingDancer(null); setDancerName(''); setDancerBirthdate('') }}
           className="flex items-center gap-1.5 text-xs text-fuchsia-400 font-bold mb-3 hover:text-fuchsia-300">
-          <Plus className="w-3.5 h-3.5" /> Agregar alumno
+          <Plus className="w-3.5 h-3.5" /> Agregar integrante
         </button>
 
         {(dancerName || dancerBirthdate) && !editingDancer && (
@@ -374,7 +466,7 @@ export default function RegistrationDetailPage() {
         )}
 
         {dancers.length === 0 ? (
-          <p className="text-sm text-neutral-500 text-center py-4">Sin alumnos registrados.</p>
+          <p className="text-sm text-neutral-500 text-center py-4">Sin integrantes registrados.</p>
         ) : (
           <div className="space-y-2">
             {dancers.map((d, idx) => {
@@ -412,7 +504,7 @@ export default function RegistrationDetailPage() {
 
                         let confirmMsg = `Eliminar a "${d.name}"?`
                         if (inviableActs.length > 0) {
-                          confirmMsg += `\n\nLos siguientes actos dejaran de ser validos y seran eliminados:\n${inviableActs.map(a => `- ${a.name}: ${a.reason}`).join('\n')}`
+                          confirmMsg += `\n\nLas siguientes coreografías dejarán de ser válidas y serán eliminadas:\n${inviableActs.map(a => `- ${a.name}: ${a.reason}`).join('\n')}`
                         }
                         if (!confirm(confirmMsg)) return
 
@@ -420,10 +512,10 @@ export default function RegistrationDetailPage() {
                           const updatedIds = a.dancer_ids.filter(id => id !== d.id)
                           if (!actIsViable(a.modality, updatedIds.length)) {
                             await supabase.from('registration_acts').delete().eq('id', a.id)
-                            await logEdit(reg.id, { entity_type: 'act', entity_id: a.id, action: 'delete', changes: { reason: { old: null, new: `acto inviable: ${a.modality} con ${updatedIds.length} dancers` } } })
+                            await logEdit(reg.id, { entity_type: 'act', entity_id: a.id, action: 'delete', changes: { reason: { old: null, new: `coreografía inviable: ${a.modality} con ${updatedIds.length} integrantes` } } })
                           } else {
                             await supabase.from('registration_acts').update({ dancer_ids: updatedIds }).eq('id', a.id)
-                            await logEdit(reg.id, { entity_type: 'act', entity_id: a.id, action: 'update', changes: { dancer_ids: { old: a.dancer_ids.length + ' dancers', new: updatedIds.length + ' dancers' } } })
+                            await logEdit(reg.id, { entity_type: 'act', entity_id: a.id, action: 'update', changes: { dancer_ids: { old: a.dancer_ids.length + ' integrantes', new: updatedIds.length + ' integrantes' } } })
                           }
                         }
                         await supabase.from('registration_dancers').delete().eq('id', d.id)
@@ -440,7 +532,7 @@ export default function RegistrationDetailPage() {
 
         {editingDancer && (
           <div className="mt-3 p-3 rounded-xl bg-neutral-800/60 border border-fuchsia-500/30 space-y-2">
-            <p className="text-xs font-bold text-fuchsia-400 uppercase tracking-wider">Editar Alumno</p>
+            <p className="text-xs font-bold text-fuchsia-400 uppercase tracking-wider">Editar Integrante</p>
             <div className="grid grid-cols-2 gap-2">
               <input value={dancerName} onChange={e => setDancerName(e.target.value)} placeholder="Nombre" className="w-full px-3 py-2 bg-neutral-700/50 rounded-lg border border-neutral-600 text-sm text-white focus:outline-none focus:border-fuchsia-500" />
               <input type="date" value={dancerBirthdate} onChange={e => setDancerBirthdate(e.target.value)} className="w-full px-3 py-2 bg-neutral-700/50 rounded-lg border border-neutral-600 text-sm text-white focus:outline-none focus:border-fuchsia-500" />
@@ -459,19 +551,19 @@ export default function RegistrationDetailPage() {
         )}
       </Section>
 
-      {/* Actos */}
-      <Section title={`Actos (${acts.length})`}>
+      {/* Coreografías */}
+      <Section title={`Coreografías (${acts.length})`}>
         <button onClick={() => { setEditingAct(null); setActModality('solista'); setActLevel('avanzado'); setActStyle(''); setActDancerIds([]) }}
           className="flex items-center gap-1.5 text-xs text-fuchsia-400 font-bold mb-3 hover:text-fuchsia-300">
-          <Plus className="w-3.5 h-3.5" /> Agregar acto
+          <Plus className="w-3.5 h-3.5" /> Agregar coreografía
         </button>
 
         {acts.length === 0 ? (
-          <p className="text-sm text-neutral-500 text-center py-4">Sin actos registrados.</p>
+          <p className="text-sm text-neutral-500 text-center py-4">Sin coreografías registradas.</p>
         ) : (
           <div className="space-y-2">
             {acts.map((a) => {
-              const dancersInAct = a.modality === 'grupal' ? dancers : dancers.filter(d => a.dancer_ids.includes(d.id))
+              const dancersInAct = dancers.filter(d => (a.dancer_ids || []).includes(d.id))
               const viable = actIsViable(a.modality, dancersInAct.length)
               return (
                 <div key={a.id} className={`group rounded-xl p-3 border transition-all ${viable ? 'bg-neutral-800/20 border-neutral-700/30 hover:border-neutral-600/50' : 'bg-red-500/5 border-red-500/30'}`}>
@@ -490,7 +582,7 @@ export default function RegistrationDetailPage() {
                       <button onClick={() => { setEditingAct(a); setActModality(a.modality); setActLevel(a.level || 'avanzado'); setActStyle(a.style || ''); setActDancerIds(a.dancer_ids) }}
                         className="w-7 h-7 rounded-lg bg-neutral-700/50 text-neutral-400 flex items-center justify-center hover:text-white"><Edit3 className="w-3.5 h-3.5" /></button>
                       <button onClick={async () => {
-                        if (!confirm('Eliminar este acto?')) return
+                        if (!confirm('Eliminar esta coreografía?')) return
                         await supabase.from('registration_acts').delete().eq('id', a.id)
                         await logEdit(reg.id, { entity_type: 'act', entity_id: a.id, action: 'delete', changes: { style: { old: a.style, new: null } } })
                         loadData()
@@ -505,7 +597,7 @@ export default function RegistrationDetailPage() {
 
         {(editingAct !== undefined && (editingAct || (!editingAct && actStyle !== ''))) ? (
           <div className="mt-3 p-3 rounded-xl bg-neutral-800/60 border border-fuchsia-500/30 space-y-3">
-            <p className="text-xs font-bold text-fuchsia-400 uppercase tracking-wider">{editingAct ? 'Editar Acto' : 'Nuevo Acto'}</p>
+            <p className="text-xs font-bold text-fuchsia-400 uppercase tracking-wider">{editingAct ? 'Editar Coreografía' : 'Nueva Coreografía'}</p>
             <div className="grid grid-cols-2 gap-2">
               <select value={actModality} onChange={e => setActModality(e.target.value as Modality)} className="px-3 py-2 bg-neutral-700/50 rounded-lg border border-neutral-600 text-sm text-white focus:outline-none focus:border-fuchsia-500">
                 {(['solista', 'dueto', 'trio', 'grupal'] as Modality[]).map(m => <option key={m} value={m}>{MODALITY_LABELS[m]}</option>)}
@@ -612,10 +704,8 @@ export default function RegistrationDetailPage() {
             <label className="text-xs text-neutral-500 font-bold uppercase flex-1">
               Abono registrado
               <input type="number" value={paid || ''}
-                onChange={e => {
-                  const val = Math.max(0, Number(e.target.value) || 0); setPaid(val)
-                  try { const raw = localStorage.getItem('d4e:socios:payments') ?? '{}'; const payments = JSON.parse(raw); payments[reg!.id] = { ...payments[reg!.id], paid: val }; localStorage.setItem('d4e:socios:payments', JSON.stringify(payments)) } catch {}
-                }}
+                onChange={e => setPaid(Math.max(0, Number(e.target.value) || 0))}
+                onBlur={handlePaidBlur}
                 className="mt-1 w-full px-3 py-2 bg-neutral-700/50 rounded-lg border border-neutral-600 text-sm text-white focus:outline-none focus:border-fuchsia-500 font-mono" />
             </label>
             <div className="pt-5">
@@ -624,10 +714,10 @@ export default function RegistrationDetailPage() {
           </div>
           <label className="text-xs text-neutral-500 font-bold uppercase block">
             Nota interna
-            <input value={note} onChange={e => {
-              setNote(e.target.value)
-              try { const raw = localStorage.getItem('d4e:socios:payments') ?? '{}'; const payments = JSON.parse(raw); payments[reg!.id] = { ...payments[reg!.id], note: e.target.value }; localStorage.setItem('d4e:socios:payments', JSON.stringify(payments)) } catch {}
-            }} placeholder="Agregar nota..." className="mt-1 w-full px-3 py-2 bg-neutral-700/50 rounded-lg border border-neutral-600 text-sm text-white focus:outline-none focus:border-fuchsia-500 placeholder-neutral-500" />
+            <input value={note}
+              onChange={e => setNote(e.target.value)}
+              onBlur={handleNoteBlur}
+              placeholder="Agregar nota..." className="mt-1 w-full px-3 py-2 bg-neutral-700/50 rounded-lg border border-neutral-600 text-sm text-white focus:outline-none focus:border-fuchsia-500 placeholder-neutral-500" />
           </label>
         </div>
       </Section>
@@ -649,11 +739,12 @@ export default function RegistrationDetailPage() {
                 Desconfirmar registro
               </button>
             ) : null}
-            <button onClick={async () => {
-              if (!confirm('ELIMINAR COMPLETAMENTE este registro? Esto borrara todos los alumnos, actos e historial de forma permanente.')) return
-              await supabase.from('coach_registrations').delete().eq('id', reg.id)
-              router.push('/socios/registros')
-            }} className="w-full py-2 rounded-lg text-xs font-bold bg-red-500/10 text-red-400 border border-red-500/30">
+            <button
+              onClick={async () => {
+                if (!confirm('ELIMINAR COMPLETAMENTE este registro? Esto borrara todos los integrantes, coreografías e historial de forma permanente.')) return
+                await supabase.from('coach_registrations').delete().eq('id', reg.id)
+                if (onBack) onBack(); else router.push('/socios/registros')
+              }} className="w-full py-2 rounded-lg text-xs font-bold bg-red-500/10 text-red-400 border border-red-500/30">
               Eliminar registro completo
             </button>
           </div>

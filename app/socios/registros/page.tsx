@@ -10,9 +10,9 @@ import { Search } from 'lucide-react'
 
 type FilterMode = 'all' | 'confirmed' | 'draft' | 'edited'
 
-export default function RegistrosPage() {
+export default function RegistrosPage({ onSelectRegistration }: { onSelectRegistration?: (id: string) => void }) {
   const router = useRouter()
-  const { event } = useEventContext()
+  const { event, lastSync } = useEventContext()
 
   const [registrations, setRegistrations] = useState<CoachRegistration[]>([])
   const [dancers, setDancers] = useState<RegistrationDancer[]>([])
@@ -38,7 +38,7 @@ export default function RegistrosPage() {
     } finally { setLoading(false) }
   }, [event])
 
-  useEffect(() => { loadAll() }, [loadAll])
+  useEffect(() => { loadAll() }, [loadAll, lastSync])
 
   useEffect(() => {
     if (!event) return
@@ -139,7 +139,7 @@ export default function RegistrosPage() {
             return (
               <button
                 key={r.id}
-                onClick={() => router.push(`/socios/registros/${r.id}`)}
+                onClick={() => onSelectRegistration ? onSelectRegistration(String(r.id)) : router.push(`/socios/registros/${r.id}`)}
                 className={`w-full text-left bg-neutral-800/40 rounded-2xl border p-4 hover:border-fuchsia-500/40 transition-all ${
                   wasEdited ? 'border-amber-500/40' : 'border-neutral-700/50'
                 }`}
@@ -180,11 +180,11 @@ export default function RegistrosPage() {
                 {/* Stats */}
                 <div className="grid grid-cols-3 gap-2 mt-3 p-2.5 rounded-xl bg-neutral-900/40 text-xs">
                   <div>
-                    <span className="text-neutral-500 uppercase text-[9px] tracking-wider">Alumnos</span>
+                    <span className="text-neutral-500 uppercase text-[9px] tracking-wider">Integrantes</span>
                     <p className="font-display text-sm text-white mt-0.5">{r.dancers.length}</p>
                   </div>
                   <div>
-                    <span className="text-neutral-500 uppercase text-[9px] tracking-wider">Actos</span>
+                    <span className="text-neutral-500 uppercase text-[9px] tracking-wider">Coreografías</span>
                     <p className="font-display text-sm text-white mt-0.5">{r.acts.length}</p>
                   </div>
                   <div>
