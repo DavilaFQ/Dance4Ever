@@ -30,6 +30,7 @@ import {
 } from 'lucide-react'
 import { exportExcel, exportPdf, exportRegistrations, exportAllRegistrationsZip } from '@/lib/export'
 import { fetchPortalConfig, savePortalConfig } from '@/lib/portalConfig'
+import QRCode from 'qrcode'
 
 
 export default function EventosPage() {
@@ -58,10 +59,16 @@ export default function EventosPage() {
   const [deadlineRegistro, setDeadlineRegistro] = useState('')
   const [deadlineCambios, setDeadlineCambios] = useState('')
   const [dancersPorAsistente, setDancersPorAsistente] = useState(8)
-  const [eventsExpanded, setEventsExpanded] = useState(true)
+  const [eventsExpanded, setEventsExpanded] = useState(false)
   const [settingsExpanded, setSettingsExpanded] = useState(false)
+  const [qrsExpanded, setQrsExpanded] = useState(false)
   const [exportsExpanded, setExportsExpanded] = useState(false)
   const [savingSettings, setSavingSettings] = useState(false)
+
+  // QR access states
+  const [qrStaffUrl, setQrStaffUrl] = useState('')
+  const [qrCoachProgUrl, setQrCoachProgUrl] = useState('')
+  const [copiedQrLink, setCopiedQrLink] = useState<string | null>(null)
 
   // Edit state
   const [editEventName, setEditEventName] = useState('')
@@ -113,6 +120,18 @@ export default function EventosPage() {
         } catch { /* ignore */ }
       })
   }, [event])
+
+  useEffect(() => {
+    if (!event || !origin) return
+    
+    // 1. QR Staff
+    const urlStaff = `${origin}/staff`
+    QRCode.toDataURL(urlStaff, { width: 400, margin: 2 }).then(setQrStaffUrl).catch(() => {})
+
+    // 2. QR Programa Coaches
+    const urlProg = `${origin}/coach/${event.id}`
+    QRCode.toDataURL(urlProg, { width: 400, margin: 2 }).then(setQrCoachProgUrl).catch(() => {})
+  }, [event?.id, origin])
 
   useEffect(() => {
     if (!event) return
@@ -344,7 +363,7 @@ export default function EventosPage() {
       {/* Event list toggle */}
       <button
         onClick={() => setEventsExpanded(v => !v)}
-        className="w-full flex items-center justify-between bg-neutral-800/40 rounded-2xl border border-neutral-700/50 p-4 hover:border-fuchsia-500/30 transition-all"
+        className="w-full flex items-center justify-between bg-neutral-800/40 rounded-2xl border border-neutral-700/50 p-4 hover:border-fuchsia-500/30 transition-all text-left"
       >
         <div>
           <h2 className="font-display text-lg tracking-wider uppercase">Selección de Evento Activo</h2>
@@ -428,7 +447,7 @@ export default function EventosPage() {
           {/* Settings toggle */}
           <button
             onClick={() => setSettingsExpanded(v => !v)}
-            className="w-full flex items-center justify-between bg-neutral-800/40 rounded-2xl border border-neutral-700/50 p-4 hover:border-fuchsia-500/30 transition-all"
+            className="w-full flex items-center justify-between bg-neutral-800/40 rounded-2xl border border-neutral-700/50 p-4 hover:border-fuchsia-500/30 transition-all text-left"
           >
             <div>
               <h2 className="font-display text-lg tracking-wider uppercase">Configuracion del Evento</h2>
@@ -631,10 +650,127 @@ export default function EventosPage() {
             </div>
           )}
 
+          {/* QR Codes toggle */}
+          <button
+            onClick={() => setQrsExpanded(v => !v)}
+            className="w-full flex items-center justify-between bg-neutral-800/40 rounded-2xl border border-neutral-700/50 p-4 hover:border-fuchsia-500/30 transition-all animate-fade-in text-left"
+          >
+            <div>
+              <h2 className="font-display text-lg tracking-wider uppercase">Códigos QR de Accesos</h2>
+              <p className="text-xs text-neutral-500 mt-0.5">QRs de Programa en Vivo (Coaches) y Portal de Staff</p>
+            </div>
+            {qrsExpanded ? <ChevronUp className="w-5 h-5 text-neutral-400" /> : <ChevronDown className="w-5 h-5 text-neutral-400" />}
+          </button>
+
+          {/* QR Codes Section */}
+          {qrsExpanded && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* 1. Programa Coaches */}
+              {qrCoachProgUrl && (
+                <div className="bg-neutral-800/30 border border-neutral-700/40 rounded-2xl p-4 flex flex-col gap-3">
+                  <div className="flex flex-col gap-0.5">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-sky-400">
+                      Día del Evento
+                    </span>
+                    <h4 className="font-display text-sm font-bold text-white uppercase">
+                      Programa Coaches
+                    </h4>
+                    <p className="text-[11px] text-neutral-500">
+                      Vista en vivo del orden en escenario.
+                    </p>
+                  </div>
+
+                  <div className="bg-white p-2.5 rounded-xl flex items-center justify-center max-w-[140px] mx-auto w-full aspect-square shadow-md">
+                    <img src={qrCoachProgUrl} alt="QR Programa" className="w-full h-full object-contain" />
+                  </div>
+
+                  <div className="flex flex-col gap-1.5 mt-auto">
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(`${origin}/coach/${event.id}`).then(() => {
+                          setCopiedQrLink('prog')
+                          setTimeout(() => setCopiedQrLink(null), 2000)
+                        })
+                      }}
+                      className="w-full py-2 bg-neutral-700 hover:bg-neutral-600 text-white font-bold text-[11px] rounded-lg flex items-center justify-center gap-1.5 transition-colors uppercase tracking-wider font-display border border-neutral-600"
+                    >
+                      {copiedQrLink === 'prog' ? '¡Copiado!' : 'Copiar Enlace'}
+                    </button>
+                    
+                    <button
+                      onClick={() => {
+                        window.open(
+                          `https://wa.me/?text=${encodeURIComponent(
+                            `¡Hola! Sigue el programa en vivo y orden de coreografías en el escenario de *Dance4Ever* aquí:\n\n🔗 ${origin}/coach/${event.id}`
+                          )}`,
+                          '_blank'
+                        )
+                      }}
+                      className="w-full py-2 text-white font-bold text-[11px] rounded-lg flex items-center justify-center gap-1.5 transition-all shadow-md uppercase tracking-wider font-display hover:brightness-90"
+                      style={{ backgroundColor: '#25D366' }}
+                    >
+                      Compartir
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* 2. Portal Staff */}
+              {qrStaffUrl && (
+                <div className="bg-neutral-800/30 border border-neutral-700/40 rounded-2xl p-4 flex flex-col gap-3">
+                  <div className="flex flex-col gap-0.5">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-amber-400">
+                      Operaciones
+                    </span>
+                    <h4 className="font-display text-sm font-bold text-white uppercase">
+                      Portal de Staff
+                    </h4>
+                    <p className="text-[11px] text-neutral-500">
+                      Acceso operativo para logística y backstage.
+                    </p>
+                  </div>
+
+                  <div className="bg-white p-2.5 rounded-xl flex items-center justify-center max-w-[140px] mx-auto w-full aspect-square shadow-md">
+                    <img src={qrStaffUrl} alt="QR Staff" className="w-full h-full object-contain" />
+                  </div>
+
+                  <div className="flex flex-col gap-1.5 mt-auto">
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(`${origin}/staff`).then(() => {
+                          setCopiedQrLink('staff')
+                          setTimeout(() => setCopiedQrLink(null), 2000)
+                        })
+                      }}
+                      className="w-full py-2 bg-neutral-700 hover:bg-neutral-600 text-white font-bold text-[11px] rounded-lg flex items-center justify-center gap-1.5 transition-colors uppercase tracking-wider font-display border border-neutral-600"
+                    >
+                      {copiedQrLink === 'staff' ? '¡Copiado!' : 'Copiar Enlace'}
+                    </button>
+                    
+                    <button
+                      onClick={() => {
+                        window.open(
+                          `https://wa.me/?text=${encodeURIComponent(
+                            `Enlace de acceso al Portal del Staff de *Dance4Ever*:\n\n🔗 ${origin}/staff`
+                          )}`,
+                          '_blank'
+                        )
+                      }}
+                      className="w-full py-2 text-white font-bold text-[11px] rounded-lg flex items-center justify-center gap-1.5 transition-all shadow-md uppercase tracking-wider font-display hover:brightness-90"
+                      style={{ backgroundColor: '#25D366' }}
+                    >
+                      Compartir
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
            {/* Exports toggle */}
           <button
             onClick={() => setExportsExpanded(v => !v)}
-            className="w-full flex items-center justify-between bg-neutral-800/40 rounded-2xl border border-neutral-700/50 p-4 hover:border-fuchsia-500/30 transition-all"
+            className="w-full flex items-center justify-between bg-neutral-800/40 rounded-2xl border border-neutral-700/50 p-4 hover:border-fuchsia-500/30 transition-all text-left"
           >
             <div>
               <h2 className="font-display text-lg tracking-wider uppercase">Exportaciones y Respaldos</h2>

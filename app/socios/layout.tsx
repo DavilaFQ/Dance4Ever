@@ -548,7 +548,7 @@ export default function SociosLayout({ children }: { children: React.ReactNode }
             onClick={() => setShowQr(false)}
           >
             <div 
-              className="w-full max-w-5xl bg-neutral-900 border border-neutral-800 rounded-3xl p-6 sm:p-8 shadow-2xl flex flex-col gap-6 relative my-8 animate-scale-in" 
+              className="w-full max-w-sm bg-neutral-900 border border-neutral-800 rounded-3xl p-6 shadow-2xl flex flex-col items-center gap-5 relative select-none animate-scale-in" 
               onClick={e => e.stopPropagation()}
             >
               <button 
@@ -556,157 +556,39 @@ export default function SociosLayout({ children }: { children: React.ReactNode }
                 className="absolute top-4 right-4 p-1.5 hover:bg-neutral-800 rounded-full transition-colors text-neutral-400 hover:text-white z-10"
                 aria-label="Cerrar modal"
               >
-                <X className="w-6 h-6" />
+                <X className="w-5 h-5" />
               </button>
 
-              <div className="flex flex-col gap-1.5 text-center sm:text-left pr-8">
-                <h3 className="font-display text-xl tracking-wider uppercase text-white font-bold">
-                  Códigos QR y Enlaces del Evento
-                </h3>
-                <p className="text-sm text-neutral-400">
-                  Visualiza, comparte y copia los accesos para las plataformas de *{event.name}*.
-                </p>
+              <h3 className="font-display text-sm tracking-widest text-center uppercase font-bold text-neutral-400 mt-2">
+                QR Registro
+              </h3>
+              
+              <div className="bg-white p-4 rounded-2xl flex items-center justify-center w-full aspect-square max-w-[220px] shadow-lg">
+                <img src={qrUrl} alt="QR Registro" className="w-full h-full object-contain" />
               </div>
+              
+              <p className="text-[11px] text-neutral-300 text-center break-all font-mono bg-neutral-900/60 p-2 rounded-lg border border-neutral-700/50 select-all w-full">
+                {origin}/register/{event.id}?t={event.registration_token}
+              </p>
+              
+              <p className="text-xs text-neutral-400 text-center leading-relaxed">
+                Escanea este código QR para acceder al formulario de registro.
+              </p>
 
-              {/* Grid de 3 Columnas */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                
-                {/* 1. Registro Coaches */}
-                {qrUrl && (
-                  <div className="bg-neutral-950/50 border border-neutral-800/80 rounded-2xl p-5 flex flex-col gap-4">
-                    <div className="flex flex-col gap-1">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-pink-400">
-                        Inscripciones
-                      </span>
-                      <h4 className="font-display text-base font-bold text-white">
-                        Registro de Coaches
-                      </h4>
-                      <p className="text-xs text-neutral-400 min-h-[32px]">
-                        Formulario para registrar bailarines, categorías y coreografías.
-                      </p>
-                    </div>
-
-                    <div className="bg-white p-3 rounded-xl flex items-center justify-center max-w-[160px] mx-auto w-full aspect-square shadow-md">
-                      <img src={qrUrl} alt="QR Registro" className="w-full h-full object-contain" />
-                    </div>
-
-                    <div className="flex flex-col gap-2 mt-auto">
-                      <button
-                        onClick={() => copyToClipboard(`${origin}/register/${event.id}?t=${event.registration_token}`, 'reg')}
-                        className="w-full py-2.5 bg-neutral-800 hover:bg-neutral-700 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-2 transition-colors uppercase tracking-wider font-display"
-                      >
-                        {copiedLink === 'reg' ? '¡Copiado!' : 'Copiar Enlace'}
-                      </button>
-                      
-                      <button
-                        onClick={() => {
-                          window.open(
-                            `https://wa.me/?text=${encodeURIComponent(
-                              `¡Hola! Te comparto el enlace de registro oficial de *Dance4Ever* para nuestro próximo evento *${event.name}*:\n\n🔗 ${origin}/register/${event.id}?t=${event.registration_token}\n\nPor favor, ingresa aquí para registrar a tus integrantes y coreografías. ¡Te esperamos!`
-                            )}`,
-                            '_blank'
-                          )
-                        }}
-                        className="w-full py-2.5 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-2 transition-all shadow-md uppercase tracking-wider font-display hover:brightness-90"
-                        style={{ backgroundColor: WHATSAPP }}
-                      >
-                        WhatsApp
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {/* 2. Programa en Vivo Coaches */}
-                {qrCoachProgUrl && (
-                  <div className="bg-neutral-950/50 border border-neutral-800/80 rounded-2xl p-5 flex flex-col gap-4">
-                    <div className="flex flex-col gap-1">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-sky-400">
-                        Día del Evento
-                      </span>
-                      <h4 className="font-display text-base font-bold text-white">
-                        Programa Coaches
-                      </h4>
-                      <p className="text-xs text-neutral-400 min-h-[32px]">
-                        Vista en tiempo real del programa y orden de participación en escenario.
-                      </p>
-                    </div>
-
-                    <div className="bg-white p-3 rounded-xl flex items-center justify-center max-w-[160px] mx-auto w-full aspect-square shadow-md">
-                      <img src={qrCoachProgUrl} alt="QR Programa" className="w-full h-full object-contain" />
-                    </div>
-
-                    <div className="flex flex-col gap-2 mt-auto">
-                      <button
-                        onClick={() => copyToClipboard(`${origin}/coach/${event.id}`, 'prog')}
-                        className="w-full py-2.5 bg-neutral-800 hover:bg-neutral-700 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-2 transition-colors uppercase tracking-wider font-display"
-                      >
-                        {copiedLink === 'prog' ? '¡Copiado!' : 'Copiar Enlace'}
-                      </button>
-                      
-                      <button
-                        onClick={() => {
-                          window.open(
-                            `https://wa.me/?text=${encodeURIComponent(
-                              `¡Hola! Sigue el programa en vivo y orden de coreografías en el escenario de *Dance4Ever* aquí:\n\n🔗 ${origin}/coach/${event.id}`
-                            )}`,
-                            '_blank'
-                          )
-                        }}
-                        className="w-full py-2.5 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-2 transition-all shadow-md uppercase tracking-wider font-display hover:brightness-90"
-                        style={{ backgroundColor: WHATSAPP }}
-                      >
-                        WhatsApp
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {/* 3. Portal Staff */}
-                {qrStaffUrl && (
-                  <div className="bg-neutral-950/50 border border-neutral-800/80 rounded-2xl p-5 flex flex-col gap-4">
-                    <div className="flex flex-col gap-1">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-amber-400">
-                        Operaciones
-                      </span>
-                      <h4 className="font-display text-base font-bold text-white">
-                        Portal de Staff
-                      </h4>
-                      <p className="text-xs text-neutral-400 min-h-[32px]">
-                        Acceso operativo para logística, backstage y control de asistencia.
-                      </p>
-                    </div>
-
-                    <div className="bg-white p-3 rounded-xl flex items-center justify-center max-w-[160px] mx-auto w-full aspect-square shadow-md">
-                      <img src={qrStaffUrl} alt="QR Staff" className="w-full h-full object-contain" />
-                    </div>
-
-                    <div className="flex flex-col gap-2 mt-auto">
-                      <button
-                        onClick={() => copyToClipboard(`${origin}/staff`, 'staff')}
-                        className="w-full py-2.5 bg-neutral-800 hover:bg-neutral-700 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-2 transition-colors uppercase tracking-wider font-display"
-                      >
-                        {copiedLink === 'staff' ? '¡Copiado!' : 'Copiar Enlace'}
-                      </button>
-                      
-                      <button
-                        onClick={() => {
-                          window.open(
-                            `https://wa.me/?text=${encodeURIComponent(
-                              `Enlace de acceso al Portal del Staff de *Dance4Ever*:\n\n🔗 ${origin}/staff`
-                            )}`,
-                            '_blank'
-                          )
-                        }}
-                        className="w-full py-2.5 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-2 transition-all shadow-md uppercase tracking-wider font-display hover:brightness-90"
-                        style={{ backgroundColor: WHATSAPP }}
-                      >
-                        WhatsApp
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-              </div>
+              <button
+                onClick={() => {
+                  window.open(
+                    `https://wa.me/?text=${encodeURIComponent(
+                      `¡Hola! Te comparto el enlace de registro oficial de *Dance4Ever* para nuestro próximo evento *${event.name}*:\n\n🔗 ${origin}/register/${event.id}?t=${event.registration_token}\n\nPor favor, ingresa aquí para registrar a tus integrantes y coreografías. ¡Te esperamos!`
+                    )}`,
+                    '_blank'
+                  )
+                }}
+                className="w-full py-3 text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-all shadow-md text-sm uppercase tracking-wider font-display hover:brightness-90"
+                style={{ backgroundColor: WHATSAPP }}
+              >
+                Compartir por WhatsApp
+              </button>
             </div>
           </div>
         )}
