@@ -351,12 +351,11 @@ export default function ProgramaPage() {
 
     setPublishing(true)
     try {
-      // 1. Collect all unique coach names from all confirmed registrations
+      // 1. Collect all unique coach names from all confirmed registrations (excluding assistants)
       const allCoaches = new Set<string>()
       registrations.forEach(r => {
-        if (r.confirmed_at) {
-          if (r.coach_name) allCoaches.add(r.coach_name.trim())
-          r.extra_coaches?.forEach(x => x && allCoaches.add(x.trim()))
+        if (r.confirmed_at && r.coach_name) {
+          allCoaches.add(r.coach_name.trim())
         }
       })
 
