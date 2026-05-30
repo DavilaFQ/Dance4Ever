@@ -2,7 +2,7 @@
   "name": "Partners Platform - Dance4ever",
   "short_name": "Socios D4E",
   "description": "Plataforma de socios para Dance4ever",
-  "start_url": "/staff",
+  "start_url": "/socios?t=d4e",
   "scope": "/",
   "display": "standalone",
   "background_color": "#171717",

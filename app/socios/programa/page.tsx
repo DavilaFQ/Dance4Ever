@@ -351,7 +351,26 @@ export default function ProgramaPage() {
 
     setPublishing(true)
     try {
-      // Fetch existing participants to preserve their "present" status
+      // 1. Collect all unique coach names from all confirmed registrations
+      const allCoaches = new Set<string>()
+      registrations.forEach(r => {
+        if (r.confirmed_at) {
+          if (r.coach_name) allCoaches.add(r.coach_name.trim())
+          r.extra_coaches?.forEach(x => x && allCoaches.add(x.trim()))
+        }
+      })
+
+      // 2. Delete and recreate coaches for this event in Supabase
+      await supabase.from('coaches').delete().eq('event_id', event.id)
+
+      const coachRows = Array.from(allCoaches).map(name => ({ event_id: event.id, name }))
+      const { data: insertedCoaches } = coachRows.length
+        ? await supabase.from('coaches').insert(coachRows).select()
+        : { data: [] }
+      
+      const coachMap = new Map((insertedCoaches || []).map(c => [c.name.toLowerCase().trim(), c.id]))
+
+      // 3. Fetch existing participants to preserve their "present" status
       const { data: existingParts } = await supabase
         .from('participants')
         .select('name, style, category, present')
@@ -361,10 +380,14 @@ export default function ProgramaPage() {
       existingParts?.forEach(p => {
         // Normalize name, style, category as unique key
         const key = `${p.name ?? ''}|${p.style ?? ''}|${p.category ?? ''}`.toLowerCase().trim()
-        presentMap.set(key, !!p.present)
+        const presentMapVal = !!p.present
+        presentMap.set(key, presentMapVal)
       })
 
+      // 4. Delete and recreate participants with correct coach_id
       await supabase.from('participants').delete().eq('event_id', event.id)
+
+      const regMap = new Map(registrations.map(r => [r.id, r]))
 
       const rows = items.map((item, idx) => {
         const { act, reg } = item
@@ -379,6 +402,11 @@ export default function ProgramaPage() {
         const key = `${actName}|${act.style || ''}|${categoryCode}`.toLowerCase().trim()
         const isPresent = presentMap.get(key) ?? false
 
+        // Look up coach_id by mapping registration back to coach
+        const registration = regMap.get(reg.id)
+        const mainCoachName = registration?.coach_name?.toLowerCase().trim()
+        const coachId = mainCoachName ? (coachMap.get(mainCoachName) || null) : null
+
         return {
           event_id: event.id,
           position: idx + 1,
@@ -388,7 +416,7 @@ export default function ProgramaPage() {
           name: actName,
           academy: reg.academy,
           city: '',
-          coach_id: null,
+          coach_id: coachId,
           present: isPresent,
         }
       })
