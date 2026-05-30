@@ -15,8 +15,9 @@ export const MODALITY_MIN_DANCERS: Record<string, number> = {
   grupal: 4,
 }
 
-// Primera coreo siempre incluida en la inscripción base
-function isBeforeCoreoDeadline(_event: Event | null): boolean {
+export function isBeforeCoreoDeadline(event: Event | null): boolean {
+  const dl = toEndOfDay(event?.fecha_cambio_tarifa_coreo)
+  if (dl) return new Date() <= dl
   return true
 }
 

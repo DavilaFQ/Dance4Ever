@@ -45,6 +45,7 @@ export type Event = {
   deadline_precio_entrada: string | null
   deadline_registro: string | null
   deadline_cambios: string | null
+  fecha_cambio_tarifa_coreo: string | null
   dancers_por_asistente_gratis: number
 }
 

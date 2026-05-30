@@ -112,7 +112,9 @@ export function getPrecioEntradaRegistro(event: Event | null): number {
   return event?.cost_entrada_temprana ?? 500
 }
 
-export function isBeforeCoreoDeadline(_event: Event | null): boolean {
+export function isBeforeCoreoDeadline(event: Event | null): boolean {
+  const dl = toEndOfDay(event?.fecha_cambio_tarifa_coreo)
+  if (dl) return new Date() <= dl
   return true
 }
 
@@ -128,7 +130,7 @@ export function costBreakdown(state: State, event: Event | null) {
       : (event!.cost_entrada_temprana ?? 500)
     return event?.cost_entrada_temprana ?? 500
   })()
-  const beforeDeadline = true
+  const beforeDeadline = isBeforeCoreoDeadline(event)
 
   return { paq, rep, asistenteCosto, dancersPorAsistente, precioEntrada, beforeDeadline }
 }
