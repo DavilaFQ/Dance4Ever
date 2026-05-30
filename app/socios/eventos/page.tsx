@@ -680,7 +680,7 @@ export default function EventosPage() {
                     </p>
                   </div>
 
-                  <div className="bg-white p-2.5 rounded-xl flex items-center justify-center max-w-[140px] mx-auto w-full aspect-square shadow-md">
+                  <div className="bg-white p-3 rounded-xl flex items-center justify-center max-w-[200px] mx-auto w-full aspect-square shadow-md">
                     <img src={qrCoachProgUrl} alt="QR Programa" className="w-full h-full object-contain" />
                   </div>
 
@@ -692,7 +692,7 @@ export default function EventosPage() {
                           setTimeout(() => setCopiedQrLink(null), 2000)
                         })
                       }}
-                      className="w-full py-2 bg-neutral-700 hover:bg-neutral-600 text-white font-bold text-[11px] rounded-lg flex items-center justify-center gap-1.5 transition-colors uppercase tracking-wider font-display border border-neutral-600"
+                      className="w-full py-2 bg-black hover:bg-neutral-900 border border-neutral-800 text-white font-bold text-[11px] rounded-lg flex items-center justify-center gap-1.5 transition-colors uppercase tracking-wider font-display active:scale-95"
                     >
                       {copiedQrLink === 'prog' ? '¡Copiado!' : 'Copiar Enlace'}
                     </button>
@@ -730,7 +730,7 @@ export default function EventosPage() {
                     </p>
                   </div>
 
-                  <div className="bg-white p-2.5 rounded-xl flex items-center justify-center max-w-[140px] mx-auto w-full aspect-square shadow-md">
+                  <div className="bg-white p-3 rounded-xl flex items-center justify-center max-w-[200px] mx-auto w-full aspect-square shadow-md">
                     <img src={qrStaffUrl} alt="QR Staff" className="w-full h-full object-contain" />
                   </div>
 
@@ -742,7 +742,7 @@ export default function EventosPage() {
                           setTimeout(() => setCopiedQrLink(null), 2000)
                         })
                       }}
-                      className="w-full py-2 bg-neutral-700 hover:bg-neutral-600 text-white font-bold text-[11px] rounded-lg flex items-center justify-center gap-1.5 transition-colors uppercase tracking-wider font-display border border-neutral-600"
+                      className="w-full py-2 bg-black hover:bg-neutral-900 border border-neutral-800 text-white font-bold text-[11px] rounded-lg flex items-center justify-center gap-1.5 transition-colors uppercase tracking-wider font-display active:scale-95"
                     >
                       {copiedQrLink === 'staff' ? '¡Copiado!' : 'Copiar Enlace'}
                     </button>
