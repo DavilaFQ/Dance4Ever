@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useMemo, useCallback } from 'react'
+import { useEffect, useState, useMemo, useCallback, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import {
   supabase,
@@ -24,8 +24,11 @@ import { costoRegistro, costBreakdown, dancerCost, MODALITY_MIN_DANCERS } from '
 import {
   ArrowLeft, Edit3, Trash2, Plus, X, MessageCircle,
   CheckCircle2, Clock, ChevronDown, ChevronUp, AlertTriangle,
-  Check,
+  Check, FileText,
 } from 'lucide-react'
+import { generateReceiptPDF, generateCartaPDF } from '@/lib/pdf'
+import { type State } from '@/components/register/types'
+import { STATUS } from '../../colors'
 
 const MODALITY_LABELS: Record<Modality, string> = {
   solista: 'Solista', dueto: 'Dueto', trio: 'Trio', grupal: 'Grupal',
@@ -61,6 +64,81 @@ function actIsViable(modality: string, dancerCount: number): boolean {
   return dancerCount >= min
 }
 
+function mapDbToState(
+  reg: CoachRegistration,
+  dancers: RegistrationDancer[],
+  acts: RegistrationAct[]
+): State {
+  const academyField = reg.academy || ''
+  const teamNameField = reg.team_name || ''
+  
+  let academy = teamNameField
+  let city = ''
+  
+  const match = academyField.match(/^(.*?)\s*\(([^)]+)\)$/)
+  if (match) {
+    academy = match[1].trim()
+    city = match[2].trim()
+  } else if (academyField) {
+    academy = academyField
+  }
+
+  const extraCoaches = reg.extra_coaches || []
+  const assistants = extraCoaches
+    .filter(s => s.startsWith('Asistente:'))
+    .map(s => s.replace(/^Asistente:\s*/, '').trim())
+    .filter(Boolean)
+
+  const stateDancers = dancers.map(d => ({
+    name: d.name || '',
+    birthdate: d.birthdate || '',
+    categoryOverride: d.category_manual ? d.category : null,
+  }))
+
+  const dancerIdToIdx = new Map<number, number>()
+  dancers.forEach((d, idx) => {
+    dancerIdToIdx.set(d.id, idx)
+  })
+
+  const stateActs = acts.map(a => {
+    const dancerIds = a.dancer_ids || []
+    const dancerIndices = dancerIds
+      .map(id => dancerIdToIdx.get(id))
+      .filter((idx): idx is number => idx !== undefined)
+
+    return {
+      modality: a.modality,
+      ageCategory: a.age_category,
+      level: a.level,
+      style: a.style || '',
+      dancerIndices,
+    }
+  })
+
+  return {
+    coach: {
+      name: reg.coach_name || '',
+      phone: reg.coach_phone || '',
+      email: reg.coach_email || '',
+      assistants,
+    },
+    academy,
+    city,
+    teamName: teamNameField,
+    teamSize: dancers.length,
+    dancers: stateDancers,
+    actCount: acts.length,
+    acts: stateActs,
+    costPaquete: reg.cost_paquete,
+    costRepeticion: reg.cost_repeticion,
+    confirmedRegistrationId: reg.id,
+    ticketsCount: reg.tickets_count || 0,
+    confirmedAt: reg.confirmed_at,
+    notes: reg.notes || '',
+    signature: null,
+  }
+}
+
 export default function RegistrationDetailPage({ registrationIdProp, onBack }: { registrationIdProp?: string; onBack?: () => void }) {
   const router = useRouter()
   const params = useParams<{ registrationId: string }>()
@@ -73,8 +151,11 @@ export default function RegistrationDetailPage({ registrationIdProp, onBack }: {
   const [editLogs, setEditLogs] = useState<EditLog[]>([])
   const [loading, setLoading] = useState(true)
   const [showDanger, setShowDanger] = useState(false)
+  const [generatingPDF, setGeneratingPDF] = useState(false)
+  const [showHistory, setShowHistory] = useState(false)
 
   const [paid, setPaid] = useState(0)
+  const [paymentInput, setPaymentInput] = useState('')
   const [note, setNote] = useState('')
   const [broadcastChannel, setBroadcastChannel] = useState<any>(null)
 
@@ -149,9 +230,13 @@ export default function RegistrationDetailPage({ registrationIdProp, onBack }: {
     }
   }, [onBack])
 
+  const hasLoadedOnceRef = useRef(false)
+
   const loadData = useCallback(async () => {
     if (!registrationId) return
-    setLoading(true)
+    if (!hasLoadedOnceRef.current) {
+      setLoading(true)
+    }
     try {
       const id = Number(registrationId)
       const [[rr], dr, ar, { data: logs }] = await Promise.all([
@@ -170,11 +255,26 @@ export default function RegistrationDetailPage({ registrationIdProp, onBack }: {
 
         setPaid(r.paid ?? 0)
         setNote(r.payment_notes ?? '')
+        hasLoadedOnceRef.current = true
       } else {
         setReg(null)
       }
     } finally { setLoading(false) }
   }, [registrationId])
+
+  const handleDownloadPDF = async () => {
+    if (!reg) return
+    try {
+      setGeneratingPDF(true)
+      const mapped = mapDbToState(reg, dancers, acts)
+      await generateReceiptPDF(mapped, event)
+    } catch (err) {
+      console.error('Error generating PDF:', err)
+      alert('Hubo un error al generar tu comprobante PDF. Por favor, vuelve a intentarlo.')
+    } finally {
+      setGeneratingPDF(false)
+    }
+  }
 
   useEffect(() => { loadData() }, [loadData, lastSync])
 
@@ -211,14 +311,43 @@ export default function RegistrationDetailPage({ registrationIdProp, onBack }: {
     return c
   }, [acts])
 
-  const handlePaidBlur = async () => {
+  const handleConfirmPayment = async () => {
     if (!reg) return
-    const val = Math.max(0, paid)
-    const { error } = await supabase.from('coach_registrations').update({ paid: val }).eq('id', reg.id)
+    const abonoVal = Math.max(0, Number(paymentInput) || 0)
+    if (abonoVal <= 0) return
+
+    // Cap at total registration cost
+    const newPaidVal = Math.min(total, (reg.paid ?? 0) + abonoVal)
+    
+    // Save to DB
+    const { error } = await supabase
+      .from('coach_registrations')
+      .update({ paid: newPaidVal })
+      .eq('id', reg.id)
+
     if (!error) {
-      await logEdit(reg.id, { action: 'update', changes: { paid: { old: reg.paid, new: val } } })
+      // Log edit
+      await logEdit(reg.id, { 
+        action: 'update', 
+        changes: { 
+          paid: { old: reg.paid ?? 0, new: newPaidVal } 
+        } 
+      })
+      
+      // Update local state smoothly
+      setReg(prev => prev ? { ...prev, paid: newPaidVal } : null)
+      setPaid(newPaidVal)
+      
+      // Reset input to empty/0
+      setPaymentInput('')
+
+      // Broadcast update to real-time subscribers
       if (broadcastChannel) {
-        broadcastChannel.send({ type: 'broadcast', event: 'ledger_update', payload: { regId: reg.id, paid: val } }).catch(() => {})
+        broadcastChannel.send({ 
+          type: 'broadcast', 
+          event: 'ledger_update', 
+          payload: { regId: reg.id, paid: newPaidVal } 
+        }).catch(() => {})
       }
     }
   }
@@ -251,88 +380,113 @@ export default function RegistrationDetailPage({ registrationIdProp, onBack }: {
     )
   }
 
-  const isConfirmed = !!reg.confirmed_at
-  const wasEdited = isEditedAfterConfirm(reg)
+  const isDraft = !reg.submitted_at || reg.submitted_at.startsWith('1970-01-01')
+  const isConfirmed = !isDraft && !!reg.confirmed_at
+  const wasEdited = !isDraft && isEditedAfterConfirm(reg)
+  const regAssistants = (reg.extra_coaches || [])
+    .filter((s: string) => s.startsWith('Asistente:'))
+    .map((s: string) => s.replace(/^Asistente:\s*/, '').trim())
+    .filter(Boolean)
 
   return (
-    <div className="p-4 pb-8 space-y-6">
+    <div className="p-4 pb-8 space-y-4">
       <button onClick={() => onBack ? onBack() : router.back()} className="flex items-center gap-1.5 text-neutral-400 hover:text-white transition-colors text-sm">
         <ArrowLeft className="w-4 h-4" /> Regresar
       </button>
 
       {/* Header */}
-      <div className={`rounded-2xl border p-5 ${wasEdited ? 'bg-amber-500/5 border-amber-500/30' : 'bg-neutral-800/40 border-neutral-700/50'}`}>
-        {/* Pending banner */}
-        {!isConfirmed && (
-          <div className="mb-3 -mt-1 bg-amber-500/10 border border-amber-500/30 rounded-xl px-3 py-2 flex items-center gap-2">
-            <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
-            <p className="text-xs text-amber-300 font-bold">PENDIENTE DE REVISION</p>
-          </div>
-        )}
+      <div className={`rounded-2xl border p-4 ${wasEdited ? 'bg-amber-500/5 border-amber-500/30' : 'bg-neutral-800/40 border-neutral-700/50'}`}>
 
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <h1 className="font-display text-2xl tracking-wide uppercase text-white">
+            <h1 className="font-display text-2xl tracking-wide uppercase text-white leading-tight">
               {reg.academy || '(sin academia)'}
             </h1>
             <div className="flex items-center gap-2 mt-1 flex-wrap">
-              <span className={`inline-block text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
-                wasEdited ? 'bg-amber-500/15 text-amber-400 border border-amber-500/30' :
-                isConfirmed ? 'bg-green-500/15 text-green-400 border border-green-500/30' :
-                'bg-amber-500/15 text-amber-400 border border-amber-500/30'
-              }`}>
-                {wasEdited ? 'EDITADO' : isConfirmed ? 'CONFIRMADO' : 'PENDIENTE'}
+              <span 
+                style={{ 
+                  backgroundColor: isDraft ? STATUS.info : wasEdited ? STATUS.info : isConfirmed ? STATUS.success : STATUS.warning, 
+                  color: '#000000' 
+                }}
+                className="inline-block text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-lg shadow-sm"
+              >
+                {isDraft ? 'BORRADOR' : wasEdited ? 'EDITADO' : isConfirmed ? 'CONFIRMADO' : 'PENDIENTE'}
               </span>
               {reg.team_name && (
-                <span className="text-sm text-neutral-400">Equipo: <strong className="text-neutral-200">{reg.team_name}</strong></span>
+                <span className="text-sm text-neutral-400 font-medium">Equipo: <strong className="text-neutral-200 font-bold">{reg.team_name}</strong></span>
               )}
             </div>
           </div>
-          <div className="text-right shrink-0">
-            <p className="font-display text-2xl text-green-400">{formatMoney(total)}</p>
-            {paid > 0 && <p className="text-xs text-green-500 mt-0.5">Pagado: {formatMoney(paid)}</p>}
-          </div>
         </div>
 
-        <div className="mt-3 pt-3 border-t border-neutral-700/50 grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
-          <p className="text-neutral-400">Coach: <span className="text-neutral-200 font-semibold">{reg.coach_name}</span></p>
-          {reg.coach_phone && <p className="text-neutral-400">Telefono: <span className="text-neutral-200">{reg.coach_phone}</span></p>}
-          {reg.coach_email && <p className="text-neutral-400 sm:col-span-2">Email: <span className="text-neutral-200">{reg.coach_email}</span></p>}
+        <div className="mt-3 pt-3 border-t border-neutral-700/50 grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-sm">
+          <p className="text-neutral-400 font-medium">Coach: <span className="text-neutral-200 font-bold">{reg.coach_name}</span></p>
+          {reg.coach_phone && <p className="text-neutral-400 font-medium">Teléfono: <span className="text-neutral-200">{reg.coach_phone}</span></p>}
+          {reg.coach_email && <p className="text-neutral-400 font-medium sm:col-span-2">Email: <span className="text-neutral-200">{reg.coach_email}</span></p>}
+          {regAssistants.length > 0 && (
+            <p className="text-neutral-400 font-medium sm:col-span-2">
+              Asistentes: <span className="text-neutral-200 font-bold">{regAssistants.join(', ')}</span>
+            </p>
+          )}
         </div>
 
         {reg.notes && (
-          <div className="mt-3 pt-3 border-t border-amber-500/20 bg-amber-500/5 rounded-xl px-3 py-2.5">
-            <p className="text-[10px] text-amber-400 font-bold uppercase tracking-wider mb-1">Notas del coach</p>
+          <div className="mt-3 pt-3 border-t border-amber-500/20 bg-amber-500/5 rounded-xl px-3 py-2">
+            <p className="text-[10px] text-amber-400 font-bold uppercase tracking-wider mb-0.5">Notas del coach</p>
             <p className="text-xs text-amber-300/80 whitespace-pre-wrap">{reg.notes}</p>
           </div>
         )}
 
         {wasEdited && (
-          <p className="text-[10px] text-amber-400 mt-2 pt-2 border-t border-amber-500/20">
-            Original: {formatDate(reg.confirmed_at)} · Ultima edicion: {formatDate(reg.submitted_at)}
+          <p className="text-[10px] text-amber-400/80 mt-2 pt-2 border-t border-amber-500/20 italic">
+            Original: {formatDate(reg.confirmed_at)} · Última edición: {formatDate(reg.submitted_at)}
           </p>
         )}
 
-        <div className="flex gap-2 mt-3 pt-3 border-t border-neutral-700/50">
-          {reg.coach_phone && (
-            <a href={`https://wa.me/${reg.coach_phone.replace(/\D/g, '')}`} target="_blank" rel="noreferrer"
-              className="flex items-center gap-1.5 text-xs text-green-400 font-bold hover:underline bg-green-500/10 px-3 py-1.5 rounded-lg border border-green-500/20">
-              <MessageCircle className="w-3.5 h-3.5" /> WhatsApp
-            </a>
-          )}
-          {!isConfirmed && (
-            <button
-              onClick={async () => {
-                await supabase.from('coach_registrations').update({ confirmed_at: new Date().toISOString() }).eq('id', reg.id)
-                await logEdit(reg.id, { action: 'confirm', entity_type: 'registration', changes: { status: { old: 'pending', new: 'confirmed' } } })
-                loadData()
-              }}
-              className="flex items-center gap-1.5 text-xs font-bold bg-green-500/10 text-green-400 px-3 py-1.5 rounded-lg border border-green-500/20 hover:bg-green-500/20"
-            >
-              <Check className="w-3.5 h-3.5" /> Confirmar registro
-            </button>
-          )}
-          {isConfirmed && wasEdited && (
+        {/* Dynamic Action 2x2/4 Flat Symmetrical Grid */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mt-4 pt-4 border-t border-neutral-700/50">
+          {/* WhatsApp */}
+          <a 
+            href={reg.coach_phone ? `https://wa.me/${reg.coach_phone.replace(/\D/g, '')}` : '#'} 
+            target={reg.coach_phone ? "_blank" : undefined} 
+            rel="noreferrer"
+            style={{ backgroundColor: '#000000', color: '#ffffff' }}
+            className={`w-full h-11 bg-black hover:bg-neutral-900 border border-neutral-800 font-bold text-xs uppercase rounded-xl flex items-center justify-center gap-2 transition-all active:scale-[0.98] ${
+              !reg.coach_phone ? 'opacity-40 cursor-not-allowed pointer-events-none' : ''
+            }`}
+          >
+            <MessageCircle className="w-4 h-4 shrink-0" style={{ color: '#ffffff' }} />
+            <span style={{ color: '#ffffff' }}>WhatsApp</span>
+          </a>
+          
+          {/* Editar Datos */}
+          <button
+            onClick={() => {
+              setEditAcademy(reg.academy); setEditTeam(reg.team_name || ''); setEditCoachName(reg.coach_name)
+              setEditCoachPhone(reg.coach_phone); setEditCoachEmail(reg.coach_email || '')
+              setEditCostPaq(reg.cost_paquete ?? 0); setEditCostRep(reg.cost_repeticion ?? 0)
+              setEditTickets(reg.tickets_count ?? 0); setEditingCoach(true)
+            }}
+            style={{ backgroundColor: '#000000', color: '#ffffff' }}
+            className="w-full h-11 bg-black hover:bg-neutral-900 border border-neutral-800 font-bold text-xs uppercase rounded-xl flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
+          >
+            <Edit3 className="w-4 h-4 shrink-0" style={{ color: '#ffffff' }} />
+            <span style={{ color: '#ffffff' }}>Editar Datos</span>
+          </button>
+
+          {/* Descargar PDF */}
+          <button
+            onClick={handleDownloadPDF}
+            disabled={generatingPDF}
+            style={{ backgroundColor: '#000000', color: '#ffffff' }}
+            className="w-full h-11 bg-black hover:bg-neutral-900 border border-neutral-800 font-bold text-xs uppercase rounded-xl flex items-center justify-center gap-2 transition-all active:scale-[0.98] disabled:opacity-50"
+          >
+            <FileText className="w-4 h-4 shrink-0" style={{ color: '#ffffff' }} />
+            <span style={{ color: '#ffffff' }}>{generatingPDF ? 'Generando...' : 'Descargar PDF'}</span>
+          </button>
+
+          {/* Acción Dinámica (Confirmar / Aprobar / Carta Responsiva) */}
+          {isConfirmed && wasEdited ? (
             <button
               onClick={async () => {
                 const now = new Date().toISOString()
@@ -340,103 +494,145 @@ export default function RegistrationDetailPage({ registrationIdProp, onBack }: {
                 await logEdit(reg.id, { action: 'update', entity_type: 'registration', changes: { confirmed_at: { old: reg.confirmed_at, new: now } } })
                 loadData()
               }}
-              className="flex items-center gap-1.5 text-xs font-bold bg-fuchsia-500/10 text-fuchsia-400 px-3 py-1.5 rounded-lg border border-fuchsia-500/20 hover:bg-fuchsia-500/20 active:scale-95 transition-all"
+              style={{ backgroundColor: '#000000', color: '#ffffff' }}
+              className="w-full h-11 bg-black hover:bg-neutral-900 border border-neutral-800 font-bold text-xs uppercase rounded-xl flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
             >
-              <Check className="w-3.5 h-3.5" /> Aprobar cambios
+              <Check className="w-4 h-4 shrink-0" style={{ color: '#ffffff' }} />
+              <span style={{ color: '#ffffff' }}>Aprobar Cambios</span>
             </button>
+          ) : !isConfirmed ? (
+            <button
+              disabled={isDraft}
+              onClick={async () => {
+                if (isDraft) return
+                await supabase.from('coach_registrations').update({ confirmed_at: new Date().toISOString() }).eq('id', reg.id)
+                await logEdit(reg.id, { action: 'confirm', entity_type: 'registration', changes: { status: { old: 'pending', new: 'confirmed' } } })
+                loadData()
+              }}
+              style={{
+                backgroundColor: isDraft ? '#262626' : '#000000',
+                color: isDraft ? '#737373' : '#ffffff',
+                borderColor: isDraft ? '#404040' : '#262626',
+                cursor: isDraft ? 'not-allowed' : 'pointer'
+              }}
+              className="w-full h-11 border font-bold text-xs uppercase rounded-xl flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
+            >
+              <Check className="w-4 h-4 shrink-0" style={{ color: isDraft ? '#737373' : '#ffffff' }} />
+              <span>{isDraft ? 'Borrador (Incompleto)' : 'Confirmar Reg'}</span>
+            </button>
+          ) : reg.signature ? (
+            <button
+              onClick={async () => {
+                if (!reg) return
+                try {
+                  const cartaState = mapDbToState(reg, dancers, acts)
+                  cartaState.signature = reg.signature || null
+                  await generateCartaPDF(cartaState, event)
+                } catch (e) {
+                  alert('Error: ' + (e as Error).message)
+                }
+              }}
+              style={{ backgroundColor: '#000000', color: '#ffffff' }}
+              className="w-full h-11 bg-black hover:bg-neutral-900 border border-neutral-800 font-bold text-xs uppercase rounded-xl flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
+            >
+              <FileText className="w-4 h-4 shrink-0" style={{ color: '#ffffff' }} />
+              <span style={{ color: '#ffffff' }}>CARTA RESPONSIVA</span>
+            </button>
+          ) : (
+            <div className="w-full h-11 bg-neutral-800/40 border border-neutral-700/30 text-neutral-500 font-bold text-xs uppercase rounded-xl flex items-center justify-center gap-2 cursor-not-allowed select-none">
+              <CheckCircle2 className="w-4 h-4 shrink-0" />
+              <span>Registrado</span>
+            </div>
           )}
         </div>
       </div>
 
-      {/* Metricas */}
-      <Section title="Metricas">
-        <div className="grid grid-cols-4 gap-2 text-center">
-          <MetricItem label="Integrantes" value={dancers.length} />
-          <MetricItem label="Coreografías" value={acts.length} />
-          <MetricItem label="Boletos" value={reg.tickets_count ?? 0} accent />
-          <MetricItem label="Pagado" value={formatMoney(paid)} accent="success" />
+      {/* Gigantic Premium KPIs Grid */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+        <MetricItem label="Integrantes" value={dancers.length} />
+        <MetricItem label="Coreografías" value={acts.length} />
+        <MetricItem label="Boletos" value={reg.tickets_count ?? 0} accent />
+        <MetricItem 
+          label="Saldo Pendiente" 
+          value={isDraft ? "—" : formatMoney(total - paid)} 
+          accent={isDraft ? undefined : total - paid > 0 ? 'warning' : 'success'} 
+        />
+      </div>
+
+      {/* Pagos Section (Rendered with Transparent Background Container) */}
+      <section className="space-y-2.5">
+        <h2 className="font-display text-lg tracking-wider text-fuchsia-500 uppercase">Pagos y Notas</h2>
+        <div className="bg-transparent border-none p-0 space-y-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-end">
+            <div className="space-y-1 w-full text-xs">
+              <span className="text-neutral-500 font-bold uppercase block">Historial de Pagos</span>
+              <div className="bg-neutral-900/60 border border-neutral-800 rounded-xl px-4 py-2.5 flex justify-between items-center text-sm font-semibold h-[46px]">
+                <span className="text-neutral-400">Total Recibido:</span>
+                <span className="text-neutral-200 font-bold font-mono">
+                  {formatMoney(paid)} <span className="text-neutral-500 text-xs">/ {formatMoney(total)}</span>
+                </span>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between text-xs h-[46px] select-none bg-transparent border border-neutral-800 rounded-xl px-4 py-2.5">
+              <span className="text-neutral-500 font-bold uppercase">Estado:</span>
+              <span 
+                style={isDraft ? { color: STATUS.muted } : total - paid > 0 ? { color: STATUS.warning } : { color: STATUS.success }}
+                className={`font-black text-sm uppercase ${!isDraft && total - paid > 0 ? 'animate-pulse' : 'font-extrabold'}`}
+              >
+                {isDraft ? 'Borrador (Incompleto)' : total - paid > 0 ? `${formatMoney(total - paid)} Pendiente` : 'Saldado'}
+              </span>
+            </div>
+
+            <div className="space-y-1 w-full text-xs sm:col-span-2">
+              <span className="text-neutral-500 font-bold uppercase block">Registrar Nuevo Abono / Pago (MXN)</span>
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-500 font-bold font-mono text-sm">$</span>
+                  <input 
+                    type="number" 
+                    value={paymentInput}
+                    onChange={e => setPaymentInput(e.target.value)}
+                    placeholder="Monto a abonar..." 
+                    style={{ border: '2px solid #525252', backgroundColor: '#171717', color: '#ffffff', padding: '10px 14px 10px 24px' }}
+                    className="w-full h-11 rounded-xl text-sm focus:outline-none focus:border-fuchsia-500 font-mono" 
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={handleConfirmPayment}
+                  style={{ backgroundColor: STATUS.primaryStrong, color: '#ffffff' }}
+                  className="px-5 h-11 hover:bg-fuchsia-600 active:scale-95 text-xs font-bold uppercase tracking-wider rounded-xl transition-all duration-150 flex items-center justify-center shrink-0 cursor-pointer"
+                >
+                  Confirmar Pago
+                </button>
+              </div>
+            </div>
+          </div>
+          <label className="text-xs text-neutral-500 font-bold uppercase block">
+            Nota interna (Privada)
+            <input value={note}
+              onChange={e => setNote(e.target.value)}
+              onBlur={handleNoteBlur}
+              placeholder="Agregar nota interna..." 
+              style={{ border: '2px solid #525252', backgroundColor: '#171717', color: '#ffffff', padding: '10px 14px' }}
+              className="mt-1 w-full rounded-xl text-sm focus:outline-none focus:border-fuchsia-500 placeholder-neutral-500" />
+          </label>
         </div>
-        <div className="mt-3 text-center">
-          <p className="text-xs text-neutral-500">
-            Saldo pendiente:{' '}
-            <span className={`font-bold text-sm ${total - paid > 0 ? 'text-amber-400' : 'text-green-400'}`}>
-              {formatMoney(total - paid)}
-            </span>
-          </p>
-        </div>
-      </Section>
+      </section>
 
       {/* Desglose de Costos */}
       {breakdown && (
         <Section title="Desglose de Costos">
           <div className="space-y-2 text-sm">
-            <div className="flex justify-between"><span className="text-neutral-400">Inscripciones base</span><span className="text-neutral-200">{formatMoney(breakdown.inscrTotal)}</span></div>
-            <div className="flex justify-between"><span className="text-neutral-400">Coreografias extra</span><span className="text-neutral-200">{formatMoney(breakdown.repTotal)}</span></div>
-            {breakdown.asistTotal > 0 && <div className="flex justify-between"><span className="text-neutral-400">Asistentes ({breakdown.paidAssistants})</span><span className="text-neutral-200">{formatMoney(breakdown.asistTotal)}</span></div>}
-            {breakdown.ticketsTotal > 0 && <div className="flex justify-between"><span className="text-neutral-400">Boletos ({reg.tickets_count})</span><span className="text-neutral-200">{formatMoney(breakdown.ticketsTotal)}</span></div>}
-            <div className="flex justify-between pt-2 border-t border-neutral-700/50 font-bold"><span className="text-white">TOTAL</span><span className="text-green-400">{formatMoney(total)}</span></div>
+            <div className="flex justify-between"><span className="text-neutral-400 font-medium">Inscripciones base</span><span className="text-neutral-200 font-semibold">{formatMoney(breakdown.inscrTotal)}</span></div>
+            <div className="flex justify-between"><span className="text-neutral-400 font-medium">Coreografías extra</span><span className="text-neutral-200 font-semibold">{formatMoney(breakdown.repTotal)}</span></div>
+            {breakdown.asistTotal > 0 && <div className="flex justify-between"><span className="text-neutral-400 font-medium">Asistentes ({breakdown.paidAssistants})</span><span className="text-neutral-200 font-semibold">{formatMoney(breakdown.asistTotal)}</span></div>}
+            {breakdown.ticketsTotal > 0 && <div className="flex justify-between"><span className="text-neutral-400 font-medium">Boletos ({reg.tickets_count})</span><span className="text-neutral-200 font-semibold">{formatMoney(breakdown.ticketsTotal)}</span></div>}
+            <div className="flex justify-between pt-2 border-t border-neutral-700/50 font-black text-base"><span className="text-white">TOTAL REGISTRO</span><span className="text-green-400">{formatMoney(total)}</span></div>
           </div>
         </Section>
       )}
-
-      {/* Coach Info Edit */}
-      <Section title="Datos del Coach">
-        {editingCoach ? (
-          <div className="space-y-3">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <LabelInput label="Academia" value={editAcademy} onChange={setEditAcademy} />
-              <LabelInput label="Equipo" value={editTeam} onChange={setEditTeam} />
-              <LabelInput label="Coach" value={editCoachName} onChange={setEditCoachName} />
-              <LabelInput label="Telefono" value={editCoachPhone} onChange={setEditCoachPhone} />
-              <LabelInput label="Email" value={editCoachEmail} onChange={setEditCoachEmail} />
-              <LabelInputNumber label="Costo Paquete" value={editCostPaq} onChange={setEditCostPaq} />
-              <LabelInputNumber label="Costo Repeticion" value={editCostRep} onChange={setEditCostRep} />
-              <LabelInputNumber label="Boletos" value={editTickets} onChange={setEditTickets} accent />
-            </div>
-            <div className="flex gap-2 pt-2">
-              <button onClick={async () => {
-                const old = {
-                  academy: reg.academy, team_name: reg.team_name, coach_name: reg.coach_name,
-                  coach_phone: reg.coach_phone, coach_email: reg.coach_email,
-                  cost_paquete: reg.cost_paquete, cost_repeticion: reg.cost_repeticion, tickets_count: reg.tickets_count,
-                }
-                const { error } = await supabase.from('coach_registrations').update({
-                  academy: editAcademy, team_name: editTeam, coach_name: editCoachName,
-                  coach_phone: editCoachPhone, coach_email: editCoachEmail || null,
-                  cost_paquete: editCostPaq, cost_repeticion: editCostRep, tickets_count: editTickets,
-                }).eq('id', reg.id)
-                if (error) alert('Error: ' + error.message)
-                else {
-                  await logEdit(reg.id, {
-                    entity_type: 'registration',
-                    changes: Object.fromEntries(Object.entries({
-                      academy: { old: old.academy, new: editAcademy },
-                      team_name: { old: old.team_name, new: editTeam },
-                      coach_name: { old: old.coach_name, new: editCoachName },
-                      coach_phone: { old: old.coach_phone, new: editCoachPhone },
-                      coach_email: { old: old.coach_email, new: editCoachEmail },
-                      cost_paquete: { old: old.cost_paquete, new: editCostPaq },
-                      cost_repeticion: { old: old.cost_repeticion, new: editCostRep },
-                      tickets_count: { old: old.tickets_count, new: editTickets },
-                    }).filter(([, v]) => (v as { old: unknown; new: unknown }).old !== (v as { old: unknown; new: unknown }).new)),
-                  })
-                  setEditingCoach(false); loadData()
-                }
-              }} className="px-4 py-2 bg-fuchsia-500 text-white font-bold text-xs rounded-xl active:scale-95">GUARDAR</button>
-              <button onClick={() => setEditingCoach(false)} className="px-4 py-2 bg-neutral-700 text-neutral-300 text-xs rounded-xl">Cancelar</button>
-            </div>
-          </div>
-        ) : (
-          <button onClick={() => {
-            setEditAcademy(reg.academy); setEditTeam(reg.team_name || ''); setEditCoachName(reg.coach_name)
-            setEditCoachPhone(reg.coach_phone); setEditCoachEmail(reg.coach_email || '')
-            setEditCostPaq(reg.cost_paquete ?? 0); setEditCostRep(reg.cost_repeticion ?? 0)
-            setEditTickets(reg.tickets_count ?? 0); setEditingCoach(true)
-          }} className="flex items-center gap-2 text-sm text-fuchsia-400 hover:text-fuchsia-300 font-bold">
-            <Edit3 className="w-4 h-4" /> Editar datos del coach y costos
-          </button>
-        )}
-      </Section>
 
       {/* Integrantes */}
       <Section title={`Integrantes (${dancers.length})`}>
@@ -480,8 +676,8 @@ export default function RegistrationDetailPage({ registrationIdProp, onBack }: {
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
                       <p className="font-bold text-sm truncate">{idx + 1}. {d.name}</p>
-                      <p className="text-xs text-neutral-400 mt-0.5">
-                        {formatBirthdate(d.birthdate)}{age !== null && <> · {age} anos</>} ·{' '}
+                      <p className="text-xs text-neutral-400 mt-0.5 font-medium">
+                        {formatBirthdate(d.birthdate)}{age !== null && <> · {age} años</>} ·{' '}
                         <span className="font-semibold uppercase">{d.category ? AGE_CATEGORY_LABELS[d.category] : 'Sin cat.'}</span>
                         {d.category_manual && <span className="text-fuchsia-400 ml-1 text-[10px]">(manual)</span>}
                       </p>
@@ -545,7 +741,7 @@ export default function RegistrationDetailPage({ registrationIdProp, onBack }: {
                 if (error) alert('Error: ' + error.message)
                 else { await logEdit(reg.id, { entity_type: 'dancer', entity_id: editingDancer.id, changes: { name: { old: editingDancer.name, new: dancerName }, birthdate: { old: editingDancer.birthdate, new: dancerBirthdate } } }); setEditingDancer(null); loadData() }
               }} className="px-3 py-1.5 bg-fuchsia-500 text-white font-bold text-xs rounded-lg active:scale-95">GUARDAR</button>
-              <button onClick={() => setEditingDancer(null)} className="px-3 py-1.5 bg-neutral-700 text-neutral-300 text-xs rounded-lg">Cancelar</button>
+              <button onClick={() => setEditingDancer(null)} className="px-3 py-1.5 bg-black hover:bg-neutral-900 border border-neutral-800 text-white text-xs rounded-lg">Cancelar</button>
             </div>
           </div>
         )}
@@ -570,9 +766,10 @@ export default function RegistrationDetailPage({ registrationIdProp, onBack }: {
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className={`text-xs font-bold px-2 py-0.5 rounded uppercase ${viable ? 'bg-neutral-700' : 'bg-red-500/20 text-red-400'}`}>{MODALITY_LABELS[a.modality]}</span>
-                        {a.age_category && <span className="text-xs font-bold bg-amber-500/15 text-amber-400 px-2 py-0.5 rounded uppercase">{AGE_CATEGORY_LABELS[a.age_category]}</span>}
-                        {a.style && <span className="text-xs text-neutral-400">{a.style}</span>}
+                        {/* High contrast legible modality badges */}
+                        <span className={`text-[10px] font-black px-2.5 py-0.5 rounded-lg uppercase tracking-wider ${viable ? 'bg-purple-600 text-white' : 'bg-red-500 text-white animate-pulse'}`}>{MODALITY_LABELS[a.modality]}</span>
+                        {a.age_category && <span className="text-[10px] font-bold bg-amber-500/15 text-amber-400 px-2 py-0.5 rounded uppercase tracking-wider">{AGE_CATEGORY_LABELS[a.age_category]}</span>}
+                        {a.style && <span className="text-xs text-neutral-400 font-bold uppercase">{a.style}</span>}
                         {a.level && a.modality === 'grupal' && <span className="text-[10px] text-neutral-500 capitalize">({a.level})</span>}
                         {!viable && <span className="text-[10px] text-red-400 font-bold uppercase">INVALIDO: {dancersInAct.length} de {MODALITY_MIN_DANCERS[a.modality]} min</span>}
                       </div>
@@ -652,77 +849,64 @@ export default function RegistrationDetailPage({ registrationIdProp, onBack }: {
               }} className="px-3 py-1.5 bg-fuchsia-500 text-white font-bold text-xs rounded-lg active:scale-95">
                 {editingAct ? 'GUARDAR' : 'AGREGAR'}
               </button>
-              <button onClick={() => { setEditingAct(null); setActStyle('') }} className="px-3 py-1.5 bg-neutral-700 text-neutral-300 text-xs rounded-lg">Cancelar</button>
+              <button onClick={() => { setEditingAct(null); setActStyle('') }} className="px-3 py-1.5 bg-black hover:bg-neutral-900 border border-neutral-800 text-white text-xs rounded-lg">Cancelar</button>
             </div>
           </div>
         ) : null}
       </Section>
 
-      {/* Historial */}
-      <Section title="Historial de Cambios">
-        {editLogs.length === 0 ? (
-          <p className="text-sm text-neutral-500 text-center py-4">Sin historial de cambios registrado.</p>
-        ) : (
-          <div className="space-y-3">
-            {editLogs.map((log) => {
-              const changes = log.changes ?? {}
-              const fieldEntries = Object.entries(changes)
-              return (
-                <div key={log.id} className="relative pl-6 pb-3 border-l-2 border-neutral-700 last:border-transparent">
-                  <div className="absolute left-0 top-1 -translate-x-1/2 w-3 h-3 rounded-full bg-neutral-600 border-2 border-neutral-800" />
-                  <p className="text-xs font-bold text-neutral-300">
-                    {log.action === 'confirm' ? 'Registro confirmado' : log.action === 'create' ? 'Creado' : log.action === 'delete' ? 'Eliminado' : 'Modificacion'}
-                    <span className="text-neutral-500 ml-2 font-normal">{formatRelative(log.created_at)}</span>
-                  </p>
-                  <p className="text-[10px] text-neutral-500 mt-0.5">Por: {log.edited_by === 'coach' ? reg?.coach_name : 'Administrador'}{log.entity_type && <> · {log.entity_type}</>}</p>
-                  {fieldEntries.length > 0 && (
-                    <div className="mt-1.5 space-y-1">
-                      {fieldEntries.map(([field, diff]) => {
-                        const d = diff as { old: unknown; new: unknown }
-                        return (
-                          <div key={field} className="text-[10px] bg-neutral-800/40 rounded-lg px-2 py-1">
-                            <span className="text-neutral-500">{field}:</span>{' '}
-                            <span className="text-red-400 line-through">{String(d.old ?? '-')}</span>
-                            {' -> '}
-                            <span className="text-green-400">{String(d.new ?? '-')}</span>
-                          </div>
-                        )
-                      })}
+      {/* Historial de Cambios (Collapsible) */}
+      <section className="bg-neutral-800/20 rounded-2xl border border-neutral-700/40 p-4">
+        <button 
+          onClick={() => setShowHistory(v => !v)}
+          className="w-full flex items-center justify-between text-left focus:outline-none"
+        >
+          <h2 className="font-display text-lg tracking-wider text-fuchsia-500 uppercase">Historial de Cambios ({editLogs.length})</h2>
+          {showHistory ? <ChevronUp className="w-5 h-5 text-fuchsia-500" /> : <ChevronDown className="w-5 h-5 text-fuchsia-500" />}
+        </button>
+        
+        {showHistory && (
+          <div className="space-y-3 mt-4 pt-3 border-t border-neutral-700/50">
+            {editLogs.length === 0 ? (
+              <p className="text-sm text-neutral-500 text-center py-4">Sin historial de cambios registrado.</p>
+            ) : (
+              <div className="space-y-3">
+                {editLogs.map((log) => {
+                  const changes = log.changes ?? {}
+                  const fieldEntries = Object.entries(changes)
+                  return (
+                    <div key={log.id} className="relative pl-6 pb-3 border-l-2 border-neutral-700 last:border-transparent">
+                      <div className="absolute left-0 top-1 -translate-x-1/2 w-3 h-3 rounded-full bg-neutral-600 border-2 border-neutral-800" />
+                      <p className="text-xs font-bold text-neutral-300">
+                        {log.action === 'confirm' ? 'Registro confirmado' : log.action === 'create' ? 'Creado' : log.action === 'delete' ? 'Eliminado' : 'Modificacion'}
+                        <span className="text-neutral-500 ml-2 font-normal">{formatRelative(log.created_at)}</span>
+                      </p>
+                      <p className="text-[10px] text-neutral-500 mt-0.5">Por: {log.edited_by === 'coach' ? reg?.coach_name : 'Administrador'}{log.entity_type && <> · {log.entity_type}</>}</p>
+                      {fieldEntries.length > 0 && (
+                        <div className="mt-1.5 space-y-1">
+                          {fieldEntries.map(([field, diff]) => {
+                            const d = diff as { old: unknown; new: unknown }
+                            return (
+                              <div key={field} className="text-[10px] bg-neutral-800/40 rounded-lg px-2 py-1">
+                                <span className="text-neutral-500">{field}:</span>{' '}
+                                <span className="text-red-400 line-through">{String(d.old ?? '-')}</span>
+                                {' -> '}
+                                <span className="text-green-400">{String(d.new ?? '-')}</span>
+                              </div>
+                            )
+                          })}
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
-              )
-            })}
+                  )
+                })}
+              </div>
+            )}
           </div>
         )}
-      </Section>
+      </section>
 
-      {/* Pagos */}
-      <Section title="Pagos">
-        <div className="space-y-3">
-          <div className="flex items-center gap-3">
-            <label className="text-xs text-neutral-500 font-bold uppercase flex-1">
-              Abono registrado
-              <input type="number" value={paid || ''}
-                onChange={e => setPaid(Math.max(0, Number(e.target.value) || 0))}
-                onBlur={handlePaidBlur}
-                className="mt-1 w-full px-3 py-2 bg-neutral-700/50 rounded-lg border border-neutral-600 text-sm text-white focus:outline-none focus:border-fuchsia-500 font-mono" />
-            </label>
-            <div className="pt-5">
-              <span className={`font-bold text-sm ${total - paid > 0 ? 'text-amber-400' : 'text-green-400'}`}>{formatMoney(total - paid)} pendiente</span>
-            </div>
-          </div>
-          <label className="text-xs text-neutral-500 font-bold uppercase block">
-            Nota interna
-            <input value={note}
-              onChange={e => setNote(e.target.value)}
-              onBlur={handleNoteBlur}
-              placeholder="Agregar nota..." className="mt-1 w-full px-3 py-2 bg-neutral-700/50 rounded-lg border border-neutral-600 text-sm text-white focus:outline-none focus:border-fuchsia-500 placeholder-neutral-500" />
-          </label>
-        </div>
-      </Section>
-
-      {/* Danger Zone (collapsible) */}
+      {/* Danger Zone (Collapsible) */}
       <div className="rounded-2xl border border-red-500/30 bg-red-500/5 overflow-hidden">
         <button onClick={() => setShowDanger(v => !v)} className="w-full flex items-center justify-between p-4 text-sm font-bold text-red-400">
           Zona de Peligro
@@ -735,7 +919,7 @@ export default function RegistrationDetailPage({ registrationIdProp, onBack }: {
                 await supabase.from('coach_registrations').update({ confirmed_at: null }).eq('id', reg.id)
                 await logEdit(reg.id, { action: 'update', changes: { status: { old: 'confirmed', new: 'pending' } } })
                 loadData()
-              }} className="w-full py-2 rounded-lg text-xs font-bold bg-amber-500/10 text-amber-400 border border-amber-500/30">
+              }} className="w-full py-2.5 rounded-xl text-xs font-bold bg-amber-500/10 text-amber-400 border border-amber-500/30 active:scale-95 transition-all">
                 Desconfirmar registro
               </button>
             ) : null}
@@ -744,12 +928,91 @@ export default function RegistrationDetailPage({ registrationIdProp, onBack }: {
                 if (!confirm('ELIMINAR COMPLETAMENTE este registro? Esto borrara todos los integrantes, coreografías e historial de forma permanente.')) return
                 await supabase.from('coach_registrations').delete().eq('id', reg.id)
                 if (onBack) onBack(); else router.push('/socios/registros')
-              }} className="w-full py-2 rounded-lg text-xs font-bold bg-red-500/10 text-red-400 border border-red-500/30">
+              }} className="w-full py-2.5 rounded-xl text-xs font-bold bg-red-500/10 text-red-400 border border-red-500/30 active:scale-95 transition-all">
               Eliminar registro completo
             </button>
           </div>
         )}
       </div>
+
+      {/* Coach Info Editor Modal Overlay */}
+      {editingCoach && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-6 sm:p-8">
+          <div 
+            style={{ backgroundColor: '#171717', border: '2px solid #3f3f3f', borderRadius: '16px', padding: '32px' }}
+            className="w-full max-w-lg space-y-6 shadow-2xl relative"
+          >
+            <button 
+              onClick={() => setEditingCoach(false)} 
+              className="absolute top-4 right-4 text-neutral-400 hover:text-white transition-colors"
+              aria-label="Cerrar modal"
+            >
+              <X className="w-5 h-5" style={{ color: '#ffffff' }} />
+            </button>
+            
+            <div className="flex items-center gap-2">
+              <Edit3 className="w-5 h-5 text-fuchsia-500" />
+              <h3 className="font-display text-lg tracking-wider uppercase font-black" style={{ color: '#ffffff' }}>Editar Datos del Coach</h3>
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-h-[55vh] overflow-y-auto pr-1">
+              <LabelInput label="Academia / Colegio" value={editAcademy} onChange={setEditAcademy} />
+              <LabelInput label="Equipo / Team Name" value={editTeam} onChange={setEditTeam} />
+              <LabelInput label="Nombre del Coach" value={editCoachName} onChange={setEditCoachName} />
+              <LabelInput label="WhatsApp / Teléfono" value={editCoachPhone} onChange={setEditCoachPhone} />
+              <LabelInput label="Email / Correo" value={editCoachEmail} onChange={setEditCoachEmail} />
+              <LabelInputNumber label="Inscripción Base (MXN)" value={editCostPaq} onChange={setEditCostPaq} />
+              <LabelInputNumber label="Coreografía Extra (MXN)" value={editCostRep} onChange={setEditCostRep} />
+              <LabelInputNumber label="Boletos Acompañante" value={editTickets} onChange={setEditTickets} accent />
+            </div>
+            
+            <div className="flex justify-end gap-2.5 pt-2">
+              <button 
+                onClick={() => setEditingCoach(false)} 
+                className="px-4 py-2.5 font-bold text-xs rounded-xl transition-all"
+                style={{ color: '#ffffff', backgroundColor: '#404040' }}
+              >
+                Cancelar
+              </button>
+              <button 
+                onClick={async () => {
+                  const old = {
+                    academy: reg.academy, team_name: reg.team_name, coach_name: reg.coach_name,
+                    coach_phone: reg.coach_phone, coach_email: reg.coach_email,
+                    cost_paquete: reg.cost_paquete, cost_repeticion: reg.cost_repeticion, tickets_count: reg.tickets_count,
+                  }
+                  const { error } = await supabase.from('coach_registrations').update({
+                    academy: editAcademy, team_name: editTeam, coach_name: editCoachName,
+                    coach_phone: editCoachPhone, coach_email: editCoachEmail || null,
+                    cost_paquete: editCostPaq, cost_repeticion: editCostRep, tickets_count: editTickets,
+                  }).eq('id', reg.id)
+                  if (error) alert('Error: ' + error.message)
+                  else {
+                    await logEdit(reg.id, {
+                      entity_type: 'registration',
+                      changes: Object.fromEntries(Object.entries({
+                        academy: { old: old.academy, new: editAcademy },
+                        team_name: { old: old.team_name, new: editTeam },
+                        coach_name: { old: old.coach_name, new: editCoachName },
+                        coach_phone: { old: old.coach_phone, new: editCoachPhone },
+                        coach_email: { old: old.coach_email, new: editCoachEmail },
+                        cost_paquete: { old: old.cost_paquete, new: editCostPaq },
+                        cost_repeticion: { old: old.cost_repeticion, new: editCostRep },
+                        tickets_count: { old: old.tickets_count, new: editTickets },
+                      }).filter(([, v]) => (v as { old: unknown; new: unknown }).old !== (v as { old: unknown; new: unknown }).new)),
+                    })
+                    setEditingCoach(false); loadData()
+                  }
+                }} 
+                className="px-4 py-2.5 font-bold text-xs rounded-xl active:scale-95 transition-all"
+                style={{ color: '#ffffff', backgroundColor: STATUS.primary }}
+              >
+                GUARDAR CAMBIOS
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -757,36 +1020,50 @@ export default function RegistrationDetailPage({ registrationIdProp, onBack }: {
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section>
-      <h2 className="font-display text-lg tracking-wider text-fuchsia-500 uppercase mb-3">{title}</h2>
+      <h2 className="font-display text-lg tracking-wider text-fuchsia-500 uppercase mb-2.5">{title}</h2>
       <div className="bg-neutral-800/20 rounded-2xl border border-neutral-700/40 p-4">{children}</div>
     </section>
   )
 }
 
 function MetricItem({ label, value, accent }: { label: string; value: string | number; accent?: boolean | string }) {
-  const color = accent === 'success' ? 'text-green-400' : accent ? 'text-fuchsia-400' : 'text-white'
+  const colorStyle = 
+    accent === 'success' ? { color: STATUS.success } : 
+    accent === 'warning' ? { color: STATUS.warning } : 
+    accent ? { color: STATUS.primary } : {}
   return (
-    <div>
-      <p className="text-[9px] text-neutral-500 uppercase tracking-wider">{label}</p>
-      <p className={`font-display text-base mt-0.5 ${color}`}>{value}</p>
+    <div className="bg-neutral-900/60 border border-neutral-800/60 rounded-xl p-3 shadow-inner flex flex-col justify-center text-center">
+      <p className="text-[9px] text-neutral-500 uppercase tracking-wider font-bold">{label}</p>
+      <p className="text-2xl sm:text-3xl font-black mt-1 leading-none" style={colorStyle}>{value}</p>
     </div>
   )
 }
 
 function LabelInput({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
   return (
-    <label className="text-xs text-neutral-500 font-bold uppercase">
+    <label className="text-xs font-bold uppercase block" style={{ color: '#a3a3a3' }}>
       {label}
-      <input value={value} onChange={e => onChange(e.target.value)} className="mt-1 w-full px-3 py-2 bg-neutral-700/50 rounded-lg border border-neutral-600 text-sm text-white focus:outline-none focus:border-fuchsia-500" />
+      <input 
+        value={value} 
+        onChange={e => onChange(e.target.value)} 
+        style={{ border: '2px solid #525252', backgroundColor: '#171717', color: '#ffffff', padding: '10px 14px', borderRadius: '12px' }}
+        className="mt-1 w-full text-sm focus:outline-none focus:border-fuchsia-500" 
+      />
     </label>
   )
 }
 
 function LabelInputNumber({ label, value, onChange, accent }: { label: string; value: number; onChange: (v: number) => void; accent?: boolean }) {
   return (
-    <label className={`text-xs font-bold uppercase ${accent ? 'text-fuchsia-400' : 'text-neutral-500'}`}>
+    <label className="text-xs font-bold uppercase block" style={{ color: accent ? STATUS.primary : '#a3a3a3' }}>
       {label}
-      <input type="number" value={value} onChange={e => onChange(Number(e.target.value) || 0)} className={`mt-1 w-full px-3 py-2 bg-neutral-700/50 rounded-lg border text-sm text-white focus:outline-none focus:border-fuchsia-500 ${accent ? 'border-fuchsia-500/30' : 'border-neutral-600'}`} />
+      <input 
+        type="number" 
+        value={value} 
+        onChange={e => onChange(Number(e.target.value) || 0)} 
+        style={{ border: accent ? `2px solid ${STATUS.primary}` : '2px solid #525252', backgroundColor: '#171717', color: '#ffffff', padding: '10px 14px', borderRadius: '12px' }}
+        className="mt-1 w-full text-sm focus:outline-none focus:border-fuchsia-500" 
+      />
     </label>
   )
 }

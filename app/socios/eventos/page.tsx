@@ -1,9 +1,10 @@
 'use client'
 
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState, useMemo, useRef, useCallback } from 'react'
 import { supabase, Event } from '@/lib/supabase'
 import { useEventContext } from '@/app/socios/layout'
 import { safeFormatDate, generateToken } from '@/lib/format'
+import { TAB } from '../colors'
 import {
   Plus,
   X,
@@ -14,7 +15,6 @@ import {
   Unlock,
   Copy,
   Check,
-  RefreshCw,
   Download,
   Save,
   DollarSign,
@@ -26,8 +26,11 @@ import {
   ChevronDown,
   ChevronUp,
   Link2,
+  Users,
 } from 'lucide-react'
 import { exportExcel, exportPdf, exportRegistrations, exportAllRegistrationsZip } from '@/lib/export'
+import { fetchPortalConfig, savePortalConfig } from '@/lib/portalConfig'
+
 
 export default function EventosPage() {
   const { events, event, loadEvents } = useEventContext()
@@ -39,7 +42,11 @@ export default function EventosPage() {
   const [copiedId, setCopiedId] = useState<string | null>(null)
   const [origin, setOrigin] = useState('')
   const [exporting, setExporting] = useState<string | null>(null)
-  const [snapshots, setSnapshots] = useState<{ id: string; label: string; createdAt: string }[]>([])
+  const [snapshots, setSnapshots] = useState<{ id: string; label: string; created_at: string }[]>([])
+
+  // Auto-save indicator
+  const [savedIndicator, setSavedIndicator] = useState<'saving' | 'saved' | null>(null)
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Event settings
   const [costPaquete, setCostPaquete] = useState(2700)
@@ -50,9 +57,10 @@ export default function EventosPage() {
   const [deadlineEntrada, setDeadlineEntrada] = useState('')
   const [deadlineRegistro, setDeadlineRegistro] = useState('')
   const [deadlineCambios, setDeadlineCambios] = useState('')
-  const [fechaCambioCoreo, setFechaCambioCoreo] = useState('')
   const [dancersPorAsistente, setDancersPorAsistente] = useState(8)
+  const [eventsExpanded, setEventsExpanded] = useState(true)
   const [settingsExpanded, setSettingsExpanded] = useState(false)
+  const [exportsExpanded, setExportsExpanded] = useState(false)
   const [savingSettings, setSavingSettings] = useState(false)
 
   // Edit state
@@ -62,13 +70,49 @@ export default function EventosPage() {
   // Registrations count
   const [regCount, setRegCount] = useState(0)
 
+  // Portal status
+  const [enableOperations, setEnableOperations] = useState(true)
+  const [enableRegistration, setEnableRegistration] = useState(true)
+  const [loadingPortalConfig, setLoadingPortalConfig] = useState(false)
+
+
+  // Load snapshots from Supabase, migrate from localStorage on first load
   useEffect(() => {
     setOrigin(window.location.origin)
-    try {
-      const raw = localStorage.getItem('d4e:socios:snapshots')
-      if (raw) setSnapshots(JSON.parse(raw))
-    } catch {}
-  }, [])
+    if (!event) return
+    supabase.from('event_snapshots').select('id, label, created_at')
+      .eq('event_id', event.id)
+      .order('created_at', { ascending: false })
+      .then(({ data }) => {
+        if (data && data.length > 0) {
+          setSnapshots(data as { id: string; label: string; created_at: string }[])
+          return
+        }
+        // Migrate from localStorage if Supabase is empty
+        try {
+          const raw = localStorage.getItem('d4e:socios:snapshots')
+          if (raw) {
+            const localSnaps = JSON.parse(raw) as { id: string; label: string; createdAt: string }[]
+            if (localSnaps.length > 0) {
+              const rows = localSnaps.map(s => ({
+                event_id: event.id,
+                label: s.label,
+                created_at: s.createdAt || new Date().toISOString(),
+              }))
+              supabase.from('event_snapshots').insert(rows).then(() => {
+                supabase.from('event_snapshots').select('id, label, created_at')
+                  .eq('event_id', event.id)
+                  .order('created_at', { ascending: false })
+                  .then(({ data: d2 }) => {
+                    if (d2) setSnapshots(d2 as { id: string; label: string; created_at: string }[])
+                  })
+              })
+              localStorage.removeItem('d4e:socios:snapshots')
+            }
+          }
+        } catch { /* ignore */ }
+      })
+  }, [event])
 
   useEffect(() => {
     if (!event) return
@@ -85,11 +129,97 @@ export default function EventosPage() {
     setCostEntradaTemprana(event.cost_entrada_temprana ?? 500)
     setCostEntradaTardia(event.cost_entrada_tardia ?? 600)
     setDeadlineEntrada(event.deadline_precio_entrada ?? '')
-    setDeadlineRegistro(event.deadline_registro ? event.deadline_registro.slice(0, 16) : '')
-    setDeadlineCambios(event.deadline_cambios ? event.deadline_cambios.slice(0, 16) : '')
-    setFechaCambioCoreo(event.fecha_cambio_tarifa_coreo ?? '')
+    setDeadlineRegistro(event.deadline_registro ? event.deadline_registro.slice(0, 10) : '')
+    setDeadlineCambios(event.deadline_cambios ? event.deadline_cambios.slice(0, 10) : '')
     setDancersPorAsistente(event.dancers_por_asistente_gratis ?? 8)
   }, [event])
+
+  useEffect(() => {
+    if (!event) return
+    setLoadingPortalConfig(true)
+    fetchPortalConfig(event.id)
+      .then(config => {
+        setEnableOperations(config.enableOperations)
+        setEnableRegistration(config.enableRegistration)
+      })
+      .finally(() => setLoadingPortalConfig(false))
+  }, [event?.id])
+
+  // Reusable save function (used by both auto-save and explicit save)
+  const doSaveSettings = useCallback(async () => {
+    if (!event) return
+    const { error } = await supabase.from('events').update({
+      default_cost_paquete: costPaquete,
+      default_cost_repeticion: costRepeticion,
+      cost_asistente: costAsistente,
+      cost_entrada_temprana: costEntradaTemprana,
+      cost_entrada_tardia: costEntradaTardia,
+      deadline_precio_entrada: deadlineEntrada ? deadlineEntrada : null,
+      deadline_registro: deadlineRegistro ? new Date(deadlineRegistro).toISOString() : null,
+      deadline_cambios: deadlineCambios ? new Date(deadlineCambios).toISOString() : null,
+      dancers_por_asistente_gratis: dancersPorAsistente,
+    }).eq('id', event.id)
+    if (!error) loadEvents()
+    return error
+  }, [event, costPaquete, costRepeticion, costAsistente, costEntradaTemprana, costEntradaTardia, deadlineEntrada, deadlineRegistro, deadlineCambios, dancersPorAsistente, loadEvents])
+
+  // Auto-save settings on any field change (debounced 1.2s)
+  useEffect(() => {
+    if (!event) return
+    // Don't auto-save right after loading (event object changed = settings were just loaded)
+    const skipInitial = event.default_cost_paquete === costPaquete &&
+      event.default_cost_repeticion === costRepeticion &&
+      event.cost_asistente === costAsistente &&
+      event.cost_entrada_temprana === costEntradaTemprana &&
+      event.cost_entrada_tardia === costEntradaTardia
+    if (skipInitial && event.deadline_precio_entrada === (deadlineEntrada || null) &&
+      (event.deadline_registro ? event.deadline_registro.slice(0, 10) : '') === deadlineRegistro &&
+      (event.deadline_cambios ? event.deadline_cambios.slice(0, 10) : '') === deadlineCambios &&
+      event.dancers_por_asistente_gratis === dancersPorAsistente) return
+
+    setSavedIndicator('saving')
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
+    saveTimerRef.current = setTimeout(async () => {
+      const error = await doSaveSettings()
+      if (!error) {
+        setSavedIndicator('saved')
+        setTimeout(() => setSavedIndicator(null), 2000)
+      } else {
+        setSavedIndicator(null)
+      }
+    }, 1200)
+    return () => { if (saveTimerRef.current) clearTimeout(saveTimerRef.current) }
+  }, [costPaquete, costRepeticion, costAsistente, costEntradaTemprana, costEntradaTardia, deadlineEntrada, deadlineRegistro, deadlineCambios, dancersPorAsistente, event, doSaveSettings])
+
+  async function handleToggleOperations() {
+    if (!event) return
+    const nextVal = !enableOperations
+    setEnableOperations(nextVal)
+    try {
+      await savePortalConfig(event.id, {
+        enableOperations: nextVal,
+        enableRegistration
+      })
+    } catch (err) {
+      alert('Error al guardar: ' + (err as Error).message)
+      setEnableOperations(!nextVal)
+    }
+  }
+
+  async function handleToggleRegistration() {
+    if (!event) return
+    const nextVal = !enableRegistration
+    setEnableRegistration(nextVal)
+    try {
+      await savePortalConfig(event.id, {
+        enableOperations,
+        enableRegistration: nextVal
+      })
+    } catch (err) {
+      alert('Error al guardar: ' + (err as Error).message)
+      setEnableRegistration(!nextVal)
+    }
+  }
 
   async function handleCreate() {
     if (!eventName || !eventDate) return
@@ -136,38 +266,11 @@ export default function EventosPage() {
     loadEvents()
   }
 
-  async function handleSaveSettings() {
-    if (!event) return
-    setSavingSettings(true)
-    const { error } = await supabase.from('events').update({
-      default_cost_paquete: costPaquete,
-      default_cost_repeticion: costRepeticion,
-      cost_asistente: costAsistente,
-      cost_entrada_temprana: costEntradaTemprana,
-      cost_entrada_tardia: costEntradaTardia,
-      deadline_precio_entrada: deadlineEntrada ? deadlineEntrada : null,
-      deadline_registro: deadlineRegistro ? new Date(deadlineRegistro).toISOString() : null,
-      deadline_cambios: deadlineCambios ? new Date(deadlineCambios).toISOString() : null,
-      fecha_cambio_tarifa_coreo: fechaCambioCoreo ? fechaCambioCoreo : null,
-      dancers_por_asistente_gratis: dancersPorAsistente,
-    }).eq('id', event.id)
-    if (error) alert('Error: ' + error.message)
-    else loadEvents()
-    setSavingSettings(false)
-  }
-
   async function handleToggleFreeze() {
     if (!event) return
     const isLocked = !event.registration_token
     const nextToken = isLocked ? generateToken() : null
     await supabase.from('events').update({ registration_token: nextToken }).eq('id', event.id)
-    loadEvents()
-  }
-
-  async function handleRegenerateToken() {
-    if (!event) return
-    if (!confirm('Esto invalidara el link anterior. Continuar?')) return
-    await supabase.from('events').update({ registration_token: generateToken() }).eq('id', event.id)
     loadEvents()
   }
 
@@ -202,12 +305,24 @@ export default function EventosPage() {
     } finally { setExporting(null) }
   }
 
-  function takeSnapshot() {
+  async function takeSnapshot() {
+    if (!event) return
     const label = prompt('Etiqueta del snapshot:', `Snapshot ${new Date().toLocaleString('es-MX')}`)
     if (!label) return
-    const next = [{ id: crypto.randomUUID(), label, createdAt: new Date().toISOString() }, ...snapshots].slice(0, 10)
-    setSnapshots(next)
-    localStorage.setItem('d4e:socios:snapshots', JSON.stringify(next))
+    const { data, error } = await supabase.from('event_snapshots').insert({
+      event_id: event.id,
+      label,
+      created_at: new Date().toISOString(),
+    }).select('id, label, created_at').single()
+    if (!error && data) {
+      setSnapshots(prev => [{ id: data.id, label: data.label, created_at: data.created_at }, ...prev])
+    }
+  }
+
+  async function deleteSnapshot(id: string) {
+    if (!confirm('Eliminar este snapshot?')) return
+    await supabase.from('event_snapshots').delete().eq('id', id)
+    setSnapshots(prev => prev.filter(s => s.id !== id))
   }
 
   return (
@@ -226,72 +341,86 @@ export default function EventosPage() {
         </button>
       </div>
 
-      {/* Event list */}
-      <div className="space-y-3">
-        {events.map(e => {
-          const isActive = e.id === event?.id
-          return (
-            <div
-              key={e.id}
-              className={`rounded-2xl border p-4 transition-all ${
-                isActive ? 'bg-fuchsia-500/5 border-fuchsia-500/40' : 'bg-neutral-800/30 border-neutral-700/40'
-              }`}
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <h3 className="font-display text-lg tracking-wide uppercase">
-                    {e.name}
-                    {isActive && <span className="ml-2 text-[10px] bg-fuchsia-500 text-white px-2 py-0.5 rounded-full align-middle">ACTIVO</span>}
-                  </h3>
-                  <p className="text-xs text-neutral-400 mt-0.5">{safeFormatDate(e.date, { dateStyle: 'long' })}</p>
-                </div>
-                <div className="flex items-center gap-1 shrink-0">
-                  {!isActive && (
-                    <button
-                      onClick={() => { loadEvents() }}
-                      className="px-3 py-1.5 bg-neutral-700 text-white text-xs font-bold rounded-lg hover:bg-neutral-600"
-                    >
-                      Seleccionar
-                    </button>
-                  )}
-                  <button
-                    onClick={() => { setEditEventName(e.name); setEditEventDate(e.date); setShowEdit(true) }}
-                    className="w-7 h-7 rounded-lg bg-neutral-700/50 text-neutral-400 flex items-center justify-center hover:text-white"
-                  >
-                    <Edit3 className="w-3.5 h-3.5" />
-                  </button>
-                  <button
-                    onClick={() => handleDelete(e.id, e.name)}
-                    className="w-7 h-7 rounded-lg bg-red-500/10 text-red-400 flex items-center justify-center hover:bg-red-500/20"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              </div>
+      {/* Event list toggle */}
+      <button
+        onClick={() => setEventsExpanded(v => !v)}
+        className="w-full flex items-center justify-between bg-neutral-800/40 rounded-2xl border border-neutral-700/50 p-4 hover:border-fuchsia-500/30 transition-all"
+      >
+        <div>
+          <h2 className="font-display text-lg tracking-wider uppercase">Selección de Evento Activo</h2>
+          <p className="text-xs text-neutral-500 mt-0.5">Lista de eventos registrados y selección</p>
+        </div>
+        {eventsExpanded ? <ChevronUp className="w-5 h-5 text-neutral-400" /> : <ChevronDown className="w-5 h-5 text-neutral-400" />}
+      </button>
 
-              {/* Event link */}
-              <div className="mt-3 pt-3 border-t border-neutral-700/30">
-                <div className="flex items-center justify-between gap-2">
-                  <p className="text-[10px] text-neutral-500 font-mono truncate flex-1">
-                    {e.registration_token
-                      ? `/register/${e.id}?t=${e.registration_token}`
-                      : 'REGISTRO BLOQUEADO'}
-                  </p>
-                  {e.registration_token && (
+      {/* Event list */}
+      {eventsExpanded && (
+        <div className="space-y-3">
+          {events.map(e => {
+            const isActive = e.id === event?.id
+            return (
+              <div
+                key={e.id}
+                className={`rounded-2xl border p-4 transition-all ${
+                  isActive ? 'bg-fuchsia-500/5 border-fuchsia-500/40' : 'bg-neutral-800/30 border-neutral-700/40'
+                }`}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <h3 className="font-display text-lg tracking-wide uppercase">
+                      {e.name}
+                      {isActive && <span className="ml-2 text-[10px] bg-fuchsia-500 text-white px-2 py-0.5 rounded-full align-middle">ACTIVO</span>}
+                    </h3>
+                    <p className="text-xs text-neutral-400 mt-0.5">{safeFormatDate(e.date, { dateStyle: 'long' })}</p>
+                  </div>
+                  <div className="flex items-center gap-1 shrink-0">
+                    {!isActive && (
+                      <button
+                        onClick={() => { loadEvents() }}
+                        className="px-3 py-1.5 bg-neutral-700 text-white text-xs font-bold rounded-lg hover:bg-neutral-600"
+                      >
+                        Seleccionar
+                      </button>
+                    )}
                     <button
-                      onClick={() => copyLink(e)}
-                      className="shrink-0 text-[10px] font-bold bg-fuchsia-500/10 text-fuchsia-400 px-2 py-1 rounded-lg border border-fuchsia-500/20 flex items-center gap-1"
+                      onClick={() => { setEditEventName(e.name); setEditEventDate(e.date); setShowEdit(true) }}
+                      className="w-7 h-7 rounded-lg bg-neutral-700/50 text-neutral-400 flex items-center justify-center hover:text-white"
                     >
-                      {copiedId === e.id ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
-                      {copiedId === e.id ? 'COPIADO' : 'COPIAR'}
+                      <Edit3 className="w-3.5 h-3.5" />
                     </button>
-                  )}
+                    <button
+                      onClick={() => handleDelete(e.id, e.name)}
+                      className="w-7 h-7 rounded-lg bg-red-500/10 text-red-400 flex items-center justify-center hover:bg-red-500/20"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Event link */}
+                <div className="mt-3 pt-3 border-t border-neutral-700/30">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-[10px] text-neutral-500 font-mono truncate flex-1">
+                      {e.registration_token
+                        ? `/register/${e.id}?t=${e.registration_token}`
+                        : 'REGISTRO BLOQUEADO'}
+                    </p>
+                    {e.registration_token && (
+                      <button
+                        onClick={() => copyLink(e)}
+                        className="shrink-0 text-[10px] font-bold bg-fuchsia-500/10 text-fuchsia-400 px-2 py-1 rounded-lg border border-fuchsia-500/20 flex items-center gap-1"
+                      >
+                        {copiedId === e.id ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                        {copiedId === e.id ? 'COPIADO' : 'COPIAR'}
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-          )
-        })}
-      </div>
+            )
+          })}
+        </div>
+      )}
 
       {/* Active event settings */}
       {event && (
@@ -310,78 +439,82 @@ export default function EventosPage() {
 
           {settingsExpanded && (
             <div className="space-y-5">
-              {/* Costs */}
+              {/* 1. Costos de Inscripción */}
               <div className="bg-neutral-800/30 rounded-2xl border border-neutral-700/40 p-4 space-y-3">
-                <h3 className="font-display text-base tracking-wider uppercase text-fuchsia-400 flex items-center gap-2">
-                  <DollarSign className="w-4 h-4" /> Costos
+                <h3 className="font-display text-base tracking-wider uppercase flex items-center gap-2" style={{ color: TAB.resumen }}>
+                  <DollarSign className="w-4 h-4" /> Costos de Inscripción
                 </h3>
-                <div className="grid grid-cols-2 gap-3">
-                  <label className="text-xs text-neutral-400 font-bold uppercase">
-                    Inscripcion base
+                <div className="space-y-2.5">
+                  <label className="text-xs text-neutral-400 font-bold uppercase block">
+                    Inscripción base
                     <input type="number" value={costPaquete} onChange={e => setCostPaquete(Number(e.target.value) || 0)} className="mt-1 w-full px-3 py-2 bg-neutral-700/50 rounded-lg border border-neutral-600 text-sm text-white focus:outline-none focus:border-fuchsia-500" />
                   </label>
-                  <label className="text-xs text-neutral-400 font-bold uppercase">
-                    Coreografia extra
+                  <label className="text-xs text-neutral-400 font-bold uppercase block">
+                    Coreografía extra
                     <input type="number" value={costRepeticion} onChange={e => setCostRepeticion(Number(e.target.value) || 0)} className="mt-1 w-full px-3 py-2 bg-neutral-700/50 rounded-lg border border-neutral-600 text-sm text-white focus:outline-none focus:border-fuchsia-500" />
                   </label>
-                  <label className="text-xs text-neutral-400 font-bold uppercase">
-                    Asistente staff
-                    <input type="number" value={costAsistente} onChange={e => setCostAsistente(Number(e.target.value) || 0)} className="mt-1 w-full px-3 py-2 bg-neutral-700/50 rounded-lg border border-neutral-600 text-sm text-white focus:outline-none focus:border-fuchsia-500" />
-                  </label>
-                  <label className="text-xs text-neutral-400 font-bold uppercase">
-                    Entrada temprana
+                </div>
+              </div>
+
+              {/* 2. Entradas */}
+              <div className="bg-neutral-800/30 rounded-2xl border border-neutral-700/40 p-4 space-y-3">
+                <h3 className="font-display text-base tracking-wider uppercase flex items-center gap-2" style={{ color: TAB.programa }}>
+                  <Ticket className="w-4 h-4" /> Entradas
+                </h3>
+                <div className="space-y-2.5">
+                  <label className="text-xs text-neutral-400 font-bold uppercase block">
+                    Preventa entradas
                     <input type="number" value={costEntradaTemprana} onChange={e => setCostEntradaTemprana(Number(e.target.value) || 0)} className="mt-1 w-full px-3 py-2 bg-neutral-700/50 rounded-lg border border-neutral-600 text-sm text-white focus:outline-none focus:border-fuchsia-500" />
                   </label>
-                  <label className="text-xs text-neutral-400 font-bold uppercase">
-                    Entrada tardia
+                  <label className="text-xs text-neutral-400 font-bold uppercase block">
+                    Precio regular
                     <input type="number" value={costEntradaTardia} onChange={e => setCostEntradaTardia(Number(e.target.value) || 0)} className="mt-1 w-full px-3 py-2 bg-neutral-700/50 rounded-lg border border-neutral-600 text-sm text-white focus:outline-none focus:border-fuchsia-500" />
                   </label>
-                  <label className="text-xs text-amber-400 font-bold uppercase">
-                    Fecha limite precio entrada
+                  <label className="text-xs text-amber-400 font-bold uppercase block">
+                    Fecha límite preventa
                     <input type="date" value={deadlineEntrada} onChange={e => setDeadlineEntrada(e.target.value)} className="mt-1 w-full px-3 py-2 bg-neutral-700/50 rounded-lg border border-amber-500/30 text-sm text-white focus:outline-none focus:border-fuchsia-500" />
                   </label>
                 </div>
               </div>
 
-              {/* Reglas de negocio */}
+              {/* 3. Asistentes */}
               <div className="bg-neutral-800/30 rounded-2xl border border-neutral-700/40 p-4 space-y-3">
-                <h3 className="font-display text-base tracking-wider uppercase text-fuchsia-400 flex items-center gap-2">
-                  <DollarSign className="w-4 h-4" /> Reglas de Negocio
+                <h3 className="font-display text-base tracking-wider uppercase flex items-center gap-2" style={{ color: TAB.registros }}>
+                  <Users className="w-4 h-4" /> Asistentes
                 </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <label className="text-xs text-neutral-400 font-bold uppercase">
-                    Fecha cambio tarifa coreo
-                    <input type="date" value={fechaCambioCoreo} onChange={e => setFechaCambioCoreo(e.target.value)} placeholder="Despues de esta fecha todas las coreos se cobran como extra" className="mt-1 w-full px-3 py-2 bg-neutral-700/50 rounded-lg border border-neutral-600 text-sm text-white focus:outline-none focus:border-fuchsia-500" />
-                    <span className="text-[10px] text-neutral-600 mt-0.5 block">Antes: 1ra coreo incluida. Despues: todas se cobran.</span>
+                <div className="space-y-2.5">
+                  <label className="text-xs text-neutral-400 font-bold uppercase block">
+                    Costo por asistente
+                    <input type="number" value={costAsistente} onChange={e => setCostAsistente(Number(e.target.value) || 0)} className="mt-1 w-full px-3 py-2 bg-neutral-700/50 rounded-lg border border-neutral-600 text-sm text-white focus:outline-none focus:border-fuchsia-500" />
                   </label>
-                  <label className="text-xs text-neutral-400 font-bold uppercase">
+                  <label className="text-xs text-neutral-400 font-bold uppercase block">
                     Integrantes por asistente gratis
                     <input type="number" value={dancersPorAsistente} onChange={e => setDancersPorAsistente(Number(e.target.value) || 1)} className="mt-1 w-full px-3 py-2 bg-neutral-700/50 rounded-lg border border-neutral-600 text-sm text-white focus:outline-none focus:border-fuchsia-500" />
-                    <span className="text-[10px] text-neutral-600 mt-0.5 block">Cada X integrantes = 1 pase de staff gratis.</span>
+                    <span className="text-[10px] text-neutral-600 mt-0.5 block">Cada X integrantes = 1 pase gratis.</span>
                   </label>
                 </div>
               </div>
 
-              {/* Deadlines */}
+              {/* 4. Fechas Límite */}
               <div className="bg-neutral-800/30 rounded-2xl border border-neutral-700/40 p-4 space-y-3">
-                <h3 className="font-display text-base tracking-wider uppercase text-fuchsia-400 flex items-center gap-2">
-                  <Clock className="w-4 h-4" /> Fechas Limite
+                <h3 className="font-display text-base tracking-wider uppercase flex items-center gap-2" style={{ color: TAB.checklist }}>
+                  <Clock className="w-4 h-4" /> Fechas Límite
                 </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <label className="text-xs text-neutral-400 font-bold uppercase">
+                <div className="space-y-2.5">
+                  <label className="text-xs text-neutral-400 font-bold uppercase block">
                     Cierre de registros
-                    <input type="datetime-local" value={deadlineRegistro} onChange={e => setDeadlineRegistro(e.target.value)} className="mt-1 w-full px-3 py-2 bg-neutral-700/50 rounded-lg border border-neutral-600 text-sm text-white focus:outline-none focus:border-fuchsia-500" />
+                    <input type="date" value={deadlineRegistro} onChange={e => setDeadlineRegistro(e.target.value)} className="mt-1 w-full px-3 py-2 bg-neutral-700/50 rounded-lg border border-neutral-600 text-sm text-white focus:outline-none focus:border-fuchsia-500" />
                   </label>
-                  <label className="text-xs text-neutral-400 font-bold uppercase">
+                  <label className="text-xs text-neutral-400 font-bold uppercase block">
                     Cierre de cambios
-                    <input type="datetime-local" value={deadlineCambios} onChange={e => setDeadlineCambios(e.target.value)} className="mt-1 w-full px-3 py-2 bg-neutral-700/50 rounded-lg border border-neutral-600 text-sm text-white focus:outline-none focus:border-fuchsia-500" />
+                    <input type="date" value={deadlineCambios} onChange={e => setDeadlineCambios(e.target.value)} className="mt-1 w-full px-3 py-2 bg-neutral-700/50 rounded-lg border border-neutral-600 text-sm text-white focus:outline-none focus:border-fuchsia-500" />
                   </label>
                 </div>
               </div>
 
-              {/* Token management */}
+              {/* 5. Token de Registro */}
               <div className="bg-neutral-800/30 rounded-2xl border border-neutral-700/40 p-4 space-y-3">
-                <h3 className="font-display text-base tracking-wider uppercase text-fuchsia-400 flex items-center gap-2">
+                <h3 className="font-display text-base tracking-wider uppercase flex items-center gap-2" style={{ color: TAB.finanzas }}>
                   <Link2 className="w-4 h-4" /> Token de Registro
                 </h3>
 
@@ -411,96 +544,164 @@ export default function EventosPage() {
                 </div>
 
                 {event.registration_token && (
-                  <div className="bg-neutral-900/50 rounded-xl p-3 space-y-2">
-                    <p className="text-[10px] text-neutral-500 font-mono break-all leading-relaxed">
+                  <div className="rounded-xl p-3 space-y-2 bg-neutral-700/30 border border-neutral-600/30">
+                    <p className="text-xs text-neutral-300 font-mono break-all leading-relaxed">
                       {origin || 'https://dance4ever.vercel.app'}/register/{event.id}?t={event.registration_token}
                     </p>
                     <div className="flex gap-2">
                       <button onClick={() => copyLink(event)} className="flex-1 flex items-center justify-center gap-1 py-2 bg-fuchsia-500 text-white text-xs font-bold rounded-lg active:scale-95">
                         <Copy className="w-3.5 h-3.5" /> Copiar link
                       </button>
-                      <button onClick={handleRegenerateToken} className="flex items-center justify-center gap-1 px-3 py-2 bg-neutral-700 text-neutral-300 text-xs font-bold rounded-lg active:scale-95">
-                        <RefreshCw className="w-3.5 h-3.5" /> Nuevo token
-                      </button>
                     </div>
                   </div>
                 )}
               </div>
 
-              {/* Save settings button */}
-              <button
-                onClick={handleSaveSettings}
-                disabled={savingSettings}
-                className="w-full py-3 bg-fuchsia-500 text-white font-display text-base tracking-wider rounded-xl active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
-              >
-                <Save className="w-5 h-5" />
-                {savingSettings ? 'GUARDANDO...' : 'GUARDAR CONFIGURACION'}
-              </button>
+              {/* 6. Estado de Portales */}
+              <div className="bg-neutral-800/30 rounded-2xl border border-neutral-700/40 p-4 space-y-4">
+                <h3 className="font-display text-base tracking-wider uppercase flex items-center gap-2" style={{ color: TAB.eventos }}>
+                  <Lock className="w-4 h-4" /> Estado de Portales
+                </h3>
+                
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between gap-4">
+                    <div>
+                      <p className="text-sm font-bold text-white uppercase tracking-wide">
+                        Portales Operativos (Staff, Coach, MC)
+                      </p>
+                      <p className="text-[11px] text-neutral-500 mt-0.5">
+                        Habilita o deshabilita accesos para las vistas en vivo del evento.
+                      </p>
+                    </div>
+                    <button
+                      onClick={handleToggleOperations}
+                      disabled={loadingPortalConfig}
+                      className={`w-12 h-6 rounded-none relative transition-colors shrink-0 ${
+                        enableOperations ? 'bg-neutral-900 border border-neutral-950' : 'bg-neutral-200 border border-neutral-300'
+                      }`}
+                      aria-label="Alternar portales operativos"
+                    >
+                      <span className={`absolute top-0.5 w-4.5 h-4.5 rounded-none transition-all ${
+                        enableOperations ? 'left-6 bg-white' : 'left-0.5 bg-neutral-500'
+                      }`} />
+                    </button>
+                  </div>
+
+                  <div className="flex items-center justify-between gap-4 pt-4 border-t border-neutral-700/20">
+                    <div>
+                      <p className="text-sm font-bold text-white uppercase tracking-wide">
+                        Registro de Academias
+                      </p>
+                      <p className="text-[11px] text-neutral-500 mt-0.5">
+                        Habilita o deshabilita el formulario de inscripción principal.
+                      </p>
+                    </div>
+                    <button
+                      onClick={handleToggleRegistration}
+                      disabled={loadingPortalConfig}
+                      className={`w-12 h-6 rounded-none relative transition-colors shrink-0 ${
+                        enableRegistration ? 'bg-neutral-900 border border-neutral-950' : 'bg-neutral-200 border border-neutral-300'
+                      }`}
+                      aria-label="Alternar portal de registro"
+                    >
+                      <span className={`absolute top-0.5 w-4.5 h-4.5 rounded-none transition-all ${
+                        enableRegistration ? 'left-6 bg-white' : 'left-0.5 bg-neutral-500'
+                      }`} />
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* 7. Guardar */}
+              <div className="flex items-center gap-2">
+                {savedIndicator && (
+                  <span className={`text-xs font-bold ${savedIndicator === 'saving' ? 'text-amber-400' : 'text-green-400'}`}>
+                    {savedIndicator === 'saving' ? 'Guardando...' : 'Guardado \u2713'}
+                  </span>
+                )}
+                <button
+                  onClick={() => { setSavingSettings(true); doSaveSettings().finally(() => setSavingSettings(false)) }}
+                  disabled={savingSettings}
+                  className="flex-1 py-3 bg-black hover:bg-neutral-900 border border-neutral-800 text-white font-display text-xs tracking-wider font-bold rounded-xl active:scale-95 disabled:opacity-50 flex items-center justify-center gap-1.5 shadow-md transition-all"
+                >
+                  <Save className="w-4 h-4" />
+                  {savingSettings ? 'GUARDANDO...' : 'GUARDAR AHORA'}
+                </button>
+              </div>
             </div>
           )}
 
-          {/* Exports & Snapshots */}
-          <div className="bg-neutral-800/30 rounded-2xl border border-neutral-700/40 p-4 space-y-3">
-            <h3 className="font-display text-base tracking-wider uppercase text-fuchsia-400 flex items-center gap-2">
-              <Download className="w-4 h-4" /> Exportaciones y Respaldos
-            </h3>
-            <div className="grid grid-cols-2 gap-2">
-              <button onClick={() => runExport('excel')} disabled={exporting === 'excel'} className="py-3 bg-fuchsia-500 text-white font-display text-xs tracking-wider rounded-xl active:scale-95 disabled:opacity-50 flex items-center justify-center gap-1.5">
-                <FileSpreadsheet className="w-4 h-4" /> {exporting === 'excel' ? '...' : 'Excel MC'}
-              </button>
-              <button onClick={() => runExport('pdf')} disabled={exporting === 'pdf'} className="py-3 bg-fuchsia-500 text-white font-display text-xs tracking-wider rounded-xl active:scale-95 disabled:opacity-50 flex items-center justify-center gap-1.5">
-                <FileText className="w-4 h-4" /> {exporting === 'pdf' ? '...' : 'PDF MC'}
-              </button>
-              <button onClick={() => runExport('regs')} disabled={exporting === 'regs'} className="py-3 bg-fuchsia-500 text-white font-display text-xs tracking-wider rounded-xl active:scale-95 disabled:opacity-50 flex items-center justify-center gap-1.5">
-                <FileSpreadsheet className="w-4 h-4" /> {exporting === 'regs' ? '...' : 'Regs XLSX'}
-              </button>
-              <button onClick={() => runExport('zip')} disabled={exporting === 'zip'} className="py-3 bg-purple-500 text-white font-display text-xs tracking-wider rounded-xl active:scale-95 disabled:opacity-50 flex items-center justify-center gap-1.5">
-                <Download className="w-4 h-4" /> {exporting === 'zip' ? '...' : 'Todos ZIP'}
-              </button>
+           {/* Exports toggle */}
+          <button
+            onClick={() => setExportsExpanded(v => !v)}
+            className="w-full flex items-center justify-between bg-neutral-800/40 rounded-2xl border border-neutral-700/50 p-4 hover:border-fuchsia-500/30 transition-all"
+          >
+            <div>
+              <h2 className="font-display text-lg tracking-wider uppercase">Exportaciones y Respaldos</h2>
+              <p className="text-xs text-neutral-500 mt-0.5">Descarga de reportes XLSX, PDF y copias de seguridad</p>
             </div>
+            {exportsExpanded ? <ChevronUp className="w-5 h-5 text-neutral-400" /> : <ChevronDown className="w-5 h-5 text-neutral-400" />}
+          </button>
 
-            <button
-              onClick={takeSnapshot}
-              className="w-full py-2.5 bg-neutral-700/50 text-neutral-300 font-display text-xs tracking-wider rounded-xl active:scale-95 flex items-center justify-center gap-2"
-            >
-              <Camera className="w-4 h-4" /> CREAR SNAPSHOT
-            </button>
-
-            {snapshots.length > 0 && (
-              <div className="space-y-1 max-h-24 overflow-y-auto">
-                {snapshots.map(s => (
-                  <div key={s.id} className="flex items-center justify-between text-xs py-1.5 border-b border-neutral-700/30">
-                    <span className="truncate">{s.label}</span>
-                    <span className="text-neutral-500 shrink-0 ml-2">{safeFormatDate(s.createdAt, { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>
-                  </div>
-                ))}
+          {/* Exports & Snapshots */}
+          {exportsExpanded && (
+            <div className="bg-neutral-800/30 rounded-2xl border border-neutral-700/40 p-4 space-y-3">
+              <div className="grid grid-cols-2 gap-2">
+                <button onClick={() => runExport('excel')} disabled={exporting === 'excel'} className="py-3 bg-fuchsia-500 text-white font-display text-xs tracking-wider rounded-xl active:scale-95 disabled:opacity-50 flex items-center justify-center gap-1.5">
+                  <FileSpreadsheet className="w-4 h-4" /> {exporting === 'excel' ? '...' : 'Excel MC'}
+                </button>
+                <button onClick={() => runExport('pdf')} disabled={exporting === 'pdf'} className="py-3 bg-fuchsia-500 text-white font-display text-xs tracking-wider rounded-xl active:scale-95 disabled:opacity-50 flex items-center justify-center gap-1.5">
+                  <FileText className="w-4 h-4" /> {exporting === 'pdf' ? '...' : 'PDF MC'}
+                </button>
+                <button onClick={() => runExport('regs')} disabled={exporting === 'regs'} className="col-span-2 py-3 bg-fuchsia-500 text-white font-display text-xs tracking-wider rounded-xl active:scale-95 disabled:opacity-50 flex items-center justify-center gap-1.5">
+                  <FileSpreadsheet className="w-4 h-4" /> {exporting === 'regs' ? 'GENERANDO...' : 'Exportar Finanzas (XLSX)'}
+                </button>
+                <button onClick={() => runExport('zip')} disabled={exporting === 'zip'} className="col-span-2 py-3 bg-purple-500 text-white font-display text-xs tracking-wider rounded-xl active:scale-95 disabled:opacity-50 flex items-center justify-center gap-1.5">
+                  <Download className="w-4 h-4" /> {exporting === 'zip' ? 'GENERANDO...' : 'Todos ZIP'}
+                </button>
               </div>
-            )}
-          </div>
+
+              <button
+                onClick={takeSnapshot}
+                className="w-full py-2.5 bg-neutral-700/50 text-neutral-300 font-display text-xs tracking-wider rounded-xl active:scale-95 flex items-center justify-center gap-2"
+              >
+                <Camera className="w-4 h-4" /> CREAR SNAPSHOT
+              </button>
+
+              {snapshots.length > 0 && (
+                <div className="space-y-1 max-h-24 overflow-y-auto font-mono">
+                  {snapshots.map(s => (
+                    <div key={s.id} className="flex items-center justify-between text-xs py-1.5 border-b border-neutral-700/30">
+                      <span className="truncate">{s.label}</span>
+                      <span className="text-neutral-500 shrink-0 ml-2">{safeFormatDate(s.created_at, { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>
+                      <button onClick={() => deleteSnapshot(s.id)} className="shrink-0 ml-1.5 text-neutral-600 hover:text-red-400"><X className="w-3 h-3" /></button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
 
       {/* Create event modal */}
       {showCreate && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => setShowCreate(false)}>
-          <div className="bg-neutral-800 rounded-2xl border border-neutral-700 w-full max-w-md p-5 space-y-4" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between">
-              <h3 className="font-display text-xl tracking-wide uppercase">Nuevo Evento</h3>
-              <button onClick={() => setShowCreate(false)}><X className="w-5 h-5 text-neutral-400" /></button>
-            </div>
-            <label className="block text-xs text-neutral-400 font-bold uppercase">
+          <div className="bg-neutral-800 rounded-2xl border border-neutral-700 w-full max-w-sm p-8 pt-10 space-y-5 text-center" onClick={e => e.stopPropagation()}>
+            <h3 className="font-display text-xl tracking-wide uppercase">Nuevo Evento</h3>
+            <label className="block text-xs text-neutral-400 font-bold uppercase text-center">
               Nombre
-              <input value={eventName} onChange={e => setEventName(e.target.value)} placeholder="Ej. Gala 2026" className="mt-1 w-full px-3 py-2 bg-neutral-700/50 rounded-lg border border-neutral-600 text-sm text-white focus:outline-none focus:border-fuchsia-500 placeholder-neutral-500" />
+              <input value={eventName} onChange={e => setEventName(e.target.value)} placeholder="Ej. Gala 2026" className="mt-1.5 w-full px-4 py-3 bg-neutral-700/50 rounded-lg border border-neutral-600 text-sm text-white text-center focus:outline-none focus:border-fuchsia-500 placeholder-neutral-500" />
             </label>
-            <label className="block text-xs text-neutral-400 font-bold uppercase">
+            <label className="block text-xs text-neutral-400 font-bold uppercase text-center">
               Fecha
-              <input type="date" value={eventDate} onChange={e => setEventDate(e.target.value)} className="mt-1 w-full px-3 py-2 bg-neutral-700/50 rounded-lg border border-neutral-600 text-sm text-white focus:outline-none focus:border-fuchsia-500" />
+              <input type="date" value={eventDate} onChange={e => setEventDate(e.target.value)} className="mt-1.5 w-48 mx-auto block px-4 py-3 bg-neutral-700/50 rounded-lg border border-neutral-600 text-sm text-white text-center focus:outline-none focus:border-fuchsia-500" />
             </label>
-            <div className="flex gap-2 pt-1">
-              <button onClick={handleCreate} disabled={isSaving || !eventName || !eventDate} className="flex-1 py-3 bg-fuchsia-500 text-white font-display text-base tracking-wider rounded-xl active:scale-95 disabled:opacity-50">
+            <div className="flex gap-2 pt-1 px-4">
+              <button onClick={handleCreate} disabled={isSaving || !eventName || !eventDate} className="flex-1 py-2.5 bg-fuchsia-500 text-white font-display text-sm tracking-wider rounded-xl active:scale-95 disabled:opacity-50">
                 {isSaving ? 'CREANDO...' : 'CREAR EVENTO'}
               </button>
-              <button onClick={() => setShowCreate(false)} className="px-4 py-3 bg-neutral-700 text-neutral-300 rounded-xl text-sm">Cancelar</button>
+              <button onClick={() => setShowCreate(false)} className="px-3 py-2.5 bg-neutral-700 text-neutral-300 rounded-xl text-sm">Cancelar</button>
             </div>
           </div>
         </div>
@@ -509,24 +710,21 @@ export default function EventosPage() {
       {/* Edit event modal */}
       {showEdit && event && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => setShowEdit(false)}>
-          <div className="bg-neutral-800 rounded-2xl border border-neutral-700 w-full max-w-md p-5 space-y-4" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between">
-              <h3 className="font-display text-xl tracking-wide uppercase">Editar Evento</h3>
-              <button onClick={() => setShowEdit(false)}><X className="w-5 h-5 text-neutral-400" /></button>
-            </div>
-            <label className="block text-xs text-neutral-400 font-bold uppercase">
+          <div className="bg-neutral-800 rounded-2xl border border-neutral-700 w-full max-w-sm p-8 pt-10 space-y-5 text-center" onClick={e => e.stopPropagation()}>
+            <h3 className="font-display text-xl tracking-wide uppercase">Editar Evento</h3>
+            <label className="block text-xs text-neutral-400 font-bold uppercase text-center">
               Nombre
-              <input value={editEventName} onChange={e => setEditEventName(e.target.value)} className="mt-1 w-full px-3 py-2 bg-neutral-700/50 rounded-lg border border-neutral-600 text-sm text-white focus:outline-none focus:border-fuchsia-500" />
+              <input value={editEventName} onChange={e => setEditEventName(e.target.value)} className="mt-1.5 w-full px-4 py-3 bg-neutral-700/50 rounded-lg border border-neutral-600 text-sm text-white text-center focus:outline-none focus:border-fuchsia-500" />
             </label>
-            <label className="block text-xs text-neutral-400 font-bold uppercase">
+            <label className="block text-xs text-neutral-400 font-bold uppercase text-center">
               Fecha
-              <input type="date" value={editEventDate} onChange={e => setEditEventDate(e.target.value)} className="mt-1 w-full px-3 py-2 bg-neutral-700/50 rounded-lg border border-neutral-600 text-sm text-white focus:outline-none focus:border-fuchsia-500" />
+              <input type="date" value={editEventDate} onChange={e => setEditEventDate(e.target.value)} className="mt-1.5 w-48 mx-auto block px-4 py-3 bg-neutral-700/50 rounded-lg border border-neutral-600 text-sm text-white text-center focus:outline-none focus:border-fuchsia-500" />
             </label>
-            <div className="flex gap-2 pt-1">
-              <button onClick={handleUpdate} disabled={isSaving} className="flex-1 py-3 bg-fuchsia-500 text-white font-display text-base tracking-wider rounded-xl active:scale-95 disabled:opacity-50">
-                {isSaving ? 'GUARDANDO...' : 'GUARDAR'}
+            <div className="flex gap-2 pt-1 px-4">
+              <button onClick={handleUpdate} disabled={isSaving || !editEventName || !editEventDate} className="flex-1 py-2.5 bg-fuchsia-500 text-white font-display text-sm tracking-wider rounded-xl active:scale-95 disabled:opacity-50">
+                {isSaving ? 'GUARDANDO...' : 'GUARDAR CAMBIOS'}
               </button>
-              <button onClick={() => setShowEdit(false)} className="px-4 py-3 bg-neutral-700 text-neutral-300 rounded-xl text-sm">Cancelar</button>
+              <button onClick={() => setShowEdit(false)} className="px-3 py-2.5 bg-neutral-700 text-neutral-300 rounded-xl text-sm">Cancelar</button>
             </div>
           </div>
         </div>

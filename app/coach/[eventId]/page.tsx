@@ -8,6 +8,9 @@ import { participantMatches } from '@/lib/search'
 import SearchBar from '@/components/SearchBar'
 import { getAvgPerTurnMs, etaLabel } from '@/lib/eta'
 import { syncServerTime, serverNow } from '@/lib/serverTime'
+import { subscribePortalConfig, PortalConfig } from '@/lib/portalConfig'
+import PortalLockout from '@/components/PortalLockout'
+
 
 const PILL_PX = 48
 const PILL_GAP = 4
@@ -27,6 +30,8 @@ export default function CoachPage({ params }: Props) {
   const [alertedAt, setAlertedAt] = useState<number | null>(null)
   const [, setTick] = useState(0)
   const [activeAnnouncement, setActiveAnnouncement] = useState('')
+  const [portalConfig, setPortalConfig] = useState<PortalConfig | null>(null)
+
 
   useEffect(() => {
     syncServerTime()
@@ -94,6 +99,15 @@ export default function CoachPage({ params }: Props) {
     return () => { supabase.removeChannel(ch) }
   }, [eventId])
 
+  useEffect(() => {
+    if (!eventId) return
+    const unsubscribe = subscribePortalConfig(eventId, (config) => {
+      setPortalConfig(config)
+    })
+    return () => unsubscribe()
+  }, [eventId])
+
+
   const coach = coaches.find(c => c.id === coachId)
   const current = event ? participants.find(p => p.position === event.current_position) : null
   const upcomingAll = event ? participants.filter(p => p.position > event.current_position) : []
@@ -136,7 +150,12 @@ export default function CoachPage({ params }: Props) {
   const { ref: listRef, count: listFit } = useFitCount(PILL_PX, PILL_GAP)
   const { ref: mineRef, count: mineFit } = useFitCount(PILL_PX, PILL_GAP)
 
+  if (portalConfig && !portalConfig.enableOperations) {
+    return <PortalLockout portalName="Operativo (Coach)" />
+  }
+
   return (
+
     <div className="h-[100dvh] bg-neutral-900 text-white flex flex-col overflow-hidden select-none">
       {activeAnnouncement && (
         <div className="bg-fuchsia-950 border-b border-yellow-400 py-1.5 shrink-0 overflow-hidden relative flex items-center z-50">

@@ -32,6 +32,8 @@ function StepView(props: {
   saving: boolean
   saveErr: string | null
   startEdit: () => void
+  signature: string | null
+  setSignature: (s: string | null) => void
   actsConfirmed: boolean
   setActsConfirmed: (b: boolean) => void
   activeActIndex: number | null

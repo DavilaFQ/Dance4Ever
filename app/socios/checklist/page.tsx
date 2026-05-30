@@ -24,12 +24,13 @@ import {
   Activity,
   Loader2,
 } from 'lucide-react'
+import { STATUS } from '../colors'
 
 interface ChecklistItem {
   id: string
   event_id: string
   text: string
-  category: 'logistica' | 'audio' | 'staff' | 'premios' | 'jueces' | 'general'
+  category: 'escenografia' | 'iluminacion' | 'jueceo' | 'premiacion' | 'registro' | 'papeleria' | 'general'
   priority: 'alta' | 'media' | 'baja'
   completed: boolean
   notes: string | null
@@ -37,27 +38,38 @@ interface ChecklistItem {
 }
 
 const CATEGORIES = [
-  { id: 'all', label: 'Todos', color: 'text-white bg-neutral-800 border-neutral-700' },
-  { id: 'logistica', label: 'Logística', icon: Shield, color: 'text-blue-400 bg-blue-500/10 border-blue-500/20' },
-  { id: 'audio', label: 'Audio / DJ', icon: Music, color: 'text-indigo-400 bg-indigo-500/10 border-indigo-500/20' },
-  { id: 'staff', label: 'Staff', icon: Users, color: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' },
-  { id: 'premios', label: 'Premios', icon: Award, color: 'text-amber-400 bg-amber-500/10 border-amber-500/20' },
-  { id: 'jueces', label: 'Jueces', icon: Bookmark, color: 'text-fuchsia-400 bg-fuchsia-500/10 border-fuchsia-500/20' },
+  { id: 'all', label: 'Todos', color: 'text-white' },
+  { id: 'escenografia', label: 'Escenografía', icon: Activity, color: 'text-indigo-400 bg-indigo-500/10 border-indigo-500/20' },
+  { id: 'iluminacion', label: 'Iluminación', icon: Shield, color: 'text-amber-400 bg-amber-500/10 border-amber-500/20' },
+  { id: 'jueceo', label: 'Jueceo', icon: Bookmark, color: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' },
+  { id: 'premiacion', label: 'Premiación', icon: Award, color: 'text-rose-400 bg-rose-500/10 border-rose-500/20' },
+  { id: 'registro', label: 'Registro', icon: Users, color: 'text-teal-400 bg-teal-500/10 border-teal-500/20' },
+  { id: 'papeleria', label: 'Papelería', icon: FileText, color: 'text-orange-400 bg-orange-500/10 border-orange-500/20' },
   { id: 'general', label: 'General', icon: ClipboardList, color: 'text-neutral-400 bg-neutral-500/10 border-neutral-700/30' },
 ] as const
 
 const DANCE_EVENT_TEMPLATE = [
-  { text: 'Colocar trofeos, medallas y diplomas en el podium', category: 'premios', priority: 'alta', notes: 'Verificar cantidad según categorías antes de iniciar.' },
-  { text: 'Probar micrófonos de jueces y presentador (MC)', category: 'audio', priority: 'alta', notes: 'Tener baterías de repuesto a la mano.' },
-  { text: 'Cargar música de todas las academias en la laptop de cabina', category: 'audio', priority: 'alta', notes: 'Verificar orden del programa en el sistema.' },
-  { text: 'Preparar pulseras, folletos y boletos en taquilla', category: 'logistica', priority: 'alta', notes: 'Verificar cambio en caja.' },
-  { text: 'Colocar botellas de agua para los jueces y staff', category: 'staff', priority: 'media', notes: 'Mantener botellas frías en nevera.' },
-  { text: 'Imprimir u organizar hojas de calificación/jueces digitales', category: 'jueces', priority: 'alta', notes: 'Verificar claves de acceso al panel de jueceo.' },
-  { text: 'Asegurar que el fotógrafo y videógrafo estén posicionados', category: 'staff', priority: 'media', notes: 'Confirmar tomas del escenario principal.' },
-  { text: 'Verificar kit de primeros auxilios en backstage', category: 'logistica', priority: 'alta', notes: 'Hielo instantáneo para torceduras indispensable.' },
-  { text: 'Coordinar la entrega de comida/snacks para el staff', category: 'staff', priority: 'baja', notes: 'Agendar entrega para el receso de la tarde.' },
-  { text: 'Instalar/verificar lectores QR en la entrada', category: 'logistica', priority: 'alta', notes: 'Probar conexión a internet.' },
-]
+  { text: 'Telas (fondo escenario)', category: 'escenografia', priority: 'alta', notes: '' },
+  { text: 'Cinchos', category: 'escenografia', priority: 'alta', notes: '' },
+  { text: 'Rollos piso', category: 'escenografia', priority: 'alta', notes: '' },
+  { text: 'Cinta piso', category: 'escenografia', priority: 'alta', notes: '' },
+  { text: 'Luces (4)', category: 'iluminacion', priority: 'alta', notes: '' },
+  { text: 'Laptops Jueces (3)', category: 'jueceo', priority: 'alta', notes: '' },
+  { text: 'Extensiones', category: 'iluminacion', priority: 'alta', notes: '' },
+  { text: 'Mantel premiación', category: 'premiacion', priority: 'media', notes: '' },
+  { text: 'Manteles rosas', category: 'premiacion', priority: 'media', notes: '' },
+  { text: 'Manteles negros', category: 'premiacion', priority: 'media', notes: '' },
+  { text: 'Muros tipo araña (3)', category: 'escenografia', priority: 'alta', notes: '' },
+  { text: 'Banner Registro (1)', category: 'registro', priority: 'alta', notes: '' },
+  { text: 'Banner Bienvenidos', category: 'general', priority: 'media', notes: '' },
+  { text: 'Cinta precaución', category: 'escenografia', priority: 'media', notes: '' },
+  { text: 'Diurex grueso (2)', category: 'papeleria', priority: 'media', notes: '' },
+  { text: 'Cinta gris (1)', category: 'papeleria', priority: 'media', notes: '' },
+  { text: 'Cutter (1)', category: 'papeleria', priority: 'media', notes: '' },
+  { text: 'Tijeras medianas (1)', category: 'papeleria', priority: 'media', notes: '' },
+  { text: 'Plumas', category: 'papeleria', priority: 'baja', notes: '' },
+  { text: 'Medallas', category: 'premiacion', priority: 'alta', notes: '' },
+  ] as const
 
 export default function ChecklistPage() {
   const { event } = useEventContext()
@@ -299,21 +311,20 @@ export default function ChecklistPage() {
           <h1 className="font-display text-xl tracking-wider uppercase flex items-center gap-2">
             <ClipboardList className="w-5 h-5 text-fuchsia-500" /> Checklist
           </h1>
-          <p className="text-xs text-neutral-500 mt-0.5">Control de logística en tiempo real</p>
+          <p className="text-xs text-neutral-500 mt-0.5">Control de logística</p>
+
         </div>
         <button
           onClick={openCreateModal}
-          className="flex items-center gap-1 bg-gradient-to-r from-fuchsia-500 to-purple-600 text-white px-3.5 py-2.5 rounded-xl font-display text-xs font-bold tracking-wider active:scale-95 transition-all shadow-[0_0_15px_rgba(217,70,239,0.3)] hover:brightness-110"
+          style={{ backgroundColor: '#000000', color: '#ffffff' }}
+          className="flex items-center gap-1 bg-black hover:bg-neutral-900 border border-neutral-800 px-3.5 py-2.5 rounded-xl font-display text-xs font-bold tracking-wider active:scale-[0.98] transition-all"
         >
           <Plus className="w-4 h-4" /> NUEVO
         </button>
       </div>
 
       {/* Circular/Glow Progress Card */}
-      <div className="relative overflow-hidden rounded-3xl bg-neutral-900 border border-neutral-800 p-5 space-y-4 shadow-xl">
-        <div className="absolute top-0 right-0 w-32 h-32 bg-fuchsia-500/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 left-0 w-32 h-32 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
-
+      <div className="relative overflow-hidden rounded-none bg-white border border-neutral-300 p-5 space-y-4 shadow-sm">
         <div className="flex items-center justify-between gap-4">
           <div className="space-y-1">
             <h2 className="text-sm text-neutral-400 font-bold uppercase tracking-wider">Estado del Evento</h2>
@@ -322,7 +333,7 @@ export default function ChecklistPage() {
             </p>
           </div>
           <div className="text-right">
-            <span className="font-display text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-400 to-purple-400 drop-shadow-[0_0_10px_rgba(217,70,239,0.2)]">
+            <span className="font-display text-3xl font-extrabold text-neutral-900">
               {stats.percentage}%
             </span>
           </div>
@@ -345,127 +356,47 @@ export default function ChecklistPage() {
         </div>
       </div>
 
-      {/* Toolbar / Search & Filters */}
-      <div className="space-y-3 bg-neutral-800/20 border border-neutral-800/60 p-3 rounded-2xl">
-        {/* Search */}
-        <div className="relative">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-500" />
-          <input
-            type="text"
-            placeholder="Buscar tareas u organizadores..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 bg-neutral-900/60 rounded-xl border border-neutral-800 text-sm text-white placeholder-neutral-500 focus:outline-none focus:border-fuchsia-500/50 transition-all"
-          />
-          {searchTerm && (
-            <button
-              onClick={() => setSearchTerm('')}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-500 hover:text-white"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          )}
-        </div>
 
-        {/* Categories Pills */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-1.5 scrollbar-thin select-none">
-          {CATEGORIES.map((cat) => {
-            const isActive = selectedCategory === cat.id
-            const CatIcon = 'icon' in cat ? cat.icon : null
-            return (
-              <button
-                key={cat.id}
-                onClick={() => setSelectedCategory(cat.id)}
-                className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-bold transition-all active:scale-95 ${
-                  isActive
-                    ? cat.id === 'all'
-                      ? 'bg-fuchsia-500 text-white border-fuchsia-500'
-                      : 'bg-neutral-800 text-white border-fuchsia-500/40 ring-1 ring-fuchsia-500/20'
-                    : cat.id === 'all'
-                    ? 'bg-neutral-900 border-neutral-800 text-neutral-500'
-                    : 'bg-neutral-900 border-neutral-800/40 text-neutral-400 hover:border-neutral-700/50'
-                }`}
-              >
-                {CatIcon && <CatIcon className="w-3.5 h-3.5" />}
-                {cat.label}
-              </button>
-            )
-          })}
-        </div>
-
-        {/* Priority Filter */}
-        <div className="flex items-center justify-between text-xs pt-1 border-t border-neutral-800/40">
-          <span className="text-neutral-500 font-bold uppercase tracking-wider">Filtrar por prioridad:</span>
-          <div className="flex gap-2">
-            {['all', 'alta', 'media', 'baja'].map((pri) => (
-              <button
-                key={pri}
-                onClick={() => setSelectedPriority(pri)}
-                className={`px-2 py-0.5 rounded-md font-semibold text-[10px] uppercase border transition-all ${
-                  selectedPriority === pri
-                    ? pri === 'alta'
-                      ? 'bg-red-500/20 text-red-400 border-red-500/30'
-                      : pri === 'media'
-                      ? 'bg-orange-500/20 text-orange-400 border-orange-500/30'
-                      : pri === 'baja'
-                      ? 'bg-slate-500/20 text-slate-400 border-slate-500/30'
-                      : 'bg-fuchsia-500/20 text-fuchsia-400 border-fuchsia-500/30'
-                    : 'bg-neutral-900 border-neutral-800 text-neutral-500 hover:text-neutral-300'
-                }`}
-              >
-                {pri === 'all' ? 'Todas' : pri}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
 
       {/* Main Checklist Items List */}
       {loading ? (
         <div className="flex flex-col items-center justify-center py-12 space-y-3">
           <Loader2 className="w-8 h-8 text-fuchsia-500 animate-spin" />
-          <p className="text-xs text-neutral-500">Cargando tareas en tiempo real...</p>
+          <p className="text-xs text-neutral-500">Cargando tareas...</p>
         </div>
-      ) : filteredItems.length === 0 ? (
+      ) : items.length === 0 ? (
         <div className="bg-neutral-800/10 border border-neutral-800/50 rounded-2xl p-8 text-center space-y-4">
           <ClipboardList className="w-12 h-12 text-neutral-600 mx-auto" />
           <div className="space-y-1">
             <h3 className="font-display text-base tracking-wide uppercase text-neutral-300">No hay tareas</h3>
             <p className="text-xs text-neutral-500 max-w-xs mx-auto">
-              {searchTerm || selectedCategory !== 'all' || selectedPriority !== 'all'
-                ? 'Ninguna tarea coincide con los filtros aplicados.'
-                : 'Esta lista está vacía. Comienza agregando una tarea o carga nuestra plantilla recomendada para danza.'}
+              Esta lista está vacía. Comienza agregando una tarea o carga nuestra plantilla recomendada para danza.
             </p>
           </div>
-          {(!searchTerm && selectedCategory === 'all' && selectedPriority === 'all') && (
-            <button
-              onClick={handleLoadTemplate}
-              className="mx-auto flex items-center gap-1.5 bg-neutral-800 hover:bg-neutral-700 text-fuchsia-400 px-4 py-2.5 rounded-xl text-xs font-bold border border-fuchsia-500/20 active:scale-95 transition-all"
-            >
-              <Sparkles className="w-3.5 h-3.5 text-fuchsia-500" /> CARGAR PLANTILLA DE DANZA
-            </button>
-          )}
+          <button
+            onClick={handleLoadTemplate}
+            className="mx-auto flex items-center gap-1.5 bg-neutral-800 hover:bg-neutral-700 text-fuchsia-400 px-4 py-2.5 rounded-xl text-xs font-bold border border-fuchsia-500/20 active:scale-95 transition-all"
+          >
+            Cargar plantilla
+          </button>
         </div>
       ) : (
         <div className="space-y-2.5">
           {/* Active checklist count banner */}
           <div className="flex items-center justify-between px-2 text-[10px] text-neutral-500 font-bold uppercase tracking-wider">
-            <span>Tareas ({filteredItems.length})</span>
-            <span className="flex items-center gap-1 text-fuchsia-500/80">
-              <Activity className="w-3 h-3 animate-pulse" /> Sincronizado en tiempo real
-            </span>
+            <span>Tareas ({items.length})</span>
           </div>
 
           {/* List layout */}
-          <div className="space-y-2">
-            {filteredItems.map((item) => {
+          <div className="space-y-3">
+            {items.map((item) => {
               const categoryDetails = CATEGORIES.find((c) => c.id === item.category)
               const CatIcon = categoryDetails && 'icon' in categoryDetails ? categoryDetails.icon : ClipboardList
 
               return (
                 <div
                   key={item.id}
-                  className={`group relative flex items-start gap-3 p-3.5 rounded-2xl border transition-all duration-300 ${
+                  className={`group relative flex items-start gap-4 p-5 rounded-2xl border transition-all duration-300 ${
                     item.completed
                       ? 'bg-neutral-900/40 border-neutral-800/40 opacity-50'
                       : 'bg-neutral-800/30 border-neutral-700/30 hover:border-neutral-700 hover:bg-neutral-800/40 shadow-sm'
@@ -478,16 +409,16 @@ export default function ChecklistPage() {
                     aria-label={item.completed ? 'Marcar como pendiente' : 'Marcar como completada'}
                   >
                     {item.completed ? (
-                      <CheckSquare className="w-5.5 h-5.5 text-fuchsia-500 scale-105 transition-all" />
+                      <CheckSquare className="w-7 h-7 text-fuchsia-500 transition-all animate-fade-in" />
                     ) : (
-                      <Square className="w-5.5 h-5.5 text-neutral-600 hover:scale-105 transition-all" />
+                      <Square className="w-7 h-7 text-neutral-600 hover:scale-105 transition-all" />
                     )}
                   </button>
 
-                  {/* Task Content */}
-                  <div className="flex-1 min-w-0 pr-12 space-y-1">
+                  {/* Task Task Content */}
+                  <div className="flex-1 min-w-0 pr-16 space-y-1.5">
                     <p
-                      className={`text-sm leading-snug font-medium select-text ${
+                      className={`text-base sm:text-lg leading-snug font-bold select-text ${
                         item.completed ? 'line-through text-neutral-500 font-normal' : 'text-white'
                       }`}
                     >
@@ -496,51 +427,28 @@ export default function ChecklistPage() {
 
                     {/* Notes (collapsible/subtext) */}
                     {item.notes && (
-                      <p className="text-[11px] leading-relaxed text-neutral-500 italic select-text">
+                      <p className="text-sm leading-relaxed text-neutral-400 italic select-text mt-1">
                         {item.notes}
                       </p>
                     )}
 
-                    {/* Badges row */}
-                    <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
-                      {/* Category Badge */}
-                      {categoryDetails && item.category !== 'general' && (
-                        <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[9px] font-extrabold uppercase border ${categoryDetails.color}`}>
-                          <CatIcon className="w-2.5 h-2.5" />
-                          {categoryDetails.label}
-                        </span>
-                      )}
-
-                      {/* Priority Badge */}
-                      <span
-                        className={`px-1.5 py-0.5 rounded-md text-[9px] font-extrabold uppercase border ${
-                          item.priority === 'alta'
-                            ? 'bg-red-500/10 text-red-400 border-red-500/20'
-                            : item.priority === 'media'
-                            ? 'bg-orange-500/10 text-orange-400 border-orange-500/20'
-                            : 'bg-slate-500/10 text-slate-400 border-slate-700/40'
-                        }`}
-                      >
-                        {item.priority}
-                      </span>
-                    </div>
                   </div>
 
                   {/* Action Buttons (visible on hover/focus in group) */}
-                  <div className="absolute right-3.5 top-3.5 flex items-center gap-1 sm:opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="absolute right-4 top-4 flex items-center gap-2 sm:opacity-0 group-hover:opacity-100 transition-opacity">
                     <button
                       onClick={() => openEditModal(item)}
-                      className="p-1.5 bg-neutral-800 text-neutral-400 hover:text-white rounded-lg border border-neutral-700/50 hover:bg-neutral-700/60 active:scale-90 transition-all"
+                      className="p-2.5 bg-black hover:bg-neutral-900 border border-neutral-800 rounded-xl active:scale-95 transition-all flex items-center justify-center"
                       title="Editar tarea"
                     >
-                      <Edit3 className="w-3.5 h-3.5" />
+                      <Edit3 className="w-5 h-5" stroke="#ffffff" />
                     </button>
                     <button
                       onClick={() => handleDeleteItem(item.id)}
-                      className="p-1.5 bg-red-500/10 text-red-400 hover:text-white hover:bg-red-500 rounded-lg border border-red-500/20 active:scale-90 transition-all"
+                      className="p-2.5 bg-black hover:bg-neutral-900 border border-neutral-800 rounded-xl active:scale-95 transition-all flex items-center justify-center"
                       title="Eliminar tarea"
                     >
-                      <Trash2 className="w-3.5 h-3.5" />
+                      <Trash2 className="w-5 h-5" stroke="#ffffff" />
                     </button>
                   </div>
                 </div>
@@ -587,79 +495,23 @@ export default function ChecklistPage() {
                   placeholder="Ej. Comprar baterías para los micrófonos"
                   value={taskText}
                   onChange={(e) => setTaskText(e.target.value)}
-                  className="w-full px-3.5 py-2.5 bg-neutral-950 rounded-xl border border-neutral-800 text-sm text-white placeholder-neutral-600 focus:outline-none focus:border-fuchsia-500 transition-colors"
+                  className="w-full px-3.5 py-2.5 bg-neutral-950 rounded-xl border border-neutral-700 text-sm text-white placeholder-neutral-600 focus:outline-none focus:border-fuchsia-500 transition-colors"
                 />
               </div>
 
-              {/* Category Picker */}
-              <div className="space-y-1.5">
-                <label className="text-[10px] text-neutral-400 font-bold uppercase tracking-wider block">
-                  Categoría
-                </label>
-                <div className="grid grid-cols-3 gap-2">
-                  {CATEGORIES.filter((c) => c.id !== 'all').map((cat) => {
-                    const isSelected = taskCategory === cat.id
-                    const CatIcon = 'icon' in cat ? cat.icon : ClipboardList
-                    return (
-                      <button
-                        key={cat.id}
-                        type="button"
-                        onClick={() => setTaskCategory(cat.id as ChecklistItem['category'])}
-                        className={`flex flex-col items-center justify-center p-2 rounded-xl border text-xs font-bold gap-1 transition-all ${
-                          isSelected
-                            ? 'bg-fuchsia-500/10 border-fuchsia-500 text-fuchsia-400 shadow-[0_0_10px_rgba(217,70,239,0.1)]'
-                            : 'bg-neutral-950 border-neutral-800/80 text-neutral-500 hover:border-neutral-700/50 hover:text-neutral-300'
-                        }`}
-                      >
-                        <CatIcon className="w-4 h-4" />
-                        <span className="text-[9px] uppercase tracking-wider">{cat.label}</span>
-                      </button>
-                    )
-                  })}
-                </div>
-              </div>
 
-              {/* Priority Picker */}
-              <div className="space-y-1.5">
-                <label className="text-[10px] text-neutral-400 font-bold uppercase tracking-wider block">
-                  Prioridad
-                </label>
-                <div className="grid grid-cols-3 gap-2">
-                  {(['baja', 'media', 'alta'] as const).map((pri) => {
-                    const isSelected = taskPriority === pri
-                    return (
-                      <button
-                        key={pri}
-                        type="button"
-                        onClick={() => setTaskPriority(pri)}
-                        className={`py-2 rounded-xl border text-[10px] font-extrabold uppercase transition-all ${
-                          isSelected
-                            ? pri === 'alta'
-                              ? 'bg-red-500/20 border-red-500 text-red-400'
-                              : pri === 'media'
-                              ? 'bg-orange-500/20 border-orange-500 text-orange-400'
-                              : 'bg-slate-500/20 border-slate-500 text-slate-400'
-                            : 'bg-neutral-950 border-neutral-800/80 text-neutral-500 hover:border-neutral-700/50'
-                        }`}
-                      >
-                        {pri}
-                      </button>
-                    )
-                  })}
-                </div>
-              </div>
 
-              {/* Notes Input */}
+              {/* Notes */}
               <div className="space-y-1.5">
                 <label className="text-[10px] text-neutral-400 font-bold uppercase tracking-wider block">
-                  Notas / Detalles (Opcional)
+                  Notas (opcional)
                 </label>
                 <textarea
                   rows={2}
-                  placeholder="Instrucciones adicionales para los socios..."
+                  placeholder="Detalles adicionales..."
                   value={taskNotes}
                   onChange={(e) => setTaskNotes(e.target.value)}
-                  className="w-full px-3.5 py-2.5 bg-neutral-950 rounded-xl border border-neutral-800 text-sm text-white placeholder-neutral-600 focus:outline-none focus:border-fuchsia-500 transition-colors resize-none"
+                  className="w-full px-3.5 py-2.5 bg-neutral-950 rounded-xl border border-neutral-700 text-sm text-white placeholder-neutral-600 focus:outline-none focus:border-fuchsia-500 transition-colors resize-none"
                 />
               </div>
 
@@ -668,17 +520,19 @@ export default function ChecklistPage() {
                 <button
                   type="submit"
                   disabled={isSaving || !taskText.trim()}
-                  className="flex-1 py-3 bg-gradient-to-r from-fuchsia-500 to-purple-600 text-white font-display text-sm tracking-wider font-bold rounded-xl active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
+                  style={{ backgroundColor: '#000000', color: '#ffffff' }}
+                  className="flex-1 py-3 bg-black hover:bg-neutral-900 border border-neutral-800 font-display text-sm tracking-wider font-bold rounded-xl active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2"
                 >
-                  {isSaving && <Loader2 className="w-4 h-4 animate-spin" />}
-                  {editingItem ? 'GUARDAR CAMBIOS' : 'CREAR TAREA'}
+                  {isSaving && <Loader2 className="w-4 h-4 animate-spin" style={{ color: '#ffffff' }} />}
+                  <span style={{ color: '#ffffff' }}>{editingItem ? 'GUARDAR CAMBIOS' : 'CREAR TAREA'}</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="px-4 py-3 bg-neutral-800 text-neutral-400 rounded-xl text-xs font-bold hover:text-white border border-neutral-700/30 transition-colors"
+                  style={{ backgroundColor: '#000000', color: '#ffffff' }}
+                  className="px-4 py-3 bg-black hover:bg-neutral-900 border border-neutral-800 rounded-xl text-xs font-bold"
                 >
-                  CANCELAR
+                  <span style={{ color: '#ffffff' }}>CANCELAR</span>
                 </button>
               </div>
             </form>

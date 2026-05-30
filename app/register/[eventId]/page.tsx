@@ -5,9 +5,12 @@ import { useSearchParams } from 'next/navigation'
 import { ArrowLeft, ArrowRight, Check, Plus, Trash2, Pencil, MessageCircle, Info, X, ChevronDown, Sparkles, Users, Clipboard, HeartHandshake, School, Clock, Calendar, Ticket, Download, Eye, DollarSign } from 'lucide-react'
 import { supabase, type Modality, type AgeCategory, type Level, type Event, AGE_CATEGORY_ORDER, AGE_CATEGORY_LABELS, AGE_CATEGORY_HINTS, categoryFromBirthdate } from '@/lib/supabase'
 import { type State, type Step, type Coach, type Dancer, type Act, STYLES, CATEGORY_COLORS, DEFAULT_DANCER_COLOR, MODALITY_OPTIONS } from '@/components/register/types'
-import { minDancers, maxDancers, modalityLabel, effectiveCategory, ageFromBirthdate, initialState, participacionesPorAlumno, getRegistrationDeadline, getChangesDeadline, isBeforeTicketsDeadline, getPrecioEntradaRegistro, isBeforeJune15, costBreakdown, costoTotal, formatMoney, formatEventDate, formatBirthdate, getDancerDisplayName, parseSmartList, LS_KEY, extractErrorMessage } from '@/components/register/utils'
+import { minDancers, maxDancers, modalityLabel, effectiveCategory, ageFromBirthdate, initialState, participacionesPorAlumno, getRegistrationDeadline, getChangesDeadline, isBeforeTicketsDeadline, getPrecioEntradaRegistro, isBeforeCoreoDeadline, costBreakdown, costoTotal, formatMoney, formatEventDate, formatBirthdate, getDancerDisplayName, parseSmartList, LS_KEY, extractErrorMessage } from '@/components/register/utils'
 import StepView from '@/components/register/StepView'
 import Centered from '@/components/register/Centered'
+import { subscribePortalConfig, PortalConfig } from '@/lib/portalConfig'
+import PortalLockout from '@/components/PortalLockout'
+
 
 type Props = { params: Promise<{ eventId: string }> }
 
@@ -18,7 +21,9 @@ export default function RegisterPage({ params }: Props) {
 
   const [event, setEvent] = useState<Event | null>(null)
   const [authState, setAuthState] = useState<'loading' | 'ok' | 'invalid'>('loading')
+  const [portalConfig, setPortalConfig] = useState<PortalConfig | null>(null)
   const [state, setState] = useState<State>(initialState)
+
   const [step, setStep] = useState<Step>({ kind: 'welcome' })
   const stepKindRef = useRef(step.kind)
   useEffect(() => {
@@ -31,6 +36,7 @@ export default function RegisterPage({ params }: Props) {
   const [isLargeScreen, setIsLargeScreen] = useState<boolean | null>(null)
   const [isKeyboardOpen, setIsKeyboardOpen] = useState(false)
   const [showSuccessSplash, setShowSuccessSplash] = useState(false)
+  const [signature, setSignature] = useState<string | null>(null)
 
 
   // Acts confirmation flow
@@ -40,6 +46,166 @@ export default function RegisterPage({ params }: Props) {
   // Smart Paste Modal State
   const [isPasteModalOpen, setIsPasteModalOpen] = useState(false)
   const [pasteText, setPasteText] = useState('')
+
+  // Draft persistence in Supabase
+  const [draftId] = useState(() => {
+    const LS_DRAFT_KEY = `d4e:register-draft-id:${eventId}`
+    const existing = typeof window !== 'undefined' ? localStorage.getItem(LS_DRAFT_KEY) : null
+    if (existing) return existing
+    const id = typeof crypto !== 'undefined' && crypto.randomUUID
+      ? crypto.randomUUID()
+      : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+          const r = Math.random() * 16 | 0
+          return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16)
+        })
+    try { localStorage.setItem(LS_DRAFT_KEY, id) } catch { /* ignore */ }
+    return id
+  })
+  const draftTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const savingRef = useRef(false)
+
+  // Track the coach_registrations.id when a draft is saved (setup → dancers)
+  const [draftRegistrationId, setDraftRegistrationId] = useState<number | null>(null)
+  const draftRegIdRef = useRef<number | null>(null)
+  draftRegIdRef.current = draftRegistrationId
+
+  const saveDraftToSupabase = useCallback(async (s: State) => {
+    if (savingRef.current) return
+    if (s.confirmedRegistrationId) return // don't save drafts for confirmed registrations
+    savingRef.current = true
+    try {
+      // 1. Save full state draft
+      await supabase.from('registration_drafts').upsert({
+        draft_id: draftId,
+        event_id: eventId,
+        state: s as unknown as Record<string, unknown>,
+        updated_at: new Date().toISOString(),
+      })
+
+      // 2. Automatically upsert into coach_registrations as a draft in the dashboard
+      const coachName = s.coach.name.trim()
+      const academyName = s.academy.trim()
+      if (coachName.length >= 2 && academyName.length >= 2) {
+        const assistants = s.coach.assistants
+          .map(a => `Asistente: ${a.trim()}`)
+          .filter(a => a !== 'Asistente:')
+        const academy = s.city.trim()
+          ? `${academyName} (${s.city.trim()})`
+          : academyName
+
+        let regId = draftRegIdRef.current
+
+        if (regId) {
+          await supabase.from('coach_registrations').update({
+            coach_name: coachName,
+            coach_phone: s.coach.phone.trim(),
+            coach_email: s.coach.email.trim() || null,
+            extra_coaches: assistants,
+            academy,
+            team_name: academyName,
+            tickets_count: s.ticketsCount ?? 0,
+            notes: s.notes?.trim() || null,
+          }).eq('id', regId)
+        } else {
+          // Check if a row with this draft_id already exists in coach_registrations to prevent double insert
+          const { data: existingRegs } = await supabase
+            .from('coach_registrations')
+            .select('id')
+            .eq('draft_id', draftId)
+            .limit(1)
+
+          if (existingRegs && existingRegs.length > 0) {
+            regId = existingRegs[0].id
+            setDraftRegistrationId(regId)
+            await supabase.from('coach_registrations').update({
+              coach_name: coachName,
+              coach_phone: s.coach.phone.trim(),
+              coach_email: s.coach.email.trim() || null,
+              extra_coaches: assistants,
+              academy,
+              team_name: academyName,
+              tickets_count: s.ticketsCount ?? 0,
+              notes: s.notes?.trim() || null,
+            }).eq('id', regId)
+          } else {
+            const { data } = await supabase.from('coach_registrations').insert({
+              event_id: eventId,
+              draft_id: draftId,
+              coach_name: coachName,
+              coach_phone: s.coach.phone.trim(),
+              coach_email: s.coach.email.trim() || null,
+              extra_coaches: assistants,
+              academy,
+              team_name: academyName,
+              submitted_at: '1970-01-01T00:00:00Z',
+              tickets_count: s.ticketsCount ?? 0,
+              notes: s.notes?.trim() || null,
+            }).select('id').single()
+            if (data) {
+              regId = data.id
+              setDraftRegistrationId(regId)
+            }
+          }
+        }
+
+        // Sync dancers and acts in real-time as part of the draft!
+        if (regId) {
+          // A. Delete existing entries to replace them
+          await supabase.from('registration_dancers').delete().eq('registration_id', regId)
+          await supabase.from('registration_acts').delete().eq('registration_id', regId)
+
+          // B. Insert dancers
+          if (s.dancers.length > 0) {
+            const dancerRows = s.dancers.map((d, i) => ({
+              registration_id: regId!,
+              name: d.name.trim(),
+              birthdate: d.birthdate,
+              category: effectiveCategory(d),
+              category_manual: d.categoryOverride !== null,
+              order_idx: i,
+            }))
+            const { data: dData, error: dErr } = await supabase
+              .from('registration_dancers')
+              .insert(dancerRows)
+              .select()
+            
+            if (!dErr && dData) {
+              const dancerIdByIndex = new Map<number, number>()
+              dData.forEach((row: { id: number, order_idx: number }) => {
+                dancerIdByIndex.set(row.order_idx, row.id)
+              })
+
+              // C. Insert acts
+              if (s.acts.length > 0) {
+                const actRows = s.acts.map((a, i) => ({
+                  registration_id: regId!,
+                  modality: a.modality,
+                  age_category: a.ageCategory,
+                  level: a.modality === 'grupal' ? a.level : 'avanzado',
+                  style: a.style,
+                  order_idx: i,
+                  dancer_ids: a.dancerIndices
+                    .map(idx => dancerIdByIndex.get(idx))
+                    .filter((x): x is number => typeof x === 'number'),
+                }))
+                await supabase.from('registration_acts').insert(actRows)
+              }
+            }
+          }
+        }
+      }
+    } catch (e) {
+      console.error('Error saving draft state:', e)
+    } finally {
+      savingRef.current = false
+    }
+  }, [draftId, eventId])
+
+  const deleteDraftFromSupabase = useCallback(async () => {
+    try {
+      await supabase.from('registration_drafts').delete().eq('draft_id', draftId)
+    } catch { /* ignore */ }
+  }, [draftId])
 
   useEffect(() => {
     try {
@@ -87,22 +253,8 @@ export default function RegisterPage({ params }: Props) {
     }
     window.addEventListener('pageshow', handlePageShow)
 
-    // 2. Forzar que el estado en montaje sea estrictamente welcome (o confirmed si ya se completó)
-    try {
-      const raw = localStorage.getItem(LS_KEY(eventId))
-      if (raw) {
-        const saved = JSON.parse(raw) as State
-        if (saved.confirmedRegistrationId) {
-          setStep({ kind: 'confirmed' })
-        } else {
-          setStep({ kind: 'welcome' })
-        }
-      } else {
-        setStep({ kind: 'welcome' })
-      }
-    } catch {
-      setStep({ kind: 'welcome' })
-    }
+    // 2. El paso real se determina cuando el efecto de auth carga el estado desde Supabase
+    // No forzamos welcome/confirmed desde localStorage — el auth effect lo resuelve
 
     return () => {
       window.removeEventListener('pageshow', handlePageShow)
@@ -111,81 +263,254 @@ export default function RegisterPage({ params }: Props) {
 
   useEffect(() => {
     let cancelled = false
-    ;(async () => {
-      const { data } = await supabase.from('events').select('*').eq('id', eventId).single()
-      if (cancelled) return
-      if (!data) { setAuthState('invalid'); return }
-      if (!data.registration_token || data.registration_token !== token) {
-        setAuthState('invalid')
-        return
+    
+    // Safeguard timeout to prevent forever-loading freezes if WebKit suspends active fetch promises
+    const timeoutId = setTimeout(() => {
+      if (!cancelled) {
+        console.warn('Mount state recovery timed out. Forcing authState = ok')
+        setAuthState('ok')
       }
-      setEvent(data as Event)
-      setAuthState('ok')
+    }, 2500)
+
+    ;(async () => {
       try {
-        const isReset = search.get('reset') === 'true' || search.get('new') === 'true'
-        if (isReset) {
-          localStorage.removeItem(LS_KEY(eventId))
-        } else {
-          const raw = localStorage.getItem(LS_KEY(eventId))
-          if (raw) {
-          const saved = JSON.parse(raw) as State
-          // Handle migration of old coach data structure
-          if (saved.coach && !saved.coach.assistants) {
-            saved.coach.assistants = []
-          }
-          if (saved.costPaquete === null) {
-            saved.costPaquete = 2700
-          }
-          if (saved.costRepeticion === null) {
-            saved.costRepeticion = 500
-          }
-          // Parse city from academy name if it contains "(city)" and city is not set
-          if (saved.city === undefined || saved.city === null) {
-            saved.city = ''
-            const match = saved.academy.match(/^(.*?)\s*\(([^)]+)\)$/)
-            if (match) {
-              saved.academy = match[1]
-              saved.city = match[2]
+        const { data } = await supabase.from('events').select('*').eq('id', eventId).single()
+        if (cancelled) return
+        if (!data) { setAuthState('invalid'); return }
+        if (!data.registration_token || data.registration_token !== token) {
+          setAuthState('invalid')
+          return
+        }
+        setEvent(data as Event)
+        
+        try {
+          const isReset = search.get('reset') === 'true' || search.get('new') === 'true'
+          if (isReset) {
+            localStorage.removeItem(LS_KEY(eventId))
+            await deleteDraftFromSupabase()
+          } else {
+            function migrateSaved(s: State): State {
+              const saved = { ...s }
+              if (saved.coach && !saved.coach.assistants) saved.coach.assistants = []
+              if (saved.costPaquete === null) saved.costPaquete = 2700
+              if (saved.costRepeticion === null) saved.costRepeticion = 500
+              if (saved.city === undefined || saved.city === null) {
+                saved.city = ''
+                const match = saved.academy.match(/^(.*?)\s*\(([^)]+)\)$/)
+                if (match) { saved.academy = match[1]; saved.city = match[2] }
+              }
+              if (saved.ticketsCount === undefined || saved.ticketsCount === null) saved.ticketsCount = 0
+              if ((saved as any).signature === undefined) saved.signature = null
+              return saved
             }
-          }
-          if (saved.ticketsCount === undefined || saved.ticketsCount === null) {
-            saved.ticketsCount = 0
-          }
-          setState(saved)
-          if (saved.confirmedRegistrationId) {
-            setStep({ kind: 'confirmed' })
-            // Fetch precise confirmed_at from database to be absolutely sure we have the exact confirmation timestamp
-            ;(async () => {
+
+            // Check if there is already a submitted/confirmed registration in DB first (source of truth)
+            let dbReg: any = null
+            try {
+              const savedRegId = typeof window !== 'undefined'
+                ? localStorage.getItem(`d4e:register-reg-id:${eventId}`)
+                : null
+
+              let query = supabase.from('coach_registrations')
+                .select('id, coach_name, coach_phone, coach_email, academy, team_name, submitted_at, confirmed_at, tickets_count, notes, cost_paquete, cost_repeticion, signature, extra_coaches')
+              if (savedRegId) {
+                query = query.eq('id', Number(savedRegId))
+              } else {
+                query = query.eq('draft_id', draftId)
+              }
+              const { data: regRow } = await query
+              if (regRow && regRow.length > 0 && regRow[0].submitted_at && !regRow[0].submitted_at.startsWith('1970-01-01')) {
+                dbReg = regRow[0]
+              }
+            } catch (e) {
+              console.error('Error checking existing registration on mount:', e)
+            }
+
+            if (dbReg) {
+              // Recover state entirely from the database submission
               try {
-                const { data: regData } = await supabase
-                  .from('coach_registrations')
-                  .select('confirmed_at')
-                  .eq('id', saved.confirmedRegistrationId)
-                  .single()
-                if (regData && regData.confirmed_at) {
-                  setState(s => {
-                    if (s.confirmedRegistrationId === saved.confirmedRegistrationId && s.confirmedAt !== regData.confirmed_at) {
-                      return { ...s, confirmedAt: regData.confirmed_at }
-                    }
-                    return s
-                  })
+                const r = dbReg
+                const { data: dancers } = await supabase.from('registration_dancers').select('*').eq('registration_id', r.id)
+                const { data: acts } = await supabase.from('registration_acts').select('*').eq('registration_id', r.id)
+                
+                // Parse academy and city
+                let academy = r.academy || ''
+                let city = ''
+                const match = academy.match(/^(.*?)\s*\(([^)]+)\)$/)
+                if (match) { academy = match[1]; city = match[2] }
+                const assistants = (r.extra_coaches || [])
+                  .map((a: string) => a.replace(/^Asistente:\s*/, ''))
+                  .filter((a: string) => a.trim().length > 0)
+                
+                setState({
+                  coach: { name: r.coach_name || '', phone: r.coach_phone || '', email: r.coach_email || '', assistants },
+                  academy, city,
+                  teamName: r.team_name || '',
+                  teamSize: (dancers || []).length,
+                  dancers: (dancers || []).map((d: any) => ({
+                    name: d.name || '', birthdate: d.birthdate || '',
+                    categoryOverride: d.category_manual ? (d.category as any) : null,
+                  })),
+                  actCount: (acts || []).length,
+                  acts: (acts || []).map((a: any) => ({
+                    modality: a.modality || 'grupal',
+                    ageCategory: a.age_category || null,
+                    level: a.level || 'avanzado',
+                    style: a.style || '',
+                    dancerIndices: (a.dancer_ids || []).map((did: number) => {
+                      const idx = (dancers || []).findIndex((d: any) => d.id === did)
+                      return idx >= 0 ? idx : 0
+                    }),
+                  })),
+                  costPaquete: r.cost_paquete || null,
+                  costRepeticion: r.cost_repeticion || null,
+                  confirmedRegistrationId: r.id,
+                  ticketsCount: r.tickets_count || 0,
+                  notes: r.notes || '',
+                  confirmedAt: r.confirmed_at || null,
+                  signature: r.signature || null,
+                })
+                setDraftRegistrationId(r.id)
+                if (r.confirmed_at) {
+                  setStep({ kind: 'confirmed' })
+                } else {
+                  setStep({ kind: 'pending' })
                 }
               } catch (e) {
-                console.error("Failed to fetch confirmation timestamp:", e)
+                console.error('Error recovering registration from DB:', e)
               }
-            })()
+            } else {
+              let rawState: State | null = null
+
+              // Try Supabase draft first
+              try {
+                const { data: draftRows, error } = await supabase
+                  .from('registration_drafts')
+                  .select('state')
+                  .eq('draft_id', draftId)
+                if (!error && draftRows && draftRows.length > 0) {
+                  rawState = migrateSaved(draftRows[0].state as State)
+                }
+              } catch { /* Supabase might not be ready */ }
+
+              // Fall back to localStorage
+              if (!rawState) {
+                const raw = localStorage.getItem(LS_KEY(eventId))
+                if (raw) {
+                  try { rawState = migrateSaved(JSON.parse(raw) as State) } catch { /* ignore */ }
+                }
+              }
+
+              if (rawState) {
+                setState(rawState)
+                // Check for existing draft in coach_registrations by draft_id
+                if (!rawState.confirmedRegistrationId) {
+                  try {
+                    const { data: draftReg } = await supabase
+                      .from('coach_registrations')
+                      .select('id')
+                      .eq('draft_id', draftId)
+                    if (draftReg && draftReg.length > 0) {
+                      setDraftRegistrationId(draftReg[0].id)
+                    }
+                  } catch { /* ignore */ }
+                }
+                if (rawState.confirmedRegistrationId) {
+                  // Determine confirmed vs pending asynchronously
+                  setStep({ kind: 'pending' })
+                  try {
+                    const { data: regData } = await supabase
+                      .from('coach_registrations')
+                      .select('confirmed_at, submitted_at')
+                      .eq('id', rawState!.confirmedRegistrationId)
+                      .single()
+                    if (regData) {
+                      setState(s => {
+                        if (s.confirmedRegistrationId === rawState!.confirmedRegistrationId) {
+                          return { 
+                            ...s, 
+                            confirmedAt: regData.confirmed_at,
+                            submittedAt: regData.submitted_at 
+                          }
+                        }
+                        return s
+                      })
+                      if (regData.confirmed_at) {
+                        setStep({ kind: 'confirmed' })
+                      }
+                    }
+                  } catch (e) {
+                    console.error("Failed to fetch confirmation timestamp:", e)
+                  }
+                }
+              } else {
+                setStep({ kind: 'welcome' })
+              }
+            }
+          }
+        } catch (err) {
+          console.error('Error during mount state recovery:', err)
+        } finally {
+          clearTimeout(timeoutId)
+          if (!cancelled) {
+            setAuthState('ok')
           }
         }
+      } catch (err) {
+        clearTimeout(timeoutId)
+        if (!cancelled) {
+          setAuthState('ok')
+        }
       }
-      } catch { /* ignore */ }
     })()
-    return () => { cancelled = true }
+    return () => { 
+      cancelled = true
+      clearTimeout(timeoutId)
+    }
   }, [eventId, token])
+
+  useEffect(() => {
+    if (!eventId) return
+    const unsubscribe = subscribePortalConfig(eventId, (config) => {
+      setPortalConfig(config)
+    })
+    return () => unsubscribe()
+  }, [eventId])
+
+  // Realtime: detect when admin confirms the registration
+  useEffect(() => {
+    if (!state.confirmedRegistrationId || !eventId) return
+    const regId = state.confirmedRegistrationId
+    const ch = supabase
+      .channel(`reg-confirm-${regId}`)
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'coach_registrations',
+        filter: `id=eq.${regId}`,
+      }, (payload) => {
+        const row = payload.new as { confirmed_at: string | null }
+        if (row?.confirmed_at) {
+          setState(s => ({ ...s, confirmedAt: row.confirmed_at }))
+          setStep({ kind: 'confirmed' })
+        } else {
+          setState(s => ({ ...s, confirmedAt: null }))
+          setStep({ kind: 'pending' })
+        }
+      })
+      .subscribe()
+    return () => { supabase.removeChannel(ch) }
+  }, [state.confirmedRegistrationId, eventId])
 
   useEffect(() => {
     if (authState !== 'ok') return
     try { localStorage.setItem(LS_KEY(eventId), JSON.stringify(state)) } catch { /* ignore */ }
-  }, [state, eventId, authState])
+    // Debounced save to Supabase (800ms)
+    if (state.confirmedRegistrationId) return // don't re-save drafts for confirmed
+    if (draftTimerRef.current) clearTimeout(draftTimerRef.current)
+    draftTimerRef.current = setTimeout(() => saveDraftToSupabase(state), 800)
+    return () => { if (draftTimerRef.current) clearTimeout(draftTimerRef.current) }
+  }, [state, eventId, authState, saveDraftToSupabase])
 
   // Auto-initialize first empty act if acts step is reached with 0 acts
   useEffect(() => {
@@ -273,6 +598,12 @@ export default function RegisterPage({ params }: Props) {
 
     const checkKeyboard = () => {
       if (typeof window === 'undefined') return false
+      
+      // No soft keyboard on desktop PCs
+      const isCoarsePointer = window.matchMedia('(pointer: coarse)').matches
+      const isDesktopSize = window.innerWidth >= 1024 && window.innerHeight >= 700
+      if (isDesktopSize && !isCoarsePointer) return false
+
       if (window.innerHeight > initialHeight) initialHeight = window.innerHeight
       // If viewport is back to (near) full size, keyboard is definitely closed
       if (vv && vv.height >= initialHeight * 0.85) return false
@@ -375,11 +706,31 @@ export default function RegisterPage({ params }: Props) {
         case 'setup': return { kind: 'dancers' }
         case 'dancers': return { kind: 'acts' }
         case 'acts': return { kind: 'summary' }
-        case 'summary': return { kind: 'confirmed' }
+        case 'summary': return state.confirmedRegistrationId ? { kind: 'pending' } : { kind: 'carta' }
         default: return s
       }
     })
-  }, [])
+  }, [state.confirmedRegistrationId])
+
+  // Sync the draft immediately when step changes (e.g. clicking next/back) to avoid debounce lag
+  useEffect(() => {
+    if (step.kind === 'welcome' || step.kind === 'confirmed' || step.kind === 'pending') return
+    saveDraftToSupabase(state)
+  }, [step.kind, saveDraftToSupabase])
+
+  // Scroll to top when entering a new step
+  useEffect(() => {
+    setTimeout(() => {
+      try {
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+        document.querySelectorAll('.overflow-y-auto').forEach(el => {
+          el.scrollTo({ top: 0, behavior: 'smooth' })
+        })
+      } catch (err) {
+        console.error('Scroll error:', err)
+      }
+    }, 100)
+  }, [step.kind])
 
   const goBack = useCallback(() => {
     setStep(s => {
@@ -388,6 +739,7 @@ export default function RegisterPage({ params }: Props) {
         case 'dancers': return { kind: 'setup' }
         case 'acts': return { kind: 'dancers' }
         case 'summary': return { kind: 'acts' }
+        case 'carta': return { kind: 'summary' }
         default: return s
       }
     })
@@ -491,86 +843,198 @@ export default function RegisterPage({ params }: Props) {
     try {
       const isUpdate = state.confirmedRegistrationId != null
       let registrationId: number
+      let computedChanges: Record<string, { old: any; new: any }> = {}
 
       const costPaquete = state.costPaquete ?? event.default_cost_paquete ?? 2700
       const costRepeticion = state.costRepeticion ?? event.default_cost_repeticion ?? 500
 
-      const extrasMerged = [
-        ...state.coach.assistants.map(a => `Asistente: ${a.trim()}`).filter(a => a !== 'Asistente:'),
-      ]
+      const assistants = state.coach.assistants
+        .map(a => `Asistente: ${a.trim()}`)
+        .filter(a => a !== 'Asistente:')
 
       const submittedAt = new Date().toISOString()
 
       if (isUpdate) {
         registrationId = state.confirmedRegistrationId!
-        // On update, fetch current extra coaches to preserve them
-        const { data: existing } = await supabase
-          .from('coach_registrations')
-          .select('extra_coaches')
-          .eq('id', registrationId)
-          .single()
 
-        const existingExtras = (existing?.extra_coaches as string[] | null) ?? []
-        const mergedExtras = [...new Set([
-          ...existingExtras.filter((s: string) => !s.startsWith('Asistente:')),
-          ...extrasMerged,
-        ])]
+        try {
+          // Fetch existing data for comparison BEFORE deleting/updating
+          const [
+            { data: oldRegs },
+            { data: oldDancers },
+            { data: oldActs }
+          ] = await Promise.all([
+            supabase.from('coach_registrations').select('*').eq('id', registrationId).limit(1),
+            supabase.from('registration_dancers').select('*').eq('registration_id', registrationId),
+            supabase.from('registration_acts').select('*').eq('registration_id', registrationId)
+          ])
+
+          if (oldRegs && oldRegs.length > 0) {
+            const oldReg = oldRegs[0]
+            
+            // Compare basic coach/academy fields
+            if (oldReg.coach_name !== state.coach.name.trim()) {
+              computedChanges.coach_name = { old: oldReg.coach_name, new: state.coach.name.trim() }
+            }
+            const newAcademy = state.city.trim() ? `${state.academy.trim()} (${state.city.trim()})` : state.academy.trim()
+            if (oldReg.academy !== newAcademy) {
+              computedChanges.academy = { old: oldReg.academy, new: newAcademy }
+            }
+            if ((oldReg.tickets_count ?? 0) !== (state.ticketsCount ?? 0)) {
+              computedChanges.boletos_adicionales = { old: oldReg.tickets_count ?? 0, new: state.ticketsCount ?? 0 }
+            }
+
+            // Compare assistants
+            const oldAssistants = oldReg.extra_coaches || []
+            if (JSON.stringify([...oldAssistants].sort()) !== JSON.stringify([...assistants].sort())) {
+              computedChanges.asistentes = { 
+                old: oldAssistants.map((a: string) => a.replace(/^Asistente:\s*/, '')).join(', ') || 'Ninguno', 
+                new: assistants.map((a: string) => a.replace(/^Asistente:\s*/, '')).join(', ') || 'Ninguno' 
+              }
+            }
+
+            // Compare dancers
+            const oldDancerNames = (oldDancers ?? []).map((d: any) => d.name.trim()).sort()
+            const newDancerNames = state.dancers.map(d => d.name.trim()).sort()
+            
+            const addedDancers = newDancerNames.filter(x => !oldDancerNames.includes(x))
+            const removedDancers = oldDancerNames.filter(x => !newDancerNames.includes(x))
+            
+            if (addedDancers.length > 0) {
+              computedChanges.integrantes_agregados = { old: null, new: addedDancers.join(', ') }
+            }
+            if (removedDancers.length > 0) {
+              computedChanges.integrantes_eliminados = { old: removedDancers.join(', '), new: null }
+            }
+
+            // Compare acts (choreographies)
+            const oldActDescs = (oldActs ?? []).map((a: any) => `${(a.modality || '').toUpperCase()} (${a.style || ''})`).sort()
+            const newActDescs = state.acts.map(a => `${(a.modality || '').toUpperCase()} (${a.style || ''})`).sort()
+
+            const addedActs = newActDescs.filter(x => !oldActDescs.includes(x))
+            const removedActs = oldActDescs.filter(x => !newActDescs.includes(x))
+
+            if (addedActs.length > 0) {
+              computedChanges.coreografias_agregadas = { old: null, new: addedActs.join(', ') }
+            }
+            if (removedActs.length > 0) {
+              computedChanges.coreografias_eliminadas = { old: removedActs.join(', '), new: null }
+            }
+          }
+        } catch (e) {
+          console.error('Error fetching old registration for logs:', e)
+        }
+
+        const academy = state.city.trim()
+          ? `${state.academy.trim()} (${state.city.trim()})`
+          : state.academy.trim()
+
+        const { error: updErr } = await supabase.from('coach_registrations').update({
+          coach_name: state.coach.name.trim(),
+          coach_phone: state.coach.phone.trim(),
+          coach_email: state.coach.email.trim() || null,
+          extra_coaches: assistants,
+          academy,
+          team_name: state.academy.trim(),
+          cost_paquete: costPaquete,
+          cost_repeticion: costRepeticion,
+          submitted_at: submittedAt,
+          tickets_count: state.ticketsCount ?? 0,
+          notes: state.notes?.trim() || null,
+          signature: signature || null,
+          confirmed_at: null, // Reset to null so it goes back to review
+        }).eq('id', registrationId)
+        if (updErr) throw updErr
+
+        // Delete existing dancers/acts for this registration to replace them
+        await supabase.from('registration_dancers').delete().eq('registration_id', registrationId)
+        await supabase.from('registration_acts').delete().eq('registration_id', registrationId)
 
         const dancerRows = state.dancers.map((d, i) => ({
+          registration_id: registrationId,
           name: d.name.trim(),
           birthdate: d.birthdate,
           category: effectiveCategory(d),
           category_manual: d.categoryOverride !== null,
           order_idx: i,
         }))
+        const { data: dData, error: dErr } = await supabase
+          .from('registration_dancers')
+          .insert(dancerRows)
+          .select()
+        if (dErr || !dData) throw dErr ?? new Error('No dancers data')
+
+        const dancerIdByIndex = new Map<number, number>()
+        dData.forEach((row: { id: number, order_idx: number }) => {
+          dancerIdByIndex.set(row.order_idx, row.id)
+        })
 
         const actRows = state.acts.map((a, i) => ({
+          registration_id: registrationId,
           modality: a.modality,
           age_category: a.ageCategory,
           level: a.modality === 'grupal' ? a.level : 'avanzado',
           style: a.style,
           order_idx: i,
-          dancer_indices: a.dancerIndices,
+          dancer_ids: a.dancerIndices
+            .map(idx => dancerIdByIndex.get(idx))
+            .filter((x): x is number => typeof x === 'number'),
         }))
-
-        const { error: rpcErr } = await supabase.rpc('resubmit_registration', {
-          p_registration_id: registrationId,
-          p_coach_name: state.coach.name.trim(),
-          p_coach_phone: state.coach.phone.trim(),
-          p_coach_email: state.coach.email.trim() || null,
-          p_extra_coaches: mergedExtras,
-          p_academy: state.city.trim() ? `${state.academy.trim()} (${state.city.trim()})` : state.academy.trim(),
-          p_team_name: state.academy.trim(),
-          p_cost_paquete: costPaquete,
-          p_cost_repeticion: costRepeticion,
-          p_tickets_count: state.ticketsCount ?? 0,
-          p_notes: state.notes?.trim() || null,
-          p_submitted_at: submittedAt,
-          p_dancers: dancerRows,
-          p_acts: actRows,
-        })
-        if (rpcErr) throw rpcErr
+        const { error: aErr } = await supabase.from('registration_acts').insert(actRows)
+        if (aErr) throw aErr
       } else {
-        const { data: regData, error: regErr } = await supabase
-          .from('coach_registrations')
-          .insert({
-            event_id: event.id,
+        const academy = state.city.trim()
+          ? `${state.academy.trim()} (${state.city.trim()})`
+          : state.academy.trim()
+
+        if (draftRegistrationId) {
+          // Update existing draft row → now submitted
+          registrationId = draftRegistrationId
+          const { error: updErr } = await supabase.from('coach_registrations').update({
             coach_name: state.coach.name.trim(),
             coach_phone: state.coach.phone.trim(),
             coach_email: state.coach.email.trim() || null,
-            extra_coaches: extrasMerged,
-            academy: state.city.trim() ? `${state.academy.trim()} (${state.city.trim()})` : state.academy.trim(),
+            extra_coaches: assistants,
+            academy,
             team_name: state.academy.trim(),
             cost_paquete: costPaquete,
             cost_repeticion: costRepeticion,
             submitted_at: submittedAt,
             tickets_count: state.ticketsCount ?? 0,
             notes: state.notes?.trim() || null,
-          })
-          .select()
-          .single()
-        if (regErr || !regData) throw regErr ?? new Error('No data')
-        registrationId = regData.id as number
+            signature: signature || null,
+          }).eq('id', draftRegistrationId)
+          if (updErr) throw updErr
+        } else {
+          const { data: regData, error: regErr } = await supabase
+            .from('coach_registrations')
+            .insert({
+              event_id: event.id,
+              draft_id: draftId,
+              coach_name: state.coach.name.trim(),
+              coach_phone: state.coach.phone.trim(),
+              coach_email: state.coach.email.trim() || null,
+              extra_coaches: assistants,
+              academy,
+              team_name: state.academy.trim(),
+              cost_paquete: costPaquete,
+              cost_repeticion: costRepeticion,
+              submitted_at: submittedAt,
+              tickets_count: state.ticketsCount ?? 0,
+              notes: state.notes?.trim() || null,
+              signature: signature || null,
+            })
+            .select()
+            .single()
+          if (regErr || !regData) throw regErr ?? new Error('No data')
+          registrationId = regData.id as number
+        }
+
+        // Delete existing dancers/acts for this registration (in case of re-submit from draft)
+        if (draftRegistrationId) {
+          await supabase.from('registration_dancers').delete().eq('registration_id', registrationId)
+          await supabase.from('registration_acts').delete().eq('registration_id', registrationId)
+        }
 
         const dancerRows = state.dancers.map((d, i) => ({
           registration_id: registrationId,
@@ -613,19 +1077,23 @@ export default function RegisterPage({ params }: Props) {
           edited_by: 'coach',
           action: isUpdate ? 'update' : 'create',
           entity_type: 'registration',
-          changes: isUpdate ? { resubmitted: { old: null, new: submittedAt } } : { submitted: { old: null, new: submittedAt } },
+          changes: isUpdate ? { resubmitted: { old: null, new: submittedAt }, ...computedChanges } : { submitted: { old: null, new: submittedAt } },
           created_at: new Date().toISOString(),
         })
       } catch {}
 
+      // After submit, always go to pending — admin must confirm from dashboard
       setState(s => ({ 
         ...s, 
         confirmedRegistrationId: registrationId,
-        confirmedAt: s.confirmedAt ?? null,
+        confirmedAt: null, // Reset to pending review state locally
+        submittedAt: submittedAt,
       }))
+      // Persist registration ID so we can recover state on reload
+      try { localStorage.setItem(`d4e:register-reg-id:${eventId}`, String(registrationId)) } catch { /* ignore */ }
       setEditMode(false)
       setShowSuccessSplash(true)
-      setStep({ kind: 'confirmed' })
+      setStep({ kind: 'pending' }) // Go back to pending screen
       setTimeout(() => {
         setShowSuccessSplash(false)
       }, 3500)
@@ -670,7 +1138,13 @@ export default function RegisterPage({ params }: Props) {
       </div>
     )
   }
+
+  if (portalConfig && !portalConfig.enableRegistration) {
+    return <PortalLockout portalName="Registro" />
+  }
+
   if (authState === 'invalid') {
+
     return (
       <Centered>
         <p className="font-display text-4xl tracking-widest text-[rgb(var(--c-primary))]">LINK INVÁLIDO</p>
@@ -702,7 +1176,7 @@ export default function RegisterPage({ params }: Props) {
               {isEditSave ? 'CAMBIOS GUARDADOS' : 'REGISTRO ENVIADO'}
             </h1>
             <p className="text-lg lg:text-xl text-[rgb(var(--c-surface)/0.9)] leading-relaxed font-medium">
-              {isEditSave ? 'Cambios al registro guardados con exito.' : 'Tu registro fue enviado. Un organizador lo revisara y confirmara pronto.'}
+              {isEditSave ? 'Cambios al registro guardados con éxito.' : 'Tu registro fue enviado. Un organizador lo revisará y confirmará pronto.'}
             </p>
           </div>
         </div>
@@ -727,9 +1201,11 @@ export default function RegisterPage({ params }: Props) {
           overflow: hidden;
           overscroll-behavior: none;
         }
-        /* Ocultar bottom nav al enfocar inputs, excepto en el paso de integrantes */
-        body:has(input:focus, textarea:focus, select:focus) [data-step]:not([data-step="dancers"]) .mobile-bottom-nav {
-          visibility: hidden;
+        /* Ocultar bottom nav al enfocar inputs, excepto en el paso de integrantes, solo en móviles con pantalla táctil */
+        @media (max-width: 1023px) and (pointer: coarse) {
+          body:has(input:focus, textarea:focus, select:focus) [data-step]:not([data-step="dancers"]) .mobile-bottom-nav {
+            visibility: hidden;
+          }
         }
       ` }} />
       <meta name="theme-color" content={step.kind === 'welcome' ? '#000000' : '#F6F4EF'} />
@@ -760,7 +1236,7 @@ export default function RegisterPage({ params }: Props) {
         )}
 
         {/* STEP STATUS INDICATOR (iOS Tab Style - Rediseñado Premium) */}
-        {(!isKeyboardOpen || step.kind === 'dancers') && !isFirstStep && step.kind !== 'confirmed' && (
+      {(!isKeyboardOpen || step.kind === 'dancers' || step.kind === 'summary' || step.kind === 'carta') && !isFirstStep && step.kind !== 'confirmed' && step.kind !== 'pending' && (
           <div className="step-status-indicator shrink-0 flex justify-center pt-0.5 pb-2 sm:py-3 px-4 sm:px-0 relative z-[99999]">
             <div className="bg-purple-50/70 p-1 rounded-2xl flex gap-1 w-full max-w-xl shadow-inner border border-purple-200/40">
               {[
@@ -814,6 +1290,8 @@ export default function RegisterPage({ params }: Props) {
               saving={saving}
               saveErr={saveErr}
               startEdit={startEdit}
+              signature={signature}
+              setSignature={setSignature}
               actsConfirmed={actsConfirmed}
               setActsConfirmed={setActsConfirmed}
               activeActIndex={activeActIndex}
@@ -824,7 +1302,7 @@ export default function RegisterPage({ params }: Props) {
       </main>
 
       {/* MOBILE BOTTOM NAV BAR (iOS native feel) */}
-      {(!isKeyboardOpen || step.kind === 'dancers') && !isFirstStep && step.kind !== 'confirmed' && (
+      {(!isKeyboardOpen || step.kind === 'dancers') && !isFirstStep && step.kind !== 'confirmed' && step.kind !== 'pending' && (
         <div
           className="mobile-bottom-nav shrink-0 lg:hidden bg-[rgb(var(--c-surface)/0.96)] backdrop-blur flex items-center justify-between px-5 py-3 z-40 border-t border-[rgb(var(--c-border)/0.4)]"
           style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 8px)' }}
@@ -859,7 +1337,7 @@ export default function RegisterPage({ params }: Props) {
             )}
           </div>
 
-          {step.kind !== 'summary' ? (
+          {step.kind !== 'summary' && step.kind !== 'carta' ? (
             step.kind === 'acts' && !actsConfirmed ? (
               <button
                 onClick={() => {
@@ -887,13 +1365,22 @@ export default function RegisterPage({ params }: Props) {
                 <ArrowRight className="w-4 h-4 animate-pulse" />
               </button>
             )
-          ) : (
+          ) : step.kind === 'carta' ? (
             <button
               onClick={confirm}
-              disabled={saving}
+              disabled={saving || !signature}
               className="flex items-center gap-1.5 text-white bg-gradient-to-r from-purple-700 via-purple-600 to-pink-600 hover:from-purple-800 hover:to-pink-700 font-display font-bold text-sm px-5 py-2.5 rounded-2xl disabled:opacity-30 disabled:pointer-events-none active:scale-95 transition-all duration-150 shadow-[0_4px_12px_rgba(168,85,247,0.3)]"
             >
-              {saving ? 'GUARDANDO…' : 'CONFIRMAR'}
+              {saving ? 'GUARDANDO…' : 'CONFIRMAR REGISTRO'}
+              <Check className="w-4 h-4 animate-pulse" />
+            </button>
+          ) : (
+            <button
+              onClick={() => goNext()}
+              className="flex items-center gap-1.5 text-white bg-gradient-to-r from-purple-700 via-purple-600 to-pink-600 hover:from-purple-800 hover:to-pink-700 font-display font-bold text-sm px-5 py-2.5 rounded-2xl active:scale-95 transition-all duration-150 shadow-[0_4px_12px_rgba(168,85,247,0.3)]"
+            >
+              CONTINUAR
+              <ArrowRight className="w-4 h-4 animate-pulse" />
             </button>
           )}
         </div>

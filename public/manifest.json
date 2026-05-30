@@ -1,7 +1,7 @@
 {
   "name": "Partners Platform - Dance4ever",
   "short_name": "Socios D4E",
-  "description": "Plataforma de socios en tiempo real para Dance4ever",
+  "description": "Plataforma de socios para Dance4ever",
   "start_url": "/staff",
   "scope": "/",
   "display": "standalone",

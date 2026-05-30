@@ -1,4 +1,5 @@
 import { RegistrationAct, RegistrationDancer, Event } from '@/lib/supabase'
+import { toEndOfDay } from '@/lib/date'
 
 export const DEFAULT_COST_PAQUETE = 2700
 export const DEFAULT_COST_REPETICION = 500
@@ -14,24 +15,18 @@ export const MODALITY_MIN_DANCERS: Record<string, number> = {
   grupal: 4,
 }
 
-function isBeforeCoreoDeadline(event: Event | null): boolean {
-  if (event?.fecha_cambio_tarifa_coreo) {
-    return new Date() < new Date(event.fecha_cambio_tarifa_coreo + 'T23:59:59')
-  }
+// Primera coreo siempre incluida en la inscripción base
+function isBeforeCoreoDeadline(_event: Event | null): boolean {
   return true
 }
 
 function getPrecioEntrada(event: Event | null): number {
-  if (event?.deadline_precio_entrada) {
-    const dl = new Date(event.deadline_precio_entrada + 'T23:59:59')
-    return new Date() > dl
-      ? (event.cost_entrada_tardia ?? DEFAULT_COST_ENTRADA_TARDIA)
-      : (event.cost_entrada_temprana ?? DEFAULT_COST_ENTRADA_TEMPRANA)
-  }
-  const fallback = new Date(2026, 5, 17, 23, 59, 59, 999)
-  return new Date() > fallback
-    ? (event?.cost_entrada_tardia ?? DEFAULT_COST_ENTRADA_TARDIA)
-    : (event?.cost_entrada_temprana ?? DEFAULT_COST_ENTRADA_TEMPRANA)
+  const dl = toEndOfDay(event?.deadline_precio_entrada)
+  if (dl) return new Date() > dl
+    ? (event!.cost_entrada_tardia ?? DEFAULT_COST_ENTRADA_TARDIA)
+    : (event!.cost_entrada_temprana ?? DEFAULT_COST_ENTRADA_TEMPRANA)
+  // No deadline configured → always early price
+  return event?.cost_entrada_temprana ?? DEFAULT_COST_ENTRADA_TEMPRANA
 }
 
 function buildActCounts(acts: RegistrationAct[], _dancers: RegistrationDancer[]): Map<number, number> {
@@ -62,8 +57,9 @@ export function costoRegistro(
   const beforeDeadline = isBeforeCoreoDeadline(event)
 
   let total = 0
-  counts.forEach(n => {
-    if (n >= 1) total += paq
+  dancers.forEach(d => {
+    total += paq
+    const n = counts.get(d.id) ?? 0
     if (beforeDeadline) {
       if (n > 1) total += (n - 1) * rep
     } else {
@@ -98,14 +94,13 @@ export function costBreakdown(
 
   let inscrTotal = 0
   let repTotal = 0
-  counts.forEach(n => {
-    if (n >= 1) {
-      inscrTotal += paq
-      if (beforeDeadline) {
-        if (n > 1) repTotal += (n - 1) * rep
-      } else {
-        repTotal += n * rep
-      }
+  dancers.forEach(d => {
+    inscrTotal += paq
+    const n = counts.get(d.id) ?? 0
+    if (beforeDeadline) {
+      if (n > 1) repTotal += (n - 1) * rep
+    } else {
+      repTotal += n * rep
     }
   })
 
@@ -140,7 +135,6 @@ export function dancerCost(
   event?: Event | null
 ): number {
   const n = counts.get(dancerId) ?? 0
-  if (n === 0) return 0
   const beforeDeadline = isBeforeCoreoDeadline(event ?? null)
   if (beforeDeadline) {
     return inscrBase + (n > 1 ? (n - 1) * repBase : 0)

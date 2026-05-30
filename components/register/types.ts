@@ -4,7 +4,6 @@ export type Coach = {
   name: string
   phone: string
   email: string
-  extras: string[]
   assistants: string[]
 }
 
@@ -24,7 +23,6 @@ export type Act = {
 
 export type State = {
   coach: Coach
-  hasMultipleCoaches: boolean | null
   academy: string
   city: string
   teamName: string
@@ -38,6 +36,7 @@ export type State = {
   ticketsCount: number
   confirmedAt?: string | null
   notes: string
+  signature: string | null
 }
 
 export type Step =
@@ -46,6 +45,8 @@ export type Step =
   | { kind: 'dancers' }
   | { kind: 'acts' }
   | { kind: 'summary' }
+  | { kind: 'carta' }
+  | { kind: 'pending' }
   | { kind: 'confirmed' }
 
 export const STYLES = ['Jazz', 'Poms', 'Acro Jazz', 'Hip Hop', 'Show', 'Ballet', 'Contempo']

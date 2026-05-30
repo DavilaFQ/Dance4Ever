@@ -5,6 +5,9 @@ import { supabase, Participant, Event } from '@/lib/supabase'
 import { participantMatches } from '@/lib/search'
 import SearchBar from '@/components/SearchBar'
 import { X } from 'lucide-react'
+import { subscribePortalConfig, PortalConfig } from '@/lib/portalConfig'
+import PortalLockout from '@/components/PortalLockout'
+
 
 type Props = { params: Promise<{ eventId: string }> }
 
@@ -13,6 +16,8 @@ export default function MCPage({ params }: Props) {
   const [event, setEvent] = useState<Event | null>(null)
   const [participants, setParticipants] = useState<Participant[]>([])
   const [notFound, setNotFound] = useState(false)
+  const [portalConfig, setPortalConfig] = useState<PortalConfig | null>(null)
+
   const [showProgram, setShowProgram] = useState(false)
   const [search, setSearch] = useState('')
   const [activeAnnouncement, setActiveAnnouncement] = useState('')
@@ -97,6 +102,15 @@ export default function MCPage({ params }: Props) {
 
   useEffect(() => { if (!showProgram) setSearch('') }, [showProgram])
 
+  useEffect(() => {
+    if (!eventId) return
+    const unsubscribe = subscribePortalConfig(eventId, (config) => {
+      setPortalConfig(config)
+    })
+    return () => unsubscribe()
+  }, [eventId])
+
+
   const loadAll = useCallback(async () => {
     const [ev, ps] = await Promise.all([
       supabase.from('events').select('*').eq('id', eventId).single(),
@@ -132,7 +146,12 @@ export default function MCPage({ params }: Props) {
     )
   }
 
+  if (portalConfig && !portalConfig.enableOperations) {
+    return <PortalLockout portalName="Operativo (MC)" />
+  }
+
   if (!event) {
+
     return (
       <div className="h-[100dvh] bg-black flex items-center justify-center text-fuchsia-500 font-display text-2xl tracking-widest animate-pulse">
         CARGANDO…

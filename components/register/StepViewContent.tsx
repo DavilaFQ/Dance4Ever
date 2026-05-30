@@ -5,6 +5,7 @@ import { supabase, AGE_CATEGORY_ORDER, AGE_CATEGORY_LABELS, AGE_CATEGORY_HINTS, 
 import { type State, type Step, type Coach, type Dancer, type Act, STYLES, CATEGORY_COLORS, DEFAULT_DANCER_COLOR, MODALITY_OPTIONS } from '@/components/register/types'
 import { minDancers, maxDancers, modalityLabel, effectiveCategory, ageFromBirthdate, formatMoney, getDancerDisplayName } from '@/components/register/utils'
 import FullSummary from '@/components/register/FullSummary'
+import CartaResponsiva from '@/components/register/CartaResponsiva'
 
 
 export default 
@@ -32,6 +33,8 @@ function StepViewContent(props: {
   saving: boolean
   saveErr: string | null
   startEdit: () => void
+  signature: string | null
+  setSignature: (s: string | null) => void
   actsConfirmed: boolean
   setActsConfirmed: (b: boolean) => void
   activeActIndex: number | null
@@ -50,7 +53,7 @@ function StepViewContent(props: {
   setVideoLoaded: React.Dispatch<React.SetStateAction<boolean>>
   videoRef: React.RefObject<HTMLVideoElement | null>
 }) {
-  const { step, state, event, editMode, isEditSave, onNext, goToStep, updateCoach, updateState, updateDancer, addDancer, removeDancer, onOpenSmartPaste, updateAct, addAct, removeAct, confirm, saving, saveErr, startEdit, actsConfirmed, setActsConfirmed, activeActIndex, setActiveActIndex, videoEnded, videoProgress, currentTime, useFallback, startBlurring, videoLoaded, setVideoEnded, setVideoProgress, setCurrentTime, setUseFallback, setStartBlurring, setVideoLoaded, videoRef } = props
+  const { step, state, event, editMode, isEditSave, onNext, goToStep, updateCoach, updateState, updateDancer, addDancer, removeDancer, onOpenSmartPaste, updateAct, addAct, removeAct, confirm, saving, saveErr, startEdit, signature, setSignature, actsConfirmed, setActsConfirmed, activeActIndex, setActiveActIndex, videoEnded, videoProgress, currentTime, useFallback, startBlurring, videoLoaded, setVideoEnded, setVideoProgress, setCurrentTime, setUseFallback, setStartBlurring, setVideoLoaded, videoRef } = props
   const [lastAddedAssistantIndex, setLastAddedAssistantIndex] = useState<number | null>(null)
   const [datePickerIndex, setDatePickerIndex] = useState<number | null>(null)
   const [datePickerVal, setDatePickerVal] = useState({ day: '', month: '', year: '' })
@@ -1008,6 +1011,23 @@ function StepViewContent(props: {
         />
       )
 
+    case 'pending':
+      return (
+        <FullSummary
+          state={state}
+          editMode={true}
+          pending
+          isEditSave={isEditSave}
+          startEdit={() => startEdit()}
+          confirm={confirm}
+          saving={saving}
+          saveErr={saveErr}
+          updateState={updateState}
+          goToStep={goToStep}
+          event={event}
+        />
+      )
+
     case 'confirmed':
       return (
         <FullSummary
@@ -1019,6 +1039,19 @@ function StepViewContent(props: {
           updateState={updateState}
           goToStep={goToStep}
           event={event}
+        />
+      )
+
+    case 'carta':
+      return (
+        <CartaResponsiva
+          state={state}
+          event={event}
+          signature={signature}
+          setSignature={setSignature}
+          confirm={confirm}
+          saving={saving}
+          goToStep={goToStep}
         />
       )
   }

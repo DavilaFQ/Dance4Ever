@@ -1,9 +1,29 @@
 import { type Event, AGE_CATEGORY_LABELS, AGE_CATEGORY_HINTS } from '@/lib/supabase'
 import { type State, STYLES, MODALITY_OPTIONS } from '@/components/register/types'
-import { effectiveCategory, costBreakdown, costoTotal, formatMoney, formatEventDate, extractErrorMessage, loadImage, modalityLabel, participacionesPorAlumno, isBeforeJune15, getPrecioEntradaRegistro } from '@/components/register/utils'
+import { effectiveCategory, costBreakdown, costoTotal, formatMoney, formatEventDate, extractErrorMessage, loadImage, modalityLabel, participacionesPorAlumno, isBeforeCoreoDeadline, getPrecioEntradaRegistro } from '@/components/register/utils'
 
 
 export async function generateReceiptPDF(state: State, event: Event | null) {
+  const doc = await generatePDF(state, event, true)
+  const filename = `Comprobante_Registro_${state.academy.replace(/\s+/g, '_') || 'Dance4ever'}.pdf`
+  doc.save(filename)
+}
+
+export async function generateReceiptPDFDoc(state: State, event: Event | null) {
+  return generatePDF(state, event, true)
+}
+
+export async function generateBudgetPDF(state: State, event: Event | null) {
+  const doc = await generatePDF(state, event, false)
+  const filename = `Presupuesto_Registro_${state.academy.replace(/\s+/g, '_') || 'Dance4ever'}.pdf`
+  doc.save(filename)
+}
+
+export async function generateBudgetPDFDoc(state: State, event: Event | null) {
+  return generatePDF(state, event, false)
+}
+
+export async function generatePDF(state: State, event: Event | null, showBankInfo: boolean) {
   const jsPDF = (await import('jspdf')).default
   const autoTable = (await import('jspdf-autotable')).default
 
@@ -69,7 +89,8 @@ export async function generateReceiptPDF(state: State, event: Event | null) {
   doc.setTextColor(234, 179, 8) // Gold
   doc.setFontSize(10)
   doc.setFont('helvetica', 'bold')
-  doc.text('COMPROBANTE DE REGISTRO', textStartX, 24)
+  const subtitleText = showBankInfo ? 'COMPROBANTE DE REGISTRO' : 'PRE-REGISTRO EN REVISIÓN'
+  doc.text(subtitleText, textStartX, 24)
 
   // Event name and date on the right side
   doc.setTextColor(255, 255, 255)
@@ -81,16 +102,25 @@ export async function generateReceiptPDF(state: State, event: Event | null) {
   doc.setTextColor(200, 200, 200)
   doc.setFontSize(9)
   doc.setFont('helvetica', 'normal')
-  const eventDate = event?.date ? formatEventDate(event.date) : 'Temporada 2026'
+  const eventDate = event?.date ? formatEventDate(event.date) : (event?.name || 'Evento')
   doc.text(eventDate, 195, 24, { align: 'right' })
   
-  // Confirmed badge on right
-  doc.setFillColor(22, 163, 74) // Success Green
-  doc.rect(155, 29, 40, 6, 'F')
-  doc.setTextColor(255, 255, 255)
-  doc.setFontSize(8)
-  doc.setFont('helvetica', 'bold')
-  doc.text('REGISTRO CONFIRMADO', 175, 33, { align: 'center' })
+  // Badge on right depending on confirmation status
+  if (showBankInfo) {
+    doc.setFillColor(22, 163, 74) // Success Green
+    doc.rect(155, 29, 40, 6, 'F')
+    doc.setTextColor(255, 255, 255)
+    doc.setFontSize(8)
+    doc.setFont('helvetica', 'bold')
+    doc.text('REGISTRO CONFIRMADO', 175, 33, { align: 'center' })
+  } else {
+    doc.setFillColor(245, 158, 11) // Amber / Orange-500 (#F59E0B)
+    doc.rect(150, 29, 45, 6, 'F')
+    doc.setTextColor(255, 255, 255)
+    doc.setFontSize(7.5)
+    doc.setFont('helvetica', 'bold')
+    doc.text('REGISTRO EN REVISIÓN', 172.5, 33, { align: 'center' })
+  }
 
   let y = 52
 
@@ -157,8 +187,12 @@ export async function generateReceiptPDF(state: State, event: Event | null) {
   doc.text('FECHA REGISTRO:', 120, y)
   doc.setTextColor(17, 17, 17)
   doc.setFont('helvetica', 'normal')
-  const confirmDateObj = state.confirmedAt ? new Date(state.confirmedAt) : new Date()
-  const confirmTimestamp = confirmDateObj.toLocaleString('es-MX', { 
+  let registrationDate = new Date()
+  if (state.confirmedAt) {
+    registrationDate = new Date(state.confirmedAt)
+  }
+
+  const confirmTimestamp = registrationDate.toLocaleString('es-MX', { 
     day: '2-digit', 
     month: 'short', 
     year: 'numeric', 
@@ -170,23 +204,13 @@ export async function generateReceiptPDF(state: State, event: Event | null) {
   y += 5
 
   // Row 4
-  if (state.coach.email || state.coach.extras.filter(e => e.trim()).length > 0) {
+  if (state.coach.email) {
     doc.setTextColor(100, 100, 100)
     doc.setFont('helvetica', 'bold')
     doc.text('EMAIL / CORREO:', 15, y)
     doc.setTextColor(17, 17, 17)
     doc.setFont('helvetica', 'normal')
-    doc.text(state.coach.email || 'SIN EMAIL', 52, y)
-    
-    const otherCoaches = state.coach.extras.filter(e => e.trim()).join(', ')
-    if (otherCoaches) {
-      doc.setTextColor(100, 100, 100)
-      doc.setFont('helvetica', 'bold')
-      doc.text('OTROS COACHES:', 120, y)
-      doc.setTextColor(17, 17, 17)
-      doc.setFont('helvetica', 'normal')
-      doc.text(otherCoaches.toUpperCase(), 150, y, { maxWidth: 45 })
-    }
+    doc.text(state.coach.email, 52, y)
     y += 5
   }
 
@@ -294,7 +318,7 @@ export async function generateReceiptPDF(state: State, event: Event | null) {
     .sort((a, b) => a.dancer.name.localeCompare(b.dancer.name, 'es'))
 
   const countsMap = participacionesPorAlumno(state)
-  const beforeJune15 = isBeforeJune15(event)
+  const beforeJune15 = isBeforeCoreoDeadline(event)
 
   const dancerRows = sortedDancersWithIndex.map(({ dancer, originalIndex }, rank) => {
     const compCat = effectiveCategory(dancer)
@@ -348,6 +372,8 @@ export async function generateReceiptPDF(state: State, event: Event | null) {
   })
 
   let finalDancersY = (doc as any).lastAutoTable.finalY || (dancersY + 15)
+  let costY: number
+  if (showBankInfo) {
   let bankY = finalDancersY + 8
 
   if (bankY > 215) {
@@ -406,7 +432,10 @@ export async function generateReceiptPDF(state: State, event: Event | null) {
   doc.setFont('helvetica', 'bold')
   doc.text('4152 3139 6949 9099', 148, bankY + 14)
 
-  let costY = bankY + 18 + 6
+  costY = bankY + 18 + 6
+  } else {
+    costY = finalDancersY + 8
+  }
 
   if (costY > 225) {
     doc.addPage()
@@ -539,9 +568,68 @@ export async function generateReceiptPDF(state: State, event: Event | null) {
 
 
 
+  // Watermark + note for budget (non-confirmed) PDF
+  if (!showBankInfo) {
+    const pageW = doc.internal.pageSize.getWidth()
+    const pageH = doc.internal.pageSize.getHeight()
+    const pageCount = doc.getNumberOfPages()
+
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i)
+
+      // Set watermark opacity (lower opacity to avoid clutter since there are multiple)
+      try {
+        const gsWatermark = doc.GState({ opacity: 0.08 })
+        doc.setGState(gsWatermark)
+      } catch { /* fallback if GState not supported */ }
+
+      // Draw red diagonal watermarks (3 positions: top, middle, bottom)
+      doc.setTextColor(239, 68, 68) // Tailwind Red-500 (#EF4444)
+      doc.setFontSize(25)
+      doc.setFont('helvetica', 'bold')
+      
+      const watermarkText = 'PRE-REGISTRO · EN REVISIÓN'
+      
+      // Top Watermark
+      doc.text(watermarkText, pageW / 2, pageH * 0.26, {
+        angle: 45,
+        align: 'center',
+      })
+
+      // Middle Watermark
+      doc.text(watermarkText, pageW / 2, pageH * 0.5, {
+        angle: 45,
+        align: 'center',
+      })
+
+      // Bottom Watermark
+      doc.text(watermarkText, pageW / 2, pageH * 0.74, {
+        angle: 45,
+        align: 'center',
+      })
+
+      // Reset GState opacity for footer note to be fully visible and clear
+      try {
+        const gsNormal = doc.GState({ opacity: 1.0 })
+        doc.setGState(gsNormal)
+      } catch { /* fallback if GState not supported */ }
+
+      // Footer note
+      const footerY = pageH - 10
+      doc.setTextColor(140, 140, 140)
+      doc.setFontSize(7.5)
+      doc.setFont('helvetica', 'italic')
+      doc.text(
+        'Este documento es un presupuesto de referencia. El comprobante oficial con datos bancarios estará disponible cuando tu registro sea confirmado.',
+        pageW / 2,
+        footerY,
+        { align: 'center', maxWidth: 180 }
+      )
+    }
+  }
+
   // Output / Download
-  const filename = `Comprobante_Registro_${state.academy.replace(/\s+/g, '_') || 'Dance4ever'}.pdf`
-  doc.save(filename)
+  return doc
 }
  
 export async function generateExtraTicketsPDF(state: State, event: Event | null, newTickets: number, action: 'view' | 'download' = 'download', pdfWindow: any = null) {
@@ -605,7 +693,7 @@ export async function generateExtraTicketsPDF(state: State, event: Event | null,
   
   doc.setTextColor(200, 200, 200)
   doc.setFontSize(9)
-  const eventDate = event?.date ? formatEventDate(event.date) : 'Temporada 2026'
+  const eventDate = event?.date ? formatEventDate(event.date) : (event?.name || 'Evento')
   doc.text(eventDate, 195, 24, { align: 'right' })
 
   let y = 52
@@ -790,4 +878,153 @@ export async function generateExtraTicketsPDF(state: State, event: Event | null,
     link.click()
     document.body.removeChild(link)
   }
+}
+
+export async function generateCartaPDF(state: State, event: Event | null) {
+  const doc = await generateCartaPDFDoc(state, event)
+  const filename = `Carta_Responsiva_${(state.academy || 'Dance4ever').replace(/\s+/g, '_')}.pdf`
+  doc.save(filename)
+}
+
+export async function generateCartaPDFDoc(state: State, event: Event | null) {
+  const jsPDF = (await import('jspdf')).default
+
+  let logoImg: HTMLImageElement | null = null
+  try { logoImg = await loadImage('/logo.png') } catch { /* ignore */ }
+
+  const doc = new jsPDF('p', 'mm', 'a4')
+  const pageW = doc.internal.pageSize.getWidth()
+
+  // Header
+  doc.setFillColor(76, 29, 149)
+  doc.rect(0, 0, 210, 35, 'F')
+  if (logoImg) {
+    const originalWidth = logoImg.width
+    const originalHeight = logoImg.height
+    const ratio = originalHeight > 0 ? originalWidth / originalHeight : 1
+    let logoHeight = 27
+    let logoWidth = logoHeight * ratio
+    if (logoWidth > 120) {
+      logoWidth = 120
+      logoHeight = logoWidth / ratio
+    }
+    const logoX = (pageW - logoWidth) / 2
+    const logoY = (35 - logoHeight) / 2
+    doc.addImage(logoImg, 'PNG', logoX, logoY, logoWidth, logoHeight)
+  }
+
+  let y = 43
+
+  // Title
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(13)
+  doc.setTextColor(76, 29, 149)
+  doc.text('CARTA RESPONSIVA Y ACUERDO DE CONFORMIDAD LEGAL', 105, y, { align: 'center' })
+
+  y += 8
+
+  // Carta text
+  const coachName = state.coach.name || '______________________________'
+  const academy = state.academy || '______________________________'
+  const eventName = event?.name || '______________________________'
+  const categories = [...new Set(state.acts.filter(a => a.ageCategory).map(a => AGE_CATEGORY_LABELS[a.ageCategory!]))].join(', ') || '______________________________'
+  const today = new Date().toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' })
+
+  doc.setFont('helvetica', 'normal')
+  doc.setFontSize(8.5)
+  doc.setTextColor(30, 30, 30)
+
+  const textLines = [
+    `Yo, ${coachName}, en mi calidad de representante legal, director y/o persona responsable del Colegio o Academia ${academy}, declaro bajo protesta de decir verdad que cuento con las autorizaciones expresas, firmas y consentimientos por escrito de los padres o tutores legales de cada uno de los integrantes menores de edad registrados, otorgándome facultad amplia y suficiente para representarlos en el evento ${eventName}, autorizar su participación y aceptar los términos del presente instrumento en su nombre.`,
+    '',
+    `Manifiesto mi conformidad y aceptación absoluta de las bases, lineamientos, CONVOCATORIA y REGLAMENTO oficial de DANCE4EVER. Acepto que cualquier decisión del Comité Organizador, penalización o descalificación derivada del incumplimiento de dichas normativas por parte de cualquier miembro de mi delegación (alumnos, bailarines, coreógrafos, personal de apoyo o padres de familia acompañantes), será entera y exclusiva responsabilidad de mi equipo y de mi persona, deslindando a los organizadores de cualquier reclamo.`,
+    '',
+    `Asimismo, otorgo a DANCE4EVER de manera irrevocable, perpetua y gratuita la cesión de derechos de uso de imagen, voz, fotografía y video de los participantes inscritos en los que pudieran aparecer durante el desarrollo del evento, con fines informativos, de difusión cultural, comerciales o promocionales, pudiendo ser reproducidos y distribuidos total o parcialmente en medios digitales, impresos y redes sociales oficiales.`,
+    '',
+    `DECLARACIÓN DE RIESGOS Y COBERTURA MÉDICA: Reconozco y acepto que la danza y disciplinas afines implican un esfuerzo físico riguroso y conllevan riesgos inherentes de lesiones (esguinces, fracturas u otros accidentes). Declaro expresamente que todos los participantes cuentan con una póliza de seguro médico vigente (público o privado) y que DANCE4EVER únicamente brindará asistencia de primeros auxilios y paramédicos de emergencia en el recinto. Libero de toda responsabilidad civil, penal, administrativa o de cualquier otra índole a los Directivos, organizadores, patrocinadores, staff de DANCE4EVER y a los operadores del recinto sede ante cualquier percance que pudiera suscitarse durante el transcurso del evento.`,
+    '',
+    `ACUERDO DE VALIDEZ DE FIRMA ELECTRÓNICA: Ambas partes reconocen que la firma digital/holográfica plasmada y capturada electrónicamente en este portal tiene pleno valor probatorio y efectos jurídicos equivalentes a una firma física autógrafa, de conformidad con lo establecido en el Artículo 89 del Código de Comercio y demás legislación aplicable en los Estados Unidos Mexicanos. Para la interpretación y cumplimiento de este instrumento, las partes se someten expresamente a las leyes aplicables y a la jurisdicción de los tribunales competentes de la Ciudad de México, renunciando a cualquier otro fuero que por razón de sus domicilios presentes o futuros pudiera corresponderles.`
+  ]
+
+  for (const line of textLines) {
+    if (line === '') { y += 2.5; continue }
+    const lines = doc.splitTextToSize(line, 180)
+    for (const l of lines) {
+      if (y > 275) { doc.addPage(); y = 20 }
+      doc.text(l, 15, y)
+      y += 4.5
+    }
+  }
+
+  y += 6
+
+  if (y > 220) { doc.addPage(); y = 25 }
+
+  // Draw card background for data section
+  doc.setFillColor(248, 248, 250)
+  doc.roundedRect(15, y - 2, 180, 48, 3, 3, 'F')
+  doc.setDrawColor(76, 29, 149)
+  doc.setLineWidth(0.8)
+  doc.line(15, y - 2, 15, y + 46)
+
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(8.5)
+  doc.setTextColor(76, 29, 149)
+  doc.text('DATOS DE REGISTRO Y CONFORMIDAD', 19, y + 3)
+  y += 8.5
+
+  const dataFields = [
+    ['Academia / Equipo:', academy],
+    ['Competencia:', eventName],
+    ['Categorías Registradas:', categories],
+    ['Fecha del Evento:', event?.date ? formatEventDate(event.date) : '______________________________'],
+    ['Fecha de Firma Digital:', today],
+    ['Representante Autorizado:', `${coachName} (Coach / Responsable)`],
+  ]
+
+  doc.setFontSize(8)
+  for (const [label, value] of dataFields) {
+    doc.setFont('helvetica', 'bold')
+    doc.setTextColor(70, 70, 70)
+    doc.text(label, 19, y)
+    doc.setFont('helvetica', 'normal')
+    doc.setTextColor(17, 17, 17)
+    
+    const valText = String(value)
+    const lines = doc.splitTextToSize(valText, 120)
+    doc.text(lines[0], 65, y)
+    y += 5.2
+  }
+
+  y += 8
+
+  if (y > 250) { doc.addPage(); y = 25 }
+
+  // Draw centered professional signature section
+  const signWidth = 80
+  const signX = (pageW - signWidth) / 2
+  
+  doc.setDrawColor(200, 200, 200)
+  doc.setLineWidth(0.4)
+  doc.line(signX, y + 16, signX + signWidth, y + 16)
+
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(8.5)
+  doc.setTextColor(60, 60, 60)
+  doc.text('FIRMA ELECTRÓNICA DE ACEPTACIÓN', pageW / 2, y + 21, { align: 'center' })
+  
+  doc.setFont('helvetica', 'normal')
+  doc.setFontSize(7.5)
+  doc.setTextColor(120, 120, 120)
+  doc.text(`Responsable: ${coachName}`, pageW / 2, y + 25, { align: 'center' })
+  doc.text('Consentimiento Digital y Trazado de Firma con Validez Legal', pageW / 2, y + 28.5, { align: 'center' })
+
+  if (state.signature) {
+    try {
+      doc.addImage(state.signature, 'PNG', signX + 10, y - 5, 60, 20)
+    } catch { /* ignore */ }
+  }
+
+  // Footer
+  return doc
 }

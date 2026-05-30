@@ -3,16 +3,18 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import Image from 'next/image'
 import { ArrowLeft, ArrowRight, Pencil, MessageCircle, Info, X, ChevronDown, Check, Sparkles, Users, Clipboard, HeartHandshake, Ticket, Download, Eye, Calendar, DollarSign, Clock } from 'lucide-react'
 import { supabase, type Event, type AgeCategory, AGE_CATEGORY_ORDER, AGE_CATEGORY_LABELS, AGE_CATEGORY_HINTS } from '@/lib/supabase'
+import { formatDate, toDate } from '@/lib/date'
 import { type State, type Step, type Coach, STYLES, CATEGORY_COLORS, DEFAULT_DANCER_COLOR, MODALITY_OPTIONS } from '@/components/register/types'
-import { minDancers, maxDancers, modalityLabel, effectiveCategory, ageFromBirthdate, participacionesPorAlumno, costBreakdown, costoTotal, formatMoney, formatEventDate, formatBirthdate, getDancerDisplayName, getRegistrationDeadline, getChangesDeadline, isBeforeTicketsDeadline, getPrecioEntradaRegistro, isBeforeJune15, LS_KEY, loadImage } from '@/components/register/utils'
-import { generateReceiptPDF, generateExtraTicketsPDF } from '@/lib/pdf'
+import { minDancers, maxDancers, modalityLabel, effectiveCategory, ageFromBirthdate, participacionesPorAlumno, costBreakdown, costoTotal, formatMoney, formatEventDate, formatBirthdate, getDancerDisplayName, getRegistrationDeadline, getChangesDeadline, isBeforeTicketsDeadline, getPrecioEntradaRegistro, isBeforeCoreoDeadline, LS_KEY, loadImage } from '@/components/register/utils'
+import { generateReceiptPDF, generateExtraTicketsPDF, generateBudgetPDF } from '@/lib/pdf'
 
 
 export default 
-function FullSummary({ state, editMode, confirmed, isEditSave, confirm, saving, saveErr, startEdit, updateState, goToStep, event }: {
+function FullSummary({ state, editMode, confirmed, pending, isEditSave, confirm, saving, saveErr, startEdit, updateState, goToStep, event }: {
   state: State
   editMode: boolean
   confirmed?: boolean
+  pending?: boolean
   isEditSave?: boolean
   confirm?: () => Promise<void>
   saving?: boolean
@@ -22,6 +24,8 @@ function FullSummary({ state, editMode, confirmed, isEditSave, confirm, saving, 
   goToStep: (s: Step) => void
   event: Event | null
 }) {
+  const isPending = pending && !confirmed
+  const isConfirmed = confirmed
   const filledDancers = state.dancers.filter(d => d.name.trim().length > 0)
   const counts = participacionesPorAlumno(state)
   const total = costoTotal(state, event)
@@ -79,6 +83,7 @@ function FullSummary({ state, editMode, confirmed, isEditSave, confirm, saving, 
   const [newExtraTickets, setNewExtraTickets] = useState(1)
   const [copiedField, setCopiedField] = useState<'clabe' | 'card' | 'account' | null>(null)
   const [generatingExtraPDF, setGeneratingExtraPDF] = useState(false)
+  const [isNotesOpen, setIsNotesOpen] = useState(() => (state.notes || '').trim().length > 0)
   const [extraTicketsSuccess, setExtraTicketsSuccess] = useState(false)
   const [lastPurchasedCount, setLastPurchasedCount] = useState(1)
 
@@ -144,6 +149,18 @@ function FullSummary({ state, editMode, confirmed, isEditSave, confirm, saving, 
     }
   }
 
+  const handleDownloadBudgetPDF = async () => {
+    try {
+      setGeneratingPDF(true)
+      await generateBudgetPDF(state, event)
+    } catch (err) {
+      console.error('Error generating budget PDF:', err)
+      alert('Hubo un error al generar tu presupuesto PDF. Por favor, vuelve a intentarlo.')
+    } finally {
+      setGeneratingPDF(false)
+    }
+  }
+
   return (
     <div className="w-full flex flex-col min-h-0 md:h-full overflow-visible md:overflow-hidden" style={{ animation: 'fadeIn 0.3s ease-out' }}>
       <style dangerouslySetInnerHTML={{ __html: `
@@ -158,13 +175,46 @@ function FullSummary({ state, editMode, confirmed, isEditSave, confirm, saving, 
         .animate-arrow-4 { animation: arrowFlow 1.6s infinite ease-in-out; animation-delay: 0.9s; }
       `}} />
       
-      <div ref={scrollContainerRef} className="flex-1 overflow-visible md:overflow-y-auto px-0 sm:px-4 lg:px-6 py-2 sm:py-4 pb-0 sm:pb-14 max-h-none md:max-h-[75vh]">
+      <div ref={scrollContainerRef} className="flex-1 overflow-visible md:overflow-y-auto px-0 sm:px-4 lg:px-6 py-2 sm:py-4 pb-0 sm:pb-14 max-h-none md:max-h-[85vh]">
         
-        {!confirmed ? (
+        {!isConfirmed && !isPending ? (
           <>
             <div className="bg-[rgb(var(--c-surface))] rounded-none sm:rounded-3xl border-t sm:border-b sm:border border-[rgb(var(--c-border)/0.4)] shadow-none sm:shadow-sm divide-y divide-[rgb(var(--c-border)/0.25)] overflow-hidden">
-          {/* COACH, ACADEMY & STAFF */}
-          <div className="p-3.5 sm:p-5 relative">
+              {/* Notas opcionales colapsables (Hasta arriba, integrado) */}
+              <div className="bg-transparent overflow-hidden transition-all duration-300">
+                <button
+                  onClick={() => setIsNotesOpen(!isNotesOpen)}
+                  className="w-full flex items-center justify-between p-3.5 sm:p-5 hover:bg-[rgb(var(--c-surface-2))] transition-colors text-left"
+                >
+                  <div className="flex items-center gap-2">
+                    <MessageCircle className={`w-4 h-4 ${isNotesOpen ? 'text-[rgb(var(--c-primary))]' : 'text-[rgb(var(--c-text)/0.55)]'}`} />
+                    <span className="text-xs font-bold text-[rgb(var(--c-text-strong))] uppercase tracking-wider">
+                      Notas adicionales para los organizadores
+                    </span>
+                    <span className="text-[10px] bg-[rgb(var(--c-primary)/0.08)] text-[rgb(var(--c-primary))] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">
+                      Opcional
+                    </span>
+                  </div>
+                  <ChevronDown className={`w-4 h-4 text-[rgb(var(--c-text)/0.55)] transition-transform duration-300 ${isNotesOpen ? 'rotate-180' : ''}`} />
+                </button>
+                
+                {isNotesOpen && (
+                  <div className="px-3.5 sm:px-5 pb-3.5 sm:pb-5 border-t border-[rgb(var(--c-border)/0.15)] animate-fadeIn bg-[rgb(var(--c-surface-2)/0.15)]">
+                    <textarea
+                      value={state.notes}
+                      onChange={e => updateState(s => ({ ...s, notes: e.target.value }))}
+                      placeholder="Escribe aquí cualquier indicación o nota importante para los organizadores del evento..."
+                      maxLength={500}
+                      rows={2}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-[rgb(var(--c-border))] bg-white text-sm text-[rgb(var(--c-text-strong))] focus:outline-none focus:border-[rgb(var(--c-primary))] resize-none placeholder:text-[rgb(var(--c-text)/0.45)] mt-3 shadow-xs"
+                    />
+                    <p className="text-[10px] text-[rgb(var(--c-text)/0.5)] mt-1 text-right">{state.notes.length}/500</p>
+                  </div>
+                )}
+              </div>
+
+              {/* COACH, ACADEMY & STAFF */}
+              <div className="p-3.5 sm:p-5 relative">
             <h3 className="font-display text-lg tracking-widest text-[rgb(var(--c-primary))] mb-4 border-b border-[rgb(var(--c-border)/0.25)] pb-2 flex justify-between items-center">
               <span>COACH Y ACADEMIA</span>
               {!confirmed && (
@@ -358,8 +408,14 @@ function FullSummary({ state, editMode, confirmed, isEditSave, confirm, saving, 
                     <span>TARIFAS Y REGLAS DE ENTRADAS:</span>
                   </div>
                   <ul className="list-disc pl-4 space-y-0.5 text-[rgb(var(--c-text)/0.85)] font-medium">
-                    <li>Costo de <strong>preventa: {formatMoney(event?.cost_entrada_temprana ?? 500)} MXN</strong> por entrada (valido antes del <strong>{event?.deadline_precio_entrada ? new Date(event.deadline_precio_entrada + 'T00:00:00').toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long' }) : 'miercoles 17 de Junio'}</strong>).</li>
-                    <li>Costo <strong>regular: {formatMoney(event?.cost_entrada_tardia ?? 600)} MXN</strong> por entrada (a partir del {event?.deadline_precio_entrada ? new Date(new Date(event.deadline_precio_entrada + 'T00:00:00').getTime() + 86400000).toLocaleDateString('es-MX', { day: 'numeric', month: 'long' }) : '18 de Junio'}).</li>
+                    {event?.deadline_precio_entrada ? (
+                      <>
+                        <li>Costo de <strong>preventa: {formatMoney(event?.cost_entrada_temprana ?? 500)} MXN</strong> por entrada (válido antes del <strong>{formatDate(event.deadline_precio_entrada, { weekday: 'long', day: 'numeric', month: 'long' })}</strong>).</li>
+                        <li>Costo <strong>regular: {formatMoney(event?.cost_entrada_tardia ?? 600)} MXN</strong> por entrada (a partir del {(() => { const d = toDate(event.deadline_precio_entrada); if (!d) return null; d.setDate(d.getDate() + 1); return d.toLocaleDateString('es-MX', { day: 'numeric', month: 'long' }); })()}).</li>
+                      </>
+                    ) : (
+                      <li>Costo por entrada: <strong>{formatMoney(event?.cost_entrada_temprana ?? 500)} MXN</strong>.</li>
+                    )}
                   </ul>
                 </div>
 
@@ -402,7 +458,7 @@ function FullSummary({ state, editMode, confirmed, isEditSave, confirm, saving, 
           let totalInscripciones = 0
           let totalAdicionales = 0
           let totalAdicionalesCount = 0
-          const beforeJune15 = isBeforeJune15(event)
+          const beforeJune15 = isBeforeCoreoDeadline(event)
 
           state.dancers.forEach((dancer, idx) => {
             if (dancer.name.trim().length === 0) return
@@ -433,13 +489,14 @@ function FullSummary({ state, editMode, confirmed, isEditSave, confirm, saving, 
                   <Info className="w-4 h-4 text-purple-600 shrink-0" />
                   INFORMACIÓN DE TARIFAS Y COREOGRAFÍAS:
                 </p>
-                La inscripcion por participante es de <strong>{formatMoney(paq)} MXN</strong> e incluye su <strong>primera coreografia o presentacion</strong> (valido para registros completados antes del <strong>{event?.fecha_cambio_tarifa_coreo ? new Date(event.fecha_cambio_tarifa_coreo + 'T00:00:00').toLocaleDateString('es-MX', { day: 'numeric', month: 'long' }) : '15 de Junio'}</strong>). Si un integrante participa en <strong>coreografias adicionales</strong>, se aplicara un costo de <strong>{formatMoney(rep)} MXN</strong> por cada presentacion extra.
+                La inscripción por participante es de <strong>{formatMoney(paq)} MXN</strong> e incluye su <strong>primera coreografía</strong>. Si un integrante participa en <strong>coreografías adicionales</strong>, se aplicará un costo de <strong>{formatMoney(rep)} MXN</strong> por cada coreografía.
               </div>
 
               <div className="bg-[rgb(var(--c-surface))] rounded-none sm:rounded-3xl border-t sm:border border-[rgb(var(--c-border)/0.4)] shadow-none sm:shadow-sm overflow-hidden">
                 <div className="p-3.5 sm:p-5">
                   <h3 className="font-display text-lg tracking-widest text-[rgb(var(--c-primary))] mb-4 border-b border-[rgb(var(--c-border)/0.25)] pb-2">
                     DESGLOSE DE COSTOS
+                    {isPending && <span className="text-[10px] text-orange-600 font-normal ml-2">(cifras de referencia — pueden ajustarse tras la revisión)</span>}
                   </h3>
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between items-center">
@@ -487,6 +544,7 @@ function FullSummary({ state, editMode, confirmed, isEditSave, confirm, saving, 
             </div>
           )
         })()}
+
       </>
     ) : (
       <div className="max-w-3xl mx-auto w-full py-2 px-3.5 sm:px-0 space-y-3 divide-y divide-[rgb(var(--c-border)/0.12)] [&>*]:pt-3 [&>*:first-child]:pt-0">
@@ -504,16 +562,22 @@ function FullSummary({ state, editMode, confirmed, isEditSave, confirm, saving, 
                 <ChevronDown className="w-5 h-5 text-purple-800 animate-arrow-4 stroke-[2.5px]" />
               </div>
               
-              {/* Center Green Success Recuadro Grande */}
-              <div className="flex-1 bg-[rgb(var(--c-success))] text-white rounded-2xl p-4 md:p-5 shadow-sm text-center space-y-1 border border-[rgb(var(--c-success-strong)/0.15)]">
+              {/* Center Status Recuadro */}
+              <div className={`flex-1 rounded-2xl p-4 md:p-5 shadow-sm text-center space-y-1 border ${isConfirmed ? 'bg-[rgb(var(--c-success))] text-white border-[rgb(var(--c-success-strong)/0.15)]' : 'bg-orange-50 text-orange-800 border-orange-300'}`}>
                 <div className="flex items-center justify-center gap-2">
-                  <Check className="w-6 h-6 stroke-[3px] shrink-0" />
+                  {isConfirmed ? (
+                    <Check className="w-6 h-6 stroke-[3px] shrink-0" />
+                  ) : (
+                    <Clock className="w-6 h-6 shrink-0" />
+                  )}
                   <h2 className="font-display text-lg md:text-xl tracking-widest font-bold uppercase">
-                    {isEditSave ? 'CAMBIOS AL REGISTRO GUARDADOS' : 'REGISTRO ENVIADO'}
+                    {isConfirmed ? (isEditSave ? 'CAMBIOS AL REGISTRO GUARDADOS' : 'REGISTRO CONFIRMADO') : 'REGISTRO ENVIADO'}
                   </h2>
                 </div>
                 <p className="text-[11px] sm:text-xs font-semibold opacity-95">
-                  {isEditSave ? 'Cambios al registro guardados con exito en nuestro sistema.' : 'Tu registro ha sido enviado. Un organizador lo revisara y confirmara pronto.'}
+                  {isConfirmed
+                    ? (isEditSave ? 'Cambios al registro guardados con éxito en nuestro sistema.' : 'Tu academia ha sido registrada exitosamente.')
+                    : 'Tu registro ha sido enviado. Un organizador lo revisará y confirmará pronto.'}
                 </p>
               </div>
               
@@ -550,8 +614,14 @@ function FullSummary({ state, editMode, confirmed, isEditSave, confirm, saving, 
             </div>
             
             <div className="bg-purple-50/50 border border-purple-200/50 rounded-xl p-3 text-[11px] leading-relaxed text-purple-950 mb-3">
-              • Costo de <strong>preventa: {formatMoney(event?.cost_entrada_temprana ?? 500)} MXN</strong> por entrada (valido antes del <strong>{event?.deadline_precio_entrada ? new Date(event.deadline_precio_entrada + 'T00:00:00').toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long' }) : 'miercoles 17 de Junio'}</strong>).<br />
-              • Costo <strong>regular: {formatMoney(event?.cost_entrada_tardia ?? 600)} MXN</strong> por entrada (a partir del {event?.deadline_precio_entrada ? new Date(new Date(event.deadline_precio_entrada + 'T00:00:00').getTime() + 86400000).toLocaleDateString('es-MX', { day: 'numeric', month: 'long' }) : '18 de Junio'}).<br />
+              {event?.deadline_precio_entrada ? (
+                <>
+                  • Costo de <strong>preventa: {formatMoney(event?.cost_entrada_temprana ?? 500)} MXN</strong> por entrada (válido antes del <strong>{formatDate(event.deadline_precio_entrada, { weekday: 'long', day: 'numeric', month: 'long' })}</strong>).<br />
+                  • Costo <strong>regular: {formatMoney(event?.cost_entrada_tardia ?? 600)} MXN</strong> por entrada (a partir del {(() => { const d = toDate(event.deadline_precio_entrada); if (!d) return null; d.setDate(d.getDate() + 1); return d.toLocaleDateString('es-MX', { day: 'numeric', month: 'long' }); })()}).<br />
+                </>
+              ) : (
+                <>• Costo por entrada: <strong>{formatMoney(event?.cost_entrada_temprana ?? 500)} MXN</strong>.<br /></>
+              )}
               <strong className="block text-red-700 font-extrabold uppercase mt-1">IMPORTANTE: No se venderán entradas el día del evento.</strong>
             </div>
             
@@ -630,7 +700,8 @@ function FullSummary({ state, editMode, confirmed, isEditSave, confirm, saving, 
           </div>
         </div>
 
-        {/* 3. INFORMACIÓN BANCARIA (SIN CAJAS, EN EL FONDO) */}
+        {/* 3. INFORMACIÓN BANCARIA */}
+        {isConfirmed && (
         <div className="py-2 text-left animate-fadeIn">
           <div className="flex items-center gap-2 mb-2.5">
             <Clipboard className="w-5.5 h-5.5 text-fuchsia-500 shrink-0" />
@@ -695,6 +766,7 @@ function FullSummary({ state, editMode, confirmed, isEditSave, confirm, saving, 
             <span>Esta información bancaria también viene detallada en el comprobante PDF de tu registro completo.</span>
           </div>
         </div>
+        )}
 
         {/* 4. TOTAL A PAGAR (DESGLOSE SIN CAJAS) */}
         {(() => {
@@ -707,7 +779,7 @@ function FullSummary({ state, editMode, confirmed, isEditSave, confirm, saving, 
           let totalInscripciones = 0
           let totalAdicionales = 0
           let totalAdicionalesCount = 0
-          const beforeJune15 = isBeforeJune15(event)
+          const beforeJune15 = isBeforeCoreoDeadline(event)
 
           state.dancers.forEach((dancer, idx) => {
             if (dancer.name.trim().length === 0) return
@@ -785,20 +857,20 @@ function FullSummary({ state, editMode, confirmed, isEditSave, confirm, saving, 
           )
         })()}
 
-        {/* 5. ACCIONES AL FINAL (BOTONES A ANCHO COMPLETO, APILADOS Y PEGADOS) */}
+        {/* 5. ACCIONES AL FINAL */}
         <div className="flex flex-col gap-2 pt-0.5">
           <button
-            onClick={handleDownloadPDF}
+            onClick={isConfirmed ? handleDownloadPDF : handleDownloadBudgetPDF}
             disabled={generatingPDF}
-            className="w-full h-14 bg-gradient-to-r from-fuchsia-600 via-pink-600 to-rose-600 hover:brightness-105 active:scale-[0.98] disabled:opacity-50 text-white font-display text-lg sm:text-xl tracking-wider rounded-2xl transition-all shadow-lg hover:shadow-fuchsia-500/20 duration-150 font-black flex items-center justify-center gap-3 cursor-pointer"
+            className={`w-full h-14 bg-gradient-to-r hover:brightness-105 active:scale-[0.98] disabled:opacity-50 text-white font-display text-lg sm:text-xl tracking-wider rounded-2xl transition-all shadow-lg duration-150 font-black flex items-center justify-center gap-3 cursor-pointer ${isConfirmed ? 'from-fuchsia-600 via-pink-600 to-rose-600 hover:shadow-fuchsia-500/20' : 'from-amber-500 via-orange-500 to-orange-600 hover:shadow-orange-500/20'}`}
           >
             {generatingPDF ? (
               <>
-                <Clock className="w-6 h-6 animate-spin" /> GENERANDO COMPROBANTE…
+                <Clock className="w-6 h-6 animate-spin" /> GENERANDO…
               </>
             ) : (
               <>
-                <Download className="w-6 h-6 text-white shrink-0" /> DESCARGAR COMPROBANTE PDF
+                <Download className="w-6 h-6 text-white shrink-0" /> {isConfirmed ? 'DESCARGAR COMPROBANTE PDF' : 'DESCARGAR PRESUPUESTO PDF'}
               </>
             )}
           </button>
@@ -889,7 +961,7 @@ function FullSummary({ state, editMode, confirmed, isEditSave, confirm, saving, 
   </div>
 
       {/* FLOATING ACTION BAR FOR CONFIRM / SAVE */}
-      {!confirmed && (
+      {!isConfirmed && !isPending && (
         <div 
           className="shrink-0 bg-[rgb(var(--c-surface))] border-t border-[rgb(var(--c-border)/0.7)] shadow-[0_-10px_40px_rgba(0,0,0,0.05)] z-20 rounded-t-3xl mt-2 p-4 md:p-5 hidden lg:block"
           style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 8px)' }}
@@ -898,20 +970,6 @@ function FullSummary({ state, editMode, confirmed, isEditSave, confirm, saving, 
             {saveErr && (
               <p className="text-[rgb(var(--c-primary))] text-xs bg-[rgb(var(--c-primary)/0.05)] border border-[rgb(var(--c-primary)/0.2)] rounded-xl px-4 py-2.5 mb-3 text-center font-bold">{saveErr}</p>
             )}
-            <div className="mb-4">
-              <label className="block text-xs font-bold text-[rgb(var(--c-text)/0.7)] uppercase tracking-wider mb-1.5">
-                Notas para los organizadores (opcional)
-              </label>
-              <textarea
-                value={state.notes}
-                onChange={e => updateState(s => ({ ...s, notes: e.target.value }))}
-                placeholder="Ej. Me dijo X organizador que me darian otro costo, esta alumna debe ir en categoria Junior..."
-                maxLength={500}
-                rows={2}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-[rgb(var(--c-border))] bg-white text-sm text-[rgb(var(--c-text-strong))] focus:outline-none focus:border-[rgb(var(--c-primary))] resize-none placeholder:text-[rgb(var(--c-text)/0.45)]"
-              />
-              <p className="text-[10px] text-[rgb(var(--c-text)/0.5)] mt-1 text-right">{state.notes.length}/500</p>
-            </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <button
                 onClick={() => goToStep({ kind: 'setup' })}
@@ -920,12 +978,12 @@ function FullSummary({ state, editMode, confirmed, isEditSave, confirm, saving, 
                 <Pencil className="w-4 h-4 text-[rgb(var(--c-primary))]" /> CORREGIR DATOS
               </button>
               <button
-                onClick={confirm}
-                disabled={saving}
+                onClick={editMode ? confirm : () => goToStep({ kind: 'carta' })}
+                disabled={editMode ? saving : false}
                 className="w-full h-14 md:h-16 bg-gradient-to-r from-purple-700 via-purple-600 to-pink-600 hover:from-purple-800 hover:to-pink-700 active:scale-[0.98] text-white font-display text-lg tracking-widest rounded-2xl disabled:opacity-50 disabled:pointer-events-none transition-all shadow-[0_4px_20px_rgba(168,85,247,0.3)] hover:shadow-[0_6px_25px_rgba(168,85,247,0.5)] md:col-span-2 font-black flex items-center justify-center gap-2"
               >
-                {saving ? 'GUARDANDO...' : editMode ? 'GUARDAR CAMBIOS' : 'ENVIAR REGISTRO'}
-                <Check className="w-5 h-5 animate-pulse" />
+                {editMode ? (saving ? 'GUARDANDO...' : 'GUARDAR CAMBIOS') : 'CONTINUAR'}
+                {editMode ? <Check className="w-5 h-5 animate-pulse" /> : <ArrowRight className="w-5 h-5 animate-pulse" />}
               </button>
             </div>
           </div>

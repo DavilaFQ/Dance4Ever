@@ -1,18 +1,20 @@
 import { Event, Participant, Coach, Modality, AgeCategory, Level, AGE_CATEGORY_ORDER, AGE_CATEGORY_LABELS, supabase } from '@/lib/supabase'
+import { toDate, toEndOfDay } from '@/lib/date'
 import * as XLSX from 'xlsx'
 import ExcelJS from 'exceljs'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import JSZip from 'jszip'
+import { generateReceiptPDFDoc, generateCartaPDFDoc } from '@/lib/pdf'
+import { State } from '@/components/register/types'
 
 // ─── Precios (mirror exacto de page.tsx) ───────────────────────────────────
 const PRECIO_INSCRIPCION = 2700
 const PRECIO_ADICIONAL_COREOGRAFIA = 500
 const PRECIO_ASISTENTE = 400
-const PRECIO_ENTRADA_TEMPRANA = 500   // antes del 17 jun 2026
-const PRECIO_ENTRADA_TARDIA  = 600   // desde el 18 jun 2026
+const PRECIO_ENTRADA_TEMPRANA = 500
+const PRECIO_ENTRADA_TARDIA  = 600
 const DANCERS_POR_ENTRADA_GRATIS = 8
-const DEADLINE_PRECIO_ENTRADA = new Date(2026, 5, 17, 23, 59, 59, 999) // 17-Jun-2026
 
 // ─── Tipos de base de datos ─────────────────────────────────────────────────
 type Status = 'PRESENTADO' | 'EN ESCENARIO' | 'PENDIENTE'
@@ -53,6 +55,8 @@ type RegRow = {
   cost_repeticion: number | null
   confirmed_at: string | null
   tickets_count: number | null
+  notes?: string | null
+  signature?: string | null
   dancers: DancerRow[]
   acts: ActRow[]
 }
@@ -157,11 +161,15 @@ function parseAssistants(extraCoaches: string[]): string[] {
 }
 
 // ─── Cálculo de costo total por registro (espejo de page.tsx) ────────────────
-function regTotalCost(r: RegRow, refDate: Date): number {
-  const paq = r.cost_paquete ?? PRECIO_INSCRIPCION
-  const rep = r.cost_repeticion ?? PRECIO_ADICIONAL_COREOGRAFIA
-  const isBeforeJune15 = refDate < new Date(2026, 5, 15)
-  const precioEntrada = refDate <= DEADLINE_PRECIO_ENTRADA ? PRECIO_ENTRADA_TEMPRANA : PRECIO_ENTRADA_TARDIA
+function regTotalCost(r: RegRow, refDate: Date, event: Event): number {
+  const paq = r.cost_paquete ?? event.default_cost_paquete ?? PRECIO_INSCRIPCION
+  const rep = r.cost_repeticion ?? event.default_cost_repeticion ?? PRECIO_ADICIONAL_COREOGRAFIA
+  const ticketDeadline = toEndOfDay(event.deadline_precio_entrada)
+  const precioEntrada = ticketDeadline
+    ? (refDate <= ticketDeadline
+      ? (event.cost_entrada_temprana ?? PRECIO_ENTRADA_TEMPRANA)
+      : (event.cost_entrada_tardia ?? PRECIO_ENTRADA_TARDIA))
+    : (event.cost_entrada_temprana ?? PRECIO_ENTRADA_TEMPRANA)
 
   // Participaciones por alumno
   const counts = new Map<number, number>()
@@ -177,9 +185,8 @@ function regTotalCost(r: RegRow, refDate: Date): number {
   // Costo por alumno
   r.dancers.forEach(d => {
     const n = counts.get(d.id) ?? 0
-    if (n === 0) return
     total += paq
-    if (isBeforeJune15) {
+    if (true) {
       if (n > 1) total += (n - 1) * rep
     } else {
       total += n * rep
@@ -189,9 +196,9 @@ function regTotalCost(r: RegRow, refDate: Date): number {
   // Asistentes
   const filledDancers = r.dancers.length
   const assistants = parseAssistants(r.extra_coaches)
-  const freeEntries = Math.floor(filledDancers / DANCERS_POR_ENTRADA_GRATIS)
+  const freeEntries = Math.floor(filledDancers / (event.dancers_por_asistente_gratis ?? DANCERS_POR_ENTRADA_GRATIS))
   const paidAssistants = Math.max(0, assistants.length - freeEntries)
-  total += paidAssistants * PRECIO_ASISTENTE
+  total += paidAssistants * (event.cost_asistente ?? PRECIO_ASISTENTE)
 
   // Boletos de acompañantes
   const tickets = r.tickets_count ?? 0
@@ -201,14 +208,9 @@ function regTotalCost(r: RegRow, refDate: Date): number {
 }
 
 // ─── Costo por alumno (espejo de page.tsx) ───────────────────────────────────
-function dancerCost(dancerId: number, counts: Map<number, number>, paq: number, rep: number, isBeforeJune15: boolean): number {
+function dancerCost(dancerId: number, counts: Map<number, number>, paq: number, rep: number): number {
   const n = counts.get(dancerId) ?? 0
-  if (n === 0) return 0
-  if (isBeforeJune15) {
-    return paq + (n > 1 ? (n - 1) * rep : 0)
-  } else {
-    return paq + n * rep
-  }
+  return paq + (n > 1 ? (n - 1) * rep : 0)
 }
 
 const MODALITY_ORDER: Modality[] = ['solista', 'dueto', 'trio', 'grupal']
@@ -217,7 +219,7 @@ const LEVEL_ORDER: Level[] = ['basico', 'avanzado']
 // ════════════════════════════════════════════════════════════════════════════
 // exportRegistrations — Excel de registros (4 hojas)
 // ════════════════════════════════════════════════════════════════════════════
-export async function exportRegistrations(event: Event): Promise<void> {
+export async function exportRegistrationsDoc(event: Event): Promise<ExcelJS.Workbook> {
   // ── 1. Cargar datos de BD ─────────────────────────────────────────────────
   const { data: regsRaw, error: regsErr } = await supabase
     .from('coach_registrations')
@@ -237,6 +239,8 @@ export async function exportRegistrations(event: Event): Promise<void> {
     cost_repeticion: number | null
     confirmed_at: string | null
     tickets_count: number | null
+    notes?: string | null
+    signature?: string | null
   }>).filter(r => r.confirmed_at)
 
   if (regs.length === 0) throw new Error('No hay registros confirmados todavía.')
@@ -272,12 +276,14 @@ export async function exportRegistrations(event: Event): Promise<void> {
     cost_repeticion: r.cost_repeticion,
     confirmed_at: r.confirmed_at,
     tickets_count: r.tickets_count,
+    notes: r.notes,
+    signature: r.signature,
     dancers: (dancersByReg.get(r.id) ?? []).sort((a, b) => a.order_idx - b.order_idx),
     acts: (actsByReg.get(r.id) ?? []).sort((a, b) => a.order_idx - b.order_idx),
   }))
 
   // ── 2. Construir lista plana de actos ─────────────────────────────────────
-  const refDate = event.date ? new Date(event.date + 'T00:00:00') : new Date()
+  const refDate = toDate(event.date) || new Date()
 
   type FlatAct = {
     modality: Modality
@@ -380,16 +386,20 @@ export async function exportRegistrations(event: Event): Promise<void> {
   }))
 
   // ── 5. Hoja EQUIPOS (una fila por registro / academia) ────────────────────
-  const isBeforeJune15 = new Date() < new Date(2026, 5, 15)
-  const precioEntrada = new Date() <= DEADLINE_PRECIO_ENTRADA ? PRECIO_ENTRADA_TEMPRANA : PRECIO_ENTRADA_TARDIA
+  const ticketDeadline = toEndOfDay(event.deadline_precio_entrada)
+  const precioEntrada = ticketDeadline
+    ? (new Date() <= ticketDeadline
+      ? (event.cost_entrada_temprana ?? PRECIO_ENTRADA_TEMPRANA)
+      : (event.cost_entrada_tardia ?? PRECIO_ENTRADA_TARDIA))
+    : (event.cost_entrada_temprana ?? PRECIO_ENTRADA_TEMPRANA)
 
   const equipos = fullRegs.map(r => {
     const { academy, city } = parseAcademyCity(r.academy, r.team_name)
     const assistants = parseAssistants(r.extra_coaches)
-    const freeEntries = Math.floor(r.dancers.length / DANCERS_POR_ENTRADA_GRATIS)
+    const freeEntries = Math.floor(r.dancers.length / (event.dancers_por_asistente_gratis ?? DANCERS_POR_ENTRADA_GRATIS))
     const paidAssistants = Math.max(0, assistants.length - freeEntries)
     const tickets = r.tickets_count ?? 0
-    const total = regTotalCost(r, refDate)
+    const total = regTotalCost(r, refDate, event)
     const confirmedDate = r.confirmed_at
       ? new Date(r.confirmed_at).toLocaleDateString('es-MX', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
       : ''
@@ -406,9 +416,9 @@ export async function exportRegistrations(event: Event): Promise<void> {
       'No. Alumnos': r.dancers.length,
       'No. Coreografías': r.acts.length,
       'Boletos acompañantes': tickets,
-      'Precio inscripción': r.cost_paquete ?? PRECIO_INSCRIPCION,
-      'Precio coreog. extra': r.cost_repeticion ?? PRECIO_ADICIONAL_COREOGRAFIA,
-      'Precio asistente': PRECIO_ASISTENTE,
+      'Precio inscripción': r.cost_paquete ?? event.default_cost_paquete ?? PRECIO_INSCRIPCION,
+      'Precio coreog. extra': r.cost_repeticion ?? event.default_cost_repeticion ?? PRECIO_ADICIONAL_COREOGRAFIA,
+      'Precio asistente': event.cost_asistente ?? PRECIO_ASISTENTE,
       'Precio boleto': precioEntrada,
       'Total a pagar': total,
       'Registrado el': confirmedDate,
@@ -418,8 +428,8 @@ export async function exportRegistrations(event: Event): Promise<void> {
   // ── 6. Hoja INTEGRANTES (una fila por alumno, con costo individual) ────────
   const integrantes = fullRegs.flatMap(r => {
     const { academy, city } = parseAcademyCity(r.academy, r.team_name)
-    const paq = r.cost_paquete ?? PRECIO_INSCRIPCION
-    const rep = r.cost_repeticion ?? PRECIO_ADICIONAL_COREOGRAFIA
+    const paq = r.cost_paquete ?? event.default_cost_paquete ?? PRECIO_INSCRIPCION
+    const rep = r.cost_repeticion ?? event.default_cost_repeticion ?? PRECIO_ADICIONAL_COREOGRAFIA
 
     // Participaciones por alumno (ID)
     const counts = new Map<number, number>()
@@ -450,7 +460,7 @@ export async function exportRegistrations(event: Event): Promise<void> {
       const effectiveCat = d.category as AgeCategory | null
       const manual = d.category_manual === true
       const n = counts.get(d.id) ?? 0
-      const cost = dancerCost(d.id, counts, paq, rep, isBeforeJune15)
+      const cost = dancerCost(d.id, counts, paq, rep)
       const actNames = actNamesByDancer.get(d.id) ?? []
 
       return {
@@ -470,7 +480,7 @@ export async function exportRegistrations(event: Event): Promise<void> {
     })
   })
 
-  // ── 7. Construir workbook y descargar ─────────────────────────────────────
+  // ── 7. Construir workbook y devolver ───────────────────────────────────────
   const wb = new ExcelJS.Workbook()
   wb.creator = 'Dance4ever'
   wb.created = new Date()
@@ -487,6 +497,11 @@ export async function exportRegistrations(event: Event): Promise<void> {
   addStyledSheet(wb, 'Equipos',     event.name, 'Equipos / academias',         equipos,     moneyCols['Equipos'])
   addStyledSheet(wb, 'Integrantes', event.name, 'Integrantes registrados',     integrantes, moneyCols['Integrantes'])
 
+  return wb
+}
+
+export async function exportRegistrations(event: Event): Promise<void> {
+  const wb = await exportRegistrationsDoc(event)
   const buf = await wb.xlsx.writeBuffer()
   const blob = new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
   const url = URL.createObjectURL(blob)
@@ -614,7 +629,7 @@ function addStyledSheet(
 // ════════════════════════════════════════════════════════════════════════════
 // exportExcel — Excel simple del programa en vivo (para el MC)
 // ════════════════════════════════════════════════════════════════════════════
-export function exportExcel(event: Event, participants: Participant[], coaches: Coach[]): void {
+export function getExportExcelBuffer(event: Event, participants: Participant[], coaches: Coach[]): ArrayBuffer {
   const coachMap = new Map(coaches.map(c => [c.id, c.name]))
   const currentPos = event.current_position
 
@@ -667,8 +682,22 @@ export function exportExcel(event: Event, participants: Participant[], coaches: 
   XLSX.utils.book_append_sheet(wb, wsRes,   'Resumen')
   XLSX.utils.book_append_sheet(wb, wsCoach, 'Por Coach')
 
+  const out = XLSX.write(wb, { bookType: 'xlsx', type: 'array' })
+  return out
+}
+
+export function exportExcel(event: Event, participants: Participant[], coaches: Coach[]): void {
+  const buf = getExportExcelBuffer(event, participants, coaches)
+  const blob = new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
   const date = new Date().toISOString().slice(0, 10)
-  XLSX.writeFile(wb, `dance4ever-${safeFilename(event.name)}-${date}.xlsx`)
+  a.download = `dance4ever-${safeFilename(event.name)}-${date}.xlsx`
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  URL.revokeObjectURL(url)
 }
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -692,7 +721,7 @@ async function loadImageAsDataURL(url: string): Promise<string | null> {
 // ════════════════════════════════════════════════════════════════════════════
 // exportPdf — PDF del programa en vivo
 // ════════════════════════════════════════════════════════════════════════════
-export async function exportPdf(event: Event, participants: Participant[], coaches: Coach[]): Promise<void> {
+export async function exportPdfDoc(event: Event, participants: Participant[], coaches: Coach[]): Promise<jsPDF> {
   const coachMap = new Map(coaches.map(c => [c.id, c.name]))
   const currentPos = event.current_position
   const presented = participants.filter(p => p.position < currentPos).length
@@ -816,12 +845,89 @@ export async function exportPdf(event: Event, participants: Participant[], coach
     doc.text(`${i} / ${totalPages}`, pageWidth - 30, pageHeight - 20, { align: 'right' })
   }
 
+  return doc
+}
+
+export async function exportPdf(event: Event, participants: Participant[], coaches: Coach[]): Promise<void> {
+  const doc = await exportPdfDoc(event, participants, coaches)
   const date = new Date().toISOString().slice(0, 10)
   doc.save(`dance4ever-${safeFilename(event.name)}-${date}.pdf`)
 }
 
+// Helper para mapear RegRow a State para PDF
+function mapRegRowToState(reg: RegRow): State {
+  const academyField = reg.academy || ''
+  const teamNameField = reg.team_name || ''
+  
+  let academy = teamNameField
+  let city = ''
+  
+  const match = academyField.match(/^(.*?)\s*\(([^)]+)\)$/)
+  if (match) {
+    academy = match[1].trim()
+    city = match[2].trim()
+  } else if (academyField) {
+    academy = academyField
+  }
+
+  const extraCoaches = reg.extra_coaches || []
+  const assistants = extraCoaches
+    .filter(s => s.startsWith('Asistente:'))
+    .map(s => s.replace(/^Asistente:\s*/, '').trim())
+    .filter(Boolean)
+
+  const stateDancers = reg.dancers.map(d => ({
+    name: d.name || '',
+    birthdate: d.birthdate || '',
+    categoryOverride: d.category_manual ? d.category : null,
+  }))
+
+  const dancerIdToIdx = new Map<number, number>()
+  reg.dancers.forEach((d, idx) => {
+    dancerIdToIdx.set(d.id, idx)
+  })
+
+  const stateActs = reg.acts.map(a => {
+    const dancerIds = a.dancer_ids || []
+    const dancerIndices = dancerIds
+      .map(id => dancerIdToIdx.get(id))
+      .filter((idx): idx is number => idx !== undefined)
+
+    return {
+      modality: a.modality,
+      ageCategory: a.age_category,
+      level: a.level,
+      style: a.style || '',
+      dancerIndices,
+    }
+  })
+
+  return {
+    coach: {
+      name: reg.coach_name || '',
+      phone: reg.coach_phone || '',
+      email: reg.coach_email || '',
+      assistants,
+    },
+    academy,
+    city,
+    teamName: teamNameField,
+    teamSize: reg.dancers.length,
+    dancers: stateDancers,
+    actCount: reg.acts.length,
+    acts: stateActs,
+    costPaquete: reg.cost_paquete,
+    costRepeticion: reg.cost_repeticion,
+    confirmedRegistrationId: reg.id,
+    ticketsCount: reg.tickets_count || 0,
+    confirmedAt: reg.confirmed_at,
+    notes: reg.notes || '',
+    signature: reg.signature || null,
+  }
+}
+
 // ════════════════════════════════════════════════════════════════════════════
-// exportAllRegistrationsZip — Zip con Excel por cada registro confirmado
+// exportAllRegistrationsZip — Zip estructurado con reportes y PDFs/Excels por academia
 // ════════════════════════════════════════════════════════════════════════════
 export async function exportAllRegistrationsZip(event: Event): Promise<void> {
   const { data: regsRaw, error: regsErr } = await supabase
@@ -834,9 +940,13 @@ export async function exportAllRegistrationsZip(event: Event): Promise<void> {
   if (regs.length === 0) throw new Error('No hay registros confirmados.')
 
   const regIds = regs.map((r: { id: number }) => r.id)
-  const [{ data: dancersData }, { data: actsData }] = await Promise.all([
+  
+  // Cargar datos adicionales: dancers, acts, participants y coaches
+  const [{ data: dancersData }, { data: actsData }, { data: participantsData }, { data: coachesData }] = await Promise.all([
     supabase.from('registration_dancers').select('*').in('registration_id', regIds),
     supabase.from('registration_acts').select('*').in('registration_id', regIds),
+    supabase.from('participants').select('*').eq('event_id', event.id).order('position'),
+    supabase.from('coaches').select('*').eq('event_id', event.id).order('name')
   ])
 
   const dancersByReg = new Map<number, DancerRow[]>()
@@ -850,10 +960,28 @@ export async function exportAllRegistrationsZip(event: Event): Promise<void> {
     arr.push(a); actsByReg.set(a.registration_id, arr)
   })
 
-  const zip = new JSZip()
-  const refDate = event.date ? new Date(event.date + 'T00:00:00') : new Date()
-  const isBeforeJune15 = new Date() < new Date(2026, 5, 15)
+  const participants = (participantsData || []) as Participant[]
+  const coaches = (coachesData || []) as Coach[]
 
+  const zip = new JSZip()
+  const refDate = toDate(event.date) || new Date()
+
+  // 1. Agregar archivos master en la raíz
+  // A. Master_Programa_Vivo_MC.xlsx
+  const masterExcelBuf = getExportExcelBuffer(event, participants, coaches)
+  zip.file('Master_Programa_Vivo_MC.xlsx', masterExcelBuf)
+
+  // B. Master_Programa_Vivo_MC.pdf
+  const masterPdfDoc = await exportPdfDoc(event, participants, coaches)
+  const masterPdfBuf = masterPdfDoc.output('arraybuffer')
+  zip.file('Master_Programa_Vivo_MC.pdf', masterPdfBuf)
+
+  // C. Master_Finanzas_Completo.xlsx
+  const masterFinWb = await exportRegistrationsDoc(event)
+  const masterFinBuf = await masterFinWb.xlsx.writeBuffer()
+  zip.file('Master_Finanzas_Completo.xlsx', masterFinBuf)
+
+  // 2. Procesar cada academia confirmada en su respectiva carpeta
   for (const reg of regsRaw) {
     if (!reg.confirmed_at) continue
     const r = reg as unknown as RegRow
@@ -861,14 +989,17 @@ export async function exportAllRegistrationsZip(event: Event): Promise<void> {
     r.acts = (actsByReg.get(r.id) ?? []).sort((a, b) => a.order_idx - b.order_idx)
     if (r.dancers.length === 0 && r.acts.length === 0) continue
 
+    const { academy, city } = parseAcademyCity(r.academy, r.team_name)
+    const paq = r.cost_paquete ?? event.default_cost_paquete ?? PRECIO_INSCRIPCION
+    const rep = r.cost_repeticion ?? event.default_cost_repeticion ?? PRECIO_ADICIONAL_COREOGRAFIA
+
+    const safeAcademyName = academy.trim().replace(/[\/\\?%*:|"<>]/g, '_')
+    const folderName = `Academias_Confirmadas/${safeAcademyName}`
+
+    // A. Detalle_[Academia].xlsx
     const wb = new ExcelJS.Workbook()
     wb.creator = 'Dance4ever'
 
-    const { academy, city } = parseAcademyCity(r.academy, r.team_name)
-    const paq = r.cost_paquete ?? PRECIO_INSCRIPCION
-    const rep = r.cost_repeticion ?? PRECIO_ADICIONAL_COREOGRAFIA
-
-    // Hoja Alumnos
     const counts = new Map<number, number>()
     r.acts.forEach(a => {
       if (a.modality === 'grupal') r.dancers.forEach(d => counts.set(d.id, (counts.get(d.id) ?? 0) + 1))
@@ -878,7 +1009,7 @@ export async function exportAllRegistrationsZip(event: Event): Promise<void> {
     const alumnosData = r.dancers.map(d => {
       const age = ageAtDate(d.birthdate, refDate)
       const n = counts.get(d.id) ?? 0
-      const cost = dancerCost(d.id, counts, paq, rep, isBeforeJune15)
+      const cost = dancerCost(d.id, counts, paq, rep)
       return {
         'Nombre': d.name,
         'Fecha Nacimiento': formatBirthdate(d.birthdate),
@@ -890,7 +1021,6 @@ export async function exportAllRegistrationsZip(event: Event): Promise<void> {
     })
     addStyledSheet(wb, 'Alumnos', `${academy}`, 'Alumnos', alumnosData, ['Costo'])
 
-    // Hoja Actos
     const actosData = r.acts.map(a => {
       const isSDT = a.modality !== 'grupal'
       const dancerById = new Map(r.dancers.map(d => [d.id, d]))
@@ -908,8 +1038,7 @@ export async function exportAllRegistrationsZip(event: Event): Promise<void> {
     })
     addStyledSheet(wb, 'Actos', `${academy}`, 'Coreografias', actosData, [])
 
-    // Hoja Resumen
-    const total = regTotalCost(r, refDate)
+    const total = regTotalCost(r, refDate, event)
     const resumenData = [{
       'Academia': academy,
       'Ciudad': city,
@@ -924,9 +1053,21 @@ export async function exportAllRegistrationsZip(event: Event): Promise<void> {
     }]
     addStyledSheet(wb, 'Resumen', `${academy}`, 'Datos generales', resumenData, ['Total'])
 
-    const buf = await wb.xlsx.writeBuffer()
-    const safeName = safeFilename(academy).slice(0, 40)
-    zip.file(`${safeName}.xlsx`, buf)
+    const detailExcelBuf = await wb.xlsx.writeBuffer()
+    zip.file(`${folderName}/Detalle_${safeAcademyName}.xlsx`, detailExcelBuf)
+
+    // B. Comprobante_Registro_[Academia].pdf
+    const stateObj = mapRegRowToState(r)
+    const receiptDoc = await generateReceiptPDFDoc(stateObj, event)
+    const receiptPdfBuf = receiptDoc.output('arraybuffer')
+    zip.file(`${folderName}/Comprobante_Registro_${safeAcademyName}.pdf`, receiptPdfBuf)
+
+    // C. Carta_Responsiva_[Academia].pdf (solo si está firmada)
+    if (r.signature) {
+      const cartaDoc = await generateCartaPDFDoc(stateObj, event)
+      const cartaPdfBuf = cartaDoc.output('arraybuffer')
+      zip.file(`${folderName}/Carta_Responsiva_${safeAcademyName}.pdf`, cartaPdfBuf)
+    }
   }
 
   const zipBlob = await zip.generateAsync({ type: 'blob' })

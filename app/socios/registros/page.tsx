@@ -8,7 +8,7 @@ import { formatMoney, isEditedAfterConfirm } from '@/lib/format'
 import { costoRegistro } from '@/lib/cost'
 import { Search } from 'lucide-react'
 
-type FilterMode = 'all' | 'confirmed' | 'draft' | 'edited'
+type FilterMode = 'all' | 'pending' | 'confirmed' | 'draft' | 'edited'
 
 export default function RegistrosPage({ onSelectRegistration }: { onSelectRegistration?: (id: string) => void }) {
   const router = useRouter()
@@ -51,8 +51,8 @@ export default function RegistrosPage({ onSelectRegistration }: { onSelectRegist
     return () => { supabase.removeChannel(ch) }
   }, [event, loadAll])
 
-  const enriched = useMemo(() =>
-    registrations.map(r => ({
+  const enriched = useMemo(() => {
+    const list = registrations.map(r => ({
       ...r,
       dancers: dancers.filter(d => d.registration_id === r.id),
       acts: acts.filter(a => a.registration_id === r.id),
@@ -62,15 +62,17 @@ export default function RegistrosPage({ onSelectRegistration }: { onSelectRegist
         r.cost_paquete, r.cost_repeticion,
         r.tickets_count ?? 0, r.extra_coaches ?? [], event
       ),
-    })),
-    [registrations, dancers, acts, event]
-  )
+    }))
+    // Ordenar alfabéticamente por academia de forma determinista
+    return list.sort((a, b) => (a.academy || '').localeCompare(b.academy || ''))
+  }, [registrations, dancers, acts, event])
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
     let base = enriched
-    if (filter === 'confirmed') base = base.filter(r => !!r.confirmed_at)
-    else if (filter === 'draft') base = base.filter(r => !r.confirmed_at)
+    if (filter === 'pending') base = base.filter(r => r.submitted_at && !r.submitted_at.startsWith('1970-01-01') && !r.confirmed_at)
+    else if (filter === 'confirmed') base = base.filter(r => !!r.confirmed_at)
+    else if (filter === 'draft') base = base.filter(r => !r.submitted_at || r.submitted_at.startsWith('1970-01-01'))
     else if (filter === 'edited') base = base.filter(r => isEditedAfterConfirm(r))
     if (!q) return base
     return base.filter(r =>
@@ -80,31 +82,32 @@ export default function RegistrosPage({ onSelectRegistration }: { onSelectRegist
     )
   }, [enriched, query, filter])
 
-  if (loading && !event) {
+  if (!event) {
     return (
       <div className="flex items-center justify-center h-full">
-        <div className="w-10 h-10 rounded-full border-2 border-fuchsia-500/20 border-t-fuchsia-500 animate-spin" />
+        <p className="text-neutral-500 text-lg font-display tracking-wider uppercase">Sin evento</p>
       </div>
     )
   }
 
   return (
     <div className="p-4 pb-6 space-y-4">
-      {/* Search */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-500" />
+      {/* Search Input on its own full-width line */}
+      <div className="relative w-full">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-500" />
         <input
           value={query}
           onChange={e => setQuery(e.target.value)}
-          placeholder="Buscar academia, coach, equipo..."
-          className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-neutral-800/60 border border-neutral-700/50 text-sm focus:outline-none focus:border-fuchsia-500/50 focus:bg-neutral-800 text-white placeholder-neutral-500"
+          placeholder="Buscar..."
+          className="search-input w-full pl-12 pr-3 py-2 bg-neutral-800/60 border border-neutral-600 text-xs focus:outline-none focus:border-fuchsia-500/50 focus:bg-neutral-800 text-white placeholder-neutral-500 rounded-xl"
         />
       </div>
 
-      {/* Filters */}
-      <div className="flex gap-2 overflow-x-auto pb-1">
+      {/* Filters in their own full-width horizontal row */}
+      <div className="grid grid-cols-5 gap-1 w-full registros-filters">
         {([
           { key: 'all', label: 'Todos' },
+          { key: 'pending', label: 'Pendientes' },
           { key: 'confirmed', label: 'Confirmados' },
           { key: 'draft', label: 'Borrador' },
           { key: 'edited', label: 'Editados' },
@@ -112,10 +115,10 @@ export default function RegistrosPage({ onSelectRegistration }: { onSelectRegist
           <button
             key={f.key}
             onClick={() => setFilter(f.key)}
-            className={`px-3 py-1.5 rounded-full text-xs font-bold tracking-wider border transition-all shrink-0 ${
+            className={`py-2 rounded-none text-[11px] font-bold border transition-all text-center truncate ${
               filter === f.key
-                ? 'bg-fuchsia-500 text-white border-fuchsia-500'
-                : 'bg-neutral-800/50 text-neutral-400 border-neutral-700/50 hover:border-neutral-600'
+                ? 'bg-neutral-900 text-white border-neutral-900'
+                : 'bg-white text-neutral-600 border-neutral-300 hover:border-neutral-400'
             }`}
           >
             {f.label}
@@ -134,27 +137,26 @@ export default function RegistrosPage({ onSelectRegistration }: { onSelectRegist
       ) : (
         <div className="space-y-3">
           {filtered.map(r => {
-            const isConfirmed = !!r.confirmed_at
-            const wasEdited = isEditedAfterConfirm(r)
+            const isDraft = !r.submitted_at || r.submitted_at.startsWith('1970-01-01')
+            const isConfirmed = !isDraft && !!r.confirmed_at
+            const wasEdited = !isDraft && isEditedAfterConfirm(r)
+            const isPending = !isDraft && !isConfirmed && !wasEdited
             return (
               <button
                 key={r.id}
                 onClick={() => onSelectRegistration ? onSelectRegistration(String(r.id)) : router.push(`/socios/registros/${r.id}`)}
                 className={`w-full text-left bg-neutral-800/40 rounded-2xl border p-4 hover:border-fuchsia-500/40 transition-all ${
-                  wasEdited ? 'border-amber-500/40' : 'border-neutral-700/50'
-                }`}
-              >
+                  isDraft ? 'border-neutral-700/30 opacity-75' :
+                  wasEdited ? 'border-amber-500/40' : 
+                  isPending ? 'border-orange-500/40' : 
+                  'border-neutral-700/50'
+                }`}>
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <h3 className="font-display text-lg tracking-wide uppercase text-white truncate">
                         {r.academy || '(sin academia)'}
                       </h3>
-                      {wasEdited && (
-                        <span className="text-[10px] font-bold bg-amber-500/15 text-amber-400 border border-amber-500/30 px-2 py-0.5 rounded-full">
-                          EDITADO
-                        </span>
-                      )}
                     </div>
                     <p className="text-sm text-neutral-400 mt-0.5">
                       Coach: <span className="text-neutral-300">{r.coach_name}</span>
@@ -167,29 +169,30 @@ export default function RegistrosPage({ onSelectRegistration }: { onSelectRegist
                   </div>
 
                   <div className="text-right shrink-0">
-                    <p className="font-display text-xl text-green-400">{formatMoney(r.total)}</p>
-                    <span className={`inline-block text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full mt-1 ${
-                      isConfirmed ? 'bg-green-500/15 text-green-400' :
-                      'bg-amber-500/15 text-amber-400'
+                    <span className={`inline-block text-[10px] font-black uppercase tracking-wider px-3 py-1 rounded-lg shadow-sm ${
+                      isConfirmed ? 'bg-green-500 text-black' :
+                      wasEdited ? 'bg-amber-400 text-black' :
+                      isPending ? 'bg-orange-500 text-black' :
+                      'bg-amber-500 text-black'
                     }`}>
-                      {isConfirmed ? 'CONFIRMADA' : 'BORRADOR'}
+                      {isConfirmed ? 'CONFIRMADA' : wasEdited ? 'EDITADO' : isPending ? 'PENDIENTE' : 'BORRADOR'}
                     </span>
                   </div>
                 </div>
 
                 {/* Stats */}
-                <div className="grid grid-cols-3 gap-2 mt-3 p-2.5 rounded-xl bg-neutral-900/40 text-xs">
+                <div className="grid grid-cols-3 gap-2 mt-3 p-3 rounded-xl bg-neutral-900/60 text-xs">
                   <div>
-                    <span className="text-neutral-500 uppercase text-[9px] tracking-wider">Integrantes</span>
-                    <p className="font-display text-sm text-white mt-0.5">{r.dancers.length}</p>
+                    <span className="text-neutral-500 uppercase text-[9px] tracking-wider font-bold">Integrantes</span>
+                    <p className="text-xl sm:text-2xl font-black text-white mt-0.5">{r.dancers.length}</p>
                   </div>
                   <div>
-                    <span className="text-neutral-500 uppercase text-[9px] tracking-wider">Coreografías</span>
-                    <p className="font-display text-sm text-white mt-0.5">{r.acts.length}</p>
+                    <span className="text-neutral-500 uppercase text-[9px] tracking-wider font-bold">Coreografías</span>
+                    <p className="text-xl sm:text-2xl font-black text-white mt-0.5">{r.acts.length}</p>
                   </div>
                   <div>
-                    <span className="text-neutral-500 uppercase text-[9px] tracking-wider">Boletos</span>
-                    <p className="font-display text-sm text-fuchsia-400 mt-0.5">{r.tickets_count ?? 0}</p>
+                    <span className="text-neutral-500 uppercase text-[9px] tracking-wider font-bold">Boletos</span>
+                    <p className="text-xl sm:text-2xl font-black text-fuchsia-400 mt-0.5">{r.tickets_count ?? 0}</p>
                   </div>
                 </div>
               </button>

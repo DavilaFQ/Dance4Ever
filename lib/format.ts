@@ -1,4 +1,7 @@
 export function formatMoney(n: number): string {
+  if (typeof window !== 'undefined' && window.localStorage?.getItem('hideFinancials') === 'true') {
+    return '$ ••••'
+  }
   return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 }).format(n)
 }
 
@@ -21,14 +24,15 @@ export function formatDate(iso: string | null): string {
   return new Date(iso).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })
 }
 
+import { toDate } from '@/lib/date'
+
 export function safeFormatDate(iso: unknown, options?: Intl.DateTimeFormatOptions): string {
   if (!iso) return 'Sin fecha'
   try {
     const str = String(iso).trim()
     if (!str || str === 'null' || str === 'undefined') return 'Sin fecha'
-    const dateStr = str.includes('T') ? str : str + 'T00:00:00'
-    const d = new Date(dateStr)
-    if (isNaN(d.getTime())) return str
+    const d = toDate(str)
+    if (!d) return str
     return d.toLocaleDateString('es-MX', options || { dateStyle: 'long' })
   } catch {
     return typeof iso === 'string' ? iso : 'Sin fecha'

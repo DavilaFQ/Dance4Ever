@@ -24,6 +24,7 @@ export type Participant = {
   event_id: string
   coach_id: string | null
   present: boolean
+  created_at?: string
 }
 
 export type Event = {
@@ -44,7 +45,6 @@ export type Event = {
   deadline_precio_entrada: string | null
   deadline_registro: string | null
   deadline_cambios: string | null
-  fecha_cambio_tarifa_coreo: string | null
   dancers_por_asistente_gratis: number
 }
 
@@ -65,13 +65,13 @@ export const AGE_CATEGORY_LABELS: Record<AgeCategory, string> = {
 }
 
 export const AGE_CATEGORY_HINTS: Record<AgeCategory, string> = {
-  tiny: 'Kinder - 3-5 anos',
-  mini: '1 a 3 Primaria - 6-8 anos',
-  elementary: '4 a 6 Primaria - 9-11 anos',
-  junior: 'Secundaria - 12-14 anos',
-  senior: 'Preparatoria - 15-17 anos',
-  college: 'Universidad - 18-21 anos',
-  open: 'Mayores de 21 anos',
+  tiny: 'Kinder - 3-5 años',
+  mini: '1 a 3 Primaria - 6-8 años',
+  elementary: '4 a 6 Primaria - 9-11 años',
+  junior: 'Secundaria - 12-14 años',
+  senior: 'Preparatoria - 15-17 años',
+  college: 'Universidad - 18-21 años',
+  open: 'Mayores de 21 años',
 }
 
 export function categoryFromAge(age: number): AgeCategory {
@@ -111,6 +111,8 @@ export type CoachRegistration = {
   notes: string | null
   paid: number
   payment_notes: string | null
+  updated_at?: string
+  signature?: string
 }
 
 export type RegistrationDancer = {
@@ -121,6 +123,7 @@ export type RegistrationDancer = {
   category: AgeCategory | null
   category_manual: boolean | null
   order_idx: number
+  created_at?: string
 }
 
 export type RegistrationAct = {
@@ -132,6 +135,7 @@ export type RegistrationAct = {
   style: string
   order_idx: number
   dancer_ids: number[]
+  created_at?: string
 }
 
 export type EditLog = {
@@ -143,5 +147,27 @@ export type EditLog = {
   entity_id: number | null
   changes: Record<string, { old: unknown; new: unknown }>
   snapshot: Record<string, unknown> | null
+  created_at: string
+}
+
+export type ProgramDraft = {
+  event_id: string
+  act_order: number[]
+  intermedio_index: number | null
+  min_gap: number
+  updated_at: string
+}
+
+export type RegistrationDraftRow = {
+  draft_id: string
+  event_id: string
+  state: Record<string, unknown>
+  updated_at: string
+}
+
+export type EventSnapshot = {
+  id: string
+  event_id: string
+  label: string
   created_at: string
 }

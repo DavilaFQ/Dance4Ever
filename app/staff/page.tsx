@@ -11,6 +11,9 @@ import SearchBar from '@/components/SearchBar'
 import ParticipantEditor from '@/components/ParticipantEditor'
 import StatsPanel from '@/components/StatsPanel'
 import { exportExcel, exportPdf, exportRegistrations } from '@/lib/export'
+import { subscribePortalConfig, PortalConfig } from '@/lib/portalConfig'
+import PortalLockout from '@/components/PortalLockout'
+
 
 type EditorState = { kind: 'edit', p: Participant } | { kind: 'create' } | null
 
@@ -49,6 +52,8 @@ export default function StaffPage() {
   const [linkCopied, setLinkCopied] = useState(false)
   const [exportingRegs, setExportingRegs] = useState(false)
   const [exportRegsErr, setExportRegsErr] = useState<string | null>(null)
+  const [portalConfig, setPortalConfig] = useState<PortalConfig | null>(null)
+
 
   useEffect(() => {
     if (!event) return
@@ -61,6 +66,15 @@ export default function StaffPage() {
       setRegistrationCount(count ?? 0)
     })()
   }, [event?.id])
+
+  useEffect(() => {
+    if (!event?.id) return
+    const unsubscribe = subscribePortalConfig(event.id, (config) => {
+      setPortalConfig(config)
+    })
+    return () => unsubscribe()
+  }, [event?.id])
+
 
   useEffect(() => {
     if (showSetup && event && !event.registration_token) {
@@ -312,7 +326,12 @@ export default function StaffPage() {
   const { ref: upcomingRef, count: upcomingFit } = useFitCount(PILL_PX, PILL_GAP)
   const upcoming = upcomingAll.slice(0, upcomingFit)
 
+  if (portalConfig && !portalConfig.enableOperations) {
+    return <PortalLockout portalName="Operativo (Staff)" />
+  }
+
   return (
+
     <div className="h-[100dvh] bg-neutral-900 text-white flex flex-col overflow-hidden select-none">
       {/* Spacer for iOS Notch */}
       <div className="shrink-0 bg-black" style={{ height: 'env(safe-area-inset-top, 0px)' }} />

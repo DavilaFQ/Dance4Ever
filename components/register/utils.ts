@@ -1,5 +1,6 @@
 import { AgeCategory, Event, categoryFromBirthdate } from '@/lib/supabase'
 import { State, Dancer, MODALITY_OPTIONS } from '@/components/register/types'
+import { toDate, toEndOfDay } from '@/lib/date'
 
 export function minDancers(m: string | null): number {
   if (m === 'solista') return 1
@@ -37,8 +38,7 @@ export function ageFromBirthdate(iso: string, ref = new Date()): number | null {
 
 export function initialState(): State {
   return {
-    coach: { name: '', phone: '', email: '', extras: [], assistants: [] },
-    hasMultipleCoaches: null,
+    coach: { name: '', phone: '', email: '', assistants: [] },
     academy: '',
     city: '',
     teamName: '',
@@ -52,6 +52,7 @@ export function initialState(): State {
     ticketsCount: 0,
     confirmedAt: null,
     notes: '',
+    signature: null,
   }
 }
 
@@ -68,54 +69,50 @@ export function participacionesPorAlumno(state: State): Map<number, number> {
 
 export function getRegistrationDeadline(event: Event | null): string {
   if (event?.deadline_registro) {
-    return new Date(event.deadline_registro).toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' })
+    return toDate(event.deadline_registro)?.toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' }) || 'No definido'
   }
-  if (!event?.date) return '15 dias antes del evento'
+  if (!event?.date) return 'No definido'
   try {
-    const d = new Date(event.date + 'T00:00:00')
+    const d = toDate(event.date)
+    if (!d) return 'No definido'
     d.setDate(d.getDate() - 15)
     return d.toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' })
   } catch {
-    return '15 dias antes del evento'
+    return 'No definido'
   }
 }
 
 export function getChangesDeadline(event: Event | null): string {
   if (event?.deadline_cambios) {
-    return new Date(event.deadline_cambios).toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' })
+    return toDate(event.deadline_cambios)?.toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' }) || 'No definido'
   }
-  if (!event?.date) return '6 dias antes del evento'
+  if (!event?.date) return 'No definido'
   try {
-    const d = new Date(event.date + 'T00:00:00')
+    const d = toDate(event.date)
+    if (!d) return 'No definido'
     d.setDate(d.getDate() - 6)
     return d.toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' })
   } catch {
-    return '6 dias antes del evento'
+    return 'No definido'
   }
 }
 
 export function isBeforeTicketsDeadline(event: Event | null): boolean {
-  if (event?.deadline_precio_entrada) {
-    return new Date() <= new Date(event.deadline_precio_entrada + 'T23:59:59')
-  }
+  const dl = toEndOfDay(event?.deadline_precio_entrada)
+  if (dl) return new Date() <= dl
   return true
 }
 
 export function getPrecioEntradaRegistro(event: Event | null): number {
-  if (event?.deadline_precio_entrada) {
-    const dl = new Date(event.deadline_precio_entrada + 'T23:59:59')
-    return new Date() > dl
-      ? (event.cost_entrada_tardia ?? 600)
-      : (event.cost_entrada_temprana ?? 500)
-  }
-  const fallback = new Date(2026, 5, 17, 23, 59, 59, 999)
-  return new Date() > fallback ? 600 : 500
+  const dl = toEndOfDay(event?.deadline_precio_entrada)
+  if (dl) return new Date() > dl
+    ? (event!.cost_entrada_tardia ?? 600)
+    : (event!.cost_entrada_temprana ?? 500)
+  // No deadline configured → always early price
+  return event?.cost_entrada_temprana ?? 500
 }
 
-export function isBeforeJune15(event: Event | null): boolean {
-  if (event?.fecha_cambio_tarifa_coreo) {
-    return new Date() < new Date(event.fecha_cambio_tarifa_coreo + 'T23:59:59')
-  }
+export function isBeforeCoreoDeadline(_event: Event | null): boolean {
   return true
 }
 
@@ -125,18 +122,13 @@ export function costBreakdown(state: State, event: Event | null) {
   const asistenteCosto = event?.cost_asistente ?? 400
   const dancersPorAsistente = event?.dancers_por_asistente_gratis ?? 8
   const precioEntrada = (() => {
-    if (event?.deadline_precio_entrada) {
-      const dl = new Date(event.deadline_precio_entrada + 'T23:59:59')
-      return new Date() > dl
-        ? (event.cost_entrada_tardia ?? 600)
-        : (event.cost_entrada_temprana ?? 500)
-    }
-    const fallback = new Date(2026, 5, 17, 23, 59, 59, 999)
-    return new Date() > fallback ? 600 : 500
+    const dl = toEndOfDay(event?.deadline_precio_entrada)
+    if (dl) return new Date() > dl
+      ? (event!.cost_entrada_tardia ?? 600)
+      : (event!.cost_entrada_temprana ?? 500)
+    return event?.cost_entrada_temprana ?? 500
   })()
-  const beforeDeadline = event?.fecha_cambio_tarifa_coreo
-    ? new Date() < new Date(event.fecha_cambio_tarifa_coreo + 'T23:59:59')
-    : true
+  const beforeDeadline = true
 
   return { paq, rep, asistenteCosto, dancersPorAsistente, precioEntrada, beforeDeadline }
 }
@@ -171,7 +163,8 @@ export function formatMoney(n: number): string {
 
 export function formatEventDate(iso: string): string {
   try {
-    const d = new Date(iso + 'T00:00:00')
+    const d = toDate(iso)
+    if (!d) return iso
     return d.toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' })
   } catch { return iso }
 }

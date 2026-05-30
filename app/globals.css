@@ -56,3 +56,611 @@ html, body {
 * {
   -webkit-touch-callout: none;
 }
+
+/* ==========================================
+   PREMIUM LIGHT MODE - DASHBOARD EXCLUSIVE 
+   ========================================== */
+
+/* Scoped body and viewport styling */
+html:has(.socios-light), 
+body:has(.socios-light) {
+  background-color: var(--cs-bg-canvas) !important;
+  background: var(--cs-bg-canvas) !important;
+  color: var(--cs-text-heading) !important;
+}
+
+/* Base shell overrides */
+.socios-light {
+  --cs-bg-canvas: #f8fafc;
+  --cs-text-heading: #0f172a;
+  --cs-text-body: #334155;
+  --cs-text-strong: #161616;
+  --cs-text-secondary: #222222;
+  --cs-text-muted: #666666;
+  --cs-text-placeholder: #888888;
+  --cs-border: #cbd5e1;
+  --cs-bg-card: #ffffff;
+  --cs-bg-soft: #f1f5f9;
+  --cs-bg-hover: #e2e8f0;
+  --cs-bg-hover-dark: #1c1c1c;
+  --cs-overlay: rgba(22, 22, 22, 0.25);
+  --cs-shadow: rgba(22, 22, 22, 0.05);
+  --cs-focus: rgba(22, 22, 22, 0.08);
+  --cs-shadow-subtle: rgba(15, 23, 42, 0.02);
+
+  background-color: var(--cs-bg-canvas) !important;
+  color: var(--cs-text-body) !important;
+}
+
+/* Navigation and Header Overrides */
+.socios-light header {
+  background-color: rgba(255, 255, 255, 0.85) !important;
+  backdrop-filter: blur(16px) !important;
+  border-bottom: 1px solid var(--cs-border) !important;
+}
+
+.socios-light nav {
+  background-color: rgba(255, 255, 255, 0.85) !important;
+  backdrop-filter: blur(16px) !important;
+  border-top: 1px solid var(--cs-border) !important;
+}
+
+
+.socios-light nav .text-fuchsia-500 {
+  color: var(--cs-text-strong) !important; /* Charcoal Active */
+  font-weight: 700 !important;
+}
+
+.socios-light nav .text-neutral-600 {
+  color: var(--cs-text-muted) !important; /* Soft Slate Inactive */
+}
+
+/* Background mapping - FRAMELESS EXCLUSIVE */
+.socios-light.bg-neutral-900,
+.socios-light.bg-neutral-950,
+.socios-light .bg-neutral-900,
+.socios-light .bg-neutral-950,
+.socios-light .bg-neutral-900\/40,
+.socios-light .bg-neutral-900\/60,
+.socios-light .bg-neutral-950\/40 {
+  background-color: transparent !important;
+}
+
+/* Dashboard flat sections - remove boxed containers */
+.socios-light .bg-neutral-800,
+.socios-light .bg-neutral-800\/20,
+.socios-light .bg-neutral-800\/30,
+.socios-light .bg-neutral-800\/40,
+.socios-light .bg-neutral-800\/50,
+.socios-light .bg-neutral-800\/60,
+.socios-light .bg-neutral-700\/50,
+.socios-light .bg-neutral-700\/30 {
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+/* Specific Event Header sitting at top of Resumen */
+.socios-light .bg-neutral-800\/50.rounded-2xl.border.border-neutral-700\/50.p-4 {
+  background-color: transparent !important;
+  border: none !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  box-shadow: none !important;
+}
+
+/* Checklist search & filter toolbar (Soft card for visual organization) */
+.socios-light .space-y-3.bg-neutral-800\/20.border.border-neutral-800\/60 {
+  background-color: var(--cs-bg-card) !important;
+  border: 1px solid var(--cs-border) !important; /* color7 */
+  box-shadow: 0 1px 3px var(--cs-shadow-subtle) !important;
+  border-radius: 16px !important;
+  padding: 16px !important;
+}
+
+/* Card Glow Overrides */
+.socios-light .bg-neutral-900.border-neutral-800 {
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* Modals overlays & container (Retain visual grouping card) */
+.socios-light .bg-black\/70,
+.socios-light .bg-black\/80 {
+  background-color: var(--cs-overlay) !important;
+  backdrop-filter: blur(6px) !important;
+}
+
+.socios-light .bg-neutral-900.border-neutral-800.w-full.max-w-md,
+.socios-light .bg-neutral-800.rounded-2xl.border.border-neutral-700.w-full,
+.socios-light .bg-neutral-800.rounded-2xl.border.border-neutral-700.w-full.max-w-sm {
+  background-color: var(--cs-bg-card) !important;
+  border: 1px solid var(--cs-border) !important;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.02) !important;
+}
+
+/* KPI Flat styling with dynamic left color border (Stripe Dashboard Style) */
+.socios-light .grid-cols-2 > div,
+.socios-light .grid-cols-3 > div {
+  background-color: transparent !important;
+  border: none !important;
+  border-left: 3px solid var(--cs-text-strong) !important;
+  border-radius: 0 !important;
+  padding: 6px 0 6px 16px !important;
+  box-shadow: none !important;
+}
+
+/* Dynamic color coding on KPI Left border based on content classes */
+.socios-light .grid-cols-2 > div:has(.text-fuchsia-500),
+.socios-light .grid-cols-2 > div:has(.text-green-400),
+.socios-light .grid-cols-3 > div:has(.text-fuchsia-400),
+.socios-light .grid-cols-3 > div:has(.text-green-400),
+.socios-light .grid-cols-2 > div:has(.text-emerald-400),
+.socios-light .grid-cols-3 > div:has(.text-emerald-400) {
+  border-left-color: var(--cs-text-strong) !important; /* Charcoal Accent */
+}
+
+.socios-light .grid-cols-2 > div:has(.text-amber-400),
+.socios-light .grid-cols-3 > div:has(.text-amber-400) {
+  border-left-color: var(--cs-text-muted) !important; /* Muted Slate Pending */
+}
+
+/* Checklist Progress Card (Grouped card for layout balance) */
+.socios-light .relative.overflow-hidden.rounded-3xl.bg-neutral-900.border.border-neutral-800.p-5 {
+  background-color: var(--cs-bg-card) !important;
+  border-color: var(--cs-border) !important;
+  box-shadow: 0 1px 3px var(--cs-shadow-subtle) !important;
+}
+
+.socios-light .relative.overflow-hidden.rounded-3xl.bg-neutral-900.border.border-neutral-800.p-5 .h-2\.5.w-full.bg-neutral-800 {
+  background-color: var(--cs-bg-soft) !important;
+  border: 1px solid var(--cs-border) !important;
+}
+
+/* Flat lists & rows with fine bottom dividers and elegant hover (No container) */
+.socios-light .space-y-2 > div,
+.socios-light .space-y-2\.5 > div,
+.socios-light .space-y-2 > .group,
+.socios-light .divide-y > div,
+.socios-light .space-y-2 > .bg-neutral-800\/30.rounded-xl.border {
+  background-color: transparent !important;
+  border: none !important;
+  border-bottom: 1px solid var(--cs-border) !important; /* sutil fine divider */
+  border-radius: 0 !important;
+  padding: 6px 8px !important; /* Compact list row padding */
+  box-shadow: none !important;
+  margin-bottom: 0 !important;
+  transition: background-color 0.15s ease !important;
+}
+
+.socios-light .space-y-2 > div:hover,
+.socios-light .space-y-2\.5 > div:hover,
+.socios-light .space-y-2 > .group:hover,
+.socios-light .divide-y > div:hover,
+.socios-light .space-y-2 > .bg-neutral-800\/30.rounded-xl.border:hover {
+  background-color: var(--cs-bg-canvas) !important; /* soft hover glow */
+}
+
+/* Text overrides */
+.socios-light .text-white,
+.socios-light .text-neutral-100 {
+  color: var(--cs-text-strong) !important; /* kitty-foreground */
+}
+
+.socios-light .text-neutral-200,
+.socios-light .text-neutral-300 {
+  color: var(--cs-text-secondary) !important; /* color0 */
+}
+
+.socios-light .text-neutral-400,
+.socios-light .text-neutral-500,
+.socios-light .text-neutral-600 {
+  color: var(--cs-text-muted) !important; /* color8 */
+}
+
+/* Border overrides */
+.socios-light .border-neutral-800,
+.socios-light .border-neutral-700,
+.socios-light .border-neutral-700\/50,
+.socios-light .border-neutral-700\/30,
+.socios-light .divide-neutral-700\/30 > * + * {
+  border-color: var(--cs-border) !important; /* color7 */
+}
+
+/* Inputs and Interactive controls */
+.socios-light input,
+.socios-light select,
+.socios-light textarea {
+  background-color: var(--cs-bg-card) !important;
+  border: 1px solid var(--cs-border) !important;
+  color: var(--cs-text-strong) !important;
+}
+
+.socios-light input::placeholder,
+.socios-light textarea::placeholder {
+  color: var(--cs-text-placeholder) !important;
+}
+
+.socios-light input:focus,
+.socios-light select:focus,
+.socios-light textarea:focus {
+  background-color: var(--cs-bg-card) !important;
+  border-color: var(--cs-text-strong) !important; /* Premium Charcoal Focus */
+  box-shadow: 0 0 0 2px var(--cs-focus) !important;
+}
+
+/* Button variants styling */
+.socios-light button.bg-neutral-800 {
+  background-color: var(--cs-bg-soft) !important;
+  border: 1px solid var(--cs-border) !important;
+  color: var(--cs-text-strong) !important;
+}
+.socios-light button.bg-neutral-800:hover {
+  background-color: var(--cs-bg-hover) !important;
+  color: #000000 !important;
+  border: 1px solid var(--cs-border) !important;
+}
+
+/* Primary elements mapped to carbon blacks/grays */
+.socios-light .text-fuchsia-500 {
+  color: var(--cs-text-strong) !important; /* Pure carbon black */
+}
+.socios-light .text-fuchsia-400 {
+  color: var(--cs-text-strong) !important;
+}
+.socios-light .bg-fuchsia-500 {
+  background-color: var(--cs-text-strong) !important;
+  color: var(--cs-bg-card) !important;
+}
+.socios-light .bg-fuchsia-500\/10,
+.socios-light .bg-fuchsia-500\/15 {
+  background-color: var(--cs-bg-soft) !important;
+  border-color: var(--cs-border) !important;
+  color: var(--cs-text-strong) !important;
+}
+.socios-light .border-fuchsia-500\/30 {
+  border-color: var(--cs-border) !important;
+}
+.socios-light .from-fuchsia-500.to-purple-600 {
+  background-image: none !important;
+  background-color: var(--cs-text-strong) !important;
+  color: var(--cs-bg-card) !important;
+}
+.socios-light .shadow-\[0_0_15px_rgba\(217\,70\,239\,0\.3\)\] {
+  box-shadow: 0 4px 12px var(--cs-shadow) !important;
+}
+.socios-light .bg-clip-text.bg-gradient-to-r.from-fuchsia-400.to-purple-400 {
+  background-image: none !important;
+  background-clip: unset !important;
+  -webkit-background-clip: unset !important;
+  color: var(--cs-text-strong) !important;
+  font-weight: 800 !important;
+}
+.socios-light .drop-shadow-\[0_0_10px_rgba\(217\,70\,239\,0\.2\)\] {
+  filter: drop-shadow(0 2px 4px var(--cs-shadow)) !important;
+}
+
+/* Complete monochrome grays/blacks mapping for all Tailwind color classes */
+
+/* Pink overrides (Tiny category) */
+.socios-light .text-pink-400,
+.socios-light .text-pink-300 {
+  color: var(--cs-text-strong) !important;
+}
+.socios-light .bg-pink-500\/10 {
+  background-color: var(--cs-bg-soft) !important;
+  color: var(--cs-text-strong) !important;
+}
+.socios-light .bg-pink-500\/20 {
+  background-color: var(--cs-bg-hover) !important;
+  color: var(--cs-text-strong) !important;
+}
+.socios-light .border-pink-500\/30 {
+  border-color: var(--cs-border) !important;
+}
+
+/* Purple overrides (Open category, ZIP buttons) */
+.socios-light .text-purple-400,
+.socios-light .text-purple-300,
+.socios-light .text-purple-500 {
+  color: var(--cs-text-strong) !important;
+}
+.socios-light .bg-purple-500 {
+  background-color: var(--cs-text-strong) !important;
+  color: var(--cs-bg-card) !important;
+}
+.socios-light .bg-purple-500\/10 {
+  background-color: var(--cs-bg-soft) !important;
+  color: var(--cs-text-strong) !important;
+}
+.socios-light .bg-purple-500\/20 {
+  background-color: var(--cs-bg-hover) !important;
+  color: var(--cs-text-strong) !important;
+}
+.socios-light .border-purple-500\/30 {
+  border-color: var(--cs-border) !important;
+}
+
+/* Indigo overrides (College category, Audio category) */
+.socios-light .text-indigo-400,
+.socios-light .text-indigo-300 {
+  color: var(--cs-text-strong) !important;
+}
+.socios-light .bg-indigo-500\/10 {
+  background-color: var(--cs-bg-soft) !important;
+  color: var(--cs-text-strong) !important;
+}
+.socios-light .bg-indigo-500\/20 {
+  background-color: var(--cs-bg-hover) !important;
+  color: var(--cs-text-strong) !important;
+}
+.socios-light .border-indigo-500\/20,
+.socios-light .border-indigo-500\/30 {
+  border-color: var(--cs-border) !important;
+}
+
+/* Green overrides (Paid, Success, Emerald) */
+.socios-light .text-green-400,
+.socios-light .text-green-500,
+.socios-light .text-emerald-400 {
+  color: var(--cs-text-strong) !important;
+}
+.socios-light .bg-green-500\/10,
+.socios-light .bg-emerald-500\/10 {
+  background-color: var(--cs-bg-soft) !important;
+  color: var(--cs-text-strong) !important;
+}
+.socios-light .border-green-500\/30,
+.socios-light .border-emerald-500\/30 {
+  border-color: var(--cs-border) !important;
+}
+
+/* Amber overrides (Pending, Mini, Elementary) */
+.socios-light .text-amber-400,
+.socios-light .text-amber-500,
+.socios-light .text-orange-400,
+.socios-light .text-orange-500 {
+  color: var(--cs-text-muted) !important; /* Muted deep gray */
+}
+.socios-light .bg-amber-500\/10,
+.socios-light .bg-orange-500\/10 {
+  background-color: var(--cs-bg-soft) !important;
+  color: var(--cs-text-muted) !important;
+}
+.socios-light .border-amber-500\/30,
+.socios-light .border-orange-500\/30 {
+  border-color: var(--cs-border) !important;
+}
+
+/* Red overrides (Danger, Red status) */
+.socios-light .text-red-400,
+.socios-light .text-red-500 {
+  color: var(--cs-text-strong) !important;
+  font-weight: 700 !important; /* bold text instead of red color */
+}
+.socios-light .bg-red-500\/5,
+.socios-light .bg-red-500\/10,
+.socios-light .bg-red-500\/20 {
+  background-color: var(--cs-bg-soft) !important;
+  color: var(--cs-text-strong) !important;
+  border-color: var(--cs-border) !important;
+}
+
+/* Blue & Teal overrides (Logistics, Senior, etc.) */
+.socios-light .text-blue-400,
+.socios-light .text-teal-400 {
+  color: var(--cs-text-strong) !important;
+}
+.socios-light .bg-blue-500\/10,
+.socios-light .bg-teal-500\/10 {
+  background-color: var(--cs-bg-soft) !important;
+  color: var(--cs-text-strong) !important;
+}
+.socios-light .border-blue-500\/20,
+.socios-light .border-teal-500\/30 {
+  border-color: var(--cs-border) !important;
+}
+
+/* Hide all glow and blur layers completely */
+.socios-light .blur-3xl {
+  display: none !important;
+}
+
+/* Eradicate all gradients */
+.socios-light .bg-gradient-to-r {
+  background-image: none !important;
+  background-color: var(--cs-text-strong) !important;
+}
+.socios-light .bg-gradient-to-r.from-fuchsia-500.via-purple-500.to-indigo-500 {
+  background-image: none !important;
+  background-color: var(--cs-text-strong) !important;
+}
+.socios-light .h-full.rounded-full.bg-gradient-to-r > div {
+  display: none !important;
+}
+
+/* Custom scrollbar in grayscale */
+.socios-light ::-webkit-scrollbar-track {
+  background: var(--cs-bg-soft) !important;
+}
+.socios-light ::-webkit-scrollbar-thumb {
+  background: var(--cs-border) !important;
+  border-radius: 4px !important;
+}
+
+/* ==================================================
+   ULTRA-COMPACT SPACING & LAYOUT (Respetando escala)
+   ================================================== */
+
+/* Compact horizontal/vertical container paddings & margins */
+.socios-light .p-4 {
+  padding: 8px !important; /* Reduced general padding from 16px to 8px */
+}
+.socios-light .pb-6 {
+  padding-bottom: 0px !important; /* No bottom gap before nav bar */
+}
+.socios-light .pb-8 {
+  padding-bottom: 0px !important;
+}
+.socios-light .pb-24 {
+  padding-bottom: 0px !important;
+}
+.socios-light main > div {
+  padding-bottom: 0px !important; /* Forces all subpage flows to reach the bottom bar */
+}
+.socios-light .pt-2 {
+  padding-top: 4px !important;
+}
+.socios-light .pt-3 {
+  padding-top: 6px !important;
+}
+
+/* Compact layout grids & gaps */
+.socios-light .gap-2 {
+  gap: 4px !important;
+}
+.socios-light .gap-3 {
+  gap: 6px !important;
+}
+.socios-light .gap-4,
+.socios-light .gap-5,
+.socios-light .gap-6 {
+  gap: 8px !important; /* Extremely compacted grid/flex layouts (was up to 24px) */
+}
+
+/* Compact flex stacks and margin spaces between sections */
+.socios-light .space-y-4 > * + *,
+.socios-light .space-y-5 > * + *,
+.socios-light .space-y-6 > * + * {
+  margin-top: 8px !important; /* Drastically reduced distance between blocks */
+}
+
+.socios-light .space-y-2\.5 > * + *,
+.socios-light .space-y-3 > * + * {
+  margin-top: 4px !important; /* Compact distance between smaller elements */
+}
+
+/* KPI Flat layouts - reduce padding further */
+.socios-light .grid-cols-2 > div,
+.socios-light .grid-cols-3 > div {
+  padding: 4px 0 4px 10px !important; /* Minimal spacing inside metrics */
+  margin: 0 !important;
+}
+
+/* Checklist layout spacing optimizations */
+.socios-light .space-y-3.bg-neutral-800\/20.border.border-neutral-800\/60 {
+  padding: 10px !important; /* Compact checklist filter header */
+  border-radius: 12px !important;
+}
+
+/* Header & Nav height / spacing */
+.socios-light header .py-4 {
+  padding-top: 6px !important;
+  padding-bottom: 6px !important;
+}
+.socios-light nav .py-3 {
+  padding-top: 4px !important;
+  padding-bottom: 4px !important;
+}
+
+/* ==================================================
+   ULTRA-MINIMAL MONOCHROME FIXES & OVERRIDES
+   ================================================== */
+
+/* 1. Remove all curves (border-radius) from registrations list and details */
+.socios-light .space-y-3 > button,
+.socios-light .space-y-3 > button *,
+.socios-light .space-y-3 > div,
+.socios-light .space-y-3 > div * {
+  border-radius: 0px !important; /* Flat square boxes */
+}
+
+/* 2. Registrations Filters - 100% width row, square boxes, monochrome theme */
+.socios-light .registros-filters button {
+  border-radius: 0px !important;
+  text-align: center !important;
+  padding: 8px 4px !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  margin: 0 !important;
+  background-color: var(--cs-bg-card) !important;
+  color: var(--cs-text-strong) !important;
+  border: 1px solid var(--cs-border) !important;
+}
+
+.socios-light .registros-filters button.bg-neutral-900 {
+  background-color: var(--cs-text-strong) !important; /* solid carbon active state */
+  color: var(--cs-bg-card) !important;
+  border-color: var(--cs-text-strong) !important;
+}
+
+/* 3. Search inputs - prevent magnifying glass text hiding */
+.socios-light .search-input {
+  padding-left: 48px !important; /* Leaves generous premium room for search icon */
+  padding-right: 12px !important;
+  padding-top: 10px !important;
+  padding-bottom: 10px !important;
+}
+
+/* 4. Checklist Priority Filter - Stretch buttons from label end to container edge, monochrome theme */
+.socios-light .checklist-priority-row button {
+  border-radius: 0px !important; /* square boxes */
+  text-align: center !important;
+  padding: 6px 4px !important;
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  margin: 0 !important;
+  background-color: var(--cs-bg-card) !important;
+  color: var(--cs-text-strong) !important;
+  border: 1px solid var(--cs-border) !important;
+}
+
+.socios-light .checklist-priority-row button.bg-neutral-900 {
+  background-color: var(--cs-text-strong) !important; /* solid carbon active state */
+  color: var(--cs-bg-card) !important;
+  border-color: var(--cs-text-strong) !important;
+}
+
+/* 5. Event Status Percentage fix - solve transparent text showing as a black box */
+.socios-light .text-transparent.bg-clip-text.bg-gradient-to-r.from-fuchsia-400.to-purple-400 {
+  color: var(--cs-text-strong) !important; /* crisp visible solid black percentage */
+  background-clip: unset !important;
+  -webkit-background-clip: unset !important;
+  background-image: none !important;
+  font-weight: 800 !important;
+}
+
+/* 6. Mobile Soft Keyboard Viewport Safety - Hide bottom nav bar when typing to avoid floating menu overlapping keyboard */
+@media (max-width: 768px) {
+  .socios-light:has(input:focus, textarea:focus) nav {
+    display: none !important;
+  }
+}
+
+/* 7. Premium Monochrome Buttons & Black background contrast overrides */
+.socios-light .bg-black,
+.socios-light button.bg-black,
+.socios-light a.bg-black {
+  background-color: var(--cs-text-strong) !important;
+  color: var(--cs-bg-card) !important;
+  border: 1px solid var(--cs-border) !important;
+}
+.socios-light .bg-black:hover,
+.socios-light button.bg-black:hover,
+.socios-light a.bg-black:hover {
+  background-color: var(--cs-bg-hover-dark) !important;
+}
+
+
+.socios-light .bg-black *,
+.socios-light button.bg-black *,
+.socios-light a.bg-black * {
+  color: var(--cs-bg-card) !important;
+}
+
+.socios-light .hover\:bg-neutral-900:hover {
+  background-color: var(--cs-bg-hover-dark) !important;
+}

@@ -1,20 +1,16 @@
-import Link from 'next/link'
 import Image from 'next/image'
 
 export default function Home() {
   return (
-    <div className="min-h-[100dvh] bg-black flex flex-col items-center justify-center gap-8 p-6">
-      <Image src="/logo.png" alt="Dance4ever" width={280} height={200} priority />
-      <p className="text-gray-400 text-center">Programa en tiempo real</p>
-      <Link href="/socios" className="bg-fuchsia-500 text-white w-64 text-center font-display text-2xl tracking-[0.3em] py-4 rounded-xl active:bg-fuchsia-600">
-        SOCIOS
-      </Link>
-      <Link href="/staff" className="bg-neutral-800 text-white w-64 text-center font-display text-xl tracking-[0.3em] py-3 rounded-xl active:bg-neutral-700">
-        STAFF
-      </Link>
-      <p className="text-center text-gray-500 text-xs max-w-xs">
-        Los coaches acceden escaneando el QR del evento desde el panel de Staff
-      </p>
+    <div className="min-h-[100dvh] bg-black flex flex-col items-center justify-center p-6 select-none relative overflow-hidden">
+      {/* Sutil resplandor radial de fondo */}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.02)_0%,transparent_60%)] pointer-events-none" />
+
+      {/* Logotipo de marca centrado */}
+      <div className="relative z-10 opacity-90 transition-opacity hover:opacity-100 duration-300">
+        <Image src="/logo.png" alt="Dance4ever" width={280} height={200} priority className="h-auto w-auto animate-fade-in" />
+      </div>
     </div>
   )
 }
+
