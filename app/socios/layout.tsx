@@ -179,6 +179,9 @@ export default function SociosLayout({ children }: { children: React.ReactNode }
   const [lastSync, setLastSync] = useState<string>(new Date().toISOString())
   const [showQr, setShowQr] = useState(false)
   const [qrUrl, setQrUrl] = useState('')
+  const [qrStaffUrl, setQrStaffUrl] = useState('')
+  const [qrCoachProgUrl, setQrCoachProgUrl] = useState('')
+  const [copiedLink, setCopiedLink] = useState<string | null>(null)
   const [origin, setOrigin] = useState('')
   const [hideFinancials, setHideFinancials] = useState(false)
   const [isOffline, setIsOffline] = useState(false)
@@ -321,10 +324,31 @@ export default function SociosLayout({ children }: { children: React.ReactNode }
   }, [event?.id, loadEvents])
 
   useEffect(() => {
-    if (!event?.registration_token || !origin) return
-    const url = `${origin}/register/${event.id}?t=${event.registration_token}`
-    QRCode.toDataURL(url, { width: 400, margin: 2 }).then(setQrUrl).catch(() => {})
+    if (!event || !origin) return
+    
+    // 1. QR Registro (Coaches)
+    if (event.registration_token) {
+      const urlReg = `${origin}/register/${event.id}?t=${event.registration_token}`
+      QRCode.toDataURL(urlReg, { width: 400, margin: 2 }).then(setQrUrl).catch(() => {})
+    }
+
+    // 2. QR Staff
+    const urlStaff = `${origin}/staff`
+    QRCode.toDataURL(urlStaff, { width: 400, margin: 2 }).then(setQrStaffUrl).catch(() => {})
+
+    // 3. QR Programa Coaches
+    const urlProg = `${origin}/coach/${event.id}`
+    QRCode.toDataURL(urlProg, { width: 400, margin: 2 }).then(setQrCoachProgUrl).catch(() => {})
   }, [event?.registration_token, event?.id, origin])
+
+  function copyToClipboard(text: string, label: string) {
+    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      navigator.clipboard.writeText(text).then(() => {
+        setCopiedLink(label)
+        setTimeout(() => setCopiedLink(null), 2000)
+      }).catch(() => {})
+    }
+  }
 
   if (checkingAuth || (!isGateUnlocked && typeof window !== 'undefined')) {
     return (
@@ -518,42 +542,171 @@ export default function SociosLayout({ children }: { children: React.ReactNode }
         )}
 
         {/* QR Modal */}
-        {showQr && event && qrUrl && (
-          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setShowQr(false)}>
-            <div className="bg-neutral-800 rounded-2xl border border-neutral-700 w-full max-w-sm p-6 pt-8 space-y-4 text-center relative shadow-2xl" onClick={e => e.stopPropagation()}>
+        {showQr && event && (
+          <div 
+            className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto" 
+            onClick={() => setShowQr(false)}
+          >
+            <div 
+              className="w-full max-w-5xl bg-neutral-900 border border-neutral-800 rounded-3xl p-6 sm:p-8 shadow-2xl flex flex-col gap-6 relative my-8 animate-scale-in" 
+              onClick={e => e.stopPropagation()}
+            >
               <button 
                 onClick={() => setShowQr(false)} 
-                className="absolute top-4 right-4 text-neutral-400 hover:text-white transition-colors"
+                className="absolute top-4 right-4 p-1.5 hover:bg-neutral-800 rounded-full transition-colors text-neutral-400 hover:text-white z-10"
                 aria-label="Cerrar modal"
               >
-                <X className="w-5 h-5" />
+                <X className="w-6 h-6" />
               </button>
-              
-              <h3 className="font-display text-lg tracking-wider uppercase text-white font-bold">QR de Registro</h3>
-              <div className="bg-white rounded-xl p-3 shadow-inner">
-                <img src={qrUrl} alt="QR Registro" className="w-full rounded-lg" />
+
+              <div className="flex flex-col gap-1.5 text-center sm:text-left pr-8">
+                <h3 className="font-display text-xl tracking-wider uppercase text-white font-bold">
+                  Códigos QR y Enlaces del Evento
+                </h3>
+                <p className="text-sm text-neutral-400">
+                  Visualiza, comparte y copia los accesos para las plataformas de *{event.name}*.
+                </p>
               </div>
-              <p className="text-[11px] text-neutral-300 text-center break-all font-mono bg-neutral-900/60 p-2 rounded-lg border border-neutral-700/50 select-all">
-                {origin}/register/{event.id}?t={event.registration_token}
-              </p>
-              <p className="text-xs text-neutral-400 text-center leading-relaxed">
-                Escanea este código QR para acceder al formulario de registro.
-              </p>
-              
-              <a
-                href={`https://wa.me/?text=${encodeURIComponent(
-                  `¡Hola! Te comparto el enlace de registro oficial de *Dance4Ever* para nuestro próximo evento *${event.name}*:\n\n🔗 ${origin}/register/${event.id}?t=${event.registration_token}\n\nPor favor, ingresa aquí para registrar a tus integrantes y coreografías. ¡Te esperamos!`
-                )}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full py-3 active:scale-[0.98] text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-all shadow-md text-sm uppercase tracking-wider font-display hover:brightness-90"
-                style={{ backgroundColor: WHATSAPP }}
-              >
-                <svg className="w-[18px] h-[18px] fill-current" viewBox="0 0 24 24">
-                  <path d="M19.073 9.57a8.556 8.556 0 0 0-14.168 7.378c0 1.637.427 3.237 1.238 4.646L5 24l2.483-1.02a8.536 8.536 0 0 0 4.09 1.03h.005a8.556 8.556 0 0 0 7.495-14.44zM12.01 22.08h-.005a6.837 6.837 0 0 1-3.488-.957l-.25-.148-2.6 1.07.288-2.524-.165-.262a6.852 6.852 0 0 1-1.049-3.69c0-3.785 3.08-6.866 6.872-6.866a6.856 6.856 0 0 1 6.868 6.872c0 3.786-3.08 6.866-6.868 6.866zm3.763-5.14c-.206-.103-1.22-.602-1.408-.671-.189-.07-.327-.103-.465.103-.138.207-.534.672-.655.81-.12.137-.241.155-.447.052a5.64 5.64 0 0 1-1.659-1.024 6.22 6.22 0 0 1-1.147-1.428c-.12-.207-.013-.319.09-.422.093-.092.207-.24.31-.362.103-.12.138-.206.207-.344.069-.138.034-.258-.017-.362-.052-.103-.465-1.12-.638-1.534-.168-.405-.333-.35-.465-.357-.12-.006-.258-.007-.396-.007-.138 0-.361.052-.55.258-.19.207-.723.707-.723 1.724 0 1.017.74 2 .843 2.138.103.137 1.455 2.222 3.525 3.117.492.213.877.34 1.177.435.495.158.946.135 1.302.082.397-.06 1.22-.498 1.393-.98.172-.483.172-.897.12-.98-.051-.085-.19-.138-.396-.241z"/>
-                </svg>
-                Compartir por WhatsApp
-              </a>
+
+              {/* Grid de 3 Columnas */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                
+                {/* 1. Registro Coaches */}
+                {qrUrl && (
+                  <div className="bg-neutral-950/50 border border-neutral-800/80 rounded-2xl p-5 flex flex-col gap-4">
+                    <div className="flex flex-col gap-1">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-pink-400">
+                        Inscripciones
+                      </span>
+                      <h4 className="font-display text-base font-bold text-white">
+                        Registro de Coaches
+                      </h4>
+                      <p className="text-xs text-neutral-400 min-h-[32px]">
+                        Formulario para registrar bailarines, categorías y coreografías.
+                      </p>
+                    </div>
+
+                    <div className="bg-white p-3 rounded-xl flex items-center justify-center max-w-[160px] mx-auto w-full aspect-square shadow-md">
+                      <img src={qrUrl} alt="QR Registro" className="w-full h-full object-contain" />
+                    </div>
+
+                    <div className="flex flex-col gap-2 mt-auto">
+                      <button
+                        onClick={() => copyToClipboard(`${origin}/register/${event.id}?t=${event.registration_token}`, 'reg')}
+                        className="w-full py-2.5 bg-neutral-800 hover:bg-neutral-700 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-2 transition-colors uppercase tracking-wider font-display"
+                      >
+                        {copiedLink === 'reg' ? '¡Copiado!' : 'Copiar Enlace'}
+                      </button>
+                      
+                      <button
+                        onClick={() => {
+                          window.open(
+                            `https://wa.me/?text=${encodeURIComponent(
+                              `¡Hola! Te comparto el enlace de registro oficial de *Dance4Ever* para nuestro próximo evento *${event.name}*:\n\n🔗 ${origin}/register/${event.id}?t=${event.registration_token}\n\nPor favor, ingresa aquí para registrar a tus integrantes y coreografías. ¡Te esperamos!`
+                            )}`,
+                            '_blank'
+                          )
+                        }}
+                        className="w-full py-2.5 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-2 transition-all shadow-md uppercase tracking-wider font-display hover:brightness-90"
+                        style={{ backgroundColor: WHATSAPP }}
+                      >
+                        WhatsApp
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* 2. Programa en Vivo Coaches */}
+                {qrCoachProgUrl && (
+                  <div className="bg-neutral-950/50 border border-neutral-800/80 rounded-2xl p-5 flex flex-col gap-4">
+                    <div className="flex flex-col gap-1">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-sky-400">
+                        Día del Evento
+                      </span>
+                      <h4 className="font-display text-base font-bold text-white">
+                        Programa Coaches
+                      </h4>
+                      <p className="text-xs text-neutral-400 min-h-[32px]">
+                        Vista en tiempo real del programa y orden de participación en escenario.
+                      </p>
+                    </div>
+
+                    <div className="bg-white p-3 rounded-xl flex items-center justify-center max-w-[160px] mx-auto w-full aspect-square shadow-md">
+                      <img src={qrCoachProgUrl} alt="QR Programa" className="w-full h-full object-contain" />
+                    </div>
+
+                    <div className="flex flex-col gap-2 mt-auto">
+                      <button
+                        onClick={() => copyToClipboard(`${origin}/coach/${event.id}`, 'prog')}
+                        className="w-full py-2.5 bg-neutral-800 hover:bg-neutral-700 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-2 transition-colors uppercase tracking-wider font-display"
+                      >
+                        {copiedLink === 'prog' ? '¡Copiado!' : 'Copiar Enlace'}
+                      </button>
+                      
+                      <button
+                        onClick={() => {
+                          window.open(
+                            `https://wa.me/?text=${encodeURIComponent(
+                              `¡Hola! Sigue el programa en vivo y orden de coreografías en el escenario de *Dance4Ever* aquí:\n\n🔗 ${origin}/coach/${event.id}`
+                            )}`,
+                            '_blank'
+                          )
+                        }}
+                        className="w-full py-2.5 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-2 transition-all shadow-md uppercase tracking-wider font-display hover:brightness-90"
+                        style={{ backgroundColor: WHATSAPP }}
+                      >
+                        WhatsApp
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* 3. Portal Staff */}
+                {qrStaffUrl && (
+                  <div className="bg-neutral-950/50 border border-neutral-800/80 rounded-2xl p-5 flex flex-col gap-4">
+                    <div className="flex flex-col gap-1">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-amber-400">
+                        Operaciones
+                      </span>
+                      <h4 className="font-display text-base font-bold text-white">
+                        Portal de Staff
+                      </h4>
+                      <p className="text-xs text-neutral-400 min-h-[32px]">
+                        Acceso operativo para logística, backstage y control de asistencia.
+                      </p>
+                    </div>
+
+                    <div className="bg-white p-3 rounded-xl flex items-center justify-center max-w-[160px] mx-auto w-full aspect-square shadow-md">
+                      <img src={qrStaffUrl} alt="QR Staff" className="w-full h-full object-contain" />
+                    </div>
+
+                    <div className="flex flex-col gap-2 mt-auto">
+                      <button
+                        onClick={() => copyToClipboard(`${origin}/staff`, 'staff')}
+                        className="w-full py-2.5 bg-neutral-800 hover:bg-neutral-700 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-2 transition-colors uppercase tracking-wider font-display"
+                      >
+                        {copiedLink === 'staff' ? '¡Copiado!' : 'Copiar Enlace'}
+                      </button>
+                      
+                      <button
+                        onClick={() => {
+                          window.open(
+                            `https://wa.me/?text=${encodeURIComponent(
+                              `Enlace de acceso al Portal del Staff de *Dance4Ever*:\n\n🔗 ${origin}/staff`
+                            )}`,
+                            '_blank'
+                          )
+                        }}
+                        className="w-full py-2.5 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-2 transition-all shadow-md uppercase tracking-wider font-display hover:brightness-90"
+                        style={{ backgroundColor: WHATSAPP }}
+                      >
+                        WhatsApp
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+              </div>
             </div>
           </div>
         )}
