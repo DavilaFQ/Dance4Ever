@@ -567,10 +567,6 @@ export default function SociosLayout({ children }: { children: React.ReactNode }
                 <img src={qrUrl} alt="QR Registro" className="w-full h-full object-contain" />
               </div>
               
-              <p className="text-xs text-white font-bold tracking-wide text-center break-all font-mono bg-neutral-950 p-2.5 rounded-lg border border-neutral-700 select-all w-full">
-                {origin}/register/{event.id}?t={event.registration_token}
-              </p>
-              
               <p className="text-xs text-neutral-400 text-center leading-relaxed">
                 Escanea este código QR para acceder al formulario de registro.
               </p>
