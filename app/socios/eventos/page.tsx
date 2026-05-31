@@ -81,6 +81,7 @@ export default function EventosPage() {
   const [enableOperations, setEnableOperations] = useState(true)
   const [enableRegistration, setEnableRegistration] = useState(true)
   const [loadingPortalConfig, setLoadingPortalConfig] = useState(false)
+  const [loadingFreeze, setLoadingFreeze] = useState(false)
 
 
   // Load snapshots from Supabase, migrate from localStorage on first load
@@ -211,7 +212,8 @@ export default function EventosPage() {
   }, [costPaquete, costRepeticion, costAsistente, costEntradaTemprana, costEntradaTardia, deadlineEntrada, deadlineRegistro, deadlineCambios, dancersPorAsistente, event, doSaveSettings])
 
   async function handleToggleOperations() {
-    if (!event) return
+    if (!event || loadingPortalConfig) return
+    setLoadingPortalConfig(true)
     const nextVal = !enableOperations
     setEnableOperations(nextVal)
     try {
@@ -222,11 +224,14 @@ export default function EventosPage() {
     } catch (err) {
       alert('Error al guardar: ' + (err as Error).message)
       setEnableOperations(!nextVal)
+    } finally {
+      setLoadingPortalConfig(false)
     }
   }
 
   async function handleToggleRegistration() {
-    if (!event) return
+    if (!event || loadingPortalConfig) return
+    setLoadingPortalConfig(true)
     const nextVal = !enableRegistration
     setEnableRegistration(nextVal)
     try {
@@ -237,6 +242,8 @@ export default function EventosPage() {
     } catch (err) {
       alert('Error al guardar: ' + (err as Error).message)
       setEnableRegistration(!nextVal)
+    } finally {
+      setLoadingPortalConfig(false)
     }
   }
 
@@ -286,11 +293,16 @@ export default function EventosPage() {
   }
 
   async function handleToggleFreeze() {
-    if (!event) return
-    const isLocked = !event.registration_token
-    const nextToken = isLocked ? generateToken() : null
-    await supabase.from('events').update({ registration_token: nextToken }).eq('id', event.id)
-    loadEvents()
+    if (!event || loadingFreeze) return
+    setLoadingFreeze(true)
+    try {
+      const isLocked = !event.registration_token
+      const nextToken = isLocked ? generateToken() : null
+      await supabase.from('events').update({ registration_token: nextToken }).eq('id', event.id)
+      await loadEvents()
+    } finally {
+      setLoadingFreeze(false)
+    }
   }
 
   function copyLink(e: Event) {
@@ -552,7 +564,10 @@ export default function EventosPage() {
                   </div>
                   <button
                     onClick={handleToggleFreeze}
+                    disabled={loadingFreeze}
                     className={`w-12 h-6 rounded-full relative transition-colors ${
+                      loadingFreeze ? 'opacity-50 cursor-not-allowed' : ''
+                    } ${
                       event.registration_token ? 'bg-green-500/30 border border-green-500' : 'bg-amber-500/30 border border-amber-500'
                     }`}
                   >

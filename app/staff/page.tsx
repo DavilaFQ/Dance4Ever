@@ -3,7 +3,7 @@ import { useEffect, useState, useCallback, useRef } from 'react'
 import Image from 'next/image'
 import { supabase, Participant, Event } from '@/lib/supabase'
 import { useFitCount } from '@/lib/useFitCount'
-import { QrCode, X, ListOrdered, Monitor, Settings, ChevronLeft, ChevronRight } from 'lucide-react'
+import { QrCode, X, ListOrdered, Monitor, Settings, ChevronLeft, ChevronRight, Star } from 'lucide-react'
 import QRCode from 'qrcode'
 import { participantMatches } from '@/lib/search'
 import SearchBar from '@/components/SearchBar'
@@ -26,6 +26,9 @@ export default function StaffPage() {
   const [portalConfig, setPortalConfig] = useState<PortalConfig | null>(null)
   const [mode, setMode] = useState<'simple' | 'manager'>('simple')
   const [onDeckInput, setOnDeckInput] = useState(3)
+  const [isAdvancing, setIsAdvancing] = useState(false)
+  const [isTogglingAwards, setIsTogglingAwards] = useState(false)
+  const [confirmAwards, setConfirmAwards] = useState(false)
   const pendingUpdatesRef = useRef<Map<number, { present: boolean, time: number }>>(new Map())
 
   useEffect(() => {
@@ -174,21 +177,41 @@ export default function StaffPage() {
     await supabase.from('participants').update({ present: next }).eq('id', p.id)
   }
 
+  async function toggleAwards() {
+    if (!event || isTogglingAwards) return
+    setIsTogglingAwards(true)
+    
+    const next = !event.awards_mode
+    setEvent(prev => prev ? { ...prev, awards_mode: next } : null)
+    
+    await supabase.from('events').update({ awards_mode: next }).eq('id', event.id)
+    
+    setTimeout(() => {
+      setIsTogglingAwards(false)
+    }, 1000) // 1-second delay block
+  }
+
   async function advance(delta: number) {
-    if (!event) return
+    if (!event || isAdvancing) return
+    setIsAdvancing(true)
+    
     const total = participants.length || 999
     const next = Math.max(0, Math.min(total + 1, event.current_position + delta))
     const shouldSetStart = next > 0 && !event.started_at
-    setEvent({
-      ...event,
-      current_position: next,
-    })
+    
+    setEvent(prev => prev ? { ...prev, current_position: next } : null)
+    
     await supabase.from('events').update({
       current_position: next,
     }).eq('id', event.id)
+    
     if (shouldSetStart) {
       await supabase.rpc('set_started_at_now', { p_id: event.id })
     }
+    
+    setTimeout(() => {
+      setIsAdvancing(false)
+    }, 600) // 600ms debounce/lock
   }
 
   const current = participants.find(p => p.position === event?.current_position)
@@ -218,6 +241,17 @@ export default function StaffPage() {
         </div>
         {event ? (
           <div className="flex items-center gap-4 shrink-0">
+            {event.current_position > 0 && mode === 'manager' && (
+              <button
+                onClick={() => { if (event.awards_mode) toggleAwards(); else setConfirmAwards(true) }}
+                disabled={isTogglingAwards}
+                className="mr-2 active:opacity-70 disabled:opacity-50 text-white"
+                aria-label="Premiación"
+                title={event.awards_mode ? "Finalizar premiación" : "Iniciar premiación"}
+              >
+                <Star className={`w-6 h-6 ${event.awards_mode ? 'fill-fuchsia-500 text-fuchsia-500' : 'text-white'}`} />
+              </button>
+            )}
             <button onClick={() => setShowProgram(true)} className="text-white active:text-fuchsia-500" title="Ver programa completo">
               <ListOrdered className="w-6 h-6" />
             </button>
@@ -320,11 +354,19 @@ export default function StaffPage() {
           {mode === 'manager' && !event.awards_mode && (
             <div className="flex shrink-0">
               {event.current_position > 0 && (
-                <button onClick={() => advance(-1)} className="bg-red-500 active:bg-red-600 text-white px-6 py-3 font-display text-2xl flex items-center justify-center gap-2">
+                <button 
+                  onClick={() => advance(-1)} 
+                  disabled={isAdvancing}
+                  className="bg-red-500 active:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed text-white px-6 py-3 font-display text-2xl flex items-center justify-center gap-2"
+                >
                   <ChevronLeft className="w-7 h-7" /> ATRÁS
                 </button>
               )}
-              <button onClick={() => advance(1)} className="relative flex-1 bg-green-500 active:bg-green-600 text-black py-3 font-display text-2xl flex items-center justify-center">
+              <button 
+                onClick={() => advance(1)} 
+                disabled={isAdvancing}
+                className="relative flex-1 bg-green-500 active:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed text-black py-3 font-display text-2xl flex items-center justify-center"
+              >
                 {event.current_position === 0 ? 'COMENZAR' : 'SIGUIENTE'}
                 <ChevronRight className="w-7 h-7 absolute right-3 top-1/2 -translate-y-1/2" />
               </button>
@@ -441,6 +483,30 @@ export default function StaffPage() {
           >
             Aceptar
           </button>
+        </Modal>
+      )}
+
+      {/* Confirmación iniciar premiación */}
+      {confirmAwards && event && (
+        <Modal onClose={() => setConfirmAwards(false)}>
+          <h2 className="font-display text-2xl tracking-widest text-black text-center font-bold">¿INICIAR PREMIACIÓN?</h2>
+          <p className="text-sm text-gray-500 text-center leading-relaxed mt-2">
+            Esto detendrá la visualización normal y mostrará la pantalla de premiación para coaches, MC y público.
+          </p>
+          <div className="grid grid-cols-2 gap-2 mt-4">
+            <button
+              onClick={() => setConfirmAwards(false)}
+              className="bg-gray-200 hover:bg-gray-300 text-black px-4 py-2.5 rounded-lg font-bold text-sm"
+            >
+              NO
+            </button>
+            <button
+              onClick={() => { toggleAwards(); setConfirmAwards(false) }}
+              className="bg-fuchsia-600 hover:bg-fuchsia-500 text-white px-4 py-2.5 rounded-lg font-bold text-sm"
+            >
+              SÍ
+            </button>
+          </div>
         </Modal>
       )}
 

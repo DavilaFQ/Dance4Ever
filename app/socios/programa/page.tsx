@@ -336,7 +336,7 @@ export default function ProgramaPage() {
   }
 
   async function handlePublish() {
-    if (!event || items.length === 0) return
+    if (publishing || !event || items.length === 0) return
 
     const activeConflicts = conflicts
     let warn = `Publicar ${items.length} coreografías en el orden actual? Esto reemplazará el programa oficial.`
