@@ -3,7 +3,7 @@ import { useEffect, useState, useCallback } from 'react'
 import Image from 'next/image'
 import { supabase, Participant, Event } from '@/lib/supabase'
 import { useFitCount } from '@/lib/useFitCount'
-import { QrCode, X, ListOrdered, Monitor } from 'lucide-react'
+import { QrCode, X, ListOrdered, Monitor, Settings, ChevronLeft, ChevronRight } from 'lucide-react'
 import QRCode from 'qrcode'
 import { participantMatches } from '@/lib/search'
 import SearchBar from '@/components/SearchBar'
@@ -19,10 +19,13 @@ export default function StaffPage() {
   const [qrUrl, setQrUrl] = useState('')
   const [mcQrUrl, setMcQrUrl] = useState('')
   const [showQr, setShowQr] = useState(false)
+  const [showSetup, setShowSetup] = useState(false)
   const [showProgram, setShowProgram] = useState(false)
   const [activeAnnouncement, setActiveAnnouncement] = useState('')
   const [programSearch, setProgramSearch] = useState('')
   const [portalConfig, setPortalConfig] = useState<PortalConfig | null>(null)
+  const [mode, setMode] = useState<'simple' | 'manager'>('simple')
+  const [onDeckInput, setOnDeckInput] = useState(3)
 
   useEffect(() => {
     if (!event?.id) return
@@ -35,6 +38,17 @@ export default function StaffPage() {
   useEffect(() => { if (!showProgram) setProgramSearch('') }, [showProgram])
 
   useEffect(() => { loadLatestEvent() }, [])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const saved = localStorage.getItem('d4e:staff-mode')
+    if (saved === 'manager' || saved === 'simple') setMode(saved)
+  }, [])
+
+  function changeMode(next: 'simple' | 'manager') {
+    setMode(next)
+    if (typeof window !== 'undefined') localStorage.setItem('d4e:staff-mode', next)
+  }
 
   const loadParticipants = useCallback(async (eventId: string) => {
     const { data } = await supabase.from('participants').select('*').eq('event_id', eventId).order('position')
@@ -101,6 +115,7 @@ export default function StaffPage() {
     const { data } = await supabase.from('events').select('*').order('created_at', { ascending: false }).limit(1).single()
     if (data) {
       setEvent(data)
+      setOnDeckInput(data.on_deck_count)
       loadParticipants(data.id)
       generateQr(data.id)
     }
@@ -115,6 +130,35 @@ export default function StaffPage() {
     ])
     setQrUrl(coachQr)
     setMcQrUrl(mcQr)
+  }
+
+  async function updateOnDeck(val: number) {
+    if (!event) return
+    await supabase.from('events').update({ on_deck_count: val }).eq('id', event.id)
+    setEvent({ ...event, on_deck_count: val })
+  }
+
+  async function togglePresent(p: Participant) {
+    const next = !p.present
+    setParticipants(prev => prev.map(x => x.id === p.id ? { ...x, present: next } : x))
+    await supabase.from('participants').update({ present: next }).eq('id', p.id)
+  }
+
+  async function advance(delta: number) {
+    if (!event) return
+    const total = participants.length || 999
+    const next = Math.max(0, Math.min(total + 1, event.current_position + delta))
+    const shouldSetStart = next > 0 && !event.started_at
+    setEvent({
+      ...event,
+      current_position: next,
+    })
+    await supabase.from('events').update({
+      current_position: next,
+    }).eq('id', event.id)
+    if (shouldSetStart) {
+      await supabase.rpc('set_started_at_now', { p_id: event.id })
+    }
   }
 
   const current = participants.find(p => p.position === event?.current_position)
@@ -149,6 +193,9 @@ export default function StaffPage() {
             </button>
             <button onClick={() => setShowQr(true)} className="text-white active:text-fuchsia-500" title="Compartir códigos QR">
               <QrCode className="w-6 h-6" />
+            </button>
+            <button onClick={() => setShowSetup(true)} className="text-white active:text-fuchsia-500" title="Ajustes de operación">
+              <Settings className="w-6 h-6" />
             </button>
           </div>
         ) : <div className="w-px" />}
@@ -218,7 +265,7 @@ export default function StaffPage() {
 
                 <div className="space-y-1 shrink-0">
                   {onDeck.map(p => (
-                    <Pill key={p.id} p={p} variant={p.present ? 'green' : 'red'} />
+                    <Pill key={p.id} p={p} variant={p.present ? 'green' : 'red'} onClick={() => togglePresent(p)} />
                   ))}
                   {onDeck.length === 0 && (
                     <p className="text-xs text-gray-500 italic text-center py-1">Sin participantes en espera</p>
@@ -237,6 +284,21 @@ export default function StaffPage() {
                 </div>
               </div>
             </>
+          )}
+
+          {/* Buttons (solo en modo MANAGER) */}
+          {mode === 'manager' && !event.awards_mode && (
+            <div className="flex shrink-0">
+              {event.current_position > 0 && (
+                <button onClick={() => advance(-1)} className="bg-red-500 active:bg-red-600 text-white px-6 py-3 font-display text-2xl flex items-center justify-center gap-2">
+                  <ChevronLeft className="w-7 h-7" /> ATRÁS
+                </button>
+              )}
+              <button onClick={() => advance(1)} className="relative flex-1 bg-green-500 active:bg-green-600 text-black py-3 font-display text-2xl flex items-center justify-center">
+                {event.current_position === 0 ? 'COMENZAR' : 'SIGUIENTE'}
+                <ChevronRight className="w-7 h-7 absolute right-3 top-1/2 -translate-y-1/2" />
+              </button>
+            </div>
           )}
         </>
       ) : (
@@ -277,7 +339,82 @@ export default function StaffPage() {
         </Modal>
       )}
 
-      {/* Programa Completo modal */}
+      {/* Simplified Settings Modal */}
+      {showSetup && event && (
+        <Modal onClose={() => setShowSetup(false)}>
+          <h2 className="font-display text-2xl tracking-widest text-black uppercase font-bold text-center border-b pb-2">
+            Ajustes de Staff
+          </h2>
+          
+          <div className="space-y-4 pt-2 text-black">
+            {/* Mode selection */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">
+                Modo de Operación
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  onClick={() => changeMode('simple')}
+                  className={`py-2 px-3 rounded-lg font-bold text-sm border transition-all ${
+                    mode === 'simple'
+                      ? 'bg-fuchsia-600 border-fuchsia-600 text-white shadow-md'
+                      : 'bg-gray-100 border-gray-200 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  Buscador
+                </button>
+                <button
+                  onClick={() => changeMode('manager')}
+                  className={`py-2 px-3 rounded-lg font-bold text-sm border transition-all ${
+                    mode === 'manager'
+                      ? 'bg-fuchsia-600 border-fuchsia-600 text-white shadow-md'
+                      : 'bg-gray-100 border-gray-200 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  Manager
+                </button>
+              </div>
+              <p className="text-[11px] text-gray-500 leading-snug">
+                El modo <b>Manager</b> habilita los botones inferiores para avanzar o retroceder el programa en vivo.
+              </p>
+            </div>
+
+            {/* Waiting zone count */}
+            <div className="space-y-1.5 pt-2 border-t border-gray-100">
+              <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">
+                Cantidad en Espera (Waiting Zone)
+              </label>
+              <div className="flex gap-2">
+                <select
+                  value={onDeckInput}
+                  onChange={(e) => {
+                    const val = Number(e.target.value)
+                    setOnDeckInput(val)
+                    updateOnDeck(val)
+                  }}
+                  className="border border-gray-300 rounded-lg px-3 py-2 flex-1 text-black font-semibold bg-white"
+                >
+                  {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(n => (
+                    <option key={n} value={n}>{n} coreografía{n !== 1 ? 's' : ''}</option>
+                  ))}
+                </select>
+              </div>
+              <p className="text-[11px] text-gray-500 leading-snug">
+                Define cuántos turnos siguientes aparecen activos en la lista de espera para registrar asistencia.
+              </p>
+            </div>
+          </div>
+          
+          <button
+            onClick={() => setShowSetup(false)}
+            className="w-full mt-4 py-2.5 bg-black hover:bg-neutral-800 text-white rounded-xl font-bold text-sm uppercase tracking-wider transition-colors"
+          >
+            Aceptar
+          </button>
+        </Modal>
+      )}
+
+      {/* Complete Program Modal */}
       {showProgram && event && (
         <div className="fixed inset-0 bg-neutral-900 z-50 flex flex-col">
           <div className="bg-black px-4 py-3 flex items-center justify-between shrink-0">
