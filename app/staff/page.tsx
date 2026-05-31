@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import Image from 'next/image'
 import { supabase, Participant, Event } from '@/lib/supabase'
 import { useFitCount } from '@/lib/useFitCount'
@@ -26,6 +26,7 @@ export default function StaffPage() {
   const [portalConfig, setPortalConfig] = useState<PortalConfig | null>(null)
   const [mode, setMode] = useState<'simple' | 'manager'>('simple')
   const [onDeckInput, setOnDeckInput] = useState(3)
+  const pendingUpdatesRef = useRef<Map<number, { present: boolean, time: number }>>(new Map())
 
   useEffect(() => {
     if (!event?.id) return
@@ -62,7 +63,29 @@ export default function StaffPage() {
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'events', filter: `id=eq.${event.id}` },
         (payload) => setEvent(payload.new as Event))
       .on('postgres_changes', { event: '*', schema: 'public', table: 'participants', filter: `event_id=eq.${event.id}` },
-        () => loadParticipants(event.id))
+        (payload) => {
+          if (payload.eventType === 'UPDATE') {
+            const updated = payload.new as Participant
+            const pending = pendingUpdatesRef.current.get(updated.id)
+            
+            // If we have a very recent local update (less than 2.5 seconds ago)
+            if (pending && Date.now() - pending.time < 2500) {
+              // Only update if the database state has caught up to our latest optimistic state
+              if (updated.present !== pending.present) {
+                // Ignore this update because it's a stale realtime event from a previous click
+                return
+              } else {
+                // Database has caught up, we can clear the pending reference
+                pendingUpdatesRef.current.delete(updated.id)
+              }
+            }
+            
+            setParticipants(prev => prev.map(x => x.id === updated.id ? { ...x, present: updated.present } : x))
+          } else {
+            // For INSERT or DELETE, we reload to be 100% safe
+            loadParticipants(event.id)
+          }
+        })
       .subscribe()
     return () => { supabase.removeChannel(channel) }
   }, [event?.id, loadParticipants])
@@ -140,7 +163,14 @@ export default function StaffPage() {
 
   async function togglePresent(p: Participant) {
     const next = !p.present
+    
+    // 1. Optimistic Update (instant UI feedback)
     setParticipants(prev => prev.map(x => x.id === p.id ? { ...x, present: next } : x))
+    
+    // 2. Lock it locally with a timestamp
+    pendingUpdatesRef.current.set(p.id, { present: next, time: Date.now() })
+    
+    // 3. Dispatch to Supabase
     await supabase.from('participants').update({ present: next }).eq('id', p.id)
   }
 
