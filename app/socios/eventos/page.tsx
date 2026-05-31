@@ -167,21 +167,26 @@ export default function EventosPage() {
 
   // Reusable save function (used by both auto-save and explicit save)
   const doSaveSettings = useCallback(async () => {
-    if (!event) return
-    const { error } = await supabase.from('events').update({
-      default_cost_paquete: costPaquete,
-      default_cost_repeticion: costRepeticion,
-      cost_asistente: costAsistente,
-      cost_entrada_temprana: costEntradaTemprana,
-      cost_entrada_tardia: costEntradaTardia,
-      deadline_precio_entrada: deadlineEntrada ? deadlineEntrada : null,
-      deadline_registro: deadlineRegistro ? new Date(deadlineRegistro).toISOString() : null,
-      deadline_cambios: deadlineCambios ? new Date(deadlineCambios).toISOString() : null,
-      dancers_por_asistente_gratis: dancersPorAsistente,
-    }).eq('id', event.id)
-    if (!error) loadEvents()
-    return error
-  }, [event, costPaquete, costRepeticion, costAsistente, costEntradaTemprana, costEntradaTardia, deadlineEntrada, deadlineRegistro, deadlineCambios, dancersPorAsistente, loadEvents])
+    if (!event || savingSettings) return
+    setSavingSettings(true)
+    try {
+      const { error } = await supabase.from('events').update({
+        default_cost_paquete: costPaquete,
+        default_cost_repeticion: costRepeticion,
+        cost_asistente: costAsistente,
+        cost_entrada_temprana: costEntradaTemprana,
+        cost_entrada_tardia: costEntradaTardia,
+        deadline_precio_entrada: deadlineEntrada ? deadlineEntrada : null,
+        deadline_registro: deadlineRegistro ? new Date(deadlineRegistro).toISOString() : null,
+        deadline_cambios: deadlineCambios ? new Date(deadlineCambios).toISOString() : null,
+        dancers_por_asistente_gratis: dancersPorAsistente,
+      }).eq('id', event.id)
+      if (!error) loadEvents()
+      return error
+    } finally {
+      setSavingSettings(false)
+    }
+  }, [event, costPaquete, costRepeticion, costAsistente, costEntradaTemprana, costEntradaTardia, deadlineEntrada, deadlineRegistro, deadlineCambios, dancersPorAsistente, loadEvents, savingSettings])
 
   // Auto-save settings on any field change (debounced 1.2s)
   useEffect(() => {

@@ -168,6 +168,7 @@ export default function RegistrationDetailPage({ registrationIdProp, onBack }: {
   const [editCostPaq, setEditCostPaq] = useState(0)
   const [editCostRep, setEditCostRep] = useState(0)
   const [editTickets, setEditTickets] = useState(0)
+  const [isSaving, setIsSaving] = useState(false)
 
   const [editingDancer, setEditingDancer] = useState<RegistrationDancer | null>(null)
   const [dancerName, setDancerName] = useState('')
@@ -976,38 +977,45 @@ export default function RegistrationDetailPage({ registrationIdProp, onBack }: {
               </button>
               <button 
                 onClick={async () => {
-                  const old = {
-                    academy: reg.academy, team_name: reg.team_name, coach_name: reg.coach_name,
-                    coach_phone: reg.coach_phone, coach_email: reg.coach_email,
-                    cost_paquete: reg.cost_paquete, cost_repeticion: reg.cost_repeticion, tickets_count: reg.tickets_count,
-                  }
-                  const { error } = await supabase.from('coach_registrations').update({
-                    academy: editAcademy, team_name: editTeam, coach_name: editCoachName,
-                    coach_phone: editCoachPhone, coach_email: editCoachEmail || null,
-                    cost_paquete: editCostPaq, cost_repeticion: editCostRep, tickets_count: editTickets,
-                  }).eq('id', reg.id)
-                  if (error) alert('Error: ' + error.message)
-                  else {
-                    await logEdit(reg.id, {
-                      entity_type: 'registration',
-                      changes: Object.fromEntries(Object.entries({
-                        academy: { old: old.academy, new: editAcademy },
-                        team_name: { old: old.team_name, new: editTeam },
-                        coach_name: { old: old.coach_name, new: editCoachName },
-                        coach_phone: { old: old.coach_phone, new: editCoachPhone },
-                        coach_email: { old: old.coach_email, new: editCoachEmail },
-                        cost_paquete: { old: old.cost_paquete, new: editCostPaq },
-                        cost_repeticion: { old: old.cost_repeticion, new: editCostRep },
-                        tickets_count: { old: old.tickets_count, new: editTickets },
-                      }).filter(([, v]) => (v as { old: unknown; new: unknown }).old !== (v as { old: unknown; new: unknown }).new)),
-                    })
-                    setEditingCoach(false); loadData()
+                  if (isSaving) return
+                  setIsSaving(true)
+                  try {
+                    const old = {
+                      academy: reg.academy, team_name: reg.team_name, coach_name: reg.coach_name,
+                      coach_phone: reg.coach_phone, coach_email: reg.coach_email,
+                      cost_paquete: reg.cost_paquete, cost_repeticion: reg.cost_repeticion, tickets_count: reg.tickets_count,
+                    }
+                    const { error } = await supabase.from('coach_registrations').update({
+                      academy: editAcademy, team_name: editTeam, coach_name: editCoachName,
+                      coach_phone: editCoachPhone, coach_email: editCoachEmail || null,
+                      cost_paquete: editCostPaq, cost_repeticion: editCostRep, tickets_count: editTickets,
+                    }).eq('id', reg.id)
+                    if (error) alert('Error: ' + error.message)
+                    else {
+                      await logEdit(reg.id, {
+                        entity_type: 'registration',
+                        changes: Object.fromEntries(Object.entries({
+                          academy: { old: old.academy, new: editAcademy },
+                          team_name: { old: old.team_name, new: editTeam },
+                          coach_name: { old: old.coach_name, new: editCoachName },
+                          coach_phone: { old: old.coach_phone, new: editCoachPhone },
+                          coach_email: { old: old.coach_email, new: editCoachEmail },
+                          cost_paquete: { old: old.cost_paquete, new: editCostPaq },
+                          cost_repeticion: { old: old.cost_repeticion, new: editCostRep },
+                          tickets_count: { old: old.tickets_count, new: editTickets },
+                        }).filter(([, v]) => (v as { old: unknown; new: unknown }).old !== (v as { old: unknown; new: unknown }).new)),
+                      })
+                      setEditingCoach(false); loadData()
+                    }
+                  } finally {
+                    setIsSaving(false)
                   }
                 }} 
-                className="px-4 py-2.5 font-bold text-xs rounded-xl active:scale-95 transition-all"
-                style={{ color: '#ffffff', backgroundColor: STATUS.primary }}
+                disabled={isSaving}
+                className="px-4 py-2.5 font-bold text-xs rounded-xl active:scale-95 transition-all disabled:opacity-50"
+                style={{ color: '#ffffff', backgroundColor: isSaving ? '#555555' : STATUS.primary }}
               >
-                GUARDAR CAMBIOS
+                {isSaving ? 'GUARDANDO...' : 'GUARDAR CAMBIOS'}
               </button>
             </div>
           </div>
