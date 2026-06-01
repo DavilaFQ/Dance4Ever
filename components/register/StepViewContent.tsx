@@ -1044,15 +1044,17 @@ function StepViewContent(props: {
 
     case 'carta':
       return (
-        <CartaResponsiva
-          state={state}
-          event={event}
-          signature={signature}
-          setSignature={setSignature}
-          confirm={confirm}
-          saving={saving}
-          goToStep={goToStep}
-        />
+        <div className="overflow-visible max-h-none md:overflow-y-auto md:max-h-[82vh] px-0 sm:px-1 w-full" style={{ animation: 'fadeIn 0.3s ease-out' }}>
+          <CartaResponsiva
+            state={state}
+            event={event}
+            signature={signature}
+            setSignature={setSignature}
+            confirm={confirm}
+            saving={saving}
+            goToStep={goToStep}
+          />
+        </div>
       )
   }
 }
