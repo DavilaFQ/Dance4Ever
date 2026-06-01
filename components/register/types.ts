@@ -50,7 +50,7 @@ export type Step =
   | { kind: 'confirmed' }
   | { kind: 'selector' }
 
-export const STYLES = ['Jazz', 'Poms', 'Acro Jazz', 'Hip Hop', 'Show', 'Ballet', 'Contempo']
+export const STYLES = ['Jazz', 'Poms', 'Acro Jazz', 'Hip Hop', 'Show', 'Ballet', 'Contempo', 'Lírico']
 
 export const CATEGORY_COLORS: Record<AgeCategory, { bg: string; border: string; text: string }> = {
   tiny: { bg: 'bg-rose-100', border: 'border-rose-300 focus-within:border-rose-500', text: 'text-rose-700' },
