@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect, useRef, useCallback } from 'react'
 import Image from 'next/image'
-import { ArrowLeft, ArrowRight, Pencil, MessageCircle, Info, X, ChevronDown, Check, Sparkles, Users, Clipboard, HeartHandshake, Ticket, Download, Eye, Calendar, DollarSign, Clock } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Pencil, MessageCircle, Info, X, ChevronDown, Check, Sparkles, Users, Clipboard, HeartHandshake, Ticket, Download, Eye, Calendar, DollarSign, Clock, Plus } from 'lucide-react'
 import { supabase, type Event, type AgeCategory, AGE_CATEGORY_ORDER, AGE_CATEGORY_LABELS, AGE_CATEGORY_HINTS } from '@/lib/supabase'
 import { formatDate, toDate } from '@/lib/date'
 import { type State, type Step, type Coach, STYLES, CATEGORY_COLORS, DEFAULT_DANCER_COLOR, MODALITY_OPTIONS } from '@/components/register/types'
@@ -887,6 +887,18 @@ function FullSummary({ state, editMode, confirmed, pending, isEditSave, confirm,
             className="w-full h-14 bg-gradient-to-r from-emerald-600 via-green-600 to-teal-600 hover:brightness-105 active:scale-[0.98] text-white font-display text-lg sm:text-xl tracking-wider rounded-2xl transition-all shadow-lg hover:shadow-green-500/15 duration-150 font-black flex items-center justify-center gap-3 cursor-pointer"
           >
             <MessageCircle className="w-6 h-6 text-white shrink-0" /> ENVIAR MENSAJE POR WHATSAPP
+          </button>
+
+          <button
+            onClick={() => {
+              if (goToStep) {
+                goToStep({ kind: 'selector' })
+                try { localStorage.removeItem(`d4e:register-reg-id:${event?.id || ''}`) } catch {}
+              }
+            }}
+            className="w-full h-14 bg-gradient-to-r from-blue-700 via-blue-600 to-cyan-600 hover:brightness-105 active:scale-[0.98] text-white font-display text-lg sm:text-xl tracking-wider rounded-2xl transition-all shadow-lg hover:shadow-blue-500/15 duration-150 font-black flex items-center justify-center gap-3 cursor-pointer"
+          >
+            <Plus className="w-5 h-5 text-white shrink-0" /> HACER OTRO REGISTRO
           </button>
         </div>
 

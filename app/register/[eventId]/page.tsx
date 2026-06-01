@@ -544,14 +544,8 @@ export default function RegisterPage({ params }: Props) {
                 console.error('Error recovering registration from DB:', e)
               }
             } else {
-              // If there are saved registration IDs in localStorage but no active single registration ID is selected, show the selector!
-              const storedIdsStr = typeof window !== 'undefined' ? localStorage.getItem(`d4e:register-reg-ids:${eventId}`) : null
-              let hasSavedRegs = false
-              try {
-                const parsed = storedIdsStr ? JSON.parse(storedIdsStr) : []
-                hasSavedRegs = parsed && parsed.length > 0
-              } catch {}
-
+              // No automatic redirect to selector on welcome screen
+              const hasSavedRegs = false
               if (hasSavedRegs) {
                 setStep({ kind: 'selector' })
               } else {
@@ -1415,24 +1409,7 @@ export default function RegisterPage({ params }: Props) {
           paddingBottom: '0px'
         }}
       >
-        {/* MULTI-REGISTRATION STICKY HEADER */}
-        {regIds.length > 0 && step.kind !== 'selector' && (
-          <div className="shrink-0 mx-4 mt-4 lg:mx-0 bg-purple-900/90 text-white text-xs sm:text-sm font-semibold py-2.5 px-4 flex justify-between items-center gap-4 rounded-2xl border border-purple-500/30 shadow-md">
-            <div className="flex items-center gap-2 min-w-0">
-              <span className="w-2 h-2 rounded-full bg-green-400 shrink-0 animate-pulse"></span>
-              <span className="truncate">Inscripción activa: <strong className="text-yellow-300">{state.academy || 'Borrador'}</strong></span>
-            </div>
-            <button 
-              onClick={() => {
-                setStep({ kind: 'selector' })
-                try { localStorage.removeItem(`d4e:register-reg-id:${eventId}`) } catch {}
-              }}
-              className="shrink-0 bg-white/10 hover:bg-white/20 active:scale-95 text-white font-bold py-1 px-3 rounded-xl transition-all border border-white/20 text-[10px] sm:text-xs cursor-pointer"
-            >
-              Ver mis registros ({regIds.length})
-            </button>
-          </div>
-        )}
+
 
         {/* DESKTOP HEADER */}
         {!isFirstStep && (
