@@ -5,11 +5,13 @@ import { supabase, CoachRegistration, RegistrationDancer, RegistrationAct, AGE_C
 import { useEventContext } from '@/app/socios/layout'
 import { formatMoney, formatRelative, safeFormatDate, isEditedAfterConfirm } from '@/lib/format'
 import { costoRegistro } from '@/lib/cost'
-import { Building2, Users, Activity, AlertTriangle, TrendingUp, DollarSign } from 'lucide-react'
+import { Building2, Users, Activity, AlertTriangle, TrendingUp, DollarSign, Copy, Check, MessageCircle } from 'lucide-react'
 import { CHART } from '../colors'
 
 export default function ResumenPage() {
-  const { event, lastSync } = useEventContext()
+  const { event, lastSync, qrUrl } = useEventContext()
+  const [copied, setCopied] = useState(false)
+  const [linkExpanded, setLinkExpanded] = useState(false)
 
   const [registrations, setRegistrations] = useState<CoachRegistration[]>([])
   const [dancers, setDancers] = useState<RegistrationDancer[]>([])
@@ -172,10 +174,90 @@ export default function ResumenPage() {
   return (
     <div className="p-4 pb-6 space-y-5">
       <div className="bg-neutral-800/50 rounded-none border border-neutral-700/50 p-4 text-center">
-        <h1 className="font-display text-xl tracking-wider uppercase">
+        <h1 className="font-display text-3xl tracking-wider uppercase font-bold text-neutral-800">
           {event ? event.name : 'Sin evento'}
         </h1>
-        {event && <p className="text-xs text-neutral-400 mt-0.5">{safeFormatDate(event.date, { day: '2-digit', month: 'long', year: 'numeric' })}</p>}
+        {event && <p className="text-sm font-semibold tracking-widest text-neutral-500 uppercase mt-1.5">{safeFormatDate(event.date, { day: '2-digit', month: 'long', year: 'numeric' }).replace(/\s*de\s*/gi, '-').replace(/\s+/g, '-')}</p>}
+      </div>
+
+      {/* COLLAPSIBLE REGISTRATION LINK BAR */}
+      <div className="w-full">
+        {/* Collapsible Bar Header Button */}
+        <button
+          onClick={() => setLinkExpanded(!linkExpanded)}
+          className="w-full py-3.5 px-4 bg-fuchsia-500/10 hover:bg-fuchsia-500/15 border border-fuchsia-500/20 active:scale-98 transition-all flex items-center justify-center font-display text-base tracking-widest font-bold text-fuchsia-600 rounded-none relative"
+        >
+          {/* Absolute Positioned Arrow on the left */}
+          <span className="absolute left-4 text-xs transition-transform duration-300 transform select-none">
+            {linkExpanded ? '▲' : '▼'}
+          </span>
+          {/* Pulsing/Blinking Text Centered */}
+          <span className="animate-pulse">
+            LINK DEL REGISTRO
+          </span>
+          {/* Absolute Positioned Arrow on the right */}
+          <span className="absolute right-4 text-xs transition-transform duration-300 transform select-none">
+            {linkExpanded ? '▲' : '▼'}
+          </span>
+        </button>
+
+        {/* Collapsible Content */}
+        {linkExpanded && (
+          <div className="py-3 px-0 bg-transparent border-none space-y-2 flex flex-col items-center">
+            
+            {/* 1. QR Code */}
+            {qrUrl ? (
+              <div className="bg-white p-2.5 border border-neutral-200 shadow-sm flex items-center justify-center max-w-[160px] aspect-square rounded-none mb-1">
+                <img src={qrUrl} alt="QR Registro" className="w-full h-full object-contain" />
+              </div>
+            ) : (
+              <div className="text-xs text-neutral-500 font-bold uppercase tracking-wider animate-pulse mb-1">
+                Generando QR...
+              </div>
+            )}
+
+            {/* 2. Copy Link Button */}
+            <button
+              onClick={() => {
+                if (!event?.registration_token) return
+                const origin = typeof window !== 'undefined' ? window.location.origin : ''
+                const url = `${origin}/register/${event.id}?t=${event.registration_token}`
+                navigator.clipboard.writeText(url).then(() => {
+                  setCopied(true)
+                  setTimeout(() => setCopied(false), 2000)
+                })
+              }}
+              disabled={!event?.registration_token}
+              className={`w-full py-4 px-4 font-bold rounded-none flex items-center justify-center gap-3 transition-all active:scale-95 text-lg uppercase tracking-wider font-display border shrink-0 ${
+                copied
+                  ? 'bg-emerald-500 border-emerald-500 text-white'
+                  : 'bg-neutral-800 border-neutral-700 hover:bg-neutral-700 text-white'
+              }`}
+            >
+              {copied ? 'Copiado con exito' : 'Copiar Enlace'}
+            </button>
+
+            {/* 3. WhatsApp Button */}
+            <button
+              onClick={() => {
+                if (!event?.registration_token) return
+                const origin = typeof window !== 'undefined' ? window.location.origin : ''
+                window.open(
+                  `https://wa.me/?text=${encodeURIComponent(
+                    `¡Hola! Te comparto el enlace de registro oficial de *Dance4Ever* para nuestro próximo evento *${event.name}*:\n\n🔗 ${origin}/register/${event.id}?t=${event.registration_token}\n\nPor favor, ingresa aquí para registrar a tus integrantes y coreografías. ¡Te esperamos!`
+                  )}`,
+                  '_blank'
+                )
+              }}
+              disabled={!event?.registration_token}
+              className="w-full py-4 px-4 bg-[#25D366] hover:bg-[#20BA5A] text-white font-bold rounded-none flex items-center justify-center gap-3 transition-all shadow-md active:scale-95 text-lg uppercase tracking-wider font-display shrink-0"
+            >
+              <MessageCircle className="w-6 h-6 text-white shrink-0" />
+              Compartir por WhatsApp
+            </button>
+            
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-2 gap-2.5">

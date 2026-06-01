@@ -64,9 +64,9 @@ html, body {
 /* Scoped body and viewport styling */
 html:has(.socios-light), 
 body:has(.socios-light) {
-  background-color: var(--cs-bg-canvas) !important;
-  background: var(--cs-bg-canvas) !important;
-  color: var(--cs-text-heading) !important;
+  background-color: #f8fafc !important;
+  background: #f8fafc !important;
+  color: #0f172a !important;
 }
 
 /* Base shell overrides */
@@ -664,3 +664,52 @@ body:has(.socios-light) {
 .socios-light .hover\:bg-neutral-900:hover {
   background-color: var(--cs-bg-hover-dark) !important;
 }
+
+/* 8. Strict Brutalist Flat Black Buttons for Program & Template Actions */
+html body .socios-light button.programa-btn,
+html body .socios-light a.programa-btn,
+html body button.programa-btn,
+html body a.programa-btn,
+button.programa-btn,
+a.programa-btn {
+  background-color: #000000 !important;
+  color: #ffffff !important;
+  border: 1px solid #000000 !important;
+  border-radius: 0px !important;
+  opacity: 1 !important;
+}
+
+html body .socios-light button.programa-btn:hover,
+html body .socios-light a.programa-btn:hover,
+html body button.programa-btn:hover,
+button.programa-btn:hover {
+  background-color: #1a1a1a !important;
+  color: #ffffff !important;
+  border-color: #1a1a1a !important;
+}
+
+html body .socios-light button.programa-btn:disabled,
+html body .socios-light a.programa-btn:disabled,
+html body button.programa-btn:disabled,
+button.programa-btn:disabled {
+  background-color: #000000 !important;
+  color: #ffffff !important;
+  border-color: #000000 !important;
+  opacity: 1 !important;
+  cursor: not-allowed;
+}
+
+html body .socios-light button.programa-btn *,
+html body .socios-light a.programa-btn *,
+button.programa-btn *,
+a.programa-btn * {
+  color: #ffffff !important;
+}
+
+html body .socios-light button.programa-btn:disabled *,
+html body .socios-light a.programa-btn:disabled *,
+button.programa-btn:disabled *,
+a.programa-btn:disabled * {
+  color: #ffffff !important;
+}
+

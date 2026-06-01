@@ -43,6 +43,7 @@ type EventContextType = {
   refreshEvent: () => Promise<void>
   hideFinancials: boolean
   toggleHideFinancials: () => void
+  qrUrl: string
 }
 
 export const EventContext = createContext<EventContextType>({
@@ -54,6 +55,7 @@ export const EventContext = createContext<EventContextType>({
   refreshEvent: async () => {},
   hideFinancials: false,
   toggleHideFinancials: () => {},
+  qrUrl: '',
 })
 
 export function useEventContext() {
@@ -193,17 +195,31 @@ export default function SociosLayout({ children }: { children: React.ReactNode }
     if (typeof window === 'undefined') return
 
     // Set mobile browser status bar (safe area/notch) color to match our light header
-    const metaTheme = document.querySelector('meta[name="theme-color"]')
+    let metaTheme = document.querySelector('meta[name="theme-color"]')
     const originalColor = metaTheme ? metaTheme.getAttribute('content') : '#000000'
-    if (metaTheme) {
-      metaTheme.setAttribute('content', '#ffffff')
+    
+    if (!metaTheme) {
+      metaTheme = document.createElement('meta')
+      metaTheme.setAttribute('name', 'theme-color')
+      document.head.appendChild(metaTheme)
     }
+    
+    metaTheme.setAttribute('content', '#f8fafc')
+
+    // Force html and body background directly to #f8fafc to ensure status bar is uniform
+    const originalBodyBg = document.body.style.backgroundColor
+    const originalHtmlBg = document.documentElement.style.backgroundColor
+    
+    document.body.style.setProperty('background-color', '#f8fafc', 'important')
+    document.documentElement.style.setProperty('background-color', '#f8fafc', 'important')
 
     return () => {
       // Restore original theme color upon leaving socios dashboard
       if (metaTheme && originalColor) {
         metaTheme.setAttribute('content', originalColor)
       }
+      document.body.style.backgroundColor = originalBodyBg
+      document.documentElement.style.backgroundColor = originalHtmlBg
     }
   }, [])
 
@@ -426,9 +442,9 @@ export default function SociosLayout({ children }: { children: React.ReactNode }
   }
 
   return (
-    <EventContext.Provider value={{ events, event, lastSync, loadAll, loadEvents, refreshEvent, hideFinancials, toggleHideFinancials }}>
+    <EventContext.Provider value={{ events, event, lastSync, loadAll, loadEvents, refreshEvent, hideFinancials, toggleHideFinancials, qrUrl }}>
 
-      <div className="socios-light h-[100dvh] flex flex-col bg-white text-white overflow-hidden select-none">
+      <div className="socios-light h-[100dvh] flex flex-col bg-[#f8fafc] text-white overflow-hidden select-none">
         <div className="flex-1 flex flex-col w-full max-w-xl mx-auto relative overflow-hidden border-x border-neutral-800">
           <header className="shrink-0 bg-neutral-900 border-b border-neutral-800 z-30" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
           <div className="flex items-center justify-between px-4 py-2 gap-2">
@@ -440,21 +456,6 @@ export default function SociosLayout({ children }: { children: React.ReactNode }
             </div>
 
             <div className="flex items-center gap-2 shrink-0">
-              {/* Botón de QR */}
-              <button
-                onClick={() => event?.registration_token && setShowQr(true)}
-                disabled={!event?.registration_token}
-                className={`w-10 h-10 flex items-center justify-center rounded-xl border active:scale-90 transition-all ${
-                  event?.registration_token
-                    ? 'bg-fuchsia-500/15 border-fuchsia-500/30 text-fuchsia-400 hover:text-fuchsia-300'
-                    : 'bg-neutral-800/30 border-neutral-700/30 text-neutral-600 cursor-not-allowed'
-                }`}
-                aria-label="Mostrar QR de registro"
-                title={event?.registration_token ? "Mostrar QR de registro" : "QR no disponible - registro congelado"}
-              >
-                <QrCode className="w-[19px] h-[19px]" />
-              </button>
-
               {/* Botón de ocultar cifras */}
               <button
                 onClick={toggleHideFinancials}

@@ -475,28 +475,25 @@ export default function ProgramaPage() {
             <button
               onClick={() => setIsEditing(!isEditing)}
               disabled={items.length === 0}
-              style={isEditing ? { backgroundColor: '#db2777', color: '#ffffff' } : { backgroundColor: '#000000', color: '#ffffff' }}
-              className="h-11 px-4 rounded-xl font-display text-xs tracking-wider active:scale-[0.98] disabled:opacity-50 transition-all font-bold flex items-center justify-center border border-neutral-800"
+              className="h-11 px-4 programa-btn rounded-none hover:bg-neutral-900 border border-black text-white font-display text-xs tracking-wider active:scale-[0.98] transition-all font-bold flex items-center justify-center"
             >
-              <span style={{ color: '#ffffff' }}>{isEditing ? 'LISTO' : 'EDITAR'}</span>
+              <span className="text-white">{isEditing ? 'LISTO' : 'EDITAR'}</span>
             </button>
             <button
               onClick={handleAutoSchedule}
               disabled={items.length === 0}
-              style={{ backgroundColor: '#000000', color: '#ffffff' }}
-              className="h-11 px-4 bg-black hover:bg-neutral-900 border border-neutral-800 rounded-xl font-display text-xs tracking-wider active:scale-[0.98] disabled:opacity-50 transition-all font-bold flex items-center justify-center"
+              className="h-11 px-4 programa-btn rounded-none hover:bg-neutral-900 border border-black text-white font-display text-xs tracking-wider active:scale-[0.98] transition-all font-bold flex items-center justify-center"
               title="Reordenar automáticamente para evitar coreos pegadas"
             >
-              <span style={{ color: '#ffffff' }}>ORDENAR</span>
+              <span className="text-white">ORDENAR</span>
             </button>
             <button
               onClick={handlePublish}
               disabled={publishing || items.length === 0}
-              style={{ backgroundColor: '#000000', color: '#ffffff' }}
-              className="h-11 px-4 bg-black hover:bg-neutral-900 border border-neutral-800 rounded-xl font-display text-xs tracking-wider active:scale-[0.98] disabled:opacity-50 transition-all font-bold flex items-center justify-center gap-1.5"
+              className="h-11 px-4 programa-btn rounded-none hover:bg-neutral-900 border border-black text-white font-display text-xs tracking-wider active:scale-[0.98] transition-all font-bold flex items-center justify-center gap-1.5"
             >
-              <Send className="w-4 h-4" style={{ color: '#ffffff' }} />
-              <span style={{ color: '#ffffff' }}>{publishing ? 'PUBLICANDO...' : 'PUBLICAR'}</span>
+              <Send className="w-4 h-4 text-white" />
+              <span className="text-white">{publishing ? 'PUBLICANDO...' : 'PUBLICAR'}</span>
             </button>
           </div>
         </div>

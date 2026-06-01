@@ -316,10 +316,9 @@ export default function ChecklistPage() {
         </div>
         <button
           onClick={openCreateModal}
-          style={{ backgroundColor: '#000000', color: '#ffffff' }}
-          className="flex items-center gap-1 bg-black hover:bg-neutral-900 border border-neutral-800 px-3.5 py-2.5 rounded-xl font-display text-xs font-bold tracking-wider active:scale-[0.98] transition-all"
+          className="flex items-center gap-1 programa-btn rounded-none hover:bg-neutral-900 border border-black text-white px-3.5 py-2.5 font-display text-xs font-bold tracking-wider active:scale-[0.98] transition-all"
         >
-          <Plus className="w-4 h-4" /> NUEVO
+          <Plus className="w-4 h-4 text-white" /> <span className="text-white">NUEVO</span>
         </button>
       </div>
 
@@ -365,7 +364,7 @@ export default function ChecklistPage() {
           <p className="text-xs text-neutral-500">Cargando tareas...</p>
         </div>
       ) : items.length === 0 ? (
-        <div className="bg-neutral-800/10 border border-neutral-800/50 rounded-2xl p-8 text-center space-y-4">
+        <div className="p-8 text-center space-y-4">
           <ClipboardList className="w-12 h-12 text-neutral-600 mx-auto" />
           <div className="space-y-1">
             <h3 className="font-display text-base tracking-wide uppercase text-neutral-300">No hay tareas</h3>
@@ -375,7 +374,7 @@ export default function ChecklistPage() {
           </div>
           <button
             onClick={handleLoadTemplate}
-            className="mx-auto flex items-center gap-1.5 bg-neutral-800 hover:bg-neutral-700 text-fuchsia-400 px-4 py-2.5 rounded-xl text-xs font-bold border border-fuchsia-500/20 active:scale-95 transition-all"
+            className="mx-auto flex items-center gap-1.5 programa-btn rounded-none hover:bg-neutral-800 text-white px-4 py-2.5 text-xs font-bold border border-black active:scale-95 transition-all"
           >
             Cargar plantilla
           </button>
