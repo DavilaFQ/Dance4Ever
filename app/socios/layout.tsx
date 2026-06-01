@@ -32,6 +32,7 @@ import FinanzasPage from '@/app/socios/finanzas/page'
 import ProgramaPage from '@/app/socios/programa/page'
 import ChecklistPage from '@/app/socios/checklist/page'
 import EventosPage from '@/app/socios/eventos/page'
+import PullToRefresh from '@/components/PullToRefresh'
 
 type EventContextType = {
   events: Event[]
@@ -496,21 +497,23 @@ export default function SociosLayout({ children }: { children: React.ReactNode }
         </header>
 
         <main className="flex-1 min-h-0 overflow-y-auto">
-          {activeTab === 'resumen' && <ResumenPage />}
-          {activeTab === 'registros' && (
-            selectedRegistrationId ? (
-              <RegistrationDetailPage
-                registrationIdProp={selectedRegistrationId}
-                onBack={() => setSelectedRegistrationId(null)}
-              />
-            ) : (
-              <RegistrosPage onSelectRegistration={(id) => setSelectedRegistrationId(id)} />
-            )
-          )}
-          {activeTab === 'finanzas' && <FinanzasPage />}
-          {activeTab === 'programa' && <ProgramaPage />}
-          {activeTab === 'checklist' && <ChecklistPage />}
-          {activeTab === 'eventos' && <EventosPage />}
+          <PullToRefresh onRefresh={async () => { window.location.reload() }}>
+            {activeTab === 'resumen' && <ResumenPage />}
+            {activeTab === 'registros' && (
+              selectedRegistrationId ? (
+                <RegistrationDetailPage
+                  registrationIdProp={selectedRegistrationId}
+                  onBack={() => setSelectedRegistrationId(null)}
+                />
+              ) : (
+                <RegistrosPage onSelectRegistration={(id) => setSelectedRegistrationId(id)} />
+              )
+            )}
+            {activeTab === 'finanzas' && <FinanzasPage />}
+            {activeTab === 'programa' && <ProgramaPage />}
+            {activeTab === 'checklist' && <ChecklistPage />}
+            {activeTab === 'eventos' && <EventosPage />}
+          </PullToRefresh>
         </main>
 
         {!isKeyboardActive && (

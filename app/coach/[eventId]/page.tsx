@@ -10,6 +10,7 @@ import { getAvgPerTurnMs, etaLabel } from '@/lib/eta'
 import { syncServerTime, serverNow } from '@/lib/serverTime'
 import { subscribePortalConfig, PortalConfig } from '@/lib/portalConfig'
 import PortalLockout from '@/components/PortalLockout'
+import PullToRefresh from '@/components/PullToRefresh'
 
 
 const PILL_PX = 48
@@ -155,8 +156,8 @@ export default function CoachPage({ params }: Props) {
   }
 
   return (
-
-    <div className="h-[100dvh] bg-neutral-900 text-white flex flex-col overflow-hidden select-none">
+    <PullToRefresh onRefresh={async () => { window.location.reload() }}>
+      <div className="h-[100dvh] bg-neutral-900 text-white flex flex-col overflow-hidden select-none">
       {activeAnnouncement && (
         <div className="bg-fuchsia-950 border-b border-yellow-400 py-1.5 shrink-0 overflow-hidden relative flex items-center z-50">
           <style dangerouslySetInnerHTML={{__html: `
@@ -384,8 +385,8 @@ export default function CoachPage({ params }: Props) {
           )}
         </div>
       )}
-
-    </div>
+      </div>
+    </PullToRefresh>
   )
 }
 

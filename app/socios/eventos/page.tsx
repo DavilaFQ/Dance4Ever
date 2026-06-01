@@ -68,7 +68,11 @@ export default function EventosPage() {
   // QR access states
   const [qrStaffUrl, setQrStaffUrl] = useState('')
   const [qrCoachProgUrl, setQrCoachProgUrl] = useState('')
+  const [qrMcUrl, setQrMcUrl] = useState('')
   const [copiedQrLink, setCopiedQrLink] = useState<string | null>(null)
+
+  // Track initialization to avoid auto-save loop on mount
+  const [isReady, setIsReady] = useState(false)
 
   // Edit state
   const [editEventName, setEditEventName] = useState('')
@@ -132,6 +136,10 @@ export default function EventosPage() {
     // 2. QR Programa Coaches
     const urlProg = `${origin}/coach/${event.id}`
     QRCode.toDataURL(urlProg, { width: 400, margin: 2 }).then(setQrCoachProgUrl).catch(() => {})
+
+    // 3. QR MC
+    const urlMc = `${origin}/mc/${event.id}`
+    QRCode.toDataURL(urlMc, { width: 400, margin: 2 }).then(setQrMcUrl).catch(() => {})
   }, [event?.id, origin])
 
   useEffect(() => {
@@ -141,6 +149,12 @@ export default function EventosPage() {
       .then(({ count }) => setRegCount(count ?? 0))
   }, [event?.id])
 
+  // Reset isReady when switching events to prevent state leakage
+  useEffect(() => {
+    setIsReady(false)
+  }, [event?.id])
+
+  // Sync inputs with the active event whenever the event ID changes
   useEffect(() => {
     if (!event) return
     setCostPaquete(event.default_cost_paquete ?? 2700)
@@ -152,7 +166,9 @@ export default function EventosPage() {
     setDeadlineRegistro(event.deadline_registro ? event.deadline_registro.slice(0, 10) : '')
     setDeadlineCambios(event.deadline_cambios ? event.deadline_cambios.slice(0, 10) : '')
     setDancersPorAsistente(event.dancers_por_asistente_gratis ?? 8)
-  }, [event])
+    
+    setIsReady(true)
+  }, [event?.id])
 
   useEffect(() => {
     if (!event) return
@@ -190,7 +206,8 @@ export default function EventosPage() {
 
   // Auto-save settings on any field change (debounced 1.2s)
   useEffect(() => {
-    if (!event) return
+    if (!event || !isReady) return
+    
     // Don't auto-save right after loading (event object changed = settings were just loaded)
     const skipInitial = event.default_cost_paquete === costPaquete &&
       event.default_cost_repeticion === costRepeticion &&
@@ -214,7 +231,7 @@ export default function EventosPage() {
       }
     }, 1200)
     return () => { if (saveTimerRef.current) clearTimeout(saveTimerRef.current) }
-  }, [costPaquete, costRepeticion, costAsistente, costEntradaTemprana, costEntradaTardia, deadlineEntrada, deadlineRegistro, deadlineCambios, dancersPorAsistente, event, doSaveSettings])
+  }, [costPaquete, costRepeticion, costAsistente, costEntradaTemprana, costEntradaTardia, deadlineEntrada, deadlineRegistro, deadlineCambios, dancersPorAsistente, event, doSaveSettings, isReady])
 
   async function handleToggleOperations() {
     if (!event || loadingPortalConfig) return
@@ -677,14 +694,14 @@ export default function EventosPage() {
           >
             <div>
               <h2 className="font-display text-lg tracking-wider uppercase">Códigos QR de Accesos</h2>
-              <p className="text-xs text-neutral-500 mt-0.5">QRs de Programa en Vivo (Coaches) y Portal de Staff</p>
+              <p className="text-xs text-neutral-500 mt-0.5">QRs de Programa (Coaches), Portal de Staff y Portal de MC (Conducción)</p>
             </div>
             {qrsExpanded ? <ChevronUp className="w-5 h-5 text-neutral-400" /> : <ChevronDown className="w-5 h-5 text-neutral-400" />}
           </button>
 
           {/* QR Codes Section */}
           {qrsExpanded && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
               {/* 1. Programa Coaches */}
               {qrCoachProgUrl && (
                 <div className="bg-neutral-800/30 border border-neutral-700/40 rounded-2xl p-4 flex flex-col gap-3">
@@ -772,6 +789,56 @@ export default function EventosPage() {
                         window.open(
                           `https://wa.me/?text=${encodeURIComponent(
                             `Enlace de acceso al Portal del Staff de *Dance4Ever*:\n\n🔗 ${origin}/staff`
+                          )}`,
+                          '_blank'
+                        )
+                      }}
+                      className="w-full py-2 text-white font-bold text-[11px] rounded-lg flex items-center justify-center gap-1.5 transition-all shadow-md uppercase tracking-wider font-display hover:brightness-90"
+                      style={{ backgroundColor: '#25D366' }}
+                    >
+                      Compartir
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* 3. Portal MC */}
+              {qrMcUrl && (
+                <div className="bg-neutral-800/30 border border-neutral-700/40 rounded-2xl p-4 flex flex-col gap-3">
+                  <div className="flex flex-col gap-0.5">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-pink-400">
+                      Conducción
+                    </span>
+                    <h4 className="font-display text-sm font-bold text-white uppercase">
+                      Portal de MC
+                    </h4>
+                    <p className="text-[11px] text-neutral-500">
+                      Pantalla en vivo con notas y control del presentador.
+                    </p>
+                  </div>
+
+                  <div className="bg-white p-3 rounded-xl flex items-center justify-center max-w-[200px] mx-auto w-full aspect-square shadow-md">
+                    <img src={qrMcUrl} alt="QR MC" className="w-full h-full object-contain" />
+                  </div>
+
+                  <div className="flex flex-col gap-1.5 mt-auto">
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(`${origin}/mc/${event.id}`).then(() => {
+                          setCopiedQrLink('mc')
+                          setTimeout(() => setCopiedQrLink(null), 2000)
+                        })
+                      }}
+                      className="w-full py-2 bg-black hover:bg-neutral-900 border border-neutral-800 text-white font-bold text-[11px] rounded-lg flex items-center justify-center gap-1.5 transition-colors uppercase tracking-wider font-display active:scale-95"
+                    >
+                      {copiedQrLink === 'mc' ? '¡Copiado!' : 'Copiar Enlace'}
+                    </button>
+                    
+                    <button
+                      onClick={() => {
+                        window.open(
+                          `https://wa.me/?text=${encodeURIComponent(
+                            `Enlace de acceso al Portal del MC (Conducción) de *Dance4Ever*:\n\n🔗 ${origin}/mc/${event.id}`
                           )}`,
                           '_blank'
                         )

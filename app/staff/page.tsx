@@ -9,6 +9,7 @@ import { participantMatches } from '@/lib/search'
 import SearchBar from '@/components/SearchBar'
 import { subscribePortalConfig, PortalConfig } from '@/lib/portalConfig'
 import PortalLockout from '@/components/PortalLockout'
+import PullToRefresh from '@/components/PullToRefresh'
 
 const PILL_PX = 48
 const PILL_GAP = 4
@@ -229,8 +230,9 @@ export default function StaffPage() {
   }
 
   return (
-    <div className="h-[100dvh] bg-neutral-900 text-white flex flex-col overflow-hidden select-none">
-      {/* Spacer for iOS Notch */}
+    <PullToRefresh onRefresh={async () => { window.location.reload() }}>
+      <div className="h-[100dvh] bg-neutral-900 text-white flex flex-col overflow-hidden select-none">
+        {/* Spacer for iOS Notch */}
       <div className="shrink-0 bg-black" style={{ height: 'env(safe-area-inset-top, 0px)' }} />
 
       {/* Header: LOGO izq | STAFF centro | iconos derecha */}
@@ -535,6 +537,7 @@ export default function StaffPage() {
         </div>
       )}
     </div>
+    </PullToRefresh>
   )
 }
 

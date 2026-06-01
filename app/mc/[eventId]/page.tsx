@@ -7,6 +7,7 @@ import SearchBar from '@/components/SearchBar'
 import { X } from 'lucide-react'
 import { subscribePortalConfig, PortalConfig } from '@/lib/portalConfig'
 import PortalLockout from '@/components/PortalLockout'
+import PullToRefresh from '@/components/PullToRefresh'
 
 
 type Props = { params: Promise<{ eventId: string }> }
@@ -163,7 +164,8 @@ export default function MCPage({ params }: Props) {
   const next = participants.find(p => p.position === event.current_position + 1)
 
   return (
-    <div className="h-[100dvh] bg-neutral-900 text-white flex flex-col overflow-hidden select-none">
+    <PullToRefresh onRefresh={async () => { window.location.reload() }}>
+      <div className="h-[100dvh] bg-neutral-900 text-white flex flex-col overflow-hidden select-none">
       {activeAnnouncement && (
         <div className="bg-fuchsia-950 border-b border-yellow-400 py-2 shrink-0 overflow-hidden relative flex items-center z-50">
           <style dangerouslySetInnerHTML={{__html: `
@@ -290,5 +292,6 @@ export default function MCPage({ params }: Props) {
         </div>
       )}
     </div>
+    </PullToRefresh>
   )
 }

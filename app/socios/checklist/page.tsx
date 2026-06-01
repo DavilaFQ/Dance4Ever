@@ -304,7 +304,7 @@ export default function ChecklistPage() {
   }
 
   return (
-    <div className="p-4 pb-24 space-y-4 max-w-xl mx-auto">
+    <div className="px-1 py-4 pb-24 space-y-4 w-full">
       {/* Page Header */}
       <div className="flex items-center justify-between gap-3">
         <div>
@@ -389,14 +389,22 @@ export default function ChecklistPage() {
 
           {/* List layout */}
           <div className="space-y-3">
-            {items.map((item) => {
+            {items
+              .slice()
+              .sort((a, b) => {
+                if (a.completed === b.completed) {
+                  return new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+                }
+                return a.completed ? 1 : -1
+              })
+              .map((item) => {
               const categoryDetails = CATEGORIES.find((c) => c.id === item.category)
               const CatIcon = categoryDetails && 'icon' in categoryDetails ? categoryDetails.icon : ClipboardList
 
               return (
                 <div
                   key={item.id}
-                  className={`group relative flex items-start gap-4 p-5 rounded-2xl border transition-all duration-300 ${
+                  className={`group relative flex items-start gap-4 p-4.5 rounded-2xl border transition-all duration-300 ${
                     item.completed
                       ? 'bg-neutral-900/40 border-neutral-800/40 opacity-50'
                       : 'bg-neutral-800/30 border-neutral-700/30 hover:border-neutral-700 hover:bg-neutral-800/40 shadow-sm'
@@ -438,17 +446,17 @@ export default function ChecklistPage() {
                   <div className="absolute right-4 top-4 flex items-center gap-2 sm:opacity-0 group-hover:opacity-100 transition-opacity">
                     <button
                       onClick={() => openEditModal(item)}
-                      className="p-2.5 bg-black hover:bg-neutral-900 border border-neutral-800 rounded-xl active:scale-95 transition-all flex items-center justify-center"
+                      className="p-2 bg-black hover:bg-neutral-900 border border-neutral-800 rounded-xl active:scale-95 transition-all flex items-center justify-center"
                       title="Editar tarea"
                     >
-                      <Edit3 className="w-5 h-5" stroke="#ffffff" />
+                      <Edit3 className="w-[18px] h-[18px]" stroke="#ffffff" />
                     </button>
                     <button
                       onClick={() => handleDeleteItem(item.id)}
-                      className="p-2.5 bg-black hover:bg-neutral-900 border border-neutral-800 rounded-xl active:scale-95 transition-all flex items-center justify-center"
+                      className="p-2 bg-black hover:bg-neutral-900 border border-neutral-800 rounded-xl active:scale-95 transition-all flex items-center justify-center"
                       title="Eliminar tarea"
                     >
-                      <Trash2 className="w-5 h-5" stroke="#ffffff" />
+                      <Trash2 className="w-[18px] h-[18px]" stroke="#ffffff" />
                     </button>
                   </div>
                 </div>

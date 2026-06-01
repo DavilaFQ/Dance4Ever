@@ -114,21 +114,8 @@ export default function FinanzasPage() {
 
   const sortedFiltered = useMemo(() => {
     const list = [...filtered]
-    return list.sort((a, b) => {
-      const paidA = payments[a.id]?.paid ?? 0
-      const restA = a.total - paidA
-      const isPaidA = restA <= 0
-
-      const paidB = payments[b.id]?.paid ?? 0
-      const restB = b.total - paidB
-      const isPaidB = restB <= 0
-
-      if (isPaidA !== isPaidB) {
-        return isPaidA ? 1 : -1
-      }
-      return (a.academy || '').localeCompare(b.academy || '')
-    })
-  }, [filtered, payments])
+    return list.sort((a, b) => (a.academy || '').localeCompare(b.academy || ''))
+  }, [filtered])
 
   const updatePayment = useCallback((regId: number, paid: number, maxAmount: number) => {
     const val = Math.min(maxAmount, Math.max(0, paid))

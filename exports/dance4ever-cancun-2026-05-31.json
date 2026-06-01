@@ -1,0 +1,4686 @@
+{
+  "exportado_el": "2026-05-31T14:00:16.847Z",
+  "evento": {
+    "id": "20c48101-ec11-43b3-8c91-bf9273bb88bf",
+    "nombre": "Cancún ",
+    "fecha": "2026-09-12"
+  },
+  "resumen": {
+    "total_registros": 46,
+    "confirmados": 33,
+    "pendientes": 13,
+    "total_bailarines": 488,
+    "total_coreos": 89,
+    "total_boletos": 1009
+  },
+  "registros": [
+    {
+      "id": 237,
+      "estado": "confirmado",
+      "academia": "Ballet Clásico Attitude (Guadalajara)",
+      "coach": "Giselle Vázquez",
+      "telefono": "5553755517",
+      "email": "coach105@gmail.com",
+      "asistentes": [
+        "Asistente: Lucia Ramirez"
+      ],
+      "num_bailarines": 6,
+      "num_coreos": 3,
+      "boletos": 12,
+      "costo_total": 23600,
+      "pagado": 0,
+      "saldo": 23600,
+      "notas": null,
+      "enviado_el": "2026-05-30T11:00:27.27+00:00",
+      "confirmado_el": "2026-05-30T11:19:09.399+00:00",
+      "bailarines": [
+        {
+          "id": 5664,
+          "nombre": "Camila Martínez",
+          "nacimiento": "2011-11-23",
+          "categoria": "Junior"
+        },
+        {
+          "id": 5665,
+          "nombre": "Renata Pérez",
+          "nacimiento": "2013-06-14",
+          "categoria": "Junior"
+        },
+        {
+          "id": 5666,
+          "nombre": "Regina López",
+          "nacimiento": "2013-06-14",
+          "categoria": "Junior"
+        },
+        {
+          "id": 5667,
+          "nombre": "Emilia Aguilar",
+          "nacimiento": "2012-03-30",
+          "categoria": "Junior"
+        },
+        {
+          "id": 5668,
+          "nombre": "Ana Paula Castillo",
+          "nacimiento": "2011-04-20",
+          "categoria": "Senior"
+        },
+        {
+          "id": 5669,
+          "nombre": "María José González",
+          "nacimiento": "2011-11-23",
+          "categoria": "Junior"
+        }
+      ],
+      "coreografias": [
+        {
+          "modalidad": "Grupal",
+          "categoria": "Senior",
+          "nivel": "avanzado",
+          "estilo": "Jazz",
+          "bailarines": 6
+        },
+        {
+          "modalidad": "Solista",
+          "categoria": "Junior",
+          "nivel": "avanzado",
+          "estilo": "Ballet",
+          "bailarines": 1
+        },
+        {
+          "modalidad": "Solista",
+          "categoria": "Junior",
+          "nivel": "avanzado",
+          "estilo": "Ballet",
+          "bailarines": 1
+        }
+      ]
+    },
+    {
+      "id": 238,
+      "estado": "confirmado",
+      "academia": "Colegio Cervantes (Guadalajara)",
+      "coach": "Ana Paula Cruz",
+      "telefono": "5582542018",
+      "email": "coach894@gmail.com",
+      "asistentes": [
+        "Asistente: Lorena Ortiz",
+        "Asistente: Patricia Gomez"
+      ],
+      "num_bailarines": 18,
+      "num_coreos": 2,
+      "boletos": 36,
+      "costo_total": 75600,
+      "pagado": 0,
+      "saldo": 75600,
+      "notas": null,
+      "enviado_el": "2026-05-30T11:01:07.003+00:00",
+      "confirmado_el": "2026-05-30T11:19:18.348+00:00",
+      "bailarines": [
+        {
+          "id": 5760,
+          "nombre": "Camila Martínez",
+          "nacimiento": "2008-12-03",
+          "categoria": "Senior"
+        },
+        {
+          "id": 5761,
+          "nombre": "Valentina Hernández",
+          "nacimiento": "2008-06-10",
+          "categoria": "Senior"
+        },
+        {
+          "id": 5762,
+          "nombre": "Itzel Vargas",
+          "nacimiento": "2010-01-29",
+          "categoria": "Senior"
+        },
+        {
+          "id": 5763,
+          "nombre": "Mariana Moreno",
+          "nacimiento": "2009-02-25",
+          "categoria": "Senior"
+        },
+        {
+          "id": 5764,
+          "nombre": "Natalia Mendoza",
+          "nacimiento": "2010-07-18",
+          "categoria": "Senior"
+        },
+        {
+          "id": 5765,
+          "nombre": "Luciana Ruiz",
+          "nacimiento": "2008-06-10",
+          "categoria": "Senior"
+        },
+        {
+          "id": 5766,
+          "nombre": "Sofía García",
+          "nacimiento": "2010-01-29",
+          "categoria": "Senior"
+        },
+        {
+          "id": 5767,
+          "nombre": "Brenda Medina",
+          "nacimiento": "2010-07-18",
+          "categoria": "Senior"
+        },
+        {
+          "id": 5768,
+          "nombre": "Daniela Flores",
+          "nacimiento": "2008-06-10",
+          "categoria": "Senior"
+        },
+        {
+          "id": 5769,
+          "nombre": "Renata Pérez",
+          "nacimiento": "2010-07-18",
+          "categoria": "Senior"
+        },
+        {
+          "id": 5770,
+          "nombre": "Romina Vázquez",
+          "nacimiento": "2009-08-14",
+          "categoria": "Senior"
+        },
+        {
+          "id": 5771,
+          "nombre": "Paola Ramos",
+          "nacimiento": "2010-01-29",
+          "categoria": "Senior"
+        },
+        {
+          "id": 5772,
+          "nombre": "Ana Paula Castillo",
+          "nacimiento": "2010-01-29",
+          "categoria": "Senior"
+        },
+        {
+          "id": 5773,
+          "nombre": "Karla Chávez",
+          "nacimiento": "2009-08-14",
+          "categoria": "Senior"
+        },
+        {
+          "id": 5774,
+          "nombre": "Valeria Torres",
+          "nacimiento": "2008-12-03",
+          "categoria": "Senior"
+        },
+        {
+          "id": 5775,
+          "nombre": "Ariadna Cruz",
+          "nacimiento": "2008-06-10",
+          "categoria": "Senior"
+        },
+        {
+          "id": 5776,
+          "nombre": "Regina López",
+          "nacimiento": "2010-07-18",
+          "categoria": "Senior"
+        },
+        {
+          "id": 5777,
+          "nombre": "Isabella Sánchez",
+          "nacimiento": "2010-07-18",
+          "categoria": "Senior"
+        }
+      ],
+      "coreografias": [
+        {
+          "modalidad": "Grupal",
+          "categoria": "Senior",
+          "nivel": "basico",
+          "estilo": "Poms",
+          "bailarines": 18
+        },
+        {
+          "modalidad": "Grupal",
+          "categoria": "Senior",
+          "nivel": "basico",
+          "estilo": "Jazz",
+          "bailarines": 18
+        }
+      ]
+    },
+    {
+      "id": 239,
+      "estado": "confirmado",
+      "academia": "Unlimited (Guadalajara)",
+      "coach": "Paola Aguilar",
+      "telefono": "5559001502",
+      "email": "coach792@gmail.com",
+      "asistentes": [
+        "Asistente: Gabriela Mendoza",
+        "Asistente: Lucia Ramirez"
+      ],
+      "num_bailarines": 12,
+      "num_coreos": 2,
+      "boletos": 24,
+      "costo_total": 45300,
+      "pagado": 0,
+      "saldo": 45300,
+      "notas": null,
+      "enviado_el": "2026-05-30T11:01:39.888+00:00",
+      "confirmado_el": "2026-05-30T11:24:33.577+00:00",
+      "bailarines": [
+        {
+          "id": 5838,
+          "nombre": "Victoria Ortiz",
+          "nacimiento": "2008-12-03",
+          "categoria": "Senior"
+        },
+        {
+          "id": 5839,
+          "nombre": "Ariadna Cruz",
+          "nacimiento": "2009-08-14",
+          "categoria": "Senior"
+        },
+        {
+          "id": 5840,
+          "nombre": "Sofía García",
+          "nacimiento": "2009-08-14",
+          "categoria": "Senior"
+        },
+        {
+          "id": 5841,
+          "nombre": "Ana Paula Castillo",
+          "nacimiento": "2009-02-25",
+          "categoria": "Senior"
+        },
+        {
+          "id": 5842,
+          "nombre": "Emilia Aguilar",
+          "nacimiento": "2009-02-25",
+          "categoria": "Senior"
+        },
+        {
+          "id": 5843,
+          "nombre": "Romina Vázquez",
+          "nacimiento": "2008-06-10",
+          "categoria": "Senior"
+        },
+        {
+          "id": 5844,
+          "nombre": "Valentina Hernández",
+          "nacimiento": "2008-12-03",
+          "categoria": "Senior"
+        },
+        {
+          "id": 5845,
+          "nombre": "Luciana Ruiz",
+          "nacimiento": "2010-01-29",
+          "categoria": "Senior"
+        },
+        {
+          "id": 5846,
+          "nombre": "Paulina Morales",
+          "nacimiento": "2009-08-14",
+          "categoria": "Senior"
+        },
+        {
+          "id": 5847,
+          "nombre": "Regina López",
+          "nacimiento": "2008-12-03",
+          "categoria": "Senior"
+        },
+        {
+          "id": 5848,
+          "nombre": "Brenda Medina",
+          "nacimiento": "2009-08-14",
+          "categoria": "Senior"
+        },
+        {
+          "id": 5849,
+          "nombre": "Natalia Mendoza",
+          "nacimiento": "2010-07-18",
+          "categoria": "Senior"
+        }
+      ],
+      "coreografias": [
+        {
+          "modalidad": "Grupal",
+          "categoria": "Senior",
+          "nivel": "avanzado",
+          "estilo": "Jazz",
+          "bailarines": 12
+        },
+        {
+          "modalidad": "Solista",
+          "categoria": "Senior",
+          "nivel": "avanzado",
+          "estilo": "Contempo",
+          "bailarines": 1
+        }
+      ]
+    },
+    {
+      "id": 240,
+      "estado": "confirmado",
+      "academia": "Olimpia Jazmín (Guadalajara)",
+      "coach": "Fernanda Luna",
+      "telefono": "5571333935",
+      "email": "coach714@gmail.com",
+      "asistentes": [
+        "Asistente: Claudia Sanchez"
+      ],
+      "num_bailarines": 9,
+      "num_coreos": 2,
+      "boletos": 18,
+      "costo_total": 33800,
+      "pagado": 0,
+      "saldo": 33800,
+      "notas": null,
+      "enviado_el": "2026-05-30T11:02:10.936+00:00",
+      "confirmado_el": "2026-05-30T11:23:19.836+00:00",
+      "bailarines": [
+        {
+          "id": 5895,
+          "nombre": "Camila Martínez",
+          "nacimiento": "2013-01-07",
+          "categoria": "Junior"
+        },
+        {
+          "id": 5896,
+          "nombre": "Victoria Ortiz",
+          "nacimiento": "2011-11-23",
+          "categoria": "Junior"
+        },
+        {
+          "id": 5897,
+          "nombre": "Michelle Gutiérrez",
+          "nacimiento": "2013-01-07",
+          "categoria": "Junior"
+        },
+        {
+          "id": 5898,
+          "nombre": "Ximena Rodríguez",
+          "nacimiento": "2011-04-20",
+          "categoria": "Senior"
+        },
+        {
+          "id": 5899,
+          "nombre": "Paulina Morales",
+          "nacimiento": "2013-06-14",
+          "categoria": "Junior"
+        },
+        {
+          "id": 5900,
+          "nombre": "Paola Ramos",
+          "nacimiento": "2011-11-23",
+          "categoria": "Junior"
+        },
+        {
+          "id": 5901,
+          "nombre": "Renata Pérez",
+          "nacimiento": "2012-08-15",
+          "categoria": "Junior"
+        },
+        {
+          "id": 5902,
+          "nombre": "Samantha Luna",
+          "nacimiento": "2011-09-09",
+          "categoria": "Junior"
+        },
+        {
+          "id": 5903,
+          "nombre": "Ariadna Cruz",
+          "nacimiento": "2011-11-23",
+          "categoria": "Junior"
+        }
+      ],
+      "coreografias": [
+        {
+          "modalidad": "Grupal",
+          "categoria": "Senior",
+          "nivel": "avanzado",
+          "estilo": "Show",
+          "bailarines": 9
+        },
+        {
+          "modalidad": "Solista",
+          "categoria": "Junior",
+          "nivel": "avanzado",
+          "estilo": "Acro Jazz",
+          "bailarines": 1
+        }
+      ]
+    },
+    {
+      "id": 241,
+      "estado": "confirmado",
+      "academia": "One Space Academia (Guadalajara)",
+      "coach": "Samantha Ortiz",
+      "telefono": "5576432307",
+      "email": "coach592@gmail.com",
+      "asistentes": [
+        "Asistente: Adriana Castillo"
+      ],
+      "num_bailarines": 8,
+      "num_coreos": 2,
+      "boletos": 16,
+      "costo_total": 30100,
+      "pagado": 0,
+      "saldo": 30100,
+      "notas": null,
+      "enviado_el": "2026-05-30T11:02:41.337+00:00",
+      "confirmado_el": "2026-05-30T11:23:36.506+00:00",
+      "bailarines": [
+        {
+          "id": 5944,
+          "nombre": "Paola Ramos",
+          "nacimiento": "2014-03-12",
+          "categoria": "Junior"
+        },
+        {
+          "id": 5945,
+          "nombre": "Victoria Ortiz",
+          "nacimiento": "2014-11-05",
+          "categoria": "Elementary"
+        },
+        {
+          "id": 5946,
+          "nombre": "Ariadna Cruz",
+          "nacimiento": "2014-05-14",
+          "categoria": "Junior"
+        },
+        {
+          "id": 5947,
+          "nombre": "Michelle Gutiérrez",
+          "nacimiento": "2015-09-01",
+          "categoria": "Elementary"
+        },
+        {
+          "id": 5948,
+          "nombre": "María José González",
+          "nacimiento": "2015-02-18",
+          "categoria": "Elementary"
+        },
+        {
+          "id": 5949,
+          "nombre": "Ximena Rodríguez",
+          "nacimiento": "2014-11-05",
+          "categoria": "Elementary"
+        },
+        {
+          "id": 5950,
+          "nombre": "Mariana Moreno",
+          "nacimiento": "2015-07-22",
+          "categoria": "Elementary"
+        },
+        {
+          "id": 5951,
+          "nombre": "Fernanda Ramírez",
+          "nacimiento": "2015-09-01",
+          "categoria": "Elementary"
+        }
+      ],
+      "coreografias": [
+        {
+          "modalidad": "Grupal",
+          "categoria": "Junior",
+          "nivel": "avanzado",
+          "estilo": "Hip Hop",
+          "bailarines": 8
+        },
+        {
+          "modalidad": "Solista",
+          "categoria": "Elementary",
+          "nivel": "avanzado",
+          "estilo": "Hip Hop",
+          "bailarines": 1
+        }
+      ]
+    },
+    {
+      "id": 242,
+      "estado": "pendiente",
+      "academia": "Academia Ifel (Guadalajara)",
+      "coach": "Brenda Morales",
+      "telefono": "5538873751",
+      "email": "coach999@gmail.com",
+      "asistentes": [
+        "Asistente: Sofia Hernandez"
+      ],
+      "num_bailarines": 9,
+      "num_coreos": 1,
+      "boletos": 18,
+      "costo_total": 33300,
+      "pagado": 33300,
+      "saldo": 0,
+      "notas": null,
+      "enviado_el": "2026-05-30T11:03:06.033+00:00",
+      "confirmado_el": null,
+      "bailarines": [
+        {
+          "id": 5979,
+          "nombre": "Fernanda Ramírez",
+          "nacimiento": "2008-06-10",
+          "categoria": "Senior"
+        },
+        {
+          "id": 5980,
+          "nombre": "Valeria Torres",
+          "nacimiento": "2009-08-14",
+          "categoria": "Senior"
+        },
+        {
+          "id": 5981,
+          "nombre": "Paulina Morales",
+          "nacimiento": "2009-08-14",
+          "categoria": "Senior"
+        },
+        {
+          "id": 5982,
+          "nombre": "Regina López",
+          "nacimiento": "2008-12-03",
+          "categoria": "Senior"
+        },
+        {
+          "id": 5983,
+          "nombre": "Alejandra Jiménez",
+          "nacimiento": "2009-02-25",
+          "categoria": "Senior"
+        },
+        {
+          "id": 5984,
+          "nombre": "Paola Ramos",
+          "nacimiento": "2010-01-29",
+          "categoria": "Senior"
+        },
+        {
+          "id": 5985,
+          "nombre": "Valentina Hernández",
+          "nacimiento": "2008-12-03",
+          "categoria": "Senior"
+        },
+        {
+          "id": 5986,
+          "nombre": "Ximena Rodríguez",
+          "nacimiento": "2009-08-14",
+          "categoria": "Senior"
+        },
+        {
+          "id": 5987,
+          "nombre": "Itzel Vargas",
+          "nacimiento": "2010-01-29",
+          "categoria": "Senior"
+        }
+      ],
+      "coreografias": [
+        {
+          "modalidad": "Solista",
+          "categoria": "Senior",
+          "nivel": "avanzado",
+          "estilo": "Ballet",
+          "bailarines": 1
+        }
+      ]
+    },
+    {
+      "id": 243,
+      "estado": "pendiente",
+      "academia": "Colegio Cervantes (Guadalajara)",
+      "coach": "Ana Paula Cruz",
+      "telefono": "5558959965",
+      "email": "coach225@gmail.com",
+      "asistentes": [
+        "Asistente: Lorena Ortiz",
+        "Asistente: Patricia Gomez"
+      ],
+      "num_bailarines": 17,
+      "num_coreos": 1,
+      "boletos": 34,
+      "costo_total": 62900,
+      "pagado": 0,
+      "saldo": 62900,
+      "notas": null,
+      "enviado_el": "2026-05-30T11:03:37.381+00:00",
+      "confirmado_el": null,
+      "bailarines": [
+        {
+          "id": 6039,
+          "nombre": "Isabella Sánchez",
+          "nacimiento": "2013-06-14",
+          "categoria": "Junior"
+        },
+        {
+          "id": 6040,
+          "nombre": "Victoria Ortiz",
+          "nacimiento": "2011-04-20",
+          "categoria": "Senior"
+        },
+        {
+          "id": 6041,
+          "nombre": "Regina López",
+          "nacimiento": "2013-06-14",
+          "categoria": "Junior"
+        },
+        {
+          "id": 6042,
+          "nombre": "Natalia Mendoza",
+          "nacimiento": "2011-04-20",
+          "categoria": "Senior"
+        },
+        {
+          "id": 6043,
+          "nombre": "Camila Martínez",
+          "nacimiento": "2011-09-09",
+          "categoria": "Junior"
+        },
+        {
+          "id": 6044,
+          "nombre": "Daniela Flores",
+          "nacimiento": "2013-01-07",
+          "categoria": "Junior"
+        },
+        {
+          "id": 6045,
+          "nombre": "Paola Ramos",
+          "nacimiento": "2012-03-30",
+          "categoria": "Junior"
+        },
+        {
+          "id": 6046,
+          "nombre": "Karla Chávez",
+          "nacimiento": "2013-01-07",
+          "categoria": "Junior"
+        },
+        {
+          "id": 6047,
+          "nombre": "Valentina Hernández",
+          "nacimiento": "2011-04-20",
+          "categoria": "Senior"
+        },
+        {
+          "id": 6048,
+          "nombre": "Paulina Morales",
+          "nacimiento": "2012-08-15",
+          "categoria": "Junior"
+        },
+        {
+          "id": 6049,
+          "nombre": "Ana Paula Castillo",
+          "nacimiento": "2013-01-07",
+          "categoria": "Junior"
+        },
+        {
+          "id": 6050,
+          "nombre": "Emilia Aguilar",
+          "nacimiento": "2011-11-23",
+          "categoria": "Junior"
+        },
+        {
+          "id": 6051,
+          "nombre": "Romina Vázquez",
+          "nacimiento": "2011-04-20",
+          "categoria": "Senior"
+        },
+        {
+          "id": 6052,
+          "nombre": "Michelle Gutiérrez",
+          "nacimiento": "2012-03-30",
+          "categoria": "Junior"
+        },
+        {
+          "id": 6053,
+          "nombre": "Fernanda Ramírez",
+          "nacimiento": "2011-11-23",
+          "categoria": "Junior"
+        },
+        {
+          "id": 6054,
+          "nombre": "Ximena Rodríguez",
+          "nacimiento": "2013-06-14",
+          "categoria": "Junior"
+        },
+        {
+          "id": 6055,
+          "nombre": "Alejandra Jiménez",
+          "nacimiento": "2012-08-15",
+          "categoria": "Junior"
+        }
+      ],
+      "coreografias": [
+        {
+          "modalidad": "Grupal",
+          "categoria": "Senior",
+          "nivel": "basico",
+          "estilo": "Poms",
+          "bailarines": 17
+        }
+      ]
+    },
+    {
+      "id": 244,
+      "estado": "confirmado",
+      "academia": "Colegio Subiré (Guadalajara)",
+      "coach": "Karla Mendoza",
+      "telefono": "5511513172",
+      "email": "coach165@gmail.com",
+      "asistentes": [
+        "Asistente: Martha Flores"
+      ],
+      "num_bailarines": 10,
+      "num_coreos": 1,
+      "boletos": 20,
+      "costo_total": 37000,
+      "pagado": 37000,
+      "saldo": 0,
+      "notas": null,
+      "enviado_el": "2026-05-30T11:04:04.646+00:00",
+      "confirmado_el": "2026-05-30T11:22:57.716+00:00",
+      "bailarines": [
+        {
+          "id": 6086,
+          "nombre": "Brenda Medina",
+          "nacimiento": "2011-11-23",
+          "categoria": "Junior"
+        },
+        {
+          "id": 6087,
+          "nombre": "Sofía García",
+          "nacimiento": "2011-04-20",
+          "categoria": "Senior"
+        },
+        {
+          "id": 6088,
+          "nombre": "Renata Pérez",
+          "nacimiento": "2012-03-30",
+          "categoria": "Junior"
+        },
+        {
+          "id": 6089,
+          "nombre": "Andrea Reyes",
+          "nacimiento": "2012-03-30",
+          "categoria": "Junior"
+        },
+        {
+          "id": 6090,
+          "nombre": "Valentina Hernández",
+          "nacimiento": "2011-09-09",
+          "categoria": "Junior"
+        },
+        {
+          "id": 6091,
+          "nombre": "Natalia Mendoza",
+          "nacimiento": "2011-09-09",
+          "categoria": "Junior"
+        },
+        {
+          "id": 6092,
+          "nombre": "Luciana Ruiz",
+          "nacimiento": "2012-03-30",
+          "categoria": "Junior"
+        },
+        {
+          "id": 6093,
+          "nombre": "Ximena Rodríguez",
+          "nacimiento": "2011-09-09",
+          "categoria": "Junior"
+        },
+        {
+          "id": 6094,
+          "nombre": "Karla Chávez",
+          "nacimiento": "2011-09-09",
+          "categoria": "Junior"
+        },
+        {
+          "id": 6095,
+          "nombre": "Daniela Flores",
+          "nacimiento": "2013-01-07",
+          "categoria": "Junior"
+        }
+      ],
+      "coreografias": [
+        {
+          "modalidad": "Grupal",
+          "categoria": "Senior",
+          "nivel": "basico",
+          "estilo": "Jazz",
+          "bailarines": 10
+        }
+      ]
+    },
+    {
+      "id": 245,
+      "estado": "confirmado",
+      "academia": "Unlimited (Guadalajara)",
+      "coach": "Sofía Ruiz",
+      "telefono": "5575616851",
+      "email": "coach665@gmail.com",
+      "asistentes": [
+        "Asistente: Adriana Castillo"
+      ],
+      "num_bailarines": 6,
+      "num_coreos": 1,
+      "boletos": 12,
+      "costo_total": 22600,
+      "pagado": 0,
+      "saldo": 22600,
+      "notas": null,
+      "enviado_el": "2026-05-30T11:04:28.628+00:00",
+      "confirmado_el": "2026-05-30T11:24:05.637+00:00",
+      "bailarines": [
+        {
+          "id": 6114,
+          "nombre": "Karla Chávez",
+          "nacimiento": "2014-03-12",
+          "categoria": "Junior"
+        },
+        {
+          "id": 6115,
+          "nombre": "Daniela Flores",
+          "nacimiento": "2015-07-22",
+          "categoria": "Elementary"
+        },
+        {
+          "id": 6116,
+          "nombre": "Natalia Mendoza",
+          "nacimiento": "2015-07-22",
+          "categoria": "Elementary"
+        },
+        {
+          "id": 6117,
+          "nombre": "Ariadna Cruz",
+          "nacimiento": "2014-11-05",
+          "categoria": "Elementary"
+        },
+        {
+          "id": 6118,
+          "nombre": "Regina López",
+          "nacimiento": "2015-09-01",
+          "categoria": "Elementary"
+        },
+        {
+          "id": 6119,
+          "nombre": "Luciana Ruiz",
+          "nacimiento": "2014-11-05",
+          "categoria": "Elementary"
+        }
+      ],
+      "coreografias": [
+        {
+          "modalidad": "Solista",
+          "categoria": "Elementary",
+          "nivel": "avanzado",
+          "estilo": "Hip Hop",
+          "bailarines": 1
+        }
+      ]
+    },
+    {
+      "id": 246,
+      "estado": "pendiente",
+      "academia": "Colegio Subiré (Guadalajara)",
+      "coach": "Michelle Sánchez",
+      "telefono": "5533429796",
+      "email": "coach662@gmail.com",
+      "asistentes": [
+        "Asistente: Veronica Diaz",
+        "Asistente: Diana Lopez"
+      ],
+      "num_bailarines": 12,
+      "num_coreos": 2,
+      "boletos": 24,
+      "costo_total": 50800,
+      "pagado": 0,
+      "saldo": 50800,
+      "notas": null,
+      "enviado_el": "2026-05-30T11:05:04.332+00:00",
+      "confirmado_el": null,
+      "bailarines": [
+        {
+          "id": 6180,
+          "nombre": "María José González",
+          "nacimiento": "2010-07-18",
+          "categoria": "Senior"
+        },
+        {
+          "id": 6181,
+          "nombre": "Regina López",
+          "nacimiento": "2010-01-29",
+          "categoria": "Senior"
+        },
+        {
+          "id": 6182,
+          "nombre": "Mariana Moreno",
+          "nacimiento": "2010-07-18",
+          "categoria": "Senior"
+        },
+        {
+          "id": 6183,
+          "nombre": "Samantha Luna",
+          "nacimiento": "2009-08-14",
+          "categoria": "Senior"
+        },
+        {
+          "id": 6184,
+          "nombre": "Ariadna Cruz",
+          "nacimiento": "2009-02-25",
+          "categoria": "Senior"
+        },
+        {
+          "id": 6185,
+          "nombre": "Karla Chávez",
+          "nacimiento": "2010-01-29",
+          "categoria": "Senior"
+        },
+        {
+          "id": 6186,
+          "nombre": "Itzel Vargas",
+          "nacimiento": "2009-08-14",
+          "categoria": "Senior"
+        },
+        {
+          "id": 6187,
+          "nombre": "Paulina Morales",
+          "nacimiento": "2009-02-25",
+          "categoria": "Senior"
+        },
+        {
+          "id": 6188,
+          "nombre": "Valentina Hernández",
+          "nacimiento": "2009-08-14",
+          "categoria": "Senior"
+        },
+        {
+          "id": 6189,
+          "nombre": "Daniela Flores",
+          "nacimiento": "2009-02-25",
+          "categoria": "Senior"
+        },
+        {
+          "id": 6190,
+          "nombre": "Alejandra Jiménez",
+          "nacimiento": "2009-08-14",
+          "categoria": "Senior"
+        },
+        {
+          "id": 6191,
+          "nombre": "Ana Paula Castillo",
+          "nacimiento": "2010-07-18",
+          "categoria": "Senior"
+        }
+      ],
+      "coreografias": [
+        {
+          "modalidad": "Grupal",
+          "categoria": "Senior",
+          "nivel": "basico",
+          "estilo": "Poms",
+          "bailarines": 12
+        },
+        {
+          "modalidad": "Grupal",
+          "categoria": "Senior",
+          "nivel": "basico",
+          "estilo": "Jazz",
+          "bailarines": 12
+        }
+      ]
+    },
+    {
+      "id": 247,
+      "estado": "pendiente",
+      "academia": "Ballet Clásico Attitude (Guadalajara)",
+      "coach": "Paola Aguilar",
+      "telefono": "5587928602",
+      "email": "coach414@gmail.com",
+      "asistentes": [
+        "Asistente: Gabriela Mendoza"
+      ],
+      "num_bailarines": 8,
+      "num_coreos": 2,
+      "boletos": 16,
+      "costo_total": 30100,
+      "pagado": 0,
+      "saldo": 30100,
+      "notas": null,
+      "enviado_el": "2026-05-30T11:05:32.743+00:00",
+      "confirmado_el": null,
+      "bailarines": [
+        {
+          "id": 6232,
+          "nombre": "Isabella Sánchez",
+          "nacimiento": "2013-01-07",
+          "categoria": "Junior"
+        },
+        {
+          "id": 6233,
+          "nombre": "Itzel Vargas",
+          "nacimiento": "2011-04-20",
+          "categoria": "Senior"
+        },
+        {
+          "id": 6234,
+          "nombre": "Emilia Aguilar",
+          "nacimiento": "2013-06-14",
+          "categoria": "Junior"
+        },
+        {
+          "id": 6235,
+          "nombre": "Luciana Ruiz",
+          "nacimiento": "2011-11-23",
+          "categoria": "Junior"
+        },
+        {
+          "id": 6236,
+          "nombre": "Paulina Morales",
+          "nacimiento": "2012-03-30",
+          "categoria": "Junior"
+        },
+        {
+          "id": 6237,
+          "nombre": "Samantha Luna",
+          "nacimiento": "2011-11-23",
+          "categoria": "Junior"
+        },
+        {
+          "id": 6238,
+          "nombre": "Mariana Moreno",
+          "nacimiento": "2013-06-14",
+          "categoria": "Junior"
+        },
+        {
+          "id": 6239,
+          "nombre": "María José González",
+          "nacimiento": "2012-03-30",
+          "categoria": "Junior"
+        }
+      ],
+      "coreografias": [
+        {
+          "modalidad": "Dueto",
+          "categoria": "Junior",
+          "nivel": "avanzado",
+          "estilo": "Ballet",
+          "bailarines": 2
+        },
+        {
+          "modalidad": "Solista",
+          "categoria": "Junior",
+          "nivel": "avanzado",
+          "estilo": "Ballet",
+          "bailarines": 1
+        }
+      ]
+    },
+    {
+      "id": 248,
+      "estado": "confirmado",
+      "academia": "One Space Academia (Guadalajara)",
+      "coach": "Sofía Ruiz",
+      "telefono": "5557917077",
+      "email": "coach523@gmail.com",
+      "asistentes": [
+        "Asistente: Adriana Castillo"
+      ],
+      "num_bailarines": 10,
+      "num_coreos": 2,
+      "boletos": 20,
+      "costo_total": 37500,
+      "pagado": 0,
+      "saldo": 37500,
+      "notas": null,
+      "enviado_el": "2026-05-30T11:06:03.958+00:00",
+      "confirmado_el": "2026-05-30T11:23:39.514+00:00",
+      "bailarines": [
+        {
+          "id": 6290,
+          "nombre": "Alejandra Jiménez",
+          "nacimiento": "2015-09-01",
+          "categoria": "Elementary"
+        },
+        {
+          "id": 6291,
+          "nombre": "Sofía García",
+          "nacimiento": "2015-02-18",
+          "categoria": "Elementary"
+        },
+        {
+          "id": 6292,
+          "nombre": "Paola Ramos",
+          "nacimiento": "2015-02-18",
+          "categoria": "Elementary"
+        },
+        {
+          "id": 6293,
+          "nombre": "Luciana Ruiz",
+          "nacimiento": "2015-09-01",
+          "categoria": "Elementary"
+        },
+        {
+          "id": 6294,
+          "nombre": "Brenda Medina",
+          "nacimiento": "2015-07-22",
+          "categoria": "Elementary"
+        },
+        {
+          "id": 6295,
+          "nombre": "Isabella Sánchez",
+          "nacimiento": "2015-07-22",
+          "categoria": "Elementary"
+        },
+        {
+          "id": 6296,
+          "nombre": "Valentina Hernández",
+          "nacimiento": "2014-03-12",
+          "categoria": "Junior"
+        },
+        {
+          "id": 6297,
+          "nombre": "Karla Chávez",
+          "nacimiento": "2014-03-12",
+          "categoria": "Junior"
+        },
+        {
+          "id": 6298,
+          "nombre": "Valeria Torres",
+          "nacimiento": "2015-02-18",
+          "categoria": "Elementary"
+        },
+        {
+          "id": 6299,
+          "nombre": "Fernanda Ramírez",
+          "nacimiento": "2016-08-30",
+          "categoria": "Elementary"
+        }
+      ],
+      "coreografias": [
+        {
+          "modalidad": "Grupal",
+          "categoria": "Junior",
+          "nivel": "avanzado",
+          "estilo": "Jazz",
+          "bailarines": 10
+        },
+        {
+          "modalidad": "Solista",
+          "categoria": "Elementary",
+          "nivel": "avanzado",
+          "estilo": "Hip Hop",
+          "bailarines": 1
+        }
+      ]
+    },
+    {
+      "id": 249,
+      "estado": "confirmado",
+      "academia": "Studio Horus Egiptus (Guadalajara)",
+      "coach": "Itzel Reyes",
+      "telefono": "5595541017",
+      "email": "coach617@gmail.com",
+      "asistentes": [
+        "Asistente: Jessica Torres"
+      ],
+      "num_bailarines": 9,
+      "num_coreos": 3,
+      "boletos": 18,
+      "costo_total": 34300,
+      "pagado": 0,
+      "saldo": 34300,
+      "notas": null,
+      "enviado_el": "2026-05-30T11:06:38.642+00:00",
+      "confirmado_el": "2026-05-30T11:23:43.977+00:00",
+      "bailarines": [
+        {
+          "id": 6363,
+          "nombre": "María José González",
+          "nacimiento": "2011-04-20",
+          "categoria": "Senior"
+        },
+        {
+          "id": 6364,
+          "nombre": "Samantha Luna",
+          "nacimiento": "2013-06-14",
+          "categoria": "Junior"
+        },
+        {
+          "id": 6365,
+          "nombre": "Camila Martínez",
+          "nacimiento": "2012-08-15",
+          "categoria": "Junior"
+        },
+        {
+          "id": 6366,
+          "nombre": "Regina López",
+          "nacimiento": "2011-04-20",
+          "categoria": "Senior"
+        },
+        {
+          "id": 6367,
+          "nombre": "Emilia Aguilar",
+          "nacimiento": "2011-09-09",
+          "categoria": "Junior"
+        },
+        {
+          "id": 6368,
+          "nombre": "Ximena Rodríguez",
+          "nacimiento": "2013-06-14",
+          "categoria": "Junior"
+        },
+        {
+          "id": 6369,
+          "nombre": "Alejandra Jiménez",
+          "nacimiento": "2012-03-30",
+          "categoria": "Junior"
+        },
+        {
+          "id": 6370,
+          "nombre": "Ana Paula Castillo",
+          "nacimiento": "2011-04-20",
+          "categoria": "Senior"
+        },
+        {
+          "id": 6371,
+          "nombre": "Valentina Hernández",
+          "nacimiento": "2012-03-30",
+          "categoria": "Junior"
+        }
+      ],
+      "coreografias": [
+        {
+          "modalidad": "Grupal",
+          "categoria": "Senior",
+          "nivel": "avanzado",
+          "estilo": "Show",
+          "bailarines": 9
+        },
+        {
+          "modalidad": "Solista",
+          "categoria": "Junior",
+          "nivel": "avanzado",
+          "estilo": "Acro Jazz",
+          "bailarines": 1
+        },
+        {
+          "modalidad": "Solista",
+          "categoria": "Junior",
+          "nivel": "avanzado",
+          "estilo": "Acro Jazz",
+          "bailarines": 1
+        }
+      ]
+    },
+    {
+      "id": 250,
+      "estado": "confirmado",
+      "academia": "Studio Horus Egiptus (Guadalajara)",
+      "coach": "Sofía Ruiz",
+      "telefono": "5567636775",
+      "email": "coach491@gmail.com",
+      "asistentes": [
+        "Asistente: Adriana Castillo"
+      ],
+      "num_bailarines": 10,
+      "num_coreos": 2,
+      "boletos": 20,
+      "costo_total": 37500,
+      "pagado": 0,
+      "saldo": 37500,
+      "notas": null,
+      "enviado_el": "2026-05-30T11:07:09.94+00:00",
+      "confirmado_el": "2026-05-30T11:23:47+00:00",
+      "bailarines": [
+        {
+          "id": 6422,
+          "nombre": "Andrea Reyes",
+          "nacimiento": "2013-01-07",
+          "categoria": "Junior"
+        },
+        {
+          "id": 6423,
+          "nombre": "Luciana Ruiz",
+          "nacimiento": "2013-01-07",
+          "categoria": "Junior"
+        },
+        {
+          "id": 6424,
+          "nombre": "Sofía García",
+          "nacimiento": "2012-08-15",
+          "categoria": "Junior"
+        },
+        {
+          "id": 6425,
+          "nombre": "Daniela Flores",
+          "nacimiento": "2012-08-15",
+          "categoria": "Junior"
+        },
+        {
+          "id": 6426,
+          "nombre": "Fernanda Ramírez",
+          "nacimiento": "2011-04-20",
+          "categoria": "Senior"
+        },
+        {
+          "id": 6427,
+          "nombre": "Natalia Mendoza",
+          "nacimiento": "2012-08-15",
+          "categoria": "Junior"
+        },
+        {
+          "id": 6428,
+          "nombre": "Romina Vázquez",
+          "nacimiento": "2012-08-15",
+          "categoria": "Junior"
+        },
+        {
+          "id": 6429,
+          "nombre": "Valeria Torres",
+          "nacimiento": "2013-01-07",
+          "categoria": "Junior"
+        },
+        {
+          "id": 6430,
+          "nombre": "Michelle Gutiérrez",
+          "nacimiento": "2011-09-09",
+          "categoria": "Junior"
+        },
+        {
+          "id": 6431,
+          "nombre": "Valentina Hernández",
+          "nacimiento": "2013-01-07",
+          "categoria": "Junior"
+        }
+      ],
+      "coreografias": [
+        {
+          "modalidad": "Grupal",
+          "categoria": "Senior",
+          "nivel": "avanzado",
+          "estilo": "Acro Jazz",
+          "bailarines": 10
+        },
+        {
+          "modalidad": "Solista",
+          "categoria": "Junior",
+          "nivel": "avanzado",
+          "estilo": "Show",
+          "bailarines": 1
+        }
+      ]
+    },
+    {
+      "id": 251,
+      "estado": "pendiente",
+      "academia": "Academia Ifel (Guadalajara)",
+      "coach": "Fernanda Luna",
+      "telefono": "5561118747",
+      "email": "coach799@gmail.com",
+      "asistentes": [
+        "Asistente: Claudia Sanchez"
+      ],
+      "num_bailarines": 11,
+      "num_coreos": 3,
+      "boletos": 22,
+      "costo_total": 42200,
+      "pagado": 42200,
+      "saldo": 0,
+      "notas": null,
+      "enviado_el": "2026-05-30T11:07:45.643+00:00",
+      "confirmado_el": null,
+      "bailarines": [
+        {
+          "id": 6509,
+          "nombre": "Sofía García",
+          "nacimiento": "2015-07-22",
+          "categoria": "Elementary"
+        },
+        {
+          "id": 6510,
+          "nombre": "Luciana Ruiz",
+          "nacimiento": "2016-08-30",
+          "categoria": "Elementary"
+        },
+        {
+          "id": 6511,
+          "nombre": "Victoria Ortiz",
+          "nacimiento": "2014-03-12",
+          "categoria": "Junior"
+        },
+        {
+          "id": 6512,
+          "nombre": "Daniela Flores",
+          "nacimiento": "2015-09-01",
+          "categoria": "Elementary"
+        },
+        {
+          "id": 6513,
+          "nombre": "Valentina Hernández",
+          "nacimiento": "2015-02-18",
+          "categoria": "Elementary"
+        },
+        {
+          "id": 6514,
+          "nombre": "Samantha Luna",
+          "nacimiento": "2014-05-14",
+          "categoria": "Junior"
+        },
+        {
+          "id": 6515,
+          "nombre": "Andrea Reyes",
+          "nacimiento": "2014-05-14",
+          "categoria": "Junior"
+        },
+        {
+          "id": 6516,
+          "nombre": "María José González",
+          "nacimiento": "2015-02-18",
+          "categoria": "Elementary"
+        },
+        {
+          "id": 6517,
+          "nombre": "Paola Ramos",
+          "nacimiento": "2015-09-01",
+          "categoria": "Elementary"
+        },
+        {
+          "id": 6518,
+          "nombre": "Michelle Gutiérrez",
+          "nacimiento": "2016-08-30",
+          "categoria": "Elementary"
+        },
+        {
+          "id": 6519,
+          "nombre": "Romina Vázquez",
+          "nacimiento": "2015-02-18",
+          "categoria": "Elementary"
+        }
+      ],
+      "coreografias": [
+        {
+          "modalidad": "Grupal",
+          "categoria": "Junior",
+          "nivel": "avanzado",
+          "estilo": "Ballet",
+          "bailarines": 11
+        },
+        {
+          "modalidad": "Dueto",
+          "categoria": "Elementary",
+          "nivel": "avanzado",
+          "estilo": "Jazz",
+          "bailarines": 2
+        },
+        {
+          "modalidad": "Solista",
+          "categoria": "Elementary",
+          "nivel": "avanzado",
+          "estilo": "Ballet",
+          "bailarines": 1
+        }
+      ]
+    },
+    {
+      "id": 252,
+      "estado": "confirmado",
+      "academia": "Colegio Cervantes (Guadalajara)",
+      "coach": "Brenda Morales",
+      "telefono": "5526884559",
+      "email": "coach434@gmail.com",
+      "asistentes": [
+        "Asistente: Sofia Hernandez",
+        "Asistente: Jessica Torres"
+      ],
+      "num_bailarines": 15,
+      "num_coreos": 1,
+      "boletos": 30,
+      "costo_total": 55900,
+      "pagado": 0,
+      "saldo": 55900,
+      "notas": null,
+      "enviado_el": "2026-05-30T11:08:16.02+00:00",
+      "confirmado_el": "2026-05-30T11:22:09.985+00:00",
+      "bailarines": [
+        {
+          "id": 6565,
+          "nombre": "María José González",
+          "nacimiento": "2015-02-18",
+          "categoria": "Elementary"
+        },
+        {
+          "id": 6566,
+          "nombre": "Ana Paula Castillo",
+          "nacimiento": "2015-09-01",
+          "categoria": "Elementary"
+        },
+        {
+          "id": 6567,
+          "nombre": "Fernanda Ramírez",
+          "nacimiento": "2014-05-14",
+          "categoria": "Junior"
+        },
+        {
+          "id": 6568,
+          "nombre": "Renata Pérez",
+          "nacimiento": "2014-05-14",
+          "categoria": "Junior"
+        },
+        {
+          "id": 6569,
+          "nombre": "Ximena Rodríguez",
+          "nacimiento": "2015-02-18",
+          "categoria": "Elementary"
+        },
+        {
+          "id": 6570,
+          "nombre": "Paola Ramos",
+          "nacimiento": "2014-11-05",
+          "categoria": "Elementary"
+        },
+        {
+          "id": 6571,
+          "nombre": "Mariana Moreno",
+          "nacimiento": "2014-11-05",
+          "categoria": "Elementary"
+        },
+        {
+          "id": 6572,
+          "nombre": "Daniela Flores",
+          "nacimiento": "2014-05-14",
+          "categoria": "Junior"
+        },
+        {
+          "id": 6573,
+          "nombre": "Alejandra Jiménez",
+          "nacimiento": "2015-09-01",
+          "categoria": "Elementary"
+        },
+        {
+          "id": 6574,
+          "nombre": "Paulina Morales",
+          "nacimiento": "2014-05-14",
+          "categoria": "Junior"
+        },
+        {
+          "id": 6575,
+          "nombre": "Camila Martínez",
+          "nacimiento": "2014-11-05",
+          "categoria": "Elementary"
+        },
+        {
+          "id": 6576,
+          "nombre": "Regina López",
+          "nacimiento": "2015-02-18",
+          "categoria": "Elementary"
+        },
+        {
+          "id": 6577,
+          "nombre": "Samantha Luna",
+          "nacimiento": "2016-08-30",
+          "categoria": "Elementary"
+        },
+        {
+          "id": 6578,
+          "nombre": "Itzel Vargas",
+          "nacimiento": "2015-02-18",
+          "categoria": "Elementary"
+        },
+        {
+          "id": 6579,
+          "nombre": "Victoria Ortiz",
+          "nacimiento": "2016-08-30",
+          "categoria": "Elementary"
+        }
+      ],
+      "coreografias": [
+        {
+          "modalidad": "Grupal",
+          "categoria": "Junior",
+          "nivel": "basico",
+          "estilo": "Jazz",
+          "bailarines": 15
+        }
+      ]
+    },
+    {
+      "id": 253,
+      "estado": "confirmado",
+      "academia": "Colegio Subiré (Guadalajara)",
+      "coach": "Fernanda Luna",
+      "telefono": "5592696351",
+      "email": "coach152@gmail.com",
+      "asistentes": [
+        "Asistente: Claudia Sanchez",
+        "Asistente: Veronica Diaz"
+      ],
+      "num_bailarines": 13,
+      "num_coreos": 2,
+      "boletos": 26,
+      "costo_total": 55000,
+      "pagado": 0,
+      "saldo": 55000,
+      "notas": null,
+      "enviado_el": "2026-05-30T11:08:52.468+00:00",
+      "confirmado_el": "2026-05-30T11:23:04.17+00:00",
+      "bailarines": [
+        {
+          "id": 6645,
+          "nombre": "Brenda Medina",
+          "nacimiento": "2012-08-15",
+          "categoria": "Junior"
+        },
+        {
+          "id": 6646,
+          "nombre": "Romina Vázquez",
+          "nacimiento": "2013-06-14",
+          "categoria": "Junior"
+        },
+        {
+          "id": 6647,
+          "nombre": "Emilia Aguilar",
+          "nacimiento": "2011-09-09",
+          "categoria": "Junior"
+        },
+        {
+          "id": 6648,
+          "nombre": "Alejandra Jiménez",
+          "nacimiento": "2011-09-09",
+          "categoria": "Junior"
+        },
+        {
+          "id": 6649,
+          "nombre": "Itzel Vargas",
+          "nacimiento": "2013-06-14",
+          "categoria": "Junior"
+        },
+        {
+          "id": 6650,
+          "nombre": "Sofía García",
+          "nacimiento": "2011-11-23",
+          "categoria": "Junior"
+        },
+        {
+          "id": 6651,
+          "nombre": "Camila Martínez",
+          "nacimiento": "2011-04-20",
+          "categoria": "Senior"
+        },
+        {
+          "id": 6652,
+          "nombre": "Ximena Rodríguez",
+          "nacimiento": "2011-11-23",
+          "categoria": "Junior"
+        },
+        {
+          "id": 6653,
+          "nombre": "María José González",
+          "nacimiento": "2012-03-30",
+          "categoria": "Junior"
+        },
+        {
+          "id": 6654,
+          "nombre": "Natalia Mendoza",
+          "nacimiento": "2011-09-09",
+          "categoria": "Junior"
+        },
+        {
+          "id": 6655,
+          "nombre": "Isabella Sánchez",
+          "nacimiento": "2013-06-14",
+          "categoria": "Junior"
+        },
+        {
+          "id": 6656,
+          "nombre": "Luciana Ruiz",
+          "nacimiento": "2013-06-14",
+          "categoria": "Junior"
+        },
+        {
+          "id": 6657,
+          "nombre": "Michelle Gutiérrez",
+          "nacimiento": "2012-03-30",
+          "categoria": "Junior"
+        }
+      ],
+      "coreografias": [
+        {
+          "modalidad": "Grupal",
+          "categoria": "Senior",
+          "nivel": "basico",
+          "estilo": "Jazz",
+          "bailarines": 13
+        },
+        {
+          "modalidad": "Grupal",
+          "categoria": "Senior",
+          "nivel": "basico",
+          "estilo": "Poms",
+          "bailarines": 13
+        }
+      ]
+    },
+    {
+      "id": 254,
+      "estado": "pendiente",
+      "academia": "Academia Ifel (Guadalajara)",
+      "coach": "Paola Aguilar",
+      "telefono": "5519833351",
+      "email": "coach769@gmail.com",
+      "asistentes": [
+        "Asistente: Gabriela Mendoza"
+      ],
+      "num_bailarines": 7,
+      "num_coreos": 1,
+      "boletos": 14,
+      "costo_total": 26300,
+      "pagado": 0,
+      "saldo": 26300,
+      "notas": null,
+      "enviado_el": "2026-05-30T11:09:16.588+00:00",
+      "confirmado_el": null,
+      "bailarines": [
+        {
+          "id": 6679,
+          "nombre": "Samantha Luna",
+          "nacimiento": "2011-04-20",
+          "categoria": "Senior"
+        },
+        {
+          "id": 6680,
+          "nombre": "Valentina Hernández",
+          "nacimiento": "2012-03-30",
+          "categoria": "Junior"
+        },
+        {
+          "id": 6681,
+          "nombre": "Ariadna Cruz",
+          "nacimiento": "2011-11-23",
+          "categoria": "Junior"
+        },
+        {
+          "id": 6682,
+          "nombre": "Sofía García",
+          "nacimiento": "2011-09-09",
+          "categoria": "Junior"
+        },
+        {
+          "id": 6683,
+          "nombre": "Luciana Ruiz",
+          "nacimiento": "2012-03-30",
+          "categoria": "Junior"
+        },
+        {
+          "id": 6684,
+          "nombre": "Emilia Aguilar",
+          "nacimiento": "2011-04-20",
+          "categoria": "Senior"
+        },
+        {
+          "id": 6685,
+          "nombre": "Itzel Vargas",
+          "nacimiento": "2012-08-15",
+          "categoria": "Junior"
+        }
+      ],
+      "coreografias": [
+        {
+          "modalidad": "Solista",
+          "categoria": "Junior",
+          "nivel": "avanzado",
+          "estilo": "Jazz",
+          "bailarines": 1
+        }
+      ]
+    },
+    {
+      "id": 255,
+      "estado": "confirmado",
+      "academia": "Colegio Subiré (Guadalajara)",
+      "coach": "Brenda Morales",
+      "telefono": "5526901917",
+      "email": "coach532@gmail.com",
+      "asistentes": [
+        "Asistente: Sofia Hernandez",
+        "Asistente: Jessica Torres"
+      ],
+      "num_bailarines": 18,
+      "num_coreos": 2,
+      "boletos": 36,
+      "costo_total": 75600,
+      "pagado": 0,
+      "saldo": 75600,
+      "notas": null,
+      "enviado_el": "2026-05-30T11:09:56.149+00:00",
+      "confirmado_el": "2026-05-30T11:23:00.841+00:00",
+      "bailarines": [
+        {
+          "id": 6776,
+          "nombre": "Valeria Torres",
+          "nacimiento": "2010-07-18",
+          "categoria": "Senior"
+        },
+        {
+          "id": 6777,
+          "nombre": "María José González",
+          "nacimiento": "2008-12-03",
+          "categoria": "Senior"
+        },
+        {
+          "id": 6778,
+          "nombre": "Camila Martínez",
+          "nacimiento": "2008-06-10",
+          "categoria": "Senior"
+        },
+        {
+          "id": 6779,
+          "nombre": "Regina López",
+          "nacimiento": "2009-08-14",
+          "categoria": "Senior"
+        },
+        {
+          "id": 6780,
+          "nombre": "Alejandra Jiménez",
+          "nacimiento": "2010-01-29",
+          "categoria": "Senior"
+        },
+        {
+          "id": 6781,
+          "nombre": "Valentina Hernández",
+          "nacimiento": "2010-01-29",
+          "categoria": "Senior"
+        },
+        {
+          "id": 6782,
+          "nombre": "Brenda Medina",
+          "nacimiento": "2010-07-18",
+          "categoria": "Senior"
+        },
+        {
+          "id": 6783,
+          "nombre": "Samantha Luna",
+          "nacimiento": "2008-12-03",
+          "categoria": "Senior"
+        },
+        {
+          "id": 6784,
+          "nombre": "Emilia Aguilar",
+          "nacimiento": "2008-12-03",
+          "categoria": "Senior"
+        },
+        {
+          "id": 6785,
+          "nombre": "Isabella Sánchez",
+          "nacimiento": "2009-08-14",
+          "categoria": "Senior"
+        },
+        {
+          "id": 6786,
+          "nombre": "Sofía García",
+          "nacimiento": "2010-01-29",
+          "categoria": "Senior"
+        },
+        {
+          "id": 6787,
+          "nombre": "Ximena Rodríguez",
+          "nacimiento": "2008-06-10",
+          "categoria": "Senior"
+        },
+        {
+          "id": 6788,
+          "nombre": "Renata Pérez",
+          "nacimiento": "2008-12-03",
+          "categoria": "Senior"
+        },
+        {
+          "id": 6789,
+          "nombre": "Karla Chávez",
+          "nacimiento": "2008-06-10",
+          "categoria": "Senior"
+        },
+        {
+          "id": 6790,
+          "nombre": "Romina Vázquez",
+          "nacimiento": "2010-01-29",
+          "categoria": "Senior"
+        },
+        {
+          "id": 6791,
+          "nombre": "Itzel Vargas",
+          "nacimiento": "2008-06-10",
+          "categoria": "Senior"
+        },
+        {
+          "id": 6792,
+          "nombre": "Natalia Mendoza",
+          "nacimiento": "2008-06-10",
+          "categoria": "Senior"
+        },
+        {
+          "id": 6793,
+          "nombre": "Michelle Gutiérrez",
+          "nacimiento": "2009-08-14",
+          "categoria": "Senior"
+        }
+      ],
+      "coreografias": [
+        {
+          "modalidad": "Grupal",
+          "categoria": "Senior",
+          "nivel": "basico",
+          "estilo": "Poms",
+          "bailarines": 18
+        },
+        {
+          "modalidad": "Grupal",
+          "categoria": "Senior",
+          "nivel": "basico",
+          "estilo": "Jazz",
+          "bailarines": 18
+        }
+      ]
+    },
+    {
+      "id": 256,
+      "estado": "confirmado",
+      "academia": "Colegio Subiré (Guadalajara)",
+      "coach": "Karla Mendoza",
+      "telefono": "5565754935",
+      "email": "coach423@gmail.com",
+      "asistentes": [
+        "Asistente: Martha Flores",
+        "Asistente: Sofia Hernandez"
+      ],
+      "num_bailarines": 14,
+      "num_coreos": 1,
+      "boletos": 28,
+      "costo_total": 52200,
+      "pagado": 40000,
+      "saldo": 12200,
+      "notas": null,
+      "enviado_el": "2026-05-30T11:10:26.148+00:00",
+      "confirmado_el": "2026-05-30T11:22:48.468+00:00",
+      "bailarines": [
+        {
+          "id": 6836,
+          "nombre": "Isabella Sánchez",
+          "nacimiento": "2013-01-07",
+          "categoria": "Junior"
+        },
+        {
+          "id": 6837,
+          "nombre": "Ana Paula Castillo",
+          "nacimiento": "2013-01-07",
+          "categoria": "Junior"
+        },
+        {
+          "id": 6838,
+          "nombre": "Camila Martínez",
+          "nacimiento": "2011-11-23",
+          "categoria": "Junior"
+        },
+        {
+          "id": 6839,
+          "nombre": "Mariana Moreno",
+          "nacimiento": "2011-11-23",
+          "categoria": "Junior"
+        },
+        {
+          "id": 6840,
+          "nombre": "Emilia Aguilar",
+          "nacimiento": "2012-03-30",
+          "categoria": "Junior"
+        },
+        {
+          "id": 6841,
+          "nombre": "Brenda Medina",
+          "nacimiento": "2012-08-15",
+          "categoria": "Junior"
+        },
+        {
+          "id": 6842,
+          "nombre": "Andrea Reyes",
+          "nacimiento": "2011-11-23",
+          "categoria": "Junior"
+        },
+        {
+          "id": 6843,
+          "nombre": "Ariadna Cruz",
+          "nacimiento": "2011-09-09",
+          "categoria": "Junior"
+        },
+        {
+          "id": 6844,
+          "nombre": "Fernanda Ramírez",
+          "nacimiento": "2013-06-14",
+          "categoria": "Junior"
+        },
+        {
+          "id": 6845,
+          "nombre": "Luciana Ruiz",
+          "nacimiento": "2012-08-15",
+          "categoria": "Junior"
+        },
+        {
+          "id": 6846,
+          "nombre": "Michelle Gutiérrez",
+          "nacimiento": "2011-04-20",
+          "categoria": "Senior"
+        },
+        {
+          "id": 6847,
+          "nombre": "Paola Ramos",
+          "nacimiento": "2013-01-07",
+          "categoria": "Junior"
+        },
+        {
+          "id": 6848,
+          "nombre": "Valeria Torres",
+          "nacimiento": "2011-11-23",
+          "categoria": "Junior"
+        },
+        {
+          "id": 6849,
+          "nombre": "Ximena Rodríguez",
+          "nacimiento": "2012-03-30",
+          "categoria": "Junior"
+        }
+      ],
+      "coreografias": [
+        {
+          "modalidad": "Grupal",
+          "categoria": "Senior",
+          "nivel": "basico",
+          "estilo": "Poms",
+          "bailarines": 14
+        }
+      ]
+    },
+    {
+      "id": 257,
+      "estado": "confirmado",
+      "academia": "Colegio Cervantes (Guadalajara)",
+      "coach": "Sofía Ruiz",
+      "telefono": "5567488123",
+      "email": "coach441@gmail.com",
+      "asistentes": [
+        "Asistente: Adriana Castillo"
+      ],
+      "num_bailarines": 11,
+      "num_coreos": 1,
+      "boletos": 22,
+      "costo_total": 40700,
+      "pagado": 0,
+      "saldo": 40700,
+      "notas": null,
+      "enviado_el": "2026-05-30T11:10:53.863+00:00",
+      "confirmado_el": "2026-05-30T11:22:14.636+00:00",
+      "bailarines": [
+        {
+          "id": 6883,
+          "nombre": "Ana Paula Castillo",
+          "nacimiento": "2009-08-14",
+          "categoria": "Senior"
+        },
+        {
+          "id": 6884,
+          "nombre": "Sofía García",
+          "nacimiento": "2010-07-18",
+          "categoria": "Senior"
+        },
+        {
+          "id": 6885,
+          "nombre": "Paulina Morales",
+          "nacimiento": "2009-02-25",
+          "categoria": "Senior"
+        },
+        {
+          "id": 6886,
+          "nombre": "Romina Vázquez",
+          "nacimiento": "2010-01-29",
+          "categoria": "Senior"
+        },
+        {
+          "id": 6887,
+          "nombre": "Natalia Mendoza",
+          "nacimiento": "2008-06-10",
+          "categoria": "Senior"
+        },
+        {
+          "id": 6888,
+          "nombre": "Renata Pérez",
+          "nacimiento": "2010-01-29",
+          "categoria": "Senior"
+        },
+        {
+          "id": 6889,
+          "nombre": "Fernanda Ramírez",
+          "nacimiento": "2009-08-14",
+          "categoria": "Senior"
+        },
+        {
+          "id": 6890,
+          "nombre": "Valentina Hernández",
+          "nacimiento": "2008-06-10",
+          "categoria": "Senior"
+        },
+        {
+          "id": 6891,
+          "nombre": "Victoria Ortiz",
+          "nacimiento": "2009-08-14",
+          "categoria": "Senior"
+        },
+        {
+          "id": 6892,
+          "nombre": "Samantha Luna",
+          "nacimiento": "2009-02-25",
+          "categoria": "Senior"
+        },
+        {
+          "id": 6893,
+          "nombre": "Andrea Reyes",
+          "nacimiento": "2010-07-18",
+          "categoria": "Senior"
+        }
+      ],
+      "coreografias": [
+        {
+          "modalidad": "Grupal",
+          "categoria": "Senior",
+          "nivel": "basico",
+          "estilo": "Poms",
+          "bailarines": 11
+        }
+      ]
+    },
+    {
+      "id": 258,
+      "estado": "confirmado",
+      "academia": "Unlimited (Guadalajara)",
+      "coach": "Paola Aguilar",
+      "telefono": "5584577805",
+      "email": "coach394@gmail.com",
+      "asistentes": [
+        "Asistente: Gabriela Mendoza"
+      ],
+      "num_bailarines": 9,
+      "num_coreos": 2,
+      "boletos": 18,
+      "costo_total": 33800,
+      "pagado": 0,
+      "saldo": 33800,
+      "notas": null,
+      "enviado_el": "2026-05-30T11:11:24.531+00:00",
+      "confirmado_el": "2026-05-30T11:21:51.399+00:00",
+      "bailarines": [
+        {
+          "id": 6939,
+          "nombre": "Luciana Ruiz",
+          "nacimiento": "2013-06-14",
+          "categoria": "Junior"
+        },
+        {
+          "id": 6940,
+          "nombre": "Victoria Ortiz",
+          "nacimiento": "2013-01-07",
+          "categoria": "Junior"
+        },
+        {
+          "id": 6941,
+          "nombre": "Isabella Sánchez",
+          "nacimiento": "2012-03-30",
+          "categoria": "Junior"
+        },
+        {
+          "id": 6942,
+          "nombre": "Andrea Reyes",
+          "nacimiento": "2013-01-07",
+          "categoria": "Junior"
+        },
+        {
+          "id": 6943,
+          "nombre": "Ximena Rodríguez",
+          "nacimiento": "2013-01-07",
+          "categoria": "Junior"
+        },
+        {
+          "id": 6944,
+          "nombre": "Itzel Vargas",
+          "nacimiento": "2011-09-09",
+          "categoria": "Junior"
+        },
+        {
+          "id": 6945,
+          "nombre": "Paulina Morales",
+          "nacimiento": "2011-09-09",
+          "categoria": "Junior"
+        },
+        {
+          "id": 6946,
+          "nombre": "Daniela Flores",
+          "nacimiento": "2012-03-30",
+          "categoria": "Junior"
+        },
+        {
+          "id": 6947,
+          "nombre": "María José González",
+          "nacimiento": "2011-04-20",
+          "categoria": "Senior"
+        }
+      ],
+      "coreografias": [
+        {
+          "modalidad": "Grupal",
+          "categoria": "Senior",
+          "nivel": "avanzado",
+          "estilo": "Hip Hop",
+          "bailarines": 9
+        },
+        {
+          "modalidad": "Solista",
+          "categoria": "Junior",
+          "nivel": "avanzado",
+          "estilo": "Contempo",
+          "bailarines": 1
+        }
+      ]
+    },
+    {
+      "id": 259,
+      "estado": "confirmado",
+      "academia": "Colegio Subiré (Guadalajara)",
+      "coach": "Brenda Morales",
+      "telefono": "5524712411",
+      "email": "coach512@gmail.com",
+      "asistentes": [
+        "Asistente: Sofia Hernandez",
+        "Asistente: Jessica Torres"
+      ],
+      "num_bailarines": 16,
+      "num_coreos": 1,
+      "boletos": 32,
+      "costo_total": 59200,
+      "pagado": 0,
+      "saldo": 59200,
+      "notas": null,
+      "enviado_el": "2026-05-30T11:11:55.794+00:00",
+      "confirmado_el": "2026-05-30T11:23:09.719+00:00",
+      "bailarines": [
+        {
+          "id": 6996,
+          "nombre": "Paulina Morales",
+          "nacimiento": "2014-05-14",
+          "categoria": "Junior"
+        },
+        {
+          "id": 6997,
+          "nombre": "Natalia Mendoza",
+          "nacimiento": "2014-11-05",
+          "categoria": "Elementary"
+        },
+        {
+          "id": 6998,
+          "nombre": "Emilia Aguilar",
+          "nacimiento": "2015-07-22",
+          "categoria": "Elementary"
+        },
+        {
+          "id": 6999,
+          "nombre": "Mariana Moreno",
+          "nacimiento": "2015-02-18",
+          "categoria": "Elementary"
+        },
+        {
+          "id": 7000,
+          "nombre": "Sofía García",
+          "nacimiento": "2016-08-30",
+          "categoria": "Elementary"
+        },
+        {
+          "id": 7001,
+          "nombre": "Valentina Hernández",
+          "nacimiento": "2014-11-05",
+          "categoria": "Elementary"
+        },
+        {
+          "id": 7002,
+          "nombre": "Isabella Sánchez",
+          "nacimiento": "2016-08-30",
+          "categoria": "Elementary"
+        },
+        {
+          "id": 7003,
+          "nombre": "Romina Vázquez",
+          "nacimiento": "2014-05-14",
+          "categoria": "Junior"
+        },
+        {
+          "id": 7004,
+          "nombre": "Ana Paula Castillo",
+          "nacimiento": "2014-03-12",
+          "categoria": "Junior"
+        },
+        {
+          "id": 7005,
+          "nombre": "Itzel Vargas",
+          "nacimiento": "2014-05-14",
+          "categoria": "Junior"
+        },
+        {
+          "id": 7006,
+          "nombre": "Fernanda Ramírez",
+          "nacimiento": "2014-11-05",
+          "categoria": "Elementary"
+        },
+        {
+          "id": 7007,
+          "nombre": "Michelle Gutiérrez",
+          "nacimiento": "2015-07-22",
+          "categoria": "Elementary"
+        },
+        {
+          "id": 7008,
+          "nombre": "Daniela Flores",
+          "nacimiento": "2014-03-12",
+          "categoria": "Junior"
+        },
+        {
+          "id": 7009,
+          "nombre": "María José González",
+          "nacimiento": "2015-02-18",
+          "categoria": "Elementary"
+        },
+        {
+          "id": 7010,
+          "nombre": "Regina López",
+          "nacimiento": "2014-03-12",
+          "categoria": "Junior"
+        },
+        {
+          "id": 7011,
+          "nombre": "Alejandra Jiménez",
+          "nacimiento": "2016-08-30",
+          "categoria": "Elementary"
+        }
+      ],
+      "coreografias": [
+        {
+          "modalidad": "Grupal",
+          "categoria": "Junior",
+          "nivel": "basico",
+          "estilo": "Poms",
+          "bailarines": 16
+        }
+      ]
+    },
+    {
+      "id": 260,
+      "estado": "confirmado",
+      "academia": "Olimpia Jazmín (Guadalajara)",
+      "coach": "Michelle Sánchez",
+      "telefono": "5569222183",
+      "email": "coach417@gmail.com",
+      "asistentes": [
+        "Asistente: Veronica Diaz",
+        "Asistente: Diana Lopez"
+      ],
+      "num_bailarines": 12,
+      "num_coreos": 2,
+      "boletos": 24,
+      "costo_total": 45300,
+      "pagado": 0,
+      "saldo": 45300,
+      "notas": null,
+      "enviado_el": "2026-05-30T11:12:28.728+00:00",
+      "confirmado_el": "2026-05-30T11:23:22.781+00:00",
+      "bailarines": [
+        {
+          "id": 7072,
+          "nombre": "Natalia Mendoza",
+          "nacimiento": "2012-03-30",
+          "categoria": "Junior"
+        },
+        {
+          "id": 7073,
+          "nombre": "Fernanda Ramírez",
+          "nacimiento": "2013-06-14",
+          "categoria": "Junior"
+        },
+        {
+          "id": 7074,
+          "nombre": "Mariana Moreno",
+          "nacimiento": "2011-11-23",
+          "categoria": "Junior"
+        },
+        {
+          "id": 7075,
+          "nombre": "Ximena Rodríguez",
+          "nacimiento": "2011-04-20",
+          "categoria": "Senior"
+        },
+        {
+          "id": 7076,
+          "nombre": "Isabella Sánchez",
+          "nacimiento": "2012-08-15",
+          "categoria": "Junior"
+        },
+        {
+          "id": 7077,
+          "nombre": "Camila Martínez",
+          "nacimiento": "2013-01-07",
+          "categoria": "Junior"
+        },
+        {
+          "id": 7078,
+          "nombre": "Regina López",
+          "nacimiento": "2011-11-23",
+          "categoria": "Junior"
+        },
+        {
+          "id": 7079,
+          "nombre": "Victoria Ortiz",
+          "nacimiento": "2011-04-20",
+          "categoria": "Senior"
+        },
+        {
+          "id": 7080,
+          "nombre": "Itzel Vargas",
+          "nacimiento": "2012-03-30",
+          "categoria": "Junior"
+        },
+        {
+          "id": 7081,
+          "nombre": "Karla Chávez",
+          "nacimiento": "2013-06-14",
+          "categoria": "Junior"
+        },
+        {
+          "id": 7082,
+          "nombre": "Valentina Hernández",
+          "nacimiento": "2013-01-07",
+          "categoria": "Junior"
+        },
+        {
+          "id": 7083,
+          "nombre": "Valeria Torres",
+          "nacimiento": "2013-01-07",
+          "categoria": "Junior"
+        }
+      ],
+      "coreografias": [
+        {
+          "modalidad": "Grupal",
+          "categoria": "Senior",
+          "nivel": "avanzado",
+          "estilo": "Show",
+          "bailarines": 12
+        },
+        {
+          "modalidad": "Solista",
+          "categoria": "Junior",
+          "nivel": "avanzado",
+          "estilo": "Acro Jazz",
+          "bailarines": 1
+        }
+      ]
+    },
+    {
+      "id": 261,
+      "estado": "confirmado",
+      "academia": "Olimpia Jazmín (Guadalajara)",
+      "coach": "Samantha Ortiz",
+      "telefono": "5522891348",
+      "email": "coach928@gmail.com",
+      "asistentes": [
+        "Asistente: Adriana Castillo"
+      ],
+      "num_bailarines": 8,
+      "num_coreos": 3,
+      "boletos": 16,
+      "costo_total": 30600,
+      "pagado": 0,
+      "saldo": 30600,
+      "notas": null,
+      "enviado_el": "2026-05-30T11:13:02.992+00:00",
+      "confirmado_el": "2026-05-30T11:23:26.082+00:00",
+      "bailarines": [
+        {
+          "id": 7140,
+          "nombre": "Emilia Aguilar",
+          "nacimiento": "2009-08-14",
+          "categoria": "Senior"
+        },
+        {
+          "id": 7141,
+          "nombre": "Romina Vázquez",
+          "nacimiento": "2010-07-18",
+          "categoria": "Senior"
+        },
+        {
+          "id": 7142,
+          "nombre": "Brenda Medina",
+          "nacimiento": "2010-07-18",
+          "categoria": "Senior"
+        },
+        {
+          "id": 7143,
+          "nombre": "Ariadna Cruz",
+          "nacimiento": "2009-08-14",
+          "categoria": "Senior"
+        },
+        {
+          "id": 7144,
+          "nombre": "Victoria Ortiz",
+          "nacimiento": "2010-01-29",
+          "categoria": "Senior"
+        },
+        {
+          "id": 7145,
+          "nombre": "Valentina Hernández",
+          "nacimiento": "2008-12-03",
+          "categoria": "Senior"
+        },
+        {
+          "id": 7146,
+          "nombre": "Ximena Rodríguez",
+          "nacimiento": "2008-12-03",
+          "categoria": "Senior"
+        },
+        {
+          "id": 7147,
+          "nombre": "Camila Martínez",
+          "nacimiento": "2010-07-18",
+          "categoria": "Senior"
+        }
+      ],
+      "coreografias": [
+        {
+          "modalidad": "Grupal",
+          "categoria": "Senior",
+          "nivel": "avanzado",
+          "estilo": "Show",
+          "bailarines": 8
+        },
+        {
+          "modalidad": "Solista",
+          "categoria": "Senior",
+          "nivel": "avanzado",
+          "estilo": "Acro Jazz",
+          "bailarines": 1
+        },
+        {
+          "modalidad": "Solista",
+          "categoria": "Senior",
+          "nivel": "avanzado",
+          "estilo": "Acro Jazz",
+          "bailarines": 1
+        }
+      ]
+    },
+    {
+      "id": 262,
+      "estado": "pendiente",
+      "academia": "Academia Ifel (Guadalajara)",
+      "coach": "Samantha Ortiz",
+      "telefono": "5577279850",
+      "email": "coach570@gmail.com",
+      "asistentes": [
+        "Asistente: Adriana Castillo"
+      ],
+      "num_bailarines": 10,
+      "num_coreos": 4,
+      "boletos": 20,
+      "costo_total": 39000,
+      "pagado": 0,
+      "saldo": 39000,
+      "notas": null,
+      "enviado_el": "2026-05-30T11:13:42.074+00:00",
+      "confirmado_el": null,
+      "bailarines": [
+        {
+          "id": 7238,
+          "nombre": "Brenda Medina",
+          "nacimiento": "2015-07-22",
+          "categoria": "Elementary"
+        },
+        {
+          "id": 7239,
+          "nombre": "Romina Vázquez",
+          "nacimiento": "2015-07-22",
+          "categoria": "Elementary"
+        },
+        {
+          "id": 7240,
+          "nombre": "Valentina Hernández",
+          "nacimiento": "2015-09-01",
+          "categoria": "Elementary"
+        },
+        {
+          "id": 7241,
+          "nombre": "Natalia Mendoza",
+          "nacimiento": "2015-07-22",
+          "categoria": "Elementary"
+        },
+        {
+          "id": 7242,
+          "nombre": "Paola Ramos",
+          "nacimiento": "2015-07-22",
+          "categoria": "Elementary"
+        },
+        {
+          "id": 7243,
+          "nombre": "Regina López",
+          "nacimiento": "2014-11-05",
+          "categoria": "Elementary"
+        },
+        {
+          "id": 7244,
+          "nombre": "María José González",
+          "nacimiento": "2014-11-05",
+          "categoria": "Elementary"
+        },
+        {
+          "id": 7245,
+          "nombre": "Daniela Flores",
+          "nacimiento": "2014-11-05",
+          "categoria": "Elementary"
+        },
+        {
+          "id": 7246,
+          "nombre": "Alejandra Jiménez",
+          "nacimiento": "2015-02-18",
+          "categoria": "Elementary"
+        },
+        {
+          "id": 7247,
+          "nombre": "Ximena Rodríguez",
+          "nacimiento": "2015-07-22",
+          "categoria": "Elementary"
+        }
+      ],
+      "coreografias": [
+        {
+          "modalidad": "Grupal",
+          "categoria": "Elementary",
+          "nivel": "avanzado",
+          "estilo": "Ballet",
+          "bailarines": 10
+        },
+        {
+          "modalidad": "Dueto",
+          "categoria": "Elementary",
+          "nivel": "avanzado",
+          "estilo": "Jazz",
+          "bailarines": 2
+        },
+        {
+          "modalidad": "Solista",
+          "categoria": "Elementary",
+          "nivel": "avanzado",
+          "estilo": "Jazz",
+          "bailarines": 1
+        },
+        {
+          "modalidad": "Solista",
+          "categoria": "Elementary",
+          "nivel": "avanzado",
+          "estilo": "Ballet",
+          "bailarines": 1
+        }
+      ]
+    },
+    {
+      "id": 263,
+      "estado": "confirmado",
+      "academia": "Studio Horus Egiptus (Guadalajara)",
+      "coach": "Samantha Ortiz",
+      "telefono": "5530959223",
+      "email": "coach748@gmail.com",
+      "asistentes": [
+        "Asistente: Adriana Castillo"
+      ],
+      "num_bailarines": 7,
+      "num_coreos": 2,
+      "boletos": 14,
+      "costo_total": 26300,
+      "pagado": 0,
+      "saldo": 26300,
+      "notas": null,
+      "enviado_el": "2026-05-30T11:14:10.19+00:00",
+      "confirmado_el": "2026-05-30T11:23:56.877+00:00",
+      "bailarines": [
+        {
+          "id": 7283,
+          "nombre": "Fernanda Ramírez",
+          "nacimiento": "2012-08-15",
+          "categoria": "Junior"
+        },
+        {
+          "id": 7284,
+          "nombre": "Itzel Vargas",
+          "nacimiento": "2012-03-30",
+          "categoria": "Junior"
+        },
+        {
+          "id": 7285,
+          "nombre": "Sofía García",
+          "nacimiento": "2011-09-09",
+          "categoria": "Junior"
+        },
+        {
+          "id": 7286,
+          "nombre": "Brenda Medina",
+          "nacimiento": "2011-11-23",
+          "categoria": "Junior"
+        },
+        {
+          "id": 7287,
+          "nombre": "Romina Vázquez",
+          "nacimiento": "2013-01-07",
+          "categoria": "Junior"
+        },
+        {
+          "id": 7288,
+          "nombre": "Valentina Hernández",
+          "nacimiento": "2013-01-07",
+          "categoria": "Junior"
+        },
+        {
+          "id": 7289,
+          "nombre": "Alejandra Jiménez",
+          "nacimiento": "2012-03-30",
+          "categoria": "Junior"
+        }
+      ],
+      "coreografias": [
+        {
+          "modalidad": "Solista",
+          "categoria": "Junior",
+          "nivel": "avanzado",
+          "estilo": "Acro Jazz",
+          "bailarines": 1
+        },
+        {
+          "modalidad": "Solista",
+          "categoria": "Junior",
+          "nivel": "avanzado",
+          "estilo": "Acro Jazz",
+          "bailarines": 1
+        }
+      ]
+    },
+    {
+      "id": 264,
+      "estado": "confirmado",
+      "academia": "Colegio Subiré (Guadalajara)",
+      "coach": "Brenda Morales",
+      "telefono": "5559876923",
+      "email": "coach425@gmail.com",
+      "asistentes": [
+        "Asistente: Sofia Hernandez",
+        "Asistente: Jessica Torres"
+      ],
+      "num_bailarines": 14,
+      "num_coreos": 1,
+      "boletos": 28,
+      "costo_total": 52200,
+      "pagado": 0,
+      "saldo": 52200,
+      "notas": null,
+      "enviado_el": "2026-05-30T11:14:40.021+00:00",
+      "confirmado_el": "2026-05-30T11:23:16.369+00:00",
+      "bailarines": [
+        {
+          "id": 7332,
+          "nombre": "Natalia Mendoza",
+          "nacimiento": "2011-04-20",
+          "categoria": "Senior"
+        },
+        {
+          "id": 7333,
+          "nombre": "Paulina Morales",
+          "nacimiento": "2011-11-23",
+          "categoria": "Junior"
+        },
+        {
+          "id": 7334,
+          "nombre": "Samantha Luna",
+          "nacimiento": "2012-03-30",
+          "categoria": "Junior"
+        },
+        {
+          "id": 7335,
+          "nombre": "Luciana Ruiz",
+          "nacimiento": "2012-03-30",
+          "categoria": "Junior"
+        },
+        {
+          "id": 7336,
+          "nombre": "Victoria Ortiz",
+          "nacimiento": "2013-06-14",
+          "categoria": "Junior"
+        },
+        {
+          "id": 7337,
+          "nombre": "Andrea Reyes",
+          "nacimiento": "2013-06-14",
+          "categoria": "Junior"
+        },
+        {
+          "id": 7338,
+          "nombre": "Sofía García",
+          "nacimiento": "2012-08-15",
+          "categoria": "Junior"
+        },
+        {
+          "id": 7339,
+          "nombre": "Isabella Sánchez",
+          "nacimiento": "2013-01-07",
+          "categoria": "Junior"
+        },
+        {
+          "id": 7340,
+          "nombre": "Romina Vázquez",
+          "nacimiento": "2011-04-20",
+          "categoria": "Senior"
+        },
+        {
+          "id": 7341,
+          "nombre": "Brenda Medina",
+          "nacimiento": "2012-03-30",
+          "categoria": "Junior"
+        },
+        {
+          "id": 7342,
+          "nombre": "Ana Paula Castillo",
+          "nacimiento": "2012-08-15",
+          "categoria": "Junior"
+        },
+        {
+          "id": 7343,
+          "nombre": "Camila Martínez",
+          "nacimiento": "2011-11-23",
+          "categoria": "Junior"
+        },
+        {
+          "id": 7344,
+          "nombre": "Paola Ramos",
+          "nacimiento": "2011-09-09",
+          "categoria": "Junior"
+        },
+        {
+          "id": 7345,
+          "nombre": "Ximena Rodríguez",
+          "nacimiento": "2012-08-15",
+          "categoria": "Junior"
+        }
+      ],
+      "coreografias": [
+        {
+          "modalidad": "Grupal",
+          "categoria": "Senior",
+          "nivel": "basico",
+          "estilo": "Poms",
+          "bailarines": 14
+        }
+      ]
+    },
+    {
+      "id": 265,
+      "estado": "pendiente",
+      "academia": "Ballet Clásico Attitude (Guadalajara)",
+      "coach": "Karla Mendoza",
+      "telefono": "5521823235",
+      "email": "coach109@gmail.com",
+      "asistentes": [
+        "Asistente: Martha Flores"
+      ],
+      "num_bailarines": 7,
+      "num_coreos": 1,
+      "boletos": 14,
+      "costo_total": 26300,
+      "pagado": 26300,
+      "saldo": 0,
+      "notas": null,
+      "enviado_el": "2026-05-30T11:15:04.119+00:00",
+      "confirmado_el": null,
+      "bailarines": [
+        {
+          "id": 7367,
+          "nombre": "Sofía García",
+          "nacimiento": "2013-06-14",
+          "categoria": "Junior"
+        },
+        {
+          "id": 7368,
+          "nombre": "Victoria Ortiz",
+          "nacimiento": "2011-09-09",
+          "categoria": "Junior"
+        },
+        {
+          "id": 7369,
+          "nombre": "Samantha Luna",
+          "nacimiento": "2012-03-30",
+          "categoria": "Junior"
+        },
+        {
+          "id": 7370,
+          "nombre": "Valeria Torres",
+          "nacimiento": "2012-03-30",
+          "categoria": "Junior"
+        },
+        {
+          "id": 7371,
+          "nombre": "Renata Pérez",
+          "nacimiento": "2012-03-30",
+          "categoria": "Junior"
+        },
+        {
+          "id": 7372,
+          "nombre": "Michelle Gutiérrez",
+          "nacimiento": "2011-11-23",
+          "categoria": "Junior"
+        },
+        {
+          "id": 7373,
+          "nombre": "Paola Ramos",
+          "nacimiento": "2012-03-30",
+          "categoria": "Junior"
+        }
+      ],
+      "coreografias": [
+        {
+          "modalidad": "Solista",
+          "categoria": "Junior",
+          "nivel": "avanzado",
+          "estilo": "Jazz",
+          "bailarines": 1
+        }
+      ]
+    },
+    {
+      "id": 266,
+      "estado": "confirmado",
+      "academia": "Unlimited (Guadalajara)",
+      "coach": "Ariadna López",
+      "telefono": "5547623950",
+      "email": "coach133@gmail.com",
+      "asistentes": [
+        "Asistente: Lorena Ortiz"
+      ],
+      "num_bailarines": 11,
+      "num_coreos": 1,
+      "boletos": 22,
+      "costo_total": 40700,
+      "pagado": 0,
+      "saldo": 40700,
+      "notas": null,
+      "enviado_el": "2026-05-30T11:15:31.787+00:00",
+      "confirmado_el": "2026-05-30T11:33:12.735+00:00",
+      "bailarines": [
+        {
+          "id": 7407,
+          "nombre": "Karla Chávez",
+          "nacimiento": "2009-02-25",
+          "categoria": "Senior"
+        },
+        {
+          "id": 7408,
+          "nombre": "Valeria Torres",
+          "nacimiento": "2009-08-14",
+          "categoria": "Senior"
+        },
+        {
+          "id": 7409,
+          "nombre": "Renata Pérez",
+          "nacimiento": "2009-02-25",
+          "categoria": "Senior"
+        },
+        {
+          "id": 7410,
+          "nombre": "Natalia Mendoza",
+          "nacimiento": "2009-08-14",
+          "categoria": "Senior"
+        },
+        {
+          "id": 7411,
+          "nombre": "Mariana Moreno",
+          "nacimiento": "2008-12-03",
+          "categoria": "Senior"
+        },
+        {
+          "id": 7412,
+          "nombre": "Romina Vázquez",
+          "nacimiento": "2010-07-18",
+          "categoria": "Senior"
+        },
+        {
+          "id": 7413,
+          "nombre": "Fernanda Ramírez",
+          "nacimiento": "2009-08-14",
+          "categoria": "Senior"
+        },
+        {
+          "id": 7414,
+          "nombre": "Brenda Medina",
+          "nacimiento": "2010-01-29",
+          "categoria": "Senior"
+        },
+        {
+          "id": 7415,
+          "nombre": "Paola Ramos",
+          "nacimiento": "2010-01-29",
+          "categoria": "Senior"
+        },
+        {
+          "id": 7416,
+          "nombre": "Sofía García",
+          "nacimiento": "2009-02-25",
+          "categoria": "Senior"
+        },
+        {
+          "id": 7417,
+          "nombre": "Paulina Morales",
+          "nacimiento": "2009-02-25",
+          "categoria": "Senior"
+        }
+      ],
+      "coreografias": [
+        {
+          "modalidad": "Grupal",
+          "categoria": "Senior",
+          "nivel": "avanzado",
+          "estilo": "Contempo",
+          "bailarines": 11
+        }
+      ]
+    },
+    {
+      "id": 267,
+      "estado": "pendiente",
+      "academia": "Studio Horus Egiptus (Guadalajara)",
+      "coach": "Michelle Sánchez",
+      "telefono": "5542971686",
+      "email": "coach411@gmail.com",
+      "asistentes": [
+        "Asistente: Veronica Diaz"
+      ],
+      "num_bailarines": 7,
+      "num_coreos": 3,
+      "boletos": 14,
+      "costo_total": 27300,
+      "pagado": 0,
+      "saldo": 27300,
+      "notas": null,
+      "enviado_el": "2026-05-30T11:16:05.518+00:00",
+      "confirmado_el": null,
+      "bailarines": [
+        {
+          "id": 7467,
+          "nombre": "Samantha Luna",
+          "nacimiento": "2010-01-29",
+          "categoria": "Senior"
+        },
+        {
+          "id": 7468,
+          "nombre": "Isabella Sánchez",
+          "nacimiento": "2008-06-10",
+          "categoria": "Senior"
+        },
+        {
+          "id": 7469,
+          "nombre": "Regina López",
+          "nacimiento": "2009-08-14",
+          "categoria": "Senior"
+        },
+        {
+          "id": 7470,
+          "nombre": "Valeria Torres",
+          "nacimiento": "2009-08-14",
+          "categoria": "Senior"
+        },
+        {
+          "id": 7471,
+          "nombre": "Andrea Reyes",
+          "nacimiento": "2010-01-29",
+          "categoria": "Senior"
+        },
+        {
+          "id": 7472,
+          "nombre": "Camila Martínez",
+          "nacimiento": "2009-08-14",
+          "categoria": "Senior"
+        },
+        {
+          "id": 7473,
+          "nombre": "Ana Paula Castillo",
+          "nacimiento": "2009-08-14",
+          "categoria": "Senior"
+        }
+      ],
+      "coreografias": [
+        {
+          "modalidad": "Grupal",
+          "categoria": "Senior",
+          "nivel": "avanzado",
+          "estilo": "Acro Jazz",
+          "bailarines": 7
+        },
+        {
+          "modalidad": "Solista",
+          "categoria": "Senior",
+          "nivel": "avanzado",
+          "estilo": "Show",
+          "bailarines": 1
+        },
+        {
+          "modalidad": "Solista",
+          "categoria": "Senior",
+          "nivel": "avanzado",
+          "estilo": "Show",
+          "bailarines": 1
+        }
+      ]
+    },
+    {
+      "id": 268,
+      "estado": "confirmado",
+      "academia": "Colegio Cervantes (Guadalajara)",
+      "coach": "Valentina Torres",
+      "telefono": "5517565133",
+      "email": "coach749@gmail.com",
+      "asistentes": [
+        "Asistente: Claudia Sanchez",
+        "Asistente: Veronica Diaz"
+      ],
+      "num_bailarines": 13,
+      "num_coreos": 1,
+      "boletos": 26,
+      "costo_total": 48500,
+      "pagado": 0,
+      "saldo": 48500,
+      "notas": null,
+      "enviado_el": "2026-05-30T11:16:34.949+00:00",
+      "confirmado_el": "2026-05-30T11:22:33.666+00:00",
+      "bailarines": [
+        {
+          "id": 7513,
+          "nombre": "Isabella Sánchez",
+          "nacimiento": "2011-09-09",
+          "categoria": "Junior"
+        },
+        {
+          "id": 7514,
+          "nombre": "Regina López",
+          "nacimiento": "2013-01-07",
+          "categoria": "Junior"
+        },
+        {
+          "id": 7515,
+          "nombre": "Karla Chávez",
+          "nacimiento": "2011-11-23",
+          "categoria": "Junior"
+        },
+        {
+          "id": 7516,
+          "nombre": "María José González",
+          "nacimiento": "2011-04-20",
+          "categoria": "Senior"
+        },
+        {
+          "id": 7517,
+          "nombre": "Renata Pérez",
+          "nacimiento": "2013-06-14",
+          "categoria": "Junior"
+        },
+        {
+          "id": 7518,
+          "nombre": "Victoria Ortiz",
+          "nacimiento": "2011-04-20",
+          "categoria": "Senior"
+        },
+        {
+          "id": 7519,
+          "nombre": "Paola Ramos",
+          "nacimiento": "2013-06-14",
+          "categoria": "Junior"
+        },
+        {
+          "id": 7520,
+          "nombre": "Valeria Torres",
+          "nacimiento": "2011-11-23",
+          "categoria": "Junior"
+        },
+        {
+          "id": 7521,
+          "nombre": "Brenda Medina",
+          "nacimiento": "2011-04-20",
+          "categoria": "Senior"
+        },
+        {
+          "id": 7522,
+          "nombre": "Andrea Reyes",
+          "nacimiento": "2012-08-15",
+          "categoria": "Junior"
+        },
+        {
+          "id": 7523,
+          "nombre": "Ariadna Cruz",
+          "nacimiento": "2012-03-30",
+          "categoria": "Junior"
+        },
+        {
+          "id": 7524,
+          "nombre": "Luciana Ruiz",
+          "nacimiento": "2013-06-14",
+          "categoria": "Junior"
+        },
+        {
+          "id": 7525,
+          "nombre": "Ana Paula Castillo",
+          "nacimiento": "2011-04-20",
+          "categoria": "Senior"
+        }
+      ],
+      "coreografias": [
+        {
+          "modalidad": "Grupal",
+          "categoria": "Senior",
+          "nivel": "basico",
+          "estilo": "Jazz",
+          "bailarines": 13
+        }
+      ]
+    },
+    {
+      "id": 269,
+      "estado": "confirmado",
+      "academia": "Colegio Cervantes (Guadalajara)",
+      "coach": "Brenda Morales",
+      "telefono": "5540219743",
+      "email": "coach919@gmail.com",
+      "asistentes": [
+        "Asistente: Sofia Hernandez"
+      ],
+      "num_bailarines": 10,
+      "num_coreos": 1,
+      "boletos": 20,
+      "costo_total": 37000,
+      "pagado": 0,
+      "saldo": 37000,
+      "notas": null,
+      "enviado_el": "2026-05-30T11:17:02.237+00:00",
+      "confirmado_el": "2026-05-30T11:22:41.423+00:00",
+      "bailarines": [
+        {
+          "id": 7556,
+          "nombre": "Sofía García",
+          "nacimiento": "2014-03-12",
+          "categoria": "Junior"
+        },
+        {
+          "id": 7557,
+          "nombre": "Valentina Hernández",
+          "nacimiento": "2016-08-30",
+          "categoria": "Elementary"
+        },
+        {
+          "id": 7558,
+          "nombre": "Karla Chávez",
+          "nacimiento": "2014-03-12",
+          "categoria": "Junior"
+        },
+        {
+          "id": 7559,
+          "nombre": "María José González",
+          "nacimiento": "2015-02-18",
+          "categoria": "Elementary"
+        },
+        {
+          "id": 7560,
+          "nombre": "Emilia Aguilar",
+          "nacimiento": "2015-09-01",
+          "categoria": "Elementary"
+        },
+        {
+          "id": 7561,
+          "nombre": "Renata Pérez",
+          "nacimiento": "2015-02-18",
+          "categoria": "Elementary"
+        },
+        {
+          "id": 7562,
+          "nombre": "Luciana Ruiz",
+          "nacimiento": "2014-03-12",
+          "categoria": "Junior"
+        },
+        {
+          "id": 7563,
+          "nombre": "Andrea Reyes",
+          "nacimiento": "2014-05-14",
+          "categoria": "Junior"
+        },
+        {
+          "id": 7564,
+          "nombre": "Alejandra Jiménez",
+          "nacimiento": "2016-08-30",
+          "categoria": "Elementary"
+        },
+        {
+          "id": 7565,
+          "nombre": "Samantha Luna",
+          "nacimiento": "2015-07-22",
+          "categoria": "Elementary"
+        }
+      ],
+      "coreografias": [
+        {
+          "modalidad": "Grupal",
+          "categoria": "Junior",
+          "nivel": "basico",
+          "estilo": "Poms",
+          "bailarines": 10
+        }
+      ]
+    },
+    {
+      "id": 270,
+      "estado": "confirmado",
+      "academia": "Colegio Subiré (Guadalajara)",
+      "coach": "Paola Aguilar",
+      "telefono": "5543218458",
+      "email": "coach920@gmail.com",
+      "asistentes": [
+        "Asistente: Gabriela Mendoza",
+        "Asistente: Lucia Ramirez"
+      ],
+      "num_bailarines": 17,
+      "num_coreos": 2,
+      "boletos": 34,
+      "costo_total": 71400,
+      "pagado": 0,
+      "saldo": 71400,
+      "notas": null,
+      "enviado_el": "2026-05-30T11:17:41.113+00:00",
+      "confirmado_el": "2026-05-30T11:23:13.244+00:00",
+      "bailarines": [
+        {
+          "id": 7651,
+          "nombre": "Isabella Sánchez",
+          "nacimiento": "2009-08-14",
+          "categoria": "Senior"
+        },
+        {
+          "id": 7652,
+          "nombre": "Regina López",
+          "nacimiento": "2009-02-25",
+          "categoria": "Senior"
+        },
+        {
+          "id": 7653,
+          "nombre": "Romina Vázquez",
+          "nacimiento": "2008-12-03",
+          "categoria": "Senior"
+        },
+        {
+          "id": 7654,
+          "nombre": "Mariana Moreno",
+          "nacimiento": "2008-06-10",
+          "categoria": "Senior"
+        },
+        {
+          "id": 7655,
+          "nombre": "Paola Ramos",
+          "nacimiento": "2010-01-29",
+          "categoria": "Senior"
+        },
+        {
+          "id": 7656,
+          "nombre": "Paulina Morales",
+          "nacimiento": "2009-02-25",
+          "categoria": "Senior"
+        },
+        {
+          "id": 7657,
+          "nombre": "Karla Chávez",
+          "nacimiento": "2008-12-03",
+          "categoria": "Senior"
+        },
+        {
+          "id": 7658,
+          "nombre": "Fernanda Ramírez",
+          "nacimiento": "2010-01-29",
+          "categoria": "Senior"
+        },
+        {
+          "id": 7659,
+          "nombre": "Valentina Hernández",
+          "nacimiento": "2010-01-29",
+          "categoria": "Senior"
+        },
+        {
+          "id": 7660,
+          "nombre": "Ana Paula Castillo",
+          "nacimiento": "2008-06-10",
+          "categoria": "Senior"
+        },
+        {
+          "id": 7661,
+          "nombre": "Alejandra Jiménez",
+          "nacimiento": "2009-08-14",
+          "categoria": "Senior"
+        },
+        {
+          "id": 7662,
+          "nombre": "Renata Pérez",
+          "nacimiento": "2010-01-29",
+          "categoria": "Senior"
+        },
+        {
+          "id": 7663,
+          "nombre": "Samantha Luna",
+          "nacimiento": "2009-02-25",
+          "categoria": "Senior"
+        },
+        {
+          "id": 7664,
+          "nombre": "Emilia Aguilar",
+          "nacimiento": "2009-08-14",
+          "categoria": "Senior"
+        },
+        {
+          "id": 7665,
+          "nombre": "Natalia Mendoza",
+          "nacimiento": "2009-08-14",
+          "categoria": "Senior"
+        },
+        {
+          "id": 7666,
+          "nombre": "Ariadna Cruz",
+          "nacimiento": "2008-06-10",
+          "categoria": "Senior"
+        },
+        {
+          "id": 7667,
+          "nombre": "Sofía García",
+          "nacimiento": "2010-01-29",
+          "categoria": "Senior"
+        }
+      ],
+      "coreografias": [
+        {
+          "modalidad": "Grupal",
+          "categoria": "Senior",
+          "nivel": "basico",
+          "estilo": "Poms",
+          "bailarines": 17
+        },
+        {
+          "modalidad": "Grupal",
+          "categoria": "Senior",
+          "nivel": "basico",
+          "estilo": "Jazz",
+          "bailarines": 17
+        }
+      ]
+    },
+    {
+      "id": 271,
+      "estado": "confirmado",
+      "academia": "Colegio Cervantes (Guadalajara)",
+      "coach": "Itzel Reyes",
+      "telefono": "5520363128",
+      "email": "coach253@gmail.com",
+      "asistentes": [
+        "Asistente: Jessica Torres",
+        "Asistente: Gabriela Mendoza"
+      ],
+      "num_bailarines": 14,
+      "num_coreos": 2,
+      "boletos": 28,
+      "costo_total": 59200,
+      "pagado": 0,
+      "saldo": 59200,
+      "notas": null,
+      "enviado_el": "2026-05-30T11:18:18.129+00:00",
+      "confirmado_el": "2026-05-30T11:22:37.65+00:00",
+      "bailarines": [
+        {
+          "id": 7738,
+          "nombre": "Camila Martínez",
+          "nacimiento": "2015-02-18",
+          "categoria": "Elementary"
+        },
+        {
+          "id": 7739,
+          "nombre": "Ximena Rodríguez",
+          "nacimiento": "2015-09-01",
+          "categoria": "Elementary"
+        },
+        {
+          "id": 7740,
+          "nombre": "Paulina Morales",
+          "nacimiento": "2016-08-30",
+          "categoria": "Elementary"
+        },
+        {
+          "id": 7741,
+          "nombre": "Valeria Torres",
+          "nacimiento": "2015-09-01",
+          "categoria": "Elementary"
+        },
+        {
+          "id": 7742,
+          "nombre": "Natalia Mendoza",
+          "nacimiento": "2014-05-14",
+          "categoria": "Junior"
+        },
+        {
+          "id": 7743,
+          "nombre": "Regina López",
+          "nacimiento": "2015-02-18",
+          "categoria": "Elementary"
+        },
+        {
+          "id": 7744,
+          "nombre": "Samantha Luna",
+          "nacimiento": "2014-03-12",
+          "categoria": "Junior"
+        },
+        {
+          "id": 7745,
+          "nombre": "María José González",
+          "nacimiento": "2014-11-05",
+          "categoria": "Elementary"
+        },
+        {
+          "id": 7746,
+          "nombre": "Valentina Hernández",
+          "nacimiento": "2016-08-30",
+          "categoria": "Elementary"
+        },
+        {
+          "id": 7747,
+          "nombre": "Karla Chávez",
+          "nacimiento": "2014-05-14",
+          "categoria": "Junior"
+        },
+        {
+          "id": 7748,
+          "nombre": "Sofía García",
+          "nacimiento": "2015-07-22",
+          "categoria": "Elementary"
+        },
+        {
+          "id": 7749,
+          "nombre": "Fernanda Ramírez",
+          "nacimiento": "2014-03-12",
+          "categoria": "Junior"
+        },
+        {
+          "id": 7750,
+          "nombre": "Andrea Reyes",
+          "nacimiento": "2014-05-14",
+          "categoria": "Junior"
+        },
+        {
+          "id": 7751,
+          "nombre": "Isabella Sánchez",
+          "nacimiento": "2014-11-05",
+          "categoria": "Elementary"
+        }
+      ],
+      "coreografias": [
+        {
+          "modalidad": "Grupal",
+          "categoria": "Junior",
+          "nivel": "basico",
+          "estilo": "Jazz",
+          "bailarines": 14
+        },
+        {
+          "modalidad": "Grupal",
+          "categoria": "Junior",
+          "nivel": "basico",
+          "estilo": "Poms",
+          "bailarines": 14
+        }
+      ]
+    },
+    {
+      "id": 272,
+      "estado": "confirmado",
+      "academia": "Studio Horus Egiptus (Guadalajara)",
+      "coach": "Valentina Torres",
+      "telefono": "5565639491",
+      "email": "coach214@gmail.com",
+      "asistentes": [
+        "Asistente: Claudia Sanchez"
+      ],
+      "num_bailarines": 11,
+      "num_coreos": 3,
+      "boletos": 22,
+      "costo_total": 41700,
+      "pagado": 0,
+      "saldo": 41700,
+      "notas": null,
+      "enviado_el": "2026-05-30T11:18:53.564+00:00",
+      "confirmado_el": "2026-05-30T11:23:50.576+00:00",
+      "bailarines": [
+        {
+          "id": 7829,
+          "nombre": "Andrea Reyes",
+          "nacimiento": "2009-02-25",
+          "categoria": "Senior"
+        },
+        {
+          "id": 7830,
+          "nombre": "Samantha Luna",
+          "nacimiento": "2008-06-10",
+          "categoria": "Senior"
+        },
+        {
+          "id": 7831,
+          "nombre": "Brenda Medina",
+          "nacimiento": "2009-08-14",
+          "categoria": "Senior"
+        },
+        {
+          "id": 7832,
+          "nombre": "Daniela Flores",
+          "nacimiento": "2010-01-29",
+          "categoria": "Senior"
+        },
+        {
+          "id": 7833,
+          "nombre": "Renata Pérez",
+          "nacimiento": "2008-06-10",
+          "categoria": "Senior"
+        },
+        {
+          "id": 7834,
+          "nombre": "Camila Martínez",
+          "nacimiento": "2009-02-25",
+          "categoria": "Senior"
+        },
+        {
+          "id": 7835,
+          "nombre": "Alejandra Jiménez",
+          "nacimiento": "2008-12-03",
+          "categoria": "Senior"
+        },
+        {
+          "id": 7836,
+          "nombre": "Fernanda Ramírez",
+          "nacimiento": "2010-01-29",
+          "categoria": "Senior"
+        },
+        {
+          "id": 7837,
+          "nombre": "Sofía García",
+          "nacimiento": "2009-02-25",
+          "categoria": "Senior"
+        },
+        {
+          "id": 7838,
+          "nombre": "Michelle Gutiérrez",
+          "nacimiento": "2010-07-18",
+          "categoria": "Senior"
+        },
+        {
+          "id": 7839,
+          "nombre": "Valentina Hernández",
+          "nacimiento": "2009-02-25",
+          "categoria": "Senior"
+        }
+      ],
+      "coreografias": [
+        {
+          "modalidad": "Grupal",
+          "categoria": "Senior",
+          "nivel": "avanzado",
+          "estilo": "Acro Jazz",
+          "bailarines": 11
+        },
+        {
+          "modalidad": "Solista",
+          "categoria": "Senior",
+          "nivel": "avanzado",
+          "estilo": "Show",
+          "bailarines": 1
+        },
+        {
+          "modalidad": "Solista",
+          "categoria": "Senior",
+          "nivel": "avanzado",
+          "estilo": "Show",
+          "bailarines": 1
+        }
+      ]
+    },
+    {
+      "id": 273,
+      "estado": "confirmado",
+      "academia": "Studio Horus Egiptus (Guadalajara)",
+      "coach": "Sofía Ruiz",
+      "telefono": "5566756086",
+      "email": "coach787@gmail.com",
+      "asistentes": [
+        "Asistente: Adriana Castillo"
+      ],
+      "num_bailarines": 10,
+      "num_coreos": 3,
+      "boletos": 20,
+      "costo_total": 38000,
+      "pagado": 0,
+      "saldo": 38000,
+      "notas": null,
+      "enviado_el": "2026-05-30T11:19:28.627+00:00",
+      "confirmado_el": "2026-05-30T11:23:59.936+00:00",
+      "bailarines": [
+        {
+          "id": 7910,
+          "nombre": "Ximena Rodríguez",
+          "nacimiento": "2009-08-14",
+          "categoria": "Senior"
+        },
+        {
+          "id": 7911,
+          "nombre": "Isabella Sánchez",
+          "nacimiento": "2009-02-25",
+          "categoria": "Senior"
+        },
+        {
+          "id": 7912,
+          "nombre": "Mariana Moreno",
+          "nacimiento": "2009-08-14",
+          "categoria": "Senior"
+        },
+        {
+          "id": 7913,
+          "nombre": "Paulina Morales",
+          "nacimiento": "2010-07-18",
+          "categoria": "Senior"
+        },
+        {
+          "id": 7914,
+          "nombre": "Fernanda Ramírez",
+          "nacimiento": "2009-08-14",
+          "categoria": "Senior"
+        },
+        {
+          "id": 7915,
+          "nombre": "Michelle Gutiérrez",
+          "nacimiento": "2009-08-14",
+          "categoria": "Senior"
+        },
+        {
+          "id": 7916,
+          "nombre": "Daniela Flores",
+          "nacimiento": "2010-07-18",
+          "categoria": "Senior"
+        },
+        {
+          "id": 7917,
+          "nombre": "Ana Paula Castillo",
+          "nacimiento": "2009-02-25",
+          "categoria": "Senior"
+        },
+        {
+          "id": 7918,
+          "nombre": "Samantha Luna",
+          "nacimiento": "2009-08-14",
+          "categoria": "Senior"
+        },
+        {
+          "id": 7919,
+          "nombre": "Valeria Torres",
+          "nacimiento": "2008-12-03",
+          "categoria": "Senior"
+        }
+      ],
+      "coreografias": [
+        {
+          "modalidad": "Grupal",
+          "categoria": "Senior",
+          "nivel": "avanzado",
+          "estilo": "Acro Jazz",
+          "bailarines": 10
+        },
+        {
+          "modalidad": "Solista",
+          "categoria": "Senior",
+          "nivel": "avanzado",
+          "estilo": "Show",
+          "bailarines": 1
+        },
+        {
+          "modalidad": "Solista",
+          "categoria": "Senior",
+          "nivel": "avanzado",
+          "estilo": "Show",
+          "bailarines": 1
+        }
+      ]
+    },
+    {
+      "id": 274,
+      "estado": "confirmado",
+      "academia": "Olimpia Jazmín (Guadalajara)",
+      "coach": "Valentina Torres",
+      "telefono": "5562901317",
+      "email": "coach721@gmail.com",
+      "asistentes": [
+        "Asistente: Claudia Sanchez"
+      ],
+      "num_bailarines": 8,
+      "num_coreos": 2,
+      "boletos": 16,
+      "costo_total": 30100,
+      "pagado": 0,
+      "saldo": 30100,
+      "notas": null,
+      "enviado_el": "2026-05-30T11:19:58.874+00:00",
+      "confirmado_el": "2026-05-30T11:23:33.331+00:00",
+      "bailarines": [
+        {
+          "id": 7960,
+          "nombre": "María José González",
+          "nacimiento": "2008-12-03",
+          "categoria": "Senior"
+        },
+        {
+          "id": 7961,
+          "nombre": "Michelle Gutiérrez",
+          "nacimiento": "2008-12-03",
+          "categoria": "Senior"
+        },
+        {
+          "id": 7962,
+          "nombre": "Isabella Sánchez",
+          "nacimiento": "2009-02-25",
+          "categoria": "Senior"
+        },
+        {
+          "id": 7963,
+          "nombre": "Natalia Mendoza",
+          "nacimiento": "2010-01-29",
+          "categoria": "Senior"
+        },
+        {
+          "id": 7964,
+          "nombre": "Fernanda Ramírez",
+          "nacimiento": "2009-02-25",
+          "categoria": "Senior"
+        },
+        {
+          "id": 7965,
+          "nombre": "Daniela Flores",
+          "nacimiento": "2010-01-29",
+          "categoria": "Senior"
+        },
+        {
+          "id": 7966,
+          "nombre": "Ariadna Cruz",
+          "nacimiento": "2009-08-14",
+          "categoria": "Senior"
+        },
+        {
+          "id": 7967,
+          "nombre": "Ana Paula Castillo",
+          "nacimiento": "2008-12-03",
+          "categoria": "Senior"
+        }
+      ],
+      "coreografias": [
+        {
+          "modalidad": "Grupal",
+          "categoria": "Senior",
+          "nivel": "avanzado",
+          "estilo": "Acro Jazz",
+          "bailarines": 8
+        },
+        {
+          "modalidad": "Solista",
+          "categoria": "Senior",
+          "nivel": "avanzado",
+          "estilo": "Show",
+          "bailarines": 1
+        }
+      ]
+    },
+    {
+      "id": 275,
+      "estado": "pendiente",
+      "academia": "Colegio Cervantes (Guadalajara)",
+      "coach": "Ana Paula Cruz",
+      "telefono": "5573744942",
+      "email": "coach962@gmail.com",
+      "asistentes": [
+        "Asistente: Lorena Ortiz"
+      ],
+      "num_bailarines": 11,
+      "num_coreos": 1,
+      "boletos": 22,
+      "costo_total": 40700,
+      "pagado": 0,
+      "saldo": 40700,
+      "notas": null,
+      "enviado_el": "2026-05-30T11:20:26.526+00:00",
+      "confirmado_el": null,
+      "bailarines": [
+        {
+          "id": 8001,
+          "nombre": "Daniela Flores",
+          "nacimiento": "2013-06-14",
+          "categoria": "Junior"
+        },
+        {
+          "id": 8002,
+          "nombre": "Ana Paula Castillo",
+          "nacimiento": "2012-08-15",
+          "categoria": "Junior"
+        },
+        {
+          "id": 8003,
+          "nombre": "Victoria Ortiz",
+          "nacimiento": "2013-01-07",
+          "categoria": "Junior"
+        },
+        {
+          "id": 8004,
+          "nombre": "Valeria Torres",
+          "nacimiento": "2012-03-30",
+          "categoria": "Junior"
+        },
+        {
+          "id": 8005,
+          "nombre": "Mariana Moreno",
+          "nacimiento": "2012-03-30",
+          "categoria": "Junior"
+        },
+        {
+          "id": 8006,
+          "nombre": "María José González",
+          "nacimiento": "2011-09-09",
+          "categoria": "Junior"
+        },
+        {
+          "id": 8007,
+          "nombre": "Sofía García",
+          "nacimiento": "2013-06-14",
+          "categoria": "Junior"
+        },
+        {
+          "id": 8008,
+          "nombre": "Romina Vázquez",
+          "nacimiento": "2012-03-30",
+          "categoria": "Junior"
+        },
+        {
+          "id": 8009,
+          "nombre": "Samantha Luna",
+          "nacimiento": "2013-06-14",
+          "categoria": "Junior"
+        },
+        {
+          "id": 8010,
+          "nombre": "Paulina Morales",
+          "nacimiento": "2011-04-20",
+          "categoria": "Senior"
+        },
+        {
+          "id": 8011,
+          "nombre": "Emilia Aguilar",
+          "nacimiento": "2011-04-20",
+          "categoria": "Senior"
+        }
+      ],
+      "coreografias": [
+        {
+          "modalidad": "Grupal",
+          "categoria": "Senior",
+          "nivel": "basico",
+          "estilo": "Poms",
+          "bailarines": 11
+        }
+      ]
+    },
+    {
+      "id": 276,
+      "estado": "pendiente",
+      "academia": "Colegio Cervantes (Guadalajara)",
+      "coach": "Paola Aguilar",
+      "telefono": "5576298179",
+      "email": "coach784@gmail.com",
+      "asistentes": [
+        "Asistente: Gabriela Mendoza"
+      ],
+      "num_bailarines": 11,
+      "num_coreos": 1,
+      "boletos": 22,
+      "costo_total": 40700,
+      "pagado": 0,
+      "saldo": 40700,
+      "notas": null,
+      "enviado_el": "2026-05-30T11:20:54.295+00:00",
+      "confirmado_el": null,
+      "bailarines": [
+        {
+          "id": 8045,
+          "nombre": "Camila Martínez",
+          "nacimiento": "2012-08-15",
+          "categoria": "Junior"
+        },
+        {
+          "id": 8046,
+          "nombre": "Luciana Ruiz",
+          "nacimiento": "2011-11-23",
+          "categoria": "Junior"
+        },
+        {
+          "id": 8047,
+          "nombre": "Sofía García",
+          "nacimiento": "2011-04-20",
+          "categoria": "Senior"
+        },
+        {
+          "id": 8048,
+          "nombre": "Karla Chávez",
+          "nacimiento": "2011-09-09",
+          "categoria": "Junior"
+        },
+        {
+          "id": 8049,
+          "nombre": "Ximena Rodríguez",
+          "nacimiento": "2013-06-14",
+          "categoria": "Junior"
+        },
+        {
+          "id": 8050,
+          "nombre": "Valentina Hernández",
+          "nacimiento": "2011-11-23",
+          "categoria": "Junior"
+        },
+        {
+          "id": 8051,
+          "nombre": "Valeria Torres",
+          "nacimiento": "2013-06-14",
+          "categoria": "Junior"
+        },
+        {
+          "id": 8052,
+          "nombre": "Fernanda Ramírez",
+          "nacimiento": "2013-01-07",
+          "categoria": "Junior"
+        },
+        {
+          "id": 8053,
+          "nombre": "Regina López",
+          "nacimiento": "2011-09-09",
+          "categoria": "Junior"
+        },
+        {
+          "id": 8054,
+          "nombre": "Ana Paula Castillo",
+          "nacimiento": "2013-01-07",
+          "categoria": "Junior"
+        },
+        {
+          "id": 8055,
+          "nombre": "Samantha Luna",
+          "nacimiento": "2013-01-07",
+          "categoria": "Junior"
+        }
+      ],
+      "coreografias": [
+        {
+          "modalidad": "Grupal",
+          "categoria": "Senior",
+          "nivel": "basico",
+          "estilo": "Poms",
+          "bailarines": 11
+        }
+      ]
+    },
+    {
+      "id": 277,
+      "estado": "pendiente",
+      "academia": "Ballet Clásico Attitude (Guadalajara)",
+      "coach": "Giselle Vázquez",
+      "telefono": "5571654744",
+      "email": "coach431@gmail.com",
+      "asistentes": [
+        "Asistente: Lucia Ramirez",
+        "Asistente: Beatriz Alvarez"
+      ],
+      "num_bailarines": 12,
+      "num_coreos": 4,
+      "boletos": 24,
+      "costo_total": 46800,
+      "pagado": 46800,
+      "saldo": 0,
+      "notas": null,
+      "enviado_el": "2026-05-30T11:21:35.155+00:00",
+      "confirmado_el": null,
+      "bailarines": [
+        {
+          "id": 8164,
+          "nombre": "Michelle Gutiérrez",
+          "nacimiento": "2008-12-03",
+          "categoria": "Senior"
+        },
+        {
+          "id": 8165,
+          "nombre": "Emilia Aguilar",
+          "nacimiento": "2009-02-25",
+          "categoria": "Senior"
+        },
+        {
+          "id": 8166,
+          "nombre": "María José González",
+          "nacimiento": "2008-06-10",
+          "categoria": "Senior"
+        },
+        {
+          "id": 8167,
+          "nombre": "Natalia Mendoza",
+          "nacimiento": "2009-08-14",
+          "categoria": "Senior"
+        },
+        {
+          "id": 8168,
+          "nombre": "Renata Pérez",
+          "nacimiento": "2009-02-25",
+          "categoria": "Senior"
+        },
+        {
+          "id": 8169,
+          "nombre": "Andrea Reyes",
+          "nacimiento": "2008-06-10",
+          "categoria": "Senior"
+        },
+        {
+          "id": 8170,
+          "nombre": "Romina Vázquez",
+          "nacimiento": "2009-08-14",
+          "categoria": "Senior"
+        },
+        {
+          "id": 8171,
+          "nombre": "Sofía García",
+          "nacimiento": "2008-06-10",
+          "categoria": "Senior"
+        },
+        {
+          "id": 8172,
+          "nombre": "Mariana Moreno",
+          "nacimiento": "2008-06-10",
+          "categoria": "Senior"
+        },
+        {
+          "id": 8173,
+          "nombre": "Ariadna Cruz",
+          "nacimiento": "2008-12-03",
+          "categoria": "Senior"
+        },
+        {
+          "id": 8174,
+          "nombre": "Brenda Medina",
+          "nacimiento": "2009-08-14",
+          "categoria": "Senior"
+        },
+        {
+          "id": 8175,
+          "nombre": "Itzel Vargas",
+          "nacimiento": "2009-02-25",
+          "categoria": "Senior"
+        }
+      ],
+      "coreografias": [
+        {
+          "modalidad": "Grupal",
+          "categoria": "Senior",
+          "nivel": "avanzado",
+          "estilo": "Ballet",
+          "bailarines": 12
+        },
+        {
+          "modalidad": "Dueto",
+          "categoria": "Senior",
+          "nivel": "avanzado",
+          "estilo": "Jazz",
+          "bailarines": 2
+        },
+        {
+          "modalidad": "Solista",
+          "categoria": "Senior",
+          "nivel": "avanzado",
+          "estilo": "Jazz",
+          "bailarines": 1
+        },
+        {
+          "modalidad": "Solista",
+          "categoria": "Senior",
+          "nivel": "avanzado",
+          "estilo": "Ballet",
+          "bailarines": 1
+        }
+      ]
+    },
+    {
+      "id": 278,
+      "estado": "confirmado",
+      "academia": "Olimpia Jazmín (Guadalajara)",
+      "coach": "Giselle Vázquez",
+      "telefono": "5514785057",
+      "email": "coach587@gmail.com",
+      "asistentes": [
+        "Asistente: Lucia Ramirez"
+      ],
+      "num_bailarines": 11,
+      "num_coreos": 3,
+      "boletos": 22,
+      "costo_total": 41700,
+      "pagado": 0,
+      "saldo": 41700,
+      "notas": null,
+      "enviado_el": "2026-05-30T11:22:10.669+00:00",
+      "confirmado_el": "2026-05-30T11:23:29.433+00:00",
+      "bailarines": [
+        {
+          "id": 8253,
+          "nombre": "Natalia Mendoza",
+          "nacimiento": "2015-07-22",
+          "categoria": "Elementary"
+        },
+        {
+          "id": 8254,
+          "nombre": "Mariana Moreno",
+          "nacimiento": "2015-07-22",
+          "categoria": "Elementary"
+        },
+        {
+          "id": 8255,
+          "nombre": "Karla Chávez",
+          "nacimiento": "2015-07-22",
+          "categoria": "Elementary"
+        },
+        {
+          "id": 8256,
+          "nombre": "Brenda Medina",
+          "nacimiento": "2014-05-14",
+          "categoria": "Junior"
+        },
+        {
+          "id": 8257,
+          "nombre": "Romina Vázquez",
+          "nacimiento": "2016-08-30",
+          "categoria": "Elementary"
+        },
+        {
+          "id": 8258,
+          "nombre": "Ximena Rodríguez",
+          "nacimiento": "2014-03-12",
+          "categoria": "Junior"
+        },
+        {
+          "id": 8259,
+          "nombre": "Paola Ramos",
+          "nacimiento": "2015-07-22",
+          "categoria": "Elementary"
+        },
+        {
+          "id": 8260,
+          "nombre": "Sofía García",
+          "nacimiento": "2015-07-22",
+          "categoria": "Elementary"
+        },
+        {
+          "id": 8261,
+          "nombre": "Regina López",
+          "nacimiento": "2015-07-22",
+          "categoria": "Elementary"
+        },
+        {
+          "id": 8262,
+          "nombre": "Camila Martínez",
+          "nacimiento": "2015-09-01",
+          "categoria": "Elementary"
+        },
+        {
+          "id": 8263,
+          "nombre": "María José González",
+          "nacimiento": "2015-07-22",
+          "categoria": "Elementary"
+        }
+      ],
+      "coreografias": [
+        {
+          "modalidad": "Grupal",
+          "categoria": "Junior",
+          "nivel": "avanzado",
+          "estilo": "Acro Jazz",
+          "bailarines": 11
+        },
+        {
+          "modalidad": "Solista",
+          "categoria": "Elementary",
+          "nivel": "avanzado",
+          "estilo": "Show",
+          "bailarines": 1
+        },
+        {
+          "modalidad": "Solista",
+          "categoria": "Elementary",
+          "nivel": "avanzado",
+          "estilo": "Show",
+          "bailarines": 1
+        }
+      ]
+    },
+    {
+      "id": 279,
+      "estado": "confirmado",
+      "academia": "Studio Horus Egiptus (Guadalajara)",
+      "coach": "Fernanda Luna",
+      "telefono": "5585928741",
+      "email": "coach240@gmail.com",
+      "asistentes": [
+        "Asistente: Claudia Sanchez"
+      ],
+      "num_bailarines": 7,
+      "num_coreos": 3,
+      "boletos": 14,
+      "costo_total": 27300,
+      "pagado": 0,
+      "saldo": 27300,
+      "notas": null,
+      "enviado_el": "2026-05-30T11:22:44.518+00:00",
+      "confirmado_el": "2026-05-30T11:24:02.67+00:00",
+      "bailarines": [
+        {
+          "id": 8313,
+          "nombre": "Emilia Aguilar",
+          "nacimiento": "2014-05-14",
+          "categoria": "Junior"
+        },
+        {
+          "id": 8314,
+          "nombre": "Valeria Torres",
+          "nacimiento": "2014-03-12",
+          "categoria": "Junior"
+        },
+        {
+          "id": 8315,
+          "nombre": "Paola Ramos",
+          "nacimiento": "2015-09-01",
+          "categoria": "Elementary"
+        },
+        {
+          "id": 8316,
+          "nombre": "Mariana Moreno",
+          "nacimiento": "2015-07-22",
+          "categoria": "Elementary"
+        },
+        {
+          "id": 8317,
+          "nombre": "Brenda Medina",
+          "nacimiento": "2014-11-05",
+          "categoria": "Elementary"
+        },
+        {
+          "id": 8318,
+          "nombre": "María José González",
+          "nacimiento": "2016-08-30",
+          "categoria": "Elementary"
+        },
+        {
+          "id": 8319,
+          "nombre": "Romina Vázquez",
+          "nacimiento": "2015-02-18",
+          "categoria": "Elementary"
+        }
+      ],
+      "coreografias": [
+        {
+          "modalidad": "Grupal",
+          "categoria": "Junior",
+          "nivel": "avanzado",
+          "estilo": "Acro Jazz",
+          "bailarines": 7
+        },
+        {
+          "modalidad": "Solista",
+          "categoria": "Elementary",
+          "nivel": "avanzado",
+          "estilo": "Show",
+          "bailarines": 1
+        },
+        {
+          "modalidad": "Solista",
+          "categoria": "Elementary",
+          "nivel": "avanzado",
+          "estilo": "Show",
+          "bailarines": 1
+        }
+      ]
+    },
+    {
+      "id": 280,
+      "estado": "pendiente",
+      "academia": "Unlimited (Guadalajara)",
+      "coach": "Karla Mendoza",
+      "telefono": "5530173712",
+      "email": "coach776@gmail.com",
+      "asistentes": [
+        "Asistente: Martha Flores"
+      ],
+      "num_bailarines": 7,
+      "num_coreos": 3,
+      "boletos": 14,
+      "costo_total": 27300,
+      "pagado": 0,
+      "saldo": 27300,
+      "notas": null,
+      "enviado_el": "2026-05-30T11:23:18.301+00:00",
+      "confirmado_el": null,
+      "bailarines": [
+        {
+          "id": 8369,
+          "nombre": "Ana Paula Castillo",
+          "nacimiento": "2009-08-14",
+          "categoria": "Senior"
+        },
+        {
+          "id": 8370,
+          "nombre": "Samantha Luna",
+          "nacimiento": "2008-12-03",
+          "categoria": "Senior"
+        },
+        {
+          "id": 8371,
+          "nombre": "Camila Martínez",
+          "nacimiento": "2009-02-25",
+          "categoria": "Senior"
+        },
+        {
+          "id": 8372,
+          "nombre": "Victoria Ortiz",
+          "nacimiento": "2010-01-29",
+          "categoria": "Senior"
+        },
+        {
+          "id": 8373,
+          "nombre": "Karla Chávez",
+          "nacimiento": "2008-06-10",
+          "categoria": "Senior"
+        },
+        {
+          "id": 8374,
+          "nombre": "Regina López",
+          "nacimiento": "2008-12-03",
+          "categoria": "Senior"
+        },
+        {
+          "id": 8375,
+          "nombre": "Romina Vázquez",
+          "nacimiento": "2010-07-18",
+          "categoria": "Senior"
+        }
+      ],
+      "coreografias": [
+        {
+          "modalidad": "Grupal",
+          "categoria": "Senior",
+          "nivel": "avanzado",
+          "estilo": "Hip Hop",
+          "bailarines": 7
+        },
+        {
+          "modalidad": "Solista",
+          "categoria": "Senior",
+          "nivel": "avanzado",
+          "estilo": "Hip Hop",
+          "bailarines": 1
+        },
+        {
+          "modalidad": "Solista",
+          "categoria": "Senior",
+          "nivel": "avanzado",
+          "estilo": "Contempo",
+          "bailarines": 1
+        }
+      ]
+    },
+    {
+      "id": 281,
+      "estado": "confirmado",
+      "academia": "Unlimited (Guadalajara)",
+      "coach": "Karla Mendoza",
+      "telefono": "5599333859",
+      "email": "coach862@gmail.com",
+      "asistentes": [
+        "Asistente: Martha Flores"
+      ],
+      "num_bailarines": 11,
+      "num_coreos": 2,
+      "boletos": 22,
+      "costo_total": 41200,
+      "pagado": 41200,
+      "saldo": 0,
+      "notas": null,
+      "enviado_el": "2026-05-30T11:23:49.988+00:00",
+      "confirmado_el": "2026-05-30T11:33:20.111+00:00",
+      "bailarines": [
+        {
+          "id": 8431,
+          "nombre": "Alejandra Jiménez",
+          "nacimiento": "2014-03-12",
+          "categoria": "Junior"
+        },
+        {
+          "id": 8432,
+          "nombre": "Victoria Ortiz",
+          "nacimiento": "2014-11-05",
+          "categoria": "Elementary"
+        },
+        {
+          "id": 8433,
+          "nombre": "Camila Martínez",
+          "nacimiento": "2014-11-05",
+          "categoria": "Elementary"
+        },
+        {
+          "id": 8434,
+          "nombre": "Regina López",
+          "nacimiento": "2014-11-05",
+          "categoria": "Elementary"
+        },
+        {
+          "id": 8435,
+          "nombre": "Valentina Hernández",
+          "nacimiento": "2015-02-18",
+          "categoria": "Elementary"
+        },
+        {
+          "id": 8436,
+          "nombre": "Ariadna Cruz",
+          "nacimiento": "2016-08-30",
+          "categoria": "Elementary"
+        },
+        {
+          "id": 8437,
+          "nombre": "Emilia Aguilar",
+          "nacimiento": "2016-08-30",
+          "categoria": "Elementary"
+        },
+        {
+          "id": 8438,
+          "nombre": "Samantha Luna",
+          "nacimiento": "2015-07-22",
+          "categoria": "Elementary"
+        },
+        {
+          "id": 8439,
+          "nombre": "Luciana Ruiz",
+          "nacimiento": "2015-02-18",
+          "categoria": "Elementary"
+        },
+        {
+          "id": 8440,
+          "nombre": "Ana Paula Castillo",
+          "nacimiento": "2015-02-18",
+          "categoria": "Elementary"
+        },
+        {
+          "id": 8441,
+          "nombre": "Paola Ramos",
+          "nacimiento": "2015-07-22",
+          "categoria": "Elementary"
+        }
+      ],
+      "coreografias": [
+        {
+          "modalidad": "Grupal",
+          "categoria": "Junior",
+          "nivel": "avanzado",
+          "estilo": "Contempo",
+          "bailarines": 11
+        },
+        {
+          "modalidad": "Solista",
+          "categoria": "Elementary",
+          "nivel": "avanzado",
+          "estilo": "Contempo",
+          "bailarines": 1
+        }
+      ]
+    },
+    {
+      "id": 284,
+      "estado": "confirmado",
+      "academia": "Danza sin ritmo (Monterrey)",
+      "coach": "Jose",
+      "telefono": "5522336655",
+      "email": "jose@gmail.com",
+      "asistentes": [],
+      "num_bailarines": 1,
+      "num_coreos": 1,
+      "boletos": 35,
+      "costo_total": 20200,
+      "pagado": 20200,
+      "saldo": 0,
+      "notas": null,
+      "enviado_el": "2026-05-30T19:09:30.565+00:00",
+      "confirmado_el": "2026-05-30T20:15:32.095+00:00",
+      "bailarines": [
+        {
+          "id": 8468,
+          "nombre": "Ana Msria Perez",
+          "nacimiento": "2020-07-22",
+          "categoria": "Tiny"
+        }
+      ],
+      "coreografias": [
+        {
+          "modalidad": "Solista",
+          "categoria": "Tiny",
+          "nivel": "avanzado",
+          "estilo": "Poms",
+          "bailarines": 1
+        }
+      ]
+    }
+  ]
+}
