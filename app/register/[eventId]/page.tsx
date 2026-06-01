@@ -1429,7 +1429,7 @@ export default function RegisterPage({ params }: Props) {
               }}
               className="shrink-0 bg-white/10 hover:bg-white/20 active:scale-95 text-white font-bold py-1 px-3 rounded-xl transition-all border border-white/20 text-[10px] sm:text-xs cursor-pointer"
             >
-              📂 Ver mis registros ({regIds.length})
+              Ver mis registros ({regIds.length})
             </button>
           </div>
         )}
@@ -1501,7 +1501,7 @@ export default function RegisterPage({ params }: Props) {
                 {/* Registrations List Card */}
                 <div className="bg-white/90 backdrop-blur border border-purple-100 rounded-3xl p-6 sm:p-8 shadow-xl shadow-purple-950/5">
                   <h3 className="font-display text-sm tracking-widest text-neutral-400 font-bold uppercase mb-6 flex items-center gap-2">
-                    📂 Mis Registros en este Dispositivo
+                    Mis Registros en este Dispositivo
                   </h3>
 
                   {loadingRegs ? (
@@ -1563,7 +1563,7 @@ export default function RegisterPage({ params }: Props) {
                               disabled={saving}
                               className="shrink-0 h-11 px-5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:brightness-105 active:scale-[0.98] text-white font-display text-xs tracking-wider rounded-xl font-black transition-all shadow-md shadow-purple-600/10 flex items-center justify-center gap-2 cursor-pointer border-0"
                             >
-                              VER INSCRIPCIÓN ➡️
+                              VER REGISTRO
                             </button>
                           </div>
                         )
@@ -1576,7 +1576,7 @@ export default function RegisterPage({ params }: Props) {
                     onClick={startNewRegistration}
                     className="w-full h-14 bg-gradient-to-r from-neutral-800 to-neutral-950 hover:brightness-110 active:scale-[0.98] text-white font-display text-xs sm:text-sm tracking-widest rounded-2xl font-black transition-all shadow-lg flex items-center justify-center gap-2 cursor-pointer uppercase border-0"
                   >
-                    ➕ Registrar nueva academia o grupo
+                    Registrar nueva academia o grupo
                   </button>
                 </div>
               </div>
