@@ -87,6 +87,35 @@ export default function EventosPage() {
   const [loadingPortalConfig, setLoadingPortalConfig] = useState(false)
   const [loadingFreeze, setLoadingFreeze] = useState(false)
 
+  // Admin mode states (Secret Developer/Owner Mode)
+  const [isAdminMode, setIsAdminMode] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      return sessionStorage.getItem('d4e_admin_mode') === 'true'
+    }
+    return false
+  })
+  const [titleTapCount, setTitleTapCount] = useState(0)
+  const [showAdminToast, setShowAdminToast] = useState(false)
+  const lastTapRef = useRef<number>(0)
+
+  const handleHeaderClick = () => {
+    const now = Date.now()
+    if (now - lastTapRef.current > 1000) {
+      setTitleTapCount(1)
+    } else {
+      const newCount = titleTapCount + 1
+      setTitleTapCount(newCount)
+      if (newCount >= 5) {
+        const newMode = !isAdminMode
+        setIsAdminMode(newMode)
+        sessionStorage.setItem('d4e_admin_mode', newMode ? 'true' : 'false')
+        setTitleTapCount(0)
+        setShowAdminToast(true)
+        setTimeout(() => setShowAdminToast(false), 2500)
+      }
+    }
+    lastTapRef.current = now
+  }
 
   // Load snapshots from Supabase, migrate from localStorage on first load
   useEffect(() => {
@@ -381,17 +410,29 @@ export default function EventosPage() {
   return (
     <div className="p-4 pb-6 space-y-5">
       {/* Header */}
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <h1 className="font-display text-xl tracking-wider uppercase">Eventos</h1>
-          <p className="text-xs text-neutral-500 mt-0.5">Gestion y configuracion de eventos</p>
-        </div>
-        <button
-          onClick={() => setShowCreate(true)}
-          className="flex items-center gap-1.5 bg-fuchsia-500 text-white px-4 py-2.5 rounded-xl font-display text-sm tracking-wider active:scale-95 transition-all"
+      <div className="flex flex-col items-center justify-center text-center gap-3 w-full py-2">
+        <div 
+          onClick={handleHeaderClick}
+          className="select-none flex flex-col items-center cursor-default"
         >
-          <Plus className="w-4 h-4" /> CREAR EVENTO
-        </button>
+          <h1 className="font-display text-xl tracking-wider uppercase flex items-center justify-center gap-2">
+            Eventos
+            {isAdminMode && (
+              <span className="text-[10px] bg-fuchsia-500/20 text-fuchsia-400 border border-fuchsia-500/30 px-2 py-0.5 rounded-full flex items-center gap-1 font-sans">
+                <Unlock className="w-2.5 h-2.5" /> ADMIN
+              </span>
+            )}
+          </h1>
+          <p className="text-xs text-neutral-500 mt-0.5">Gestión y configuración de eventos</p>
+        </div>
+        {isAdminMode && (
+          <button
+            onClick={() => setShowCreate(true)}
+            className="mt-1 flex items-center gap-1.5 bg-fuchsia-500 text-white px-4 py-2.5 rounded-xl font-display text-sm tracking-wider active:scale-95 transition-all animate-in fade-in zoom-in-95 duration-200"
+          >
+            <Plus className="w-4 h-4" /> CREAR EVENTO
+          </button>
+        )}
       </div>
 
       {/* Event list toggle */}
@@ -435,18 +476,24 @@ export default function EventosPage() {
                         Seleccionar
                       </button>
                     )}
-                    <button
-                      onClick={() => { setEditEventName(e.name); setEditEventDate(e.date); setShowEdit(true) }}
-                      className="w-7 h-7 rounded-lg bg-neutral-700/50 text-neutral-400 flex items-center justify-center hover:text-white"
-                    >
-                      <Edit3 className="w-3.5 h-3.5" />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(e.id, e.name)}
-                      className="w-7 h-7 rounded-lg bg-red-500/10 text-red-400 flex items-center justify-center hover:bg-red-500/20"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
+                    {isAdminMode && (
+                      <>
+                        <button
+                          onClick={() => { setEditEventName(e.name); setEditEventDate(e.date); setShowEdit(true) }}
+                          className="w-7 h-7 rounded-lg bg-neutral-700/50 text-neutral-400 flex items-center justify-center hover:text-white"
+                          title="Editar evento"
+                        >
+                          <Edit3 className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(e.id, e.name)}
+                          className="w-7 h-7 rounded-lg bg-red-500/10 text-red-400 flex items-center justify-center hover:bg-red-500/20"
+                          title="Eliminar evento"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </>
+                    )}
                   </div>
                 </div>
 
@@ -500,11 +547,11 @@ export default function EventosPage() {
                 <div className="space-y-2.5">
                   <label className="text-xs text-neutral-400 font-bold uppercase block">
                     Inscripción base
-                    <input type="number" value={costPaquete} onChange={e => setCostPaquete(Number(e.target.value) || 0)} className="mt-1 w-full px-3 py-2 bg-neutral-700/50 rounded-lg border border-neutral-600 text-sm text-white focus:outline-none focus:border-fuchsia-500" />
+                    <input type="number" value={costPaquete} onChange={e => setCostPaquete(Number(e.target.value) || 0)} disabled={!isAdminMode} className="mt-1 w-full px-3 py-2 bg-neutral-700/50 rounded-lg border border-neutral-600 text-sm text-white focus:outline-none focus:border-fuchsia-500" />
                   </label>
                   <label className="text-xs text-neutral-400 font-bold uppercase block">
                     Coreografía extra
-                    <input type="number" value={costRepeticion} onChange={e => setCostRepeticion(Number(e.target.value) || 0)} className="mt-1 w-full px-3 py-2 bg-neutral-700/50 rounded-lg border border-neutral-600 text-sm text-white focus:outline-none focus:border-fuchsia-500" />
+                    <input type="number" value={costRepeticion} onChange={e => setCostRepeticion(Number(e.target.value) || 0)} disabled={!isAdminMode} className="mt-1 w-full px-3 py-2 bg-neutral-700/50 rounded-lg border border-neutral-600 text-sm text-white focus:outline-none focus:border-fuchsia-500" />
                   </label>
                 </div>
               </div>
@@ -517,15 +564,15 @@ export default function EventosPage() {
                 <div className="space-y-2.5">
                   <label className="text-xs text-neutral-400 font-bold uppercase block">
                     Preventa entradas
-                    <input type="number" value={costEntradaTemprana} onChange={e => setCostEntradaTemprana(Number(e.target.value) || 0)} className="mt-1 w-full px-3 py-2 bg-neutral-700/50 rounded-lg border border-neutral-600 text-sm text-white focus:outline-none focus:border-fuchsia-500" />
+                    <input type="number" value={costEntradaTemprana} onChange={e => setCostEntradaTemprana(Number(e.target.value) || 0)} disabled={!isAdminMode} className="mt-1 w-full px-3 py-2 bg-neutral-700/50 rounded-lg border border-neutral-600 text-sm text-white focus:outline-none focus:border-fuchsia-500" />
                   </label>
                   <label className="text-xs text-neutral-400 font-bold uppercase block">
                     Precio regular
-                    <input type="number" value={costEntradaTardia} onChange={e => setCostEntradaTardia(Number(e.target.value) || 0)} className="mt-1 w-full px-3 py-2 bg-neutral-700/50 rounded-lg border border-neutral-600 text-sm text-white focus:outline-none focus:border-fuchsia-500" />
+                    <input type="number" value={costEntradaTardia} onChange={e => setCostEntradaTardia(Number(e.target.value) || 0)} disabled={!isAdminMode} className="mt-1 w-full px-3 py-2 bg-neutral-700/50 rounded-lg border border-neutral-600 text-sm text-white focus:outline-none focus:border-fuchsia-500" />
                   </label>
                   <label className="text-xs text-amber-400 font-bold uppercase block">
                     Fecha límite preventa
-                    <input type="date" value={deadlineEntrada} onChange={e => setDeadlineEntrada(e.target.value)} className="mt-1 w-full px-3 py-2 bg-neutral-700/50 rounded-lg border border-amber-500/30 text-sm text-white focus:outline-none focus:border-fuchsia-500" />
+                    <input type="date" value={deadlineEntrada} onChange={e => setDeadlineEntrada(e.target.value)} disabled={!isAdminMode} className="mt-1 w-full px-3 py-2 bg-neutral-700/50 rounded-lg border border-amber-500/30 text-sm text-white focus:outline-none focus:border-fuchsia-500" />
                   </label>
                 </div>
               </div>
@@ -538,11 +585,11 @@ export default function EventosPage() {
                 <div className="space-y-2.5">
                   <label className="text-xs text-neutral-400 font-bold uppercase block">
                     Costo por asistente
-                    <input type="number" value={costAsistente} onChange={e => setCostAsistente(Number(e.target.value) || 0)} className="mt-1 w-full px-3 py-2 bg-neutral-700/50 rounded-lg border border-neutral-600 text-sm text-white focus:outline-none focus:border-fuchsia-500" />
+                    <input type="number" value={costAsistente} onChange={e => setCostAsistente(Number(e.target.value) || 0)} disabled={!isAdminMode} className="mt-1 w-full px-3 py-2 bg-neutral-700/50 rounded-lg border border-neutral-600 text-sm text-white focus:outline-none focus:border-fuchsia-500" />
                   </label>
                   <label className="text-xs text-neutral-400 font-bold uppercase block">
                     Integrantes por asistente gratis
-                    <input type="number" value={dancersPorAsistente} onChange={e => setDancersPorAsistente(Number(e.target.value) || 1)} className="mt-1 w-full px-3 py-2 bg-neutral-700/50 rounded-lg border border-neutral-600 text-sm text-white focus:outline-none focus:border-fuchsia-500" />
+                    <input type="number" value={dancersPorAsistente} onChange={e => setDancersPorAsistente(Number(e.target.value) || 1)} disabled={!isAdminMode} className="mt-1 w-full px-3 py-2 bg-neutral-700/50 rounded-lg border border-neutral-600 text-sm text-white focus:outline-none focus:border-fuchsia-500" />
                     <span className="text-[10px] text-neutral-600 mt-0.5 block">Cada X integrantes = 1 pase gratis.</span>
                   </label>
                 </div>
@@ -556,11 +603,11 @@ export default function EventosPage() {
                 <div className="space-y-2.5">
                   <label className="text-xs text-neutral-400 font-bold uppercase block">
                     Cierre de registros
-                    <input type="date" value={deadlineRegistro} onChange={e => setDeadlineRegistro(e.target.value)} className="mt-1 w-full px-3 py-2 bg-neutral-700/50 rounded-lg border border-neutral-600 text-sm text-white focus:outline-none focus:border-fuchsia-500" />
+                    <input type="date" value={deadlineRegistro} onChange={e => setDeadlineRegistro(e.target.value)} disabled={!isAdminMode} className="mt-1 w-full px-3 py-2 bg-neutral-700/50 rounded-lg border border-neutral-600 text-sm text-white focus:outline-none focus:border-fuchsia-500" />
                   </label>
                   <label className="text-xs text-neutral-400 font-bold uppercase block">
                     Cierre de cambios
-                    <input type="date" value={deadlineCambios} onChange={e => setDeadlineCambios(e.target.value)} className="mt-1 w-full px-3 py-2 bg-neutral-700/50 rounded-lg border border-neutral-600 text-sm text-white focus:outline-none focus:border-fuchsia-500" />
+                    <input type="date" value={deadlineCambios} onChange={e => setDeadlineCambios(e.target.value)} disabled={!isAdminMode} className="mt-1 w-full px-3 py-2 bg-neutral-700/50 rounded-lg border border-neutral-600 text-sm text-white focus:outline-none focus:border-fuchsia-500" />
                   </label>
                 </div>
               </div>
@@ -586,10 +633,8 @@ export default function EventosPage() {
                   </div>
                   <button
                     onClick={handleToggleFreeze}
-                    disabled={loadingFreeze}
+                    disabled={loadingFreeze || !isAdminMode}
                     className={`w-12 h-6 rounded-full relative transition-colors ${
-                      loadingFreeze ? 'opacity-50 cursor-not-allowed' : ''
-                    } ${
                       event.registration_token ? 'bg-green-500/30 border border-green-500' : 'bg-amber-500/30 border border-amber-500'
                     }`}
                   >
@@ -631,7 +676,7 @@ export default function EventosPage() {
                     </div>
                     <button
                       onClick={handleToggleOperations}
-                      disabled={loadingPortalConfig}
+                      disabled={loadingPortalConfig || !isAdminMode}
                       className={`w-12 h-6 rounded-none relative transition-colors shrink-0 ${
                         enableOperations ? 'bg-neutral-900 border border-neutral-950' : 'bg-neutral-200 border border-neutral-300'
                       }`}
@@ -654,7 +699,7 @@ export default function EventosPage() {
                     </div>
                     <button
                       onClick={handleToggleRegistration}
-                      disabled={loadingPortalConfig}
+                      disabled={loadingPortalConfig || !isAdminMode}
                       className={`w-12 h-6 rounded-none relative transition-colors shrink-0 ${
                         enableRegistration ? 'bg-neutral-900 border border-neutral-950' : 'bg-neutral-200 border border-neutral-300'
                       }`}
@@ -677,8 +722,8 @@ export default function EventosPage() {
                 )}
                 <button
                   onClick={() => { setSavingSettings(true); doSaveSettings().finally(() => setSavingSettings(false)) }}
-                  disabled={savingSettings}
-                  className="flex-1 py-3 bg-black hover:bg-neutral-900 border border-neutral-800 text-white font-display text-xs tracking-wider font-bold rounded-xl active:scale-95 disabled:opacity-50 flex items-center justify-center gap-1.5 shadow-md transition-all"
+                  disabled={savingSettings || !isAdminMode}
+                  className="flex-1 py-3 bg-black hover:bg-neutral-900 border border-neutral-800 text-white font-display text-xs tracking-wider font-bold rounded-xl active:scale-95 flex items-center justify-center gap-1.5 shadow-md transition-all"
                 >
                   <Save className="w-4 h-4" />
                   {savingSettings ? 'GUARDANDO...' : 'GUARDAR AHORA'}
@@ -950,6 +995,16 @@ export default function EventosPage() {
               <button onClick={() => setShowEdit(false)} className="px-3 py-2.5 bg-neutral-700 text-neutral-300 rounded-xl text-sm">Cancelar</button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Floating toast notification for Admin Mode */}
+      {showAdminToast && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-neutral-900/90 border border-fuchsia-500/40 backdrop-blur-md text-white px-5 py-3 rounded-2xl flex items-center gap-2.5 shadow-lg shadow-fuchsia-500/10 animate-in fade-in slide-in-from-bottom-4 duration-300">
+          <div className="w-2 h-2 rounded-full bg-fuchsia-500 animate-ping" />
+          <span className="font-display text-xs tracking-wider uppercase">
+            {isAdminMode ? '✨ Modo Administrador Activo' : '🔒 Modo Administrador Desactivado'}
+          </span>
         </div>
       )}
     </div>
