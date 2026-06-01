@@ -32,6 +32,8 @@ export default function RegisterPage({ params }: Props) {
   const [editMode, setEditMode] = useState(false)
   const [isEditSave, setIsEditSave] = useState(false)
   const [saving, setSaving] = useState(false)
+  const submittingRef = useRef(saving)
+  submittingRef.current = saving
   const [saveErr, setSaveErr] = useState<string | null>(null)
   const [isLargeScreen, setIsLargeScreen] = useState<boolean | null>(null)
   const [isKeyboardOpen, setIsKeyboardOpen] = useState(false)
@@ -68,6 +70,138 @@ export default function RegisterPage({ params }: Props) {
   const [draftRegistrationId, setDraftRegistrationId] = useState<number | null>(null)
   const draftRegIdRef = useRef<number | null>(null)
   draftRegIdRef.current = draftRegistrationId
+
+  // Multiple registrations state
+  const [regIds, setRegIds] = useState<number[]>([])
+  const [loadingRegs, setLoadingRegs] = useState(false)
+  const [regsList, setRegsList] = useState<any[]>([])
+
+  // Load registration list details from Supabase using IDs
+  const loadRegistrationsList = useCallback(async (idsToLoad: number[]) => {
+    if (idsToLoad.length === 0) {
+      setRegsList([])
+      return
+    }
+    setLoadingRegs(true)
+    try {
+      const { data, error } = await supabase
+        .from('coach_registrations')
+        .select('id, coach_name, coach_phone, coach_email, academy, team_name, submitted_at, confirmed_at')
+        .in('id', idsToLoad)
+        .order('id', { ascending: false })
+      
+      if (!error && data) {
+        setRegsList(data)
+      }
+    } catch (e) {
+      console.error('Error loading registrations list:', e)
+    } finally {
+      setLoadingRegs(false)
+    }
+  }, [])
+
+  // Load a specific registration detail into state to view it
+  const loadRegistration = async (regId: number) => {
+    setSaving(true)
+    try {
+      const { data: regRow } = await supabase
+        .from('coach_registrations')
+        .select('id, coach_name, coach_phone, coach_email, academy, team_name, submitted_at, confirmed_at, tickets_count, notes, cost_paquete, cost_repeticion, signature, extra_coaches')
+        .eq('id', regId)
+        .single()
+      
+      if (regRow) {
+        const { data: dancers } = await supabase.from('registration_dancers').select('*').eq('registration_id', regRow.id)
+        const { data: acts } = await supabase.from('registration_acts').select('*').eq('registration_id', regRow.id)
+        
+        let academy = regRow.academy || ''
+        let city = ''
+        const match = academy.match(/^(.*?)\s*\(([^)]+)\)$/)
+        if (match) { academy = match[1]; city = match[2] }
+        const assistants = (regRow.extra_coaches || [])
+          .map((a: string) => a.replace(/^Asistente:\s*/, ''))
+          .filter((a: string) => a.trim().length > 0)
+        
+        const loadedState: State = {
+          coach: { name: regRow.coach_name || '', phone: regRow.coach_phone || '', email: regRow.coach_email || '', assistants },
+          academy, city,
+          teamName: regRow.team_name || '',
+          teamSize: (dancers || []).length,
+          dancers: (dancers || []).map((d: any) => ({
+            name: d.name || '', birthdate: d.birthdate || '',
+            categoryOverride: d.category_manual ? (d.category as any) : null,
+          })),
+          actCount: (acts || []).length,
+          acts: (acts || []).map((a: any) => ({
+            modality: a.modality || 'grupal',
+            ageCategory: a.age_category || null,
+            level: a.level || 'avanzado',
+            style: a.style || '',
+            dancerIndices: (a.dancer_ids || []).map((did: number) => {
+              const idx = (dancers || []).findIndex((d: any) => d.id === did)
+              return idx >= 0 ? idx : 0
+            }),
+          })),
+          costPaquete: regRow.cost_paquete || null,
+          costRepeticion: regRow.cost_repeticion || null,
+          confirmedRegistrationId: regRow.id,
+          ticketsCount: regRow.tickets_count || 0,
+          notes: regRow.notes || '',
+          confirmedAt: regRow.confirmed_at || null,
+          signature: regRow.signature || null,
+        }
+        
+        setState(loadedState)
+        setDraftRegistrationId(regRow.id)
+        
+        // Also persist in localStorage single key
+        localStorage.setItem(`d4e:register-reg-id:${eventId}`, String(regRow.id))
+        
+        if (regRow.confirmed_at) {
+          setStep({ kind: 'confirmed' })
+        } else {
+          setStep({ kind: 'pending' })
+        }
+      }
+    } catch (e) {
+      console.error('Error loading registration:', e)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  // Clear active state to fill a new registration
+  const startNewRegistration = () => {
+    const newDraftId = typeof crypto !== 'undefined' && crypto.randomUUID
+      ? crypto.randomUUID()
+      : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+          const r = Math.random() * 16 | 0
+          return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16)
+        })
+    
+    localStorage.removeItem(`d4e:register-reg-id:${eventId}`)
+    localStorage.setItem(`d4e:register-draft-id:${eventId}`, newDraftId)
+    
+    setState({
+      coach: { name: '', phone: '', email: '', assistants: [] },
+      academy: '',
+      city: '',
+      teamName: '',
+      teamSize: null,
+      dancers: [],
+      actCount: null,
+      acts: [],
+      costPaquete: null,
+      costRepeticion: null,
+      confirmedRegistrationId: null,
+      ticketsCount: 0,
+      notes: '',
+      signature: null,
+    })
+    
+    setDraftRegistrationId(null)
+    setStep({ kind: 'welcome' })
+  }
 
   const saveDraftToSupabase = useCallback(async (s: State) => {
     if (savingRef.current) return
@@ -262,6 +396,36 @@ export default function RegisterPage({ params }: Props) {
   }, [eventId])
 
   useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const idsKey = `d4e:register-reg-ids:${eventId}`
+      const singleKey = `d4e:register-reg-id:${eventId}`
+      const storedIdsStr = localStorage.getItem(idsKey)
+      const storedSingleId = localStorage.getItem(singleKey)
+      
+      let ids: number[] = []
+      if (storedIdsStr) {
+        try { ids = JSON.parse(storedIdsStr) } catch {}
+      }
+      
+      // Migration: if they have a single registered ID but not in the list, import it!
+      if (storedSingleId) {
+        const sId = Number(storedSingleId)
+        if (!isNaN(sId) && !ids.includes(sId)) {
+          ids.push(sId)
+          localStorage.setItem(idsKey, JSON.stringify(ids))
+        }
+      }
+      setRegIds(ids)
+    }
+  }, [eventId])
+
+  useEffect(() => {
+    if (regIds.length > 0) {
+      loadRegistrationsList(regIds)
+    }
+  }, [regIds, loadRegistrationsList])
+
+  useEffect(() => {
     let cancelled = false
     
     // Safeguard timeout to prevent forever-loading freezes if WebKit suspends active fetch promises
@@ -380,71 +544,83 @@ export default function RegisterPage({ params }: Props) {
                 console.error('Error recovering registration from DB:', e)
               }
             } else {
-              let rawState: State | null = null
-
-              // Try Supabase draft first
+              // If there are saved registration IDs in localStorage but no active single registration ID is selected, show the selector!
+              const storedIdsStr = typeof window !== 'undefined' ? localStorage.getItem(`d4e:register-reg-ids:${eventId}`) : null
+              let hasSavedRegs = false
               try {
-                const { data: draftRows, error } = await supabase
-                  .from('registration_drafts')
-                  .select('state')
-                  .eq('draft_id', draftId)
-                if (!error && draftRows && draftRows.length > 0) {
-                  rawState = migrateSaved(draftRows[0].state as State)
-                }
-              } catch { /* Supabase might not be ready */ }
+                const parsed = storedIdsStr ? JSON.parse(storedIdsStr) : []
+                hasSavedRegs = parsed && parsed.length > 0
+              } catch {}
 
-              // Fall back to localStorage
-              if (!rawState) {
-                const raw = localStorage.getItem(LS_KEY(eventId))
-                if (raw) {
-                  try { rawState = migrateSaved(JSON.parse(raw) as State) } catch { /* ignore */ }
-                }
-              }
+              if (hasSavedRegs) {
+                setStep({ kind: 'selector' })
+              } else {
+                let rawState: State | null = null
 
-              if (rawState) {
-                setState(rawState)
-                // Check for existing draft in coach_registrations by draft_id
-                if (!rawState.confirmedRegistrationId) {
-                  try {
-                    const { data: draftReg } = await supabase
-                      .from('coach_registrations')
-                      .select('id')
-                      .eq('draft_id', draftId)
-                    if (draftReg && draftReg.length > 0) {
-                      setDraftRegistrationId(draftReg[0].id)
-                    }
-                  } catch { /* ignore */ }
-                }
-                if (rawState.confirmedRegistrationId) {
-                  // Determine confirmed vs pending asynchronously
-                  setStep({ kind: 'pending' })
-                  try {
-                    const { data: regData } = await supabase
-                      .from('coach_registrations')
-                      .select('confirmed_at, submitted_at')
-                      .eq('id', rawState!.confirmedRegistrationId)
-                      .single()
-                    if (regData) {
-                      setState(s => {
-                        if (s.confirmedRegistrationId === rawState!.confirmedRegistrationId) {
-                          return { 
-                            ...s, 
-                            confirmedAt: regData.confirmed_at,
-                            submittedAt: regData.submitted_at 
-                          }
-                        }
-                        return s
-                      })
-                      if (regData.confirmed_at) {
-                        setStep({ kind: 'confirmed' })
-                      }
-                    }
-                  } catch (e) {
-                    console.error("Failed to fetch confirmation timestamp:", e)
+                // Try Supabase draft first
+                try {
+                  const { data: draftRows, error } = await supabase
+                    .from('registration_drafts')
+                    .select('state')
+                    .eq('draft_id', draftId)
+                  if (!error && draftRows && draftRows.length > 0) {
+                    rawState = migrateSaved(draftRows[0].state as State)
+                  }
+                } catch { /* Supabase might not be ready */ }
+
+                // Fall back to localStorage
+                if (!rawState) {
+                  const raw = localStorage.getItem(LS_KEY(eventId))
+                  if (raw) {
+                    try { rawState = migrateSaved(JSON.parse(raw) as State) } catch { /* ignore */ }
                   }
                 }
-              } else {
-                setStep({ kind: 'welcome' })
+
+                if (rawState) {
+                  setState(rawState)
+                  // Check for existing draft in coach_registrations by draft_id
+                  if (!rawState.confirmedRegistrationId) {
+                    try {
+                      const { data: draftReg } = await supabase
+                        .from('coach_registrations')
+                        .select('id')
+                        .eq('draft_id', draftId)
+                      if (draftReg && draftReg.length > 0) {
+                        setDraftRegistrationId(draftReg[0].id)
+                      }
+                    } catch { /* ignore */ }
+                  }
+                  if (rawState.confirmedRegistrationId) {
+                    // Determine confirmed vs pending asynchronously
+                    setStep({ kind: 'pending' })
+                    try {
+                      const { data: regData } = await supabase
+                        .from('coach_registrations')
+                        .select('confirmed_at, submitted_at')
+                        .eq('id', rawState!.confirmedRegistrationId)
+                        .single()
+                      if (regData) {
+                        setState(s => {
+                          if (s.confirmedRegistrationId === rawState!.confirmedRegistrationId) {
+                            return { 
+                              ...s, 
+                              confirmedAt: regData.confirmed_at,
+                              submittedAt: regData.submitted_at 
+                            }
+                          }
+                          return s
+                        })
+                        if (regData.confirmed_at) {
+                          setStep({ kind: 'confirmed' })
+                        }
+                      }
+                    } catch (e) {
+                      console.error("Failed to fetch confirmation timestamp:", e)
+                    }
+                  }
+                } else {
+                  setStep({ kind: 'welcome' })
+                }
               }
             }
           }
@@ -489,6 +665,10 @@ export default function RegisterPage({ params }: Props) {
         table: 'coach_registrations',
         filter: `id=eq.${regId}`,
       }, (payload) => {
+        if (submittingRef.current) {
+          console.log("Ignoring realtime update because coach is currently saving changes...")
+          return
+        }
         const row = payload.new as { confirmed_at: string | null }
         if (row?.confirmed_at) {
           setState(s => ({ ...s, confirmedAt: row.confirmed_at }))
@@ -947,8 +1127,11 @@ export default function RegisterPage({ params }: Props) {
         if (updErr) throw updErr
 
         // Delete existing dancers/acts for this registration to replace them
-        await supabase.from('registration_dancers').delete().eq('registration_id', registrationId)
-        await supabase.from('registration_acts').delete().eq('registration_id', registrationId)
+        const { error: delDancersErr } = await supabase.from('registration_dancers').delete().eq('registration_id', registrationId)
+        if (delDancersErr) throw delDancersErr
+
+        const { error: delActsErr } = await supabase.from('registration_acts').delete().eq('registration_id', registrationId)
+        if (delActsErr) throw delActsErr
 
         const dancerRows = state.dancers.map((d, i) => ({
           registration_id: registrationId,
@@ -1032,8 +1215,11 @@ export default function RegisterPage({ params }: Props) {
 
         // Delete existing dancers/acts for this registration (in case of re-submit from draft)
         if (draftRegistrationId) {
-          await supabase.from('registration_dancers').delete().eq('registration_id', registrationId)
-          await supabase.from('registration_acts').delete().eq('registration_id', registrationId)
+          const { error: delDancersErr } = await supabase.from('registration_dancers').delete().eq('registration_id', registrationId)
+          if (delDancersErr) throw delDancersErr
+
+          const { error: delActsErr } = await supabase.from('registration_acts').delete().eq('registration_id', registrationId)
+          if (delActsErr) throw delActsErr
         }
 
         const dancerRows = state.dancers.map((d, i) => ({
@@ -1090,7 +1276,19 @@ export default function RegisterPage({ params }: Props) {
         submittedAt: submittedAt,
       }))
       // Persist registration ID so we can recover state on reload
-      try { localStorage.setItem(`d4e:register-reg-id:${eventId}`, String(registrationId)) } catch { /* ignore */ }
+      try { 
+        localStorage.setItem(`d4e:register-reg-id:${eventId}`, String(registrationId))
+        const storedIdsStr = localStorage.getItem(`d4e:register-reg-ids:${eventId}`)
+        let ids: number[] = []
+        if (storedIdsStr) {
+          try { ids = JSON.parse(storedIdsStr) } catch {}
+        }
+        if (!ids.includes(registrationId)) {
+          ids.push(registrationId)
+          localStorage.setItem(`d4e:register-reg-ids:${eventId}`, JSON.stringify(ids))
+        }
+        setRegIds(ids)
+      } catch { /* ignore */ }
       setEditMode(false)
       setShowSuccessSplash(true)
       setStep({ kind: 'pending' }) // Go back to pending screen
@@ -1153,7 +1351,7 @@ export default function RegisterPage({ params }: Props) {
     )
   }
 
-  const isFirstStep = step.kind === 'welcome'
+  const isFirstStep = step.kind === 'welcome' || step.kind === 'selector'
   const isMobile = isLargeScreen === false
 
   return (
@@ -1217,6 +1415,25 @@ export default function RegisterPage({ params }: Props) {
           paddingBottom: '0px'
         }}
       >
+        {/* MULTI-REGISTRATION STICKY HEADER */}
+        {regIds.length > 0 && step.kind !== 'selector' && (
+          <div className="shrink-0 mx-4 mt-4 lg:mx-0 bg-purple-900/90 text-white text-xs sm:text-sm font-semibold py-2.5 px-4 flex justify-between items-center gap-4 rounded-2xl border border-purple-500/30 shadow-md">
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="w-2 h-2 rounded-full bg-green-400 shrink-0 animate-pulse"></span>
+              <span className="truncate">Inscripción activa: <strong className="text-yellow-300">{state.academy || 'Borrador'}</strong></span>
+            </div>
+            <button 
+              onClick={() => {
+                setStep({ kind: 'selector' })
+                try { localStorage.removeItem(`d4e:register-reg-id:${eventId}`) } catch {}
+              }}
+              className="shrink-0 bg-white/10 hover:bg-white/20 active:scale-95 text-white font-bold py-1 px-3 rounded-xl transition-all border border-white/20 text-[10px] sm:text-xs cursor-pointer"
+            >
+              📂 Ver mis registros ({regIds.length})
+            </button>
+          </div>
+        )}
+
         {/* DESKTOP HEADER */}
         {!isFirstStep && (
           <div className="shrink-0 hidden lg:flex items-center gap-6 pb-4 border-b border-[rgb(var(--c-border)/0.3)]">
@@ -1266,37 +1483,136 @@ export default function RegisterPage({ params }: Props) {
 
         <div className={`flex-1 min-h-0 flex justify-center transition-colors duration-300 ${step.kind === 'welcome' ? 'bg-black' : ''}`}>
           <div className={`w-full ${step.kind === 'welcome' ? 'bg-black' : step.kind === 'summary' || step.kind === 'confirmed' || step.kind === 'dancers' ? 'max-w-6xl' : 'max-w-3xl'} min-h-full lg:h-full flex flex-col justify-start lg:justify-center transition-colors duration-300 ${step.kind === 'welcome' ? 'bg-black' : isKeyboardOpen ? 'pt-[1vh] lg:pt-3' : 'pt-0 sm:pt-2 lg:pt-0'} min-h-0`}>
-            <StepView
-              step={step}
-              state={state}
-              event={event}
-              isKeyboardOpen={isKeyboardOpen}
-              editMode={editMode}
-              isEditSave={isEditSave}
-              isMobile={isMobile}
-              onNext={goNext}
-              onBack={goBack}
-              goToStep={setStep}
-              updateCoach={updateCoach}
-              updateState={setState}
-              updateDancer={updateDancer}
-              addDancer={addDancer}
-              removeDancer={removeDancer}
-              onOpenSmartPaste={() => setIsPasteModalOpen(true)}
-              updateAct={updateAct}
-              addAct={addAct}
-              removeAct={removeAct}
-              confirm={confirm}
-              saving={saving}
-              saveErr={saveErr}
-              startEdit={startEdit}
-              signature={signature}
-              setSignature={setSignature}
-              actsConfirmed={actsConfirmed}
-              setActsConfirmed={setActsConfirmed}
-              activeActIndex={activeActIndex}
-              setActiveActIndex={setActiveActIndex}
-            />
+            {step.kind === 'selector' ? (
+              <div className="w-full max-w-3xl mx-auto px-4 py-8 text-neutral-800 animate-fadeIn">
+                {/* Event Header */}
+                <div className="text-center mb-8">
+                  <p className="font-display text-xs sm:text-sm tracking-[0.3em] text-[rgb(var(--c-primary))] font-black uppercase mb-2">PANEL DE REGISTRO</p>
+                  <h2 className="font-display text-2xl sm:text-3xl font-black uppercase text-neutral-900 tracking-wide mb-1">
+                    {event?.name || 'Cargando evento...'}
+                  </h2>
+                  {event?.date && (
+                    <p className="text-xs sm:text-sm text-neutral-500 font-semibold uppercase tracking-wider">
+                      {formatEventDate(event.date)}
+                    </p>
+                  )}
+                </div>
+
+                {/* Registrations List Card */}
+                <div className="bg-white/90 backdrop-blur border border-purple-100 rounded-3xl p-6 sm:p-8 shadow-xl shadow-purple-950/5">
+                  <h3 className="font-display text-sm tracking-widest text-neutral-400 font-bold uppercase mb-6 flex items-center gap-2">
+                    📂 Mis Registros en este Dispositivo
+                  </h3>
+
+                  {loadingRegs ? (
+                    <div className="flex flex-col items-center justify-center py-12 gap-3 text-neutral-400 font-semibold text-sm">
+                      <div className="w-8 h-8 rounded-full border-4 border-purple-600 border-t-transparent animate-spin"></div>
+                      <span>Cargando tus registros...</span>
+                    </div>
+                  ) : regsList.length === 0 ? (
+                    <div className="text-center py-10 border border-dashed border-purple-200 rounded-2xl mb-8">
+                      <p className="text-neutral-500 font-semibold text-sm mb-2">No se encontraron registros previos guardados en este navegador.</p>
+                      <p className="text-xs text-neutral-400">Si tenías uno, asegúrate de estar usando el mismo dispositivo y navegador.</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4 mb-8">
+                      {regsList.map((reg) => {
+                        const isConfirmed = !!reg.confirmed_at
+                        const isPending = !isConfirmed && reg.submitted_at && !reg.submitted_at.startsWith('1970-01-01')
+                        
+                        return (
+                          <div 
+                            key={reg.id} 
+                            className="bg-neutral-50/60 hover:bg-neutral-50 border border-neutral-200/80 hover:border-purple-300 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all duration-200 group"
+                          >
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-2.5 flex-wrap">
+                                <h4 className="font-display text-sm sm:text-base font-black text-neutral-900 group-hover:text-purple-950 transition-colors uppercase">
+                                  {reg.academy || 'Borrador sin nombre'}
+                                </h4>
+                                
+                                {/* Status Badge */}
+                                {isConfirmed ? (
+                                  <span className="text-[10px] tracking-wider font-display font-black uppercase px-2 py-0.5 rounded-full bg-green-100 text-green-700 border border-green-200 flex items-center gap-1">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                                    CONFIRMADO
+                                  </span>
+                                ) : isPending ? (
+                                  <span className="text-[10px] tracking-wider font-display font-black uppercase px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-700 border border-yellow-200 flex items-center gap-1">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-yellow-500 animate-pulse"></span>
+                                    PENDIENTE DE PAGO
+                                  </span>
+                                ) : (
+                                  <span className="text-[10px] tracking-wider font-display font-black uppercase px-2 py-0.5 rounded-full bg-neutral-100 text-neutral-600 border border-neutral-200 flex items-center gap-1">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-neutral-400"></span>
+                                    BORRADOR
+                                  </span>
+                                )}
+                              </div>
+                              
+                              <p className="text-xs text-neutral-500 font-semibold">
+                                Coach: <span className="text-neutral-700 font-bold">{reg.coach_name || 'Sin nombre'}</span>
+                              </p>
+                              <p className="text-[10px] text-neutral-400">
+                                ID Registro: #{reg.id}
+                              </p>
+                            </div>
+
+                            <button
+                              onClick={() => loadRegistration(reg.id)}
+                              disabled={saving}
+                              className="shrink-0 h-11 px-5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:brightness-105 active:scale-[0.98] text-white font-display text-xs tracking-wider rounded-xl font-black transition-all shadow-md shadow-purple-600/10 flex items-center justify-center gap-2 cursor-pointer border-0"
+                            >
+                              VER INSCRIPCIÓN ➡️
+                            </button>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
+
+                  {/* Start New Registration Button */}
+                  <button
+                    onClick={startNewRegistration}
+                    className="w-full h-14 bg-gradient-to-r from-neutral-800 to-neutral-950 hover:brightness-110 active:scale-[0.98] text-white font-display text-xs sm:text-sm tracking-widest rounded-2xl font-black transition-all shadow-lg flex items-center justify-center gap-2 cursor-pointer uppercase border-0"
+                  >
+                    ➕ Registrar nueva academia o grupo
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <StepView
+                step={step}
+                state={state}
+                event={event}
+                isKeyboardOpen={isKeyboardOpen}
+                editMode={editMode}
+                isEditSave={isEditSave}
+                isMobile={isMobile}
+                onNext={goNext}
+                onBack={goBack}
+                goToStep={setStep}
+                updateCoach={updateCoach}
+                updateState={setState}
+                updateDancer={updateDancer}
+                addDancer={addDancer}
+                removeDancer={removeDancer}
+                onOpenSmartPaste={() => setIsPasteModalOpen(true)}
+                updateAct={updateAct}
+                addAct={addAct}
+                removeAct={removeAct}
+                confirm={confirm}
+                saving={saving}
+                saveErr={saveErr}
+                startEdit={startEdit}
+                signature={signature}
+                setSignature={setSignature}
+                actsConfirmed={actsConfirmed}
+                setActsConfirmed={setActsConfirmed}
+                activeActIndex={activeActIndex}
+                setActiveActIndex={setActiveActIndex}
+              />
+            )}
           </div>
         </div>
       </main>
@@ -1365,6 +1681,15 @@ export default function RegisterPage({ params }: Props) {
                 <ArrowRight className="w-4 h-4 animate-pulse" />
               </button>
             )
+          ) : step.kind === 'summary' && editMode ? (
+            <button
+              onClick={confirm}
+              disabled={saving}
+              className="flex items-center gap-1.5 text-white bg-gradient-to-r from-purple-700 via-purple-600 to-pink-600 hover:from-purple-800 hover:to-pink-700 font-display font-bold text-sm px-5 py-2.5 rounded-2xl disabled:opacity-30 disabled:pointer-events-none active:scale-95 transition-all duration-150 shadow-[0_4px_12px_rgba(168,85,247,0.3)]"
+            >
+              {saving ? 'GUARDANDO…' : 'GUARDAR CAMBIOS'}
+              <Check className="w-4 h-4 animate-pulse" />
+            </button>
           ) : step.kind === 'carta' ? (
             <button
               onClick={confirm}

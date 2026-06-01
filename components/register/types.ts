@@ -48,6 +48,7 @@ export type Step =
   | { kind: 'carta' }
   | { kind: 'pending' }
   | { kind: 'confirmed' }
+  | { kind: 'selector' }
 
 export const STYLES = ['Jazz', 'Poms', 'Acro Jazz', 'Hip Hop', 'Show', 'Ballet', 'Contempo']
 
