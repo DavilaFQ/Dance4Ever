@@ -1008,11 +1008,14 @@ export default function StandaloneBuilderPage() {
                               </p>
                               {(() => {
                                 const dancersInAct = item.reg.dancers.filter(d => (item.act.dancer_ids || []).includes(d.id))
-                                const dancerNames = dancersInAct.map(d => d.name.split(' ').slice(0, 2).join(' ')).join(', ')
-                                return dancerNames && (
-                                  <p className="text-xs text-neutral-600 font-bold truncate mt-1">
-                                    {item.act.modality === 'grupal' ? `${dancersInAct.length} integrantes` : dancerNames}
-                                  </p>
+                                return dancersInAct.length > 0 && (
+                                  <div className="mt-1 flex flex-col gap-0.5">
+                                    {dancersInAct.map(d => (
+                                      <p key={d.id} className="text-xs text-neutral-600 font-bold leading-tight">
+                                        {d.name}
+                                      </p>
+                                    ))}
+                                  </div>
                                 )
                               })()}
                             </div>
@@ -1299,14 +1302,13 @@ function ActCard({ item, index, dragHandle, isDragOverlay, conflicts, isEditing,
   const colors = act.age_category ? CATEGORY_COLORS[act.age_category] : CATEGORY_COLORS.open
   const mod = MODALITY_LABELS[act.modality].toUpperCase()
   const dancersInAct = reg.dancers.filter(d => (act.dancer_ids || []).includes(d.id))
-  const names = dancersInAct.map(d => d.name.split(' ').slice(0, 2).join(' ')).join(', ')
   const hasConflict = conflicts && conflicts.length > 0
   const conflictDancerNames = hasConflict
     ? [...new Set(conflicts!.map(c => c.dancerName))].join(', ')
     : ''
 
   return (
-    <div className={`flex items-center gap-3 p-3 rounded-none border-2 transition-all ${
+    <div className={`flex items-start gap-3 p-3 rounded-none border-2 transition-all ${
       isDragOverlay
         ? `${colors.bg} border-black shadow-2xl`
         : `bg-white border-neutral-200 hover:border-black hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]`
@@ -1352,22 +1354,26 @@ function ActCard({ item, index, dragHandle, isDragOverlay, conflicts, isEditing,
             <span className="text-[10px] text-neutral-500 font-extrabold uppercase">- {act.style}</span>
           )}
         </div>
-        <p className="text-sm font-black truncate mt-1 text-black">
+        <p className="text-sm font-black mt-1 text-black">
           {reg.academy}{reg.team_name ? ` - ${reg.team_name}` : ''}
         </p>
-        {names && (
-          <p className="text-xs text-neutral-600 font-bold truncate mt-1">
-            {act.modality === 'grupal' ? `${dancersInAct.length} integrantes` : names}
-          </p>
+        {dancersInAct.length > 0 && (
+          <div className="mt-1.5 flex flex-col gap-0.5">
+            {dancersInAct.map(d => (
+              <p key={d.id} className="text-xs text-neutral-600 font-bold leading-tight">
+                {d.name}
+              </p>
+            ))}
+          </div>
         )}
         {hasConflict && !isDragOverlay && (
-          <p className="text-xs text-red-600 font-black truncate mt-1 leading-tight">
+          <p className="text-xs text-red-600 font-black mt-1 leading-tight">
             {conflictDancerNames}
           </p>
         )}
       </div>
 
-      <div className="shrink-0 flex items-center gap-2">
+      <div className="shrink-0 flex flex-col items-end gap-2">
         <div className="text-[9px] text-neutral-500 font-bold uppercase text-right leading-tight">
           {act.modality === 'grupal' && <div>{dancersInAct.length} INT.</div>}
           <div>{act.level === 'basico' ? 'Basico' : 'Avanzado'}</div>
