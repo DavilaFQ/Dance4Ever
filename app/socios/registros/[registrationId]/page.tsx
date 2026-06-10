@@ -14,6 +14,7 @@ import {
   AGE_CATEGORY_LABELS,
   categoryFromBirthdate,
   Event,
+  AgeCategory,
 } from '@/lib/supabase'
 import { useEventContext } from '@/app/socios/layout'
 import {
@@ -173,6 +174,8 @@ export default function RegistrationDetailPage({ registrationIdProp, onBack }: {
   const [editingDancer, setEditingDancer] = useState<RegistrationDancer | null>(null)
   const [dancerName, setDancerName] = useState('')
   const [dancerBirthdate, setDancerBirthdate] = useState('')
+  const [dancerCategoryManual, setDancerCategoryManual] = useState(false)
+  const [dancerCategoryOverride, setDancerCategoryOverride] = useState<AgeCategory>('open')
 
   const [editingAct, setEditingAct] = useState<RegistrationAct | null>(null)
   const [actModality, setActModality] = useState<Modality>('solista')
@@ -362,6 +365,68 @@ export default function RegistrationDetailPage({ registrationIdProp, onBack }: {
         broadcastChannel.send({ type: 'broadcast', event: 'ledger_update', payload: { regId: reg.id, note: note.trim() || null } }).catch(() => {})
       }
     }
+  }
+
+  const handleSaveDancerEdit = async () => {
+    if (!editingDancer || !reg) return
+    const calculatedCat = categoryFromBirthdate(dancerBirthdate)
+    const finalCat = dancerCategoryManual ? dancerCategoryOverride : calculatedCat
+    
+    // 1. Update dancer in DB
+    const { error } = await supabase
+      .from('registration_dancers')
+      .update({
+        name: dancerName.trim(),
+        birthdate: dancerBirthdate,
+        category: finalCat,
+        category_manual: dancerCategoryManual
+      })
+      .eq('id', editingDancer.id)
+      
+    if (error) {
+      alert('Error al guardar integrante: ' + error.message)
+      return
+    }
+
+    // 2. Recalculate act categories for all acts containing this dancer
+    const affectedActs = acts.filter(a => a.dancer_ids.includes(editingDancer.id))
+    const { data: updatedDancers } = await supabase
+      .from('registration_dancers')
+      .select('*')
+      .eq('registration_id', reg.id)
+      
+    if (updatedDancers) {
+      const dancerMap = new Map(updatedDancers.map(d => [d.id, d]))
+      for (const act of affectedActs) {
+        const actDancers = act.dancer_ids.map(id => dancerMap.get(id)).filter(Boolean) as RegistrationDancer[]
+        const maxAgeIdx = actDancers.reduce((max, d) => {
+          const idx = d.category ? AGE_CATEGORY_ORDER.indexOf(d.category) : 0
+          return idx > max ? idx : max
+        }, 0)
+        const ageCat = AGE_CATEGORY_ORDER[maxAgeIdx]
+        
+        await supabase
+          .from('registration_acts')
+          .update({ age_category: ageCat })
+          .eq('id', act.id)
+      }
+    }
+
+    // 3. Log edit
+    await logEdit(reg.id, {
+      entity_type: 'dancer',
+      entity_id: editingDancer.id,
+      action: 'update',
+      changes: {
+        name: { old: editingDancer.name, new: dancerName.trim() },
+        birthdate: { old: editingDancer.birthdate, new: dancerBirthdate },
+        category: { old: editingDancer.category, new: finalCat },
+        category_manual: { old: editingDancer.category_manual, new: dancerCategoryManual }
+      }
+    })
+
+    setEditingDancer(null)
+    loadData()
   }
 
   if (loading) {
@@ -672,6 +737,48 @@ export default function RegistrationDetailPage({ registrationIdProp, onBack }: {
               const cost = dancerCost(d.id, counts, breakdown?.inscrBase ?? 0, breakdown?.repBase ?? 0)
               const actNames = acts.filter(a => a.modality === 'grupal' || a.dancer_ids.includes(d.id)).map(a => a.style || MODALITY_LABELS[a.modality])
 
+              if (editingDancer?.id === d.id) {
+                return (
+                  <div key={d.id} className="bg-neutral-800/40 rounded-xl p-3 border border-fuchsia-500/30 space-y-3">
+                    <p className="text-xs font-bold text-fuchsia-400 uppercase tracking-wider">Editar Integrante #{idx + 1}</p>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                      <div>
+                        <label className="text-[10px] text-neutral-400 uppercase font-bold tracking-wider block mb-1">Nombre</label>
+                        <input value={dancerName} onChange={e => setDancerName(e.target.value)} placeholder="Nombre completo" className="w-full px-3 py-2 bg-neutral-700/50 rounded-lg border border-neutral-600 text-sm text-white focus:outline-none focus:border-fuchsia-500" />
+                      </div>
+                      <div>
+                        <label className="text-[10px] text-neutral-400 uppercase font-bold tracking-wider block mb-1">Fecha de Nacimiento</label>
+                        <input type="date" value={dancerBirthdate} onChange={e => setDancerBirthdate(e.target.value)} className="w-full px-3 py-2 bg-neutral-700/50 rounded-lg border border-neutral-600 text-sm text-white focus:outline-none focus:border-fuchsia-500" />
+                      </div>
+                      <div>
+                        <label className="text-[10px] text-neutral-400 uppercase font-bold tracking-wider block mb-1">Categoría</label>
+                        <select
+                          value={dancerCategoryManual ? dancerCategoryOverride : 'auto'}
+                          onChange={e => {
+                            if (e.target.value === 'auto') {
+                              setDancerCategoryManual(false)
+                            } else {
+                              setDancerCategoryManual(true)
+                              setDancerCategoryOverride(e.target.value as AgeCategory)
+                            }
+                          }}
+                          className="w-full px-3 py-2 bg-neutral-700/50 rounded-lg border border-neutral-600 text-sm text-white focus:outline-none focus:border-fuchsia-500 font-medium"
+                        >
+                          <option value="auto">Automática (según edad)</option>
+                          {AGE_CATEGORY_ORDER.map(cat => (
+                            <option key={cat} value={cat}>{AGE_CATEGORY_LABELS[cat]}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <button onClick={handleSaveDancerEdit} className="px-3 py-1.5 bg-fuchsia-500 hover:bg-fuchsia-600 text-white font-bold text-xs rounded-lg active:scale-95 font-sans">GUARDAR</button>
+                      <button onClick={() => setEditingDancer(null)} className="px-3 py-1.5 bg-black hover:bg-neutral-900 border border-neutral-800 text-white text-xs rounded-lg font-sans">Cancelar</button>
+                    </div>
+                  </div>
+                )
+              }
+
               return (
                 <div key={d.id} className="group bg-neutral-800/20 rounded-xl p-3 border border-neutral-700/30 hover:border-neutral-600/50 transition-all">
                   <div className="flex items-start justify-between gap-2">
@@ -686,7 +793,13 @@ export default function RegistrationDetailPage({ registrationIdProp, onBack }: {
                     </div>
                     <div className="flex items-center gap-1 shrink-0 opacity-30 group-hover:opacity-100 transition-opacity">
                       <span className="text-xs font-bold text-green-400">{formatMoney(cost)}</span>
-                      <button onClick={() => { setEditingDancer(d); setDancerName(d.name); setDancerBirthdate(d.birthdate) }}
+                      <button onClick={() => {
+                        setEditingDancer(d)
+                        setDancerName(d.name)
+                        setDancerBirthdate(d.birthdate)
+                        setDancerCategoryManual(!!d.category_manual)
+                        setDancerCategoryOverride(d.category || 'open')
+                      }}
                         className="w-7 h-7 rounded-lg bg-neutral-700/50 text-neutral-400 flex items-center justify-center hover:text-white"><Edit3 className="w-3.5 h-3.5" /></button>
                       <button onClick={async () => {
                         const affectedActs = acts.filter(a => a.dancer_ids.includes(d.id))
@@ -724,26 +837,6 @@ export default function RegistrationDetailPage({ registrationIdProp, onBack }: {
                 </div>
               )
             })}
-          </div>
-        )}
-
-        {editingDancer && (
-          <div className="mt-3 p-3 rounded-xl bg-neutral-800/60 border border-fuchsia-500/30 space-y-2">
-            <p className="text-xs font-bold text-fuchsia-400 uppercase tracking-wider">Editar Integrante</p>
-            <div className="grid grid-cols-2 gap-2">
-              <input value={dancerName} onChange={e => setDancerName(e.target.value)} placeholder="Nombre" className="w-full px-3 py-2 bg-neutral-700/50 rounded-lg border border-neutral-600 text-sm text-white focus:outline-none focus:border-fuchsia-500" />
-              <input type="date" value={dancerBirthdate} onChange={e => setDancerBirthdate(e.target.value)} className="w-full px-3 py-2 bg-neutral-700/50 rounded-lg border border-neutral-600 text-sm text-white focus:outline-none focus:border-fuchsia-500" />
-            </div>
-            <div className="flex gap-2">
-              <button onClick={async () => {
-                if (!editingDancer) return
-                const cat = categoryFromBirthdate(dancerBirthdate)
-                const { error } = await supabase.from('registration_dancers').update({ name: dancerName, birthdate: dancerBirthdate, category: cat }).eq('id', editingDancer.id)
-                if (error) alert('Error: ' + error.message)
-                else { await logEdit(reg.id, { entity_type: 'dancer', entity_id: editingDancer.id, changes: { name: { old: editingDancer.name, new: dancerName }, birthdate: { old: editingDancer.birthdate, new: dancerBirthdate } } }); setEditingDancer(null); loadData() }
-              }} className="px-3 py-1.5 bg-fuchsia-500 text-white font-bold text-xs rounded-lg active:scale-95">GUARDAR</button>
-              <button onClick={() => setEditingDancer(null)} className="px-3 py-1.5 bg-black hover:bg-neutral-900 border border-neutral-800 text-white text-xs rounded-lg">Cancelar</button>
-            </div>
           </div>
         )}
       </Section>

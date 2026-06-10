@@ -30,6 +30,7 @@ export default function StaffPage() {
   const [isAdvancing, setIsAdvancing] = useState(false)
   const [isTogglingAwards, setIsTogglingAwards] = useState(false)
   const [confirmAwards, setConfirmAwards] = useState(false)
+  const [errorState, setErrorState] = useState<string | null>(null)
   const pendingUpdatesRef = useRef<Map<number, { present: boolean, time: number }>>(new Map())
 
   useEffect(() => {
@@ -56,8 +57,16 @@ export default function StaffPage() {
   }
 
   const loadParticipants = useCallback(async (eventId: string) => {
-    const { data } = await supabase.from('participants').select('*').eq('event_id', eventId).order('position')
-    if (data) setParticipants(data)
+    try {
+      const { data, error } = await supabase.from('participants').select('*').eq('event_id', eventId).order('position')
+      if (error) {
+        setErrorState(prev => prev ? `${prev} | ${error.message}` : error.message)
+      } else if (data) {
+        setParticipants(data)
+      }
+    } catch (err) {
+      setErrorState(prev => prev ? `${prev} | ${(err as Error).message}` : (err as Error).message)
+    }
   }, [])
 
   useEffect(() => {
@@ -139,12 +148,20 @@ export default function StaffPage() {
   }, [event?.id])
 
   async function loadLatestEvent() {
-    const { data } = await supabase.from('events').select('*').order('created_at', { ascending: false }).limit(1).single()
-    if (data) {
-      setEvent(data)
-      setOnDeckInput(data.on_deck_count)
-      loadParticipants(data.id)
-      generateQr(data.id)
+    try {
+      const { data, error } = await supabase.from('events').select('*').order('created_at', { ascending: false }).limit(1).single()
+      if (error) {
+        setErrorState(error.message)
+      } else if (data) {
+        setEvent(data)
+        setOnDeckInput(data.on_deck_count)
+        loadParticipants(data.id)
+        generateQr(data.id)
+      } else {
+        setErrorState('No events returned from database.')
+      }
+    } catch (err) {
+      setErrorState((err as Error).message)
     }
   }
 
@@ -231,329 +248,439 @@ export default function StaffPage() {
 
   return (
     <PullToRefresh onRefresh={async () => { window.location.reload() }}>
-      <div className="h-[100dvh] bg-neutral-900 text-white flex flex-col overflow-hidden select-none">
+      <div className="h-[100dvh] text-white flex flex-col overflow-hidden select-none relative" style={{
+        background: '#09090b',
+      }}>
+        {/* Apple Premium Dark Mode styles */}
+        <style dangerouslySetInnerHTML={{__html: `
+          .apple-glass-card {
+            background: rgba(22, 22, 26, 0.75);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+            border-radius: 20px;
+            z-index: 10;
+          }
+          .apple-glass-header {
+            background: rgba(9, 9, 11, 0.75);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            z-index: 20;
+          }
+          .apple-btn {
+            border-radius: 16px;
+            font-weight: 600;
+            transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            letter-spacing: -0.01em;
+          }
+          .apple-btn:active {
+            transform: scale(0.96);
+            opacity: 0.85;
+          }
+          .apple-btn-primary {
+            background: #ffffff;
+            color: #000000;
+            border: 1px solid #ffffff;
+            box-shadow: 0 4px 12px rgba(255, 255, 255, 0.15);
+          }
+          .apple-btn-secondary {
+            background: rgba(255, 255, 255, 0.06);
+            color: #ffffff;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+          }
+          .apple-btn-danger {
+            background: rgba(239, 68, 68, 0.12);
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.25);
+          }
+          .apple-btn-success {
+            background: rgba(34, 197, 94, 0.12);
+            color: #22c55e;
+            border: 1px solid rgba(34, 197, 94, 0.25);
+          }
+          .apple-btn-warning {
+            background: rgba(249, 115, 22, 0.12);
+            color: #f97316;
+            border: 1px solid rgba(249, 115, 22, 0.25);
+          }
+          .apple-pill-gray {
+            background: rgba(255, 255, 255, 0.035);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 14px;
+            transition: all 0.2s;
+          }
+          .apple-pill-green {
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid rgba(34, 197, 94, 0.35);
+            border-radius: 14px;
+            box-shadow: 0 0 10px rgba(34, 197, 94, 0.05);
+          }
+          .apple-pill-red {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.35);
+            border-radius: 14px;
+            box-shadow: 0 0 10px rgba(239, 68, 68, 0.05);
+          }
+          .apple-pill-done {
+            background: rgba(255, 255, 255, 0.01);
+            border: 1px solid rgba(255, 255, 255, 0.02);
+            opacity: 0.35;
+          }
+          .animate-fade-in {
+            animation: fadeIn 0.25s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+          }
+          @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.97); }
+            to { opacity: 1; transform: scale(1); }
+          }
+        `}} />
+
         {/* Spacer for iOS Notch */}
-      <div className="shrink-0 bg-black" style={{ height: 'env(safe-area-inset-top, 0px)' }} />
+        <div className="shrink-0 bg-black" style={{ height: 'env(safe-area-inset-top, 0px)' }} />
 
-      {/* Header: LOGO izq | STAFF centro | iconos derecha */}
-      <header className="bg-black px-3 py-2 flex items-center justify-between shrink-0">
-        <div className="flex items-center gap-3 min-w-0 shrink-0">
-          <Image src="/logo.png" alt="Dance4ever" width={56} height={40} priority className="shrink-0" />
-          <h1 className="font-display text-3xl tracking-[0.2em] text-fuchsia-500 leading-none">STAFF</h1>
-        </div>
-        {event ? (
-          <div className="flex items-center gap-4 shrink-0">
-            {event.current_position > 0 && mode === 'manager' && (
-              <button
-                onClick={() => { if (event.awards_mode) toggleAwards(); else setConfirmAwards(true) }}
-                disabled={isTogglingAwards}
-                className="mr-2 active:opacity-70 disabled:opacity-50 text-white"
-                aria-label="Premiación"
-                title={event.awards_mode ? "Finalizar premiación" : "Iniciar premiación"}
-              >
-                <Star className={`w-6 h-6 ${event.awards_mode ? 'fill-fuchsia-500 text-fuchsia-500' : 'text-white'}`} />
-              </button>
-            )}
-            <button onClick={() => setShowProgram(true)} className="text-white active:text-fuchsia-500" title="Ver programa completo">
-              <ListOrdered className="w-6 h-6" />
-            </button>
-            <button onClick={() => setShowQr(true)} className="text-white active:text-fuchsia-500" title="Compartir códigos QR">
-              <QrCode className="w-6 h-6" />
-            </button>
-            <button onClick={() => setShowSetup(true)} className="text-white active:text-fuchsia-500" title="Ajustes de operación">
-              <Settings className="w-6 h-6" />
-            </button>
+        {/* Header: LOGO izq | STAFF centro | iconos derecha */}
+        <header className="apple-glass-header px-4 py-3.5 flex items-center justify-between shrink-0 relative z-20">
+          <div className="flex items-center gap-3 min-w-0 shrink-0">
+            <Image src="/logo.png" alt="Dance4ever" width={46} height={32} priority className="shrink-0 opacity-90" />
+            <h1 className="font-display text-2xl tracking-[0.15em] text-white leading-none font-bold uppercase">STAFF</h1>
           </div>
-        ) : <div className="w-px" />}
-      </header>
-
-      {activeAnnouncement && (
-        <div className="bg-fuchsia-950 border-b border-yellow-400 py-1.5 shrink-0 overflow-hidden relative flex items-center z-50">
-          <style dangerouslySetInnerHTML={{__html: `
-            @keyframes marquee {
-              0% { transform: translateX(0%); }
-              100% { transform: translateX(-33.33%); }
-            }
-            .animate-marquee-custom {
-              display: inline-block;
-              white-space: nowrap;
-              animation: marquee 25s linear infinite;
-            }
-          `}} />
-          <div className="animate-marquee-custom font-display text-base tracking-[0.2em] text-yellow-300 font-bold uppercase">
-            <span>🚨 AVISO DE CONTROL: {activeAnnouncement} &nbsp;·&nbsp; 🚨 AVISO DE CONTROL: {activeAnnouncement} &nbsp;·&nbsp; 🚨 AVISO DE CONTROL: {activeAnnouncement} &nbsp;·&nbsp; </span>
-          </div>
-          <button 
-            onClick={() => setActiveAnnouncement('')} 
-            className="absolute right-2 bg-black/60 border border-fuchsia-500/50 hover:bg-black text-white hover:text-fuchsia-400 p-1 rounded-full z-10 transition-all duration-200"
-            aria-label="Cerrar aviso"
-          >
-            <X className="w-3 h-3" />
-          </button>
-        </div>
-      )}
-
-      {event ? (
-        <>
-          {event.awards_mode ? (
-            <div className="flex-1 min-h-0 flex flex-col bg-black text-fuchsia-500 px-4">
-              <div className="flex-1 flex items-center justify-center text-center animate-pulse">
-                <p className="font-display text-7xl leading-none uppercase tracking-wider">Premiación</p>
-              </div>
-            </div>
-          ) : (
-            <>
-              {/* EN ESCENARIO panel — arriba */}
-              <div className="bg-fuchsia-500 text-white px-3 py-3 shrink-0 text-center">
-                {current ? (
-                  <>
-                    <p className="font-display text-xs tracking-[0.4em] opacity-80 leading-none">EN ESCENARIO · #{String(event.current_position).padStart(2, '0')}</p>
-                    <p className="font-display text-3xl uppercase leading-tight mt-2 break-words">{current.name}</p>
-                    <p className="font-display text-xs uppercase opacity-70 leading-tight mt-2">
-                      {[current.academy, current.category, current.type].filter(Boolean).join(' · ')}
-                    </p>
-                  </>
-                ) : event.current_position === 0 ? (
-                  <p className="font-display text-3xl py-2">POR INICIAR</p>
-                ) : (
-                  <p className="font-display text-2xl py-2">— PROGRAMA TERMINADO —</p>
-                )}
-              </div>
-
-              {/* SIGUIENTE label */}
-              <div className="bg-neutral-900 border-b border-neutral-700/60 text-center py-1.5 shrink-0">
-                <span className="font-display text-xl tracking-[0.4em]">SIGUIENTE</span>
-              </div>
-
-              {/* WAITING ZONE shrink-0 + UPCOMING flex-1 */}
-              <div className="flex flex-col min-h-0 flex-1 px-2 pt-1 pb-2 gap-0.5 overflow-hidden">
-                <p className="text-center font-display text-base tracking-[0.4em] text-gray-300 leading-none shrink-0">WAITING ZONE</p>
-
-                <div className="space-y-1 shrink-0">
-                  {onDeck.map(p => (
-                    <Pill key={p.id} p={p} variant={p.present ? 'green' : 'red'} onClick={() => togglePresent(p)} />
-                  ))}
-                  {onDeck.length === 0 && (
-                    <p className="text-xs text-gray-500 italic text-center py-1">Sin participantes en espera</p>
-                  )}
-                </div>
-
-                <div className="border-t border-neutral-700/60 my-1 shrink-0" />
-
-                <div ref={upcomingRef} className="flex-1 min-h-0 overflow-hidden flex flex-col gap-1">
-                  {upcoming.map(p => (
-                    <Pill key={p.id} p={p} variant="gray" grow />
-                  ))}
-                  {upcomingAll.length === 0 && participants.length > 0 && (
-                    <p className="text-xs text-gray-500 italic text-center py-1">No hay más turnos</p>
-                  )}
-                </div>
-              </div>
-            </>
-          )}
-
-          {/* Buttons (solo en modo MANAGER) */}
-          {mode === 'manager' && !event.awards_mode && (
-            <div className="flex shrink-0">
-              {event.current_position > 0 && (
-                <button 
-                  onClick={() => advance(-1)} 
-                  disabled={isAdvancing}
-                  className="bg-red-500 active:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed text-white px-6 py-3 font-display text-2xl flex items-center justify-center gap-2"
+          {event ? (
+            <div className="flex items-center gap-4 shrink-0">
+              {event.current_position > 0 && mode === 'manager' && (
+                <button
+                  onClick={() => { if (event.awards_mode) toggleAwards(); else setConfirmAwards(true) }}
+                  disabled={isTogglingAwards}
+                  className="active:opacity-70 disabled:opacity-50 text-white transition-opacity"
+                  aria-label="Premiación"
+                  title={event.awards_mode ? "Finalizar premiación" : "Iniciar premiación"}
                 >
-                  <ChevronLeft className="w-7 h-7" /> ATRÁS
+                  <Star className={`w-6 h-6 ${event.awards_mode ? 'fill-white text-white' : 'text-zinc-400'}`} />
                 </button>
               )}
-              <button 
-                onClick={() => advance(1)} 
-                disabled={isAdvancing}
-                className="relative flex-1 bg-green-500 active:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed text-black py-3 font-display text-2xl flex items-center justify-center"
-              >
-                {event.current_position === 0 ? 'COMENZAR' : 'SIGUIENTE'}
-                <ChevronRight className="w-7 h-7 absolute right-3 top-1/2 -translate-y-1/2" />
+              <button onClick={() => setShowProgram(true)} className="text-zinc-400 hover:text-white transition-colors" title="Ver programa completo">
+                <ListOrdered className="w-6 h-6" />
+              </button>
+              <button onClick={() => setShowQr(true)} className="text-zinc-400 hover:text-white transition-colors" title="Compartir códigos QR">
+                <QrCode className="w-6 h-6" />
+              </button>
+              <button onClick={() => setShowSetup(true)} className="text-zinc-400 hover:text-white transition-colors" title="Ajustes de operación">
+                <Settings className="w-6 h-6" />
               </button>
             </div>
-          )}
-        </>
-      ) : (
-        <div className="flex-1 flex flex-col items-center justify-center text-gray-400 p-6 gap-4">
-          <Image src="/logo.png" alt="Dance4ever" width={180} height={130} priority />
-          <p className="text-center font-display text-lg tracking-wider">No hay evento activo</p>
-        </div>
-      )}
+          ) : <div className="w-px" />}
+        </header>
 
-      {/* QR Modal */}
-      {showQr && qrUrl && mcQrUrl && event && (
-        <Modal onClose={() => setShowQr(false)}>
-          <a
-            href={`/coach/${event.id}`}
-            target="_blank"
-            rel="noreferrer"
-            className="block w-full bg-neutral-100 active:bg-neutral-200 rounded-xl p-3 space-y-2 text-black"
-          >
-            <h3 className="font-display text-lg tracking-widest text-center font-bold">COACHES</h3>
-            <img src={qrUrl} alt="QR Coaches" className="w-full rounded-lg" />
-            <p className="text-[10px] text-gray-500 text-center break-all">{typeof window !== 'undefined' ? window.location.origin : ''}/coach/{event.id}</p>
-          </a>
-
-          <a
-            href={`/mc/${event.id}`}
-            target="_blank"
-            rel="noreferrer"
-            className="flex items-center gap-3 w-full bg-neutral-100 active:bg-neutral-200 rounded-xl p-2 text-black"
-          >
-            <img src={mcQrUrl} alt="QR Presentador" className="w-1/4 aspect-square rounded-md" />
-            <div className="flex-1 min-w-0">
-              <h3 className="font-display text-sm tracking-widest flex items-center gap-1 font-bold">
-                <Monitor className="w-4 h-4 text-black" /> PRESENTADOR
-              </h3>
-              <p className="text-[10px] text-gray-500 break-all mt-1">{typeof window !== 'undefined' ? window.location.origin : ''}/mc/{event.id}</p>
-            </div>
-          </a>
-        </Modal>
-      )}
-
-      {/* Simplified Settings Modal */}
-      {showSetup && event && (
-        <Modal onClose={() => setShowSetup(false)}>
-          <h2 className="font-display text-2xl tracking-widest text-black uppercase font-bold text-center border-b pb-2">
-            Ajustes de Staff
-          </h2>
-          
-          <div className="space-y-4 pt-2 text-black">
-            {/* Mode selection */}
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">
-                Modo de Operación
-              </label>
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  onClick={() => changeMode('simple')}
-                  className={`py-2 px-3 rounded-lg font-bold text-sm border transition-all ${
-                    mode === 'simple'
-                      ? 'bg-fuchsia-600 border-fuchsia-600 text-white shadow-md'
-                      : 'bg-gray-100 border-gray-200 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  Buscador
-                </button>
-                <button
-                  onClick={() => changeMode('manager')}
-                  className={`py-2 px-3 rounded-lg font-bold text-sm border transition-all ${
-                    mode === 'manager'
-                      ? 'bg-fuchsia-600 border-fuchsia-600 text-white shadow-md'
-                      : 'bg-gray-100 border-gray-200 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  Manager
-                </button>
-              </div>
-              <p className="text-[11px] text-gray-500 leading-snug">
-                El modo <b>Manager</b> habilita los botones inferiores para avanzar o retroceder el programa en vivo.
-              </p>
-            </div>
-
-            {/* Waiting zone count */}
-            <div className="space-y-1.5 pt-2 border-t border-gray-100">
-              <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">
-                Cantidad en Espera (Waiting Zone)
-              </label>
-              <div className="flex gap-2">
-                <select
-                  value={onDeckInput}
-                  onChange={(e) => {
-                    const val = Number(e.target.value)
-                    setOnDeckInput(val)
-                    updateOnDeck(val)
-                  }}
-                  className="border border-gray-300 rounded-lg px-3 py-2 flex-1 text-black font-semibold bg-white"
-                >
-                  {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(n => (
-                    <option key={n} value={n}>{n} coreografía{n !== 1 ? 's' : ''}</option>
-                  ))}
-                </select>
-              </div>
-              <p className="text-[11px] text-gray-500 leading-snug">
-                Define cuántos turnos siguientes aparecen activos en la lista de espera para registrar asistencia.
-              </p>
-            </div>
+        {errorState && (
+          <div className="bg-red-950/90 backdrop-blur-md border-b border-red-500 py-3 px-4 text-center text-red-200 text-sm font-semibold z-50">
+            ⚠️ Error de Conexión: {errorState}
           </div>
-          
-          <button
-            onClick={() => setShowSetup(false)}
-            className="w-full mt-4 py-2.5 bg-black hover:bg-neutral-800 text-white rounded-xl font-bold text-sm uppercase tracking-wider transition-colors"
-          >
-            Aceptar
-          </button>
-        </Modal>
-      )}
+        )}
 
-      {/* Confirmación iniciar premiación */}
-      {confirmAwards && event && (
-        <Modal onClose={() => setConfirmAwards(false)}>
-          <h2 className="font-display text-2xl tracking-widest text-black text-center font-bold">¿INICIAR PREMIACIÓN?</h2>
-          <p className="text-sm text-gray-500 text-center leading-relaxed mt-2">
-            Esto detendrá la visualización normal y mostrará la pantalla de premiación para coaches, MC y público.
-          </p>
-          <div className="grid grid-cols-2 gap-2 mt-4">
-            <button
-              onClick={() => setConfirmAwards(false)}
-              className="bg-gray-200 hover:bg-gray-300 text-black px-4 py-2.5 rounded-lg font-bold text-sm"
+        {activeAnnouncement && (
+          <div className="bg-neutral-900 border-b border-yellow-500/50 py-2 shrink-0 overflow-hidden relative flex items-center z-50">
+            <style dangerouslySetInnerHTML={{__html: `
+              @keyframes marquee {
+                0% { transform: translateX(0%); }
+                100% { transform: translateX(-33.33%); }
+              }
+              .animate-marquee-custom {
+                display: inline-block;
+                white-space: nowrap;
+                animation: marquee 25s linear infinite;
+              }
+            `}} />
+            <div className="animate-marquee-custom font-display text-sm tracking-[0.2em] text-yellow-400 font-bold uppercase">
+              <span>🚨 AVISO DE CONTROL: {activeAnnouncement} &nbsp;·&nbsp; 🚨 AVISO DE CONTROL: {activeAnnouncement} &nbsp;·&nbsp; 🚨 AVISO DE CONTROL: {activeAnnouncement} &nbsp;·&nbsp; </span>
+            </div>
+            <button 
+              onClick={() => setActiveAnnouncement('')} 
+              className="absolute right-2 bg-black/60 border border-neutral-700 hover:bg-black text-white p-1.5 rounded-full z-10 transition-all duration-200"
+              aria-label="Cerrar aviso"
             >
-              NO
-            </button>
-            <button
-              onClick={() => { toggleAwards(); setConfirmAwards(false) }}
-              className="bg-fuchsia-600 hover:bg-fuchsia-500 text-white px-4 py-2.5 rounded-lg font-bold text-sm"
-            >
-              SÍ
+              <X className="w-3.5 h-3.5" />
             </button>
           </div>
-        </Modal>
-      )}
+        )}
 
-      {/* Complete Program Modal */}
-      {showProgram && event && (
-        <div className="fixed inset-0 bg-neutral-900 z-50 flex flex-col">
-          <div className="bg-black px-4 py-3 flex items-center justify-between shrink-0">
-            <h3 className="font-display text-2xl tracking-widest text-fuchsia-500">PROGRAMA</h3>
-            <button onClick={() => setShowProgram(false)} aria-label="Cerrar"><X className="w-6 h-6" /></button>
+        {event ? (
+          <>
+            {event.awards_mode ? (
+              <div className="flex-1 min-h-0 flex flex-col px-4 text-center bg-zinc-950 text-white z-10 justify-center">
+                <div className="animate-pulse">
+                  <p className="font-display text-6.5xl leading-none uppercase tracking-wide font-black">Premiación</p>
+                  <p className="font-display text-6.5xl leading-none uppercase tracking-wide mt-2 font-black text-zinc-500">De Bloque</p>
+                </div>
+                <div className="flex flex-col items-center justify-center animate-pulse mt-12">
+                  <p className="font-display text-3.5xl leading-tight uppercase tracking-wide text-zinc-300">Pantalla de Premiación</p>
+                  <p className="font-display text-3.5xl leading-tight uppercase tracking-wide mt-2 text-zinc-500">Activa en Portales</p>
+                </div>
+              </div>
+            ) : (
+              <>
+                {/* EN ESCENARIO panel — arriba */}
+                <div className="apple-glass-card px-4 py-4 shrink-0 text-center relative overflow-hidden mb-3 mx-4 mt-4">
+                  {current ? (
+                    <>
+                      <p className="font-display text-[9px] tracking-[0.3em] text-zinc-500 font-bold uppercase leading-none">EN ESCENARIO · #{String(event.current_position).padStart(2, '0')}</p>
+                      <p className="font-display text-3.5xl uppercase leading-tight mt-2.5 text-white break-words font-extrabold">{current.name}</p>
+                      <p className="font-display text-[11px] uppercase opacity-70 leading-tight mt-2 text-zinc-400">
+                        {[current.academy, current.category, current.type].filter(Boolean).join('  ·  ')}
+                      </p>
+                    </>
+                  ) : event.current_position === 0 ? (
+                    <p className="font-display text-2xl py-2 text-zinc-400 uppercase tracking-widest font-bold">POR INICIAR</p>
+                  ) : (
+                    <p className="font-display text-xl py-2 text-zinc-600 uppercase tracking-widest font-bold">— PROGRAMA TERMINADO —</p>
+                  )}
+                </div>
+
+                {/* SIGUIENTE label */}
+                <div className="text-center py-1 shrink-0 z-10">
+                  <span className="font-display text-sm tracking-[0.3em] text-zinc-500 uppercase font-bold">SIGUIENTE EN COLA</span>
+                </div>
+
+                {/* WAITING ZONE shrink-0 + UPCOMING flex-1 */}
+                <div className="flex flex-col min-h-0 flex-1 px-4 pt-1 pb-2 gap-1.5 overflow-hidden relative z-10">
+                  <p className="text-center font-display text-[10px] tracking-[0.25em] text-zinc-500 uppercase leading-none shrink-0 font-bold mb-1">WAITING ZONE</p>
+
+                  <div className="space-y-1.5 shrink-0">
+                    {onDeck.map(p => (
+                      <Pill key={p.id} p={p} variant={p.present ? 'green' : 'red'} onClick={() => togglePresent(p)} />
+                    ))}
+                    {onDeck.length === 0 && (
+                      <p className="text-sm text-zinc-600 italic text-center py-2">Sin participantes en espera</p>
+                    )}
+                  </div>
+
+                  <div className="border-t border-white/5 my-1.5 shrink-0" />
+
+                  <div ref={upcomingRef} className="flex-1 min-h-0 overflow-hidden flex flex-col gap-1.5">
+                    {upcoming.map(p => (
+                      <Pill key={p.id} p={p} variant="gray" grow />
+                    ))}
+                    {upcomingAll.length === 0 && participants.length > 0 && (
+                      <p className="text-sm text-zinc-600 italic text-center py-2">No hay más turnos</p>
+                    )}
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* Buttons (solo en modo MANAGER) */}
+            {mode === 'manager' && !event.awards_mode && (
+              <div className="flex gap-2.5 p-4 shrink-0 relative z-20">
+                {event.current_position > 0 && (
+                  <button 
+                    onClick={() => advance(-1)} 
+                    disabled={isAdvancing}
+                    className="flex-1 apple-btn apple-btn-secondary py-3.5 font-display text-xl flex items-center justify-center gap-2"
+                  >
+                    <ChevronLeft className="w-6 h-6" /> ATRÁS
+                  </button>
+                )}
+                <button 
+                  onClick={() => advance(1)} 
+                  disabled={isAdvancing}
+                  className="flex-[2] apple-btn apple-btn-primary py-3.5 font-display text-xl flex items-center justify-center gap-2"
+                >
+                  {event.current_position === 0 ? 'COMENZAR' : 'SIGUIENTE'}
+                  <ChevronRight className="w-6 h-6" />
+                </button>
+              </div>
+            )}
+          </>
+        ) : (
+          <div className="flex-1 flex flex-col items-center justify-center text-zinc-500 p-6 gap-4 z-10">
+            <Image src="/logo.png" alt="Dance4ever" width={180} height={130} priority className="opacity-80" />
+            <p className="text-center font-display text-lg tracking-wider font-semibold">No hay evento activo</p>
           </div>
-          <SearchBar value={programSearch} onChange={setProgramSearch} />
-          <div className="flex-1 min-h-0 overflow-y-auto p-2 space-y-1">
-            {(() => {
-              if (participants.length === 0) return <p className="text-center text-gray-500 italic py-6">Sin programa</p>
-              const filtered = participants.filter(p => participantMatches(p, programSearch))
-              if (filtered.length === 0) return <p className="text-center text-gray-500 italic py-6">Sin resultados</p>
-              return filtered.map(p => {
-                const isOnStage = event.current_position === p.position
-                const isOnDeck = !isOnStage && p.position > event.current_position && p.position <= event.current_position + event.on_deck_count
-                const done = p.position < event.current_position
-                const variant = isOnStage ? 'green' : isOnDeck ? (p.present ? 'green' : 'red') : done ? 'gray' : 'gray'
-                return <Pill key={p.id} p={p} variant={variant} />
-              })
-            })()}
+        )}
+
+        {/* QR Modal */}
+        {showQr && qrUrl && mcQrUrl && event && (
+          <Modal onClose={() => setShowQr(false)}>
+            <a
+              href={`/coach/${event.id}`}
+              target="_blank"
+              rel="noreferrer"
+              className="block w-full apple-btn apple-btn-secondary p-4 space-y-2.5 text-white"
+            >
+              <h3 className="font-display text-base tracking-widest text-center font-bold">PORTAL COACHES</h3>
+              <div className="bg-white p-2.5 rounded-lg flex items-center justify-center">
+                <img src={qrUrl} alt="QR Coaches" className="w-full aspect-square rounded-md" />
+              </div>
+              <p className="text-[9px] text-zinc-400 text-center break-all opacity-80">{typeof window !== 'undefined' ? window.location.origin : ''}/coach/{event.id}</p>
+            </a>
+
+            <a
+              href={`/mc/${event.id}`}
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center gap-3 w-full apple-btn apple-btn-secondary p-3 text-white"
+            >
+              <div className="w-1/4 bg-white p-1 rounded-md flex items-center justify-center aspect-square">
+                <img src={mcQrUrl} alt="QR Presentador" className="w-full rounded-sm" />
+              </div>
+              <div className="flex-1 min-w-0 text-left">
+                <h3 className="font-display text-sm tracking-widest flex items-center gap-1 font-bold">
+                  <Monitor className="w-4 h-4 text-zinc-400" /> PORTAL PRESENTADOR
+                </h3>
+                <p className="text-[9px] text-zinc-500 break-all mt-1 opacity-70">{typeof window !== 'undefined' ? window.location.origin : ''}/mc/{event.id}</p>
+              </div>
+            </a>
+          </Modal>
+        )}
+
+        {/* Simplified Settings Modal */}
+        {showSetup && event && (
+          <Modal onClose={() => setShowSetup(false)}>
+            <h2 className="font-display text-xl tracking-widest text-white uppercase font-bold text-center border-b border-white/5 pb-2">
+              Ajustes de Staff
+            </h2>
+            
+            <div className="space-y-4 pt-2 text-white">
+              {/* Mode selection */}
+              <div className="space-y-2 text-left">
+                <label className="text-xs font-bold text-zinc-400 uppercase tracking-wider">
+                  Modo de Operación
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    onClick={() => changeMode('simple')}
+                    className={`py-2 px-3 rounded-xl font-bold text-sm border transition-all ${
+                      mode === 'simple'
+                        ? 'bg-white text-black border-white'
+                        : 'bg-white/5 border-white/10 text-zinc-400 hover:bg-white/10'
+                    }`}
+                  >
+                    Buscador
+                  </button>
+                  <button
+                    onClick={() => changeMode('manager')}
+                    className={`py-2 px-3 rounded-xl font-bold text-sm border transition-all ${
+                      mode === 'manager'
+                        ? 'bg-white text-black border-white'
+                        : 'bg-white/5 border-white/10 text-zinc-400 hover:bg-white/10'
+                    }`}
+                  >
+                    Manager
+                  </button>
+                </div>
+                <p className="text-[11px] text-zinc-500 leading-snug">
+                  El modo <b>Manager</b> habilita los botones inferiores para avanzar o retroceder el programa en vivo.
+                </p>
+              </div>
+
+              {/* Waiting zone count */}
+              <div className="space-y-2 pt-2 border-t border-white/5 text-left">
+                <label className="text-xs font-bold text-zinc-400 uppercase tracking-wider">
+                  Cantidad en Espera (Waiting Zone)
+                </label>
+                <div className="flex gap-2">
+                  <select
+                    value={onDeckInput}
+                    onChange={(e) => {
+                      const val = Number(e.target.value)
+                      setOnDeckInput(val)
+                      updateOnDeck(val)
+                    }}
+                    className="border border-white/10 rounded-xl px-3 py-2 flex-1 text-white font-semibold bg-zinc-900 focus:outline-none focus:border-white"
+                  >
+                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(n => (
+                      <option key={n} value={n} className="bg-zinc-950 text-white">{n} coreografía{n !== 1 ? 's' : ''}</option>
+                    ))}
+                  </select>
+                </div>
+                <p className="text-[11px] text-zinc-500 leading-snug">
+                  Define cuántos turnos siguientes aparecen activos en la lista de espera para registrar asistencia.
+                </p>
+              </div>
+            </div>
+            
+            <button
+              onClick={() => setShowSetup(false)}
+              className="w-full mt-4 apple-btn apple-btn-primary py-3 text-sm uppercase tracking-widest"
+            >
+              Aceptar
+            </button>
+          </Modal>
+        )}
+
+        {/* Confirmación iniciar premiación */}
+        {confirmAwards && event && (
+          <Modal onClose={() => setConfirmAwards(false)}>
+            <h2 className="font-display text-xl tracking-widest text-white text-center font-bold">¿INICIAR PREMIACIÓN?</h2>
+            <p className="text-sm text-zinc-400 text-center leading-relaxed mt-2">
+              Esto detendrá la visualización normal y mostrará la pantalla de premiación para coaches, MC y público.
+            </p>
+            <div className="grid grid-cols-2 gap-3 mt-4">
+              <button
+                onClick={() => setConfirmAwards(false)}
+                className="bg-white/5 border border-white/10 hover:bg-white/10 text-white px-4 py-2.5 rounded-xl font-bold text-sm transition-all"
+              >
+                NO
+              </button>
+              <button
+                onClick={() => { toggleAwards(); setConfirmAwards(false) }}
+                className="apple-btn apple-btn-primary px-4 py-2.5 text-sm"
+              >
+                SÍ
+              </button>
+            </div>
+          </Modal>
+        )}
+
+        {/* Complete Program Modal */}
+        {showProgram && event && (
+          <div className="fixed inset-0 bg-black/70 backdrop-blur-md z-50 flex flex-col p-4 animate-fade-in">
+            <div className="flex-1 min-h-0 flex flex-col apple-glass-card overflow-hidden bg-zinc-950/80 border border-white/10">
+              <div className="bg-black/30 px-4 py-3.5 flex items-center justify-between shrink-0 border-b border-white/5">
+                <h3 className="font-display text-xl tracking-widest text-white font-bold">PROGRAMA</h3>
+                <button onClick={() => setShowProgram(false)} className="p-1 hover:text-zinc-400 transition-colors" aria-label="Cerrar"><X className="w-6 h-6" /></button>
+              </div>
+              <SearchBar value={programSearch} onChange={setProgramSearch} />
+              <div className="flex-1 min-h-0 overflow-y-auto p-3 space-y-2">
+                {(() => {
+                  if (participants.length === 0) return <p className="text-center text-zinc-600 italic py-6">Sin programa</p>
+                  const filtered = participants.filter(p => participantMatches(p, programSearch))
+                  if (filtered.length === 0) return <p className="text-center text-zinc-600 italic py-6">Sin resultados</p>
+                  return filtered.map(p => {
+                    const isOnStage = event.current_position === p.position
+                    const isOnDeck = !isOnStage && p.position > event.current_position && p.position <= event.current_position + event.on_deck_count
+                    const done = p.position < event.current_position
+                    const variant = isOnStage ? 'green' : isOnDeck ? (p.present ? 'green' : 'red') : done ? 'gray' : 'gray'
+                    const pillVariant = done ? 'done' : variant
+                    return <Pill key={p.id} p={p} variant={pillVariant} />
+                  })
+                })()}
+              </div>
+            </div>
           </div>
-        </div>
-      )}
-    </div>
+        )}
+      </div>
     </PullToRefresh>
   )
 }
 
-function Pill({ p, variant, onClick, grow }: { p: Participant, variant: 'green' | 'red' | 'gray', onClick?: () => void, grow?: boolean }) {
+function Pill({ p, variant, onClick, grow }: { p: Participant, variant: 'green' | 'red' | 'gray' | 'done', onClick?: () => void, grow?: boolean }) {
   const bg =
-    variant === 'green' ? 'bg-green-800 active:bg-green-700' :
-    variant === 'red' ? 'bg-red-900 active:bg-red-800' :
-    'bg-neutral-700'
+    variant === 'green' ? 'apple-pill-green' :
+    variant === 'red' ? 'apple-pill-red' :
+    variant === 'done' ? 'apple-pill-done' :
+    'apple-pill-gray'
   const Tag = onClick ? 'button' : 'div'
   return (
-    <Tag onClick={onClick} className={`w-full rounded-md px-3 py-1.5 flex items-center gap-2 ${bg} ${onClick ? 'text-left' : ''} ${grow ? 'flex-1 min-h-0' : ''} transition-colors`}>
-      <span className="font-display text-base shrink-0 w-10 text-center leading-none opacity-75">#{p.position}</span>
-      <p className="flex-1 min-w-0 font-display text-2xl uppercase truncate leading-none text-center">{p.name}</p>
+    <Tag onClick={onClick} className={`w-full rounded-xl px-4 py-2.5 flex items-center gap-3 ${bg} ${onClick ? 'text-left cursor-pointer' : ''} ${grow ? 'flex-1 min-h-0' : ''} transition-all duration-200 z-10`}>
+      <span className="font-display text-base shrink-0 w-10 text-center leading-none opacity-80 font-bold">#{p.position}</span>
+      <p className="flex-1 min-w-0 font-display text-2.5xl uppercase truncate leading-none text-center font-bold">{p.name}</p>
       <div className="shrink-0 leading-none text-right max-w-[30%]">
-        {p.academy && <p className="font-display text-sm uppercase truncate">{p.academy}</p>}
-        {p.category && <p className="font-display text-[10px] uppercase opacity-70 truncate mt-1">{p.category}</p>}
+        {p.academy && <p className="font-display text-sm uppercase truncate text-zinc-400 font-semibold">{p.academy.split('(')[0].trim()}</p>}
+        {p.category && <p className="font-display text-[9px] uppercase opacity-50 truncate mt-1 text-zinc-500">{p.category}</p>}
       </div>
     </Tag>
   )
@@ -561,10 +688,10 @@ function Pill({ p, variant, onClick, grow }: { p: Participant, variant: 'green' 
 
 function Modal({ children, onClose }: { children: React.ReactNode, onClose: () => void }) {
   return (
-    <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4" onClick={onClose}>
-      <div className="bg-white text-black rounded-2xl p-5 max-w-sm w-full space-y-3" onClick={e => e.stopPropagation()}>
-        <div className="flex justify-end -mt-1 -mr-1">
-          <button onClick={onClose}><X className="w-5 h-5" /></button>
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-fade-in" onClick={onClose}>
+      <div className="apple-glass-card bg-zinc-950/85 border border-white/10 p-6 max-w-sm w-full space-y-4 text-white" onClick={e => e.stopPropagation()}>
+        <div className="flex justify-end -mt-2 -mr-2">
+          <button onClick={onClose} className="p-1.5 hover:text-zinc-400 transition-colors"><X className="w-5 h-5" /></button>
         </div>
         {children}
       </div>

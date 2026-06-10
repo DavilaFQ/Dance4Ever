@@ -85,33 +85,16 @@ export default function SociosLayout({ children }: { children: React.ReactNode }
   useEffect(() => {
     if (typeof window === 'undefined') return
 
-    // 1. Verificar la puerta secreta por token URL o si es PWA/Web Clip autónomo (Add to Home Screen)
-    const isStandalone = typeof window !== 'undefined' && (
-      (window.navigator as any).standalone === true ||
-      window.matchMedia('(display-mode: standalone)').matches
-    )
+    // Auto-unlock gate so users can view the login form directly without needing secret URL parameters
+    setIsGateUnlocked(true)
+    localStorage.setItem('d4e_dashboard_gate', 'unlocked')
 
+    // Clean URL parameter if it exists
     const params = new URLSearchParams(window.location.search)
     const tParam = params.get('t')
-
-    if (tParam === 'd4e' || isStandalone) {
-      localStorage.setItem('d4e_dashboard_gate', 'unlocked')
-      setIsGateUnlocked(true)
-      
-      // Limpiar el parámetro de la URL sin recargar (solo si venía el token)
-      if (tParam === 'd4e') {
-        const cleanUrl = window.location.pathname
-        window.history.replaceState({}, '', cleanUrl)
-      }
-    } else {
-      const savedGate = localStorage.getItem('d4e_dashboard_gate')
-      if (savedGate === 'unlocked') {
-        setIsGateUnlocked(true)
-      } else {
-        // Redirigir al inicio si no se tiene acceso secreto
-        router.push('/')
-        return
-      }
+    if (tParam === 'd4e') {
+      const cleanUrl = window.location.pathname
+      window.history.replaceState({}, '', cleanUrl)
     }
 
     // 2. Verificar hash guardado contra la contraseña del servidor
