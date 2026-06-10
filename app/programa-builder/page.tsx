@@ -1406,7 +1406,6 @@ function ActCard({ item, index, dragHandle, isDragOverlay, conflicts, isEditing,
 function IntermedioMarker({ isEditing }: { isEditing: boolean }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: INTERMEDIO_ID,
-    disabled: !isEditing,
   })
 
   const style = {
@@ -1417,15 +1416,13 @@ function IntermedioMarker({ isEditing }: { isEditing: boolean }) {
   return (
     <div ref={setNodeRef} style={style} {...attributes}>
       <div className="flex items-center gap-3 p-3 rounded-none bg-amber-50 border-2 border-dashed border-amber-500 hover:border-black transition-all">
-        {isEditing && (
-          <button
-            {...listeners}
-            className="shrink-0 text-amber-500/60 hover:text-black cursor-grab active:cursor-grabbing touch-none"
-            aria-label="Arrastrar para mover premiacion"
-          >
-            <GripVertical className="w-5 h-5" />
-          </button>
-        )}
+        <button
+          {...listeners}
+          className="shrink-0 text-amber-500/60 hover:text-black cursor-grab active:cursor-grabbing touch-none"
+          aria-label="Arrastrar para mover premiacion"
+        >
+          <GripVertical className="w-5 h-5" />
+        </button>
         <Award className="w-5 h-5 text-amber-600 shrink-0" />
         <span className="font-display text-base tracking-[0.2em] text-amber-900 uppercase flex-1 text-center font-black italic">Premiacion Intermedia</span>
         <Award className="w-5 h-5 text-amber-600 shrink-0" />
