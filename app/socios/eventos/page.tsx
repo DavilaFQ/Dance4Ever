@@ -68,7 +68,7 @@ export default function EventosPage() {
   // QR access states
   const [qrStaffUrl, setQrStaffUrl] = useState('')
   const [qrCoachProgUrl, setQrCoachProgUrl] = useState('')
-  const [qrMcUrl, setQrMcUrl] = useState('')
+  const [qrPresentadorUrl, setQrPresentadorUrl] = useState('')
   const [copiedQrLink, setCopiedQrLink] = useState<string | null>(null)
 
   // Track initialization to avoid auto-save loop on mount
@@ -166,9 +166,9 @@ export default function EventosPage() {
     const urlProg = `${origin}/coach/${event.id}`
     QRCode.toDataURL(urlProg, { width: 400, margin: 2 }).then(setQrCoachProgUrl).catch(() => {})
 
-    // 3. QR MC
-    const urlMc = `${origin}/mc/${event.id}`
-    QRCode.toDataURL(urlMc, { width: 400, margin: 2 }).then(setQrMcUrl).catch(() => {})
+    // 3. QR Presentador
+    const urlPresentador = `${origin}/presentador/${event.id}`
+    QRCode.toDataURL(urlPresentador, { width: 400, margin: 2 }).then(setQrPresentadorUrl).catch(() => {})
   }, [event?.id, origin])
 
   useEffect(() => {
@@ -668,7 +668,7 @@ export default function EventosPage() {
                   <div className="flex items-center justify-between gap-4">
                     <div>
                       <p className="text-sm font-bold text-white uppercase tracking-wide">
-                        Portales Operativos (Staff, Coach, MC)
+                        Portales Operativos (Staff, Coach, Presentador)
                       </p>
                       <p className="text-[11px] text-neutral-500 mt-0.5">
                         Habilita o deshabilita accesos para las vistas en vivo del evento.
@@ -739,7 +739,7 @@ export default function EventosPage() {
           >
             <div>
               <h2 className="font-display text-lg tracking-wider uppercase">Códigos QR de Accesos</h2>
-              <p className="text-xs text-neutral-500 mt-0.5">QRs de Programa (Coaches), Portal de Staff y Portal de MC (Conducción)</p>
+              <p className="text-xs text-neutral-500 mt-0.5">QRs de Programa (Coaches), Portal de Staff y Portal de Presentador (Conducción)</p>
             </div>
             {qrsExpanded ? <ChevronUp className="w-5 h-5 text-neutral-400" /> : <ChevronDown className="w-5 h-5 text-neutral-400" />}
           </button>
@@ -847,15 +847,15 @@ export default function EventosPage() {
                 </div>
               )}
 
-              {/* 3. Portal MC */}
-              {qrMcUrl && (
+              {/* 3. Portal Presentador */}
+              {qrPresentadorUrl && (
                 <div className="bg-neutral-800/30 border border-neutral-700/40 rounded-2xl p-4 flex flex-col gap-3">
                   <div className="flex flex-col gap-0.5">
                     <span className="text-[10px] font-bold uppercase tracking-wider text-pink-400">
                       Conducción
                     </span>
                     <h4 className="font-display text-sm font-bold text-white uppercase">
-                      Portal de MC
+                      Portal de Presentador
                     </h4>
                     <p className="text-[11px] text-neutral-500">
                       Pantalla en vivo con notas y control del presentador.
@@ -863,27 +863,27 @@ export default function EventosPage() {
                   </div>
 
                   <div className="bg-white p-3 rounded-xl flex items-center justify-center max-w-[200px] mx-auto w-full aspect-square shadow-md">
-                    <img src={qrMcUrl} alt="QR MC" className="w-full h-full object-contain" />
+                    <img src={qrPresentadorUrl} alt="QR Presentador" className="w-full h-full object-contain" />
                   </div>
 
                   <div className="flex flex-col gap-1.5 mt-auto">
                     <button
                       onClick={() => {
-                        navigator.clipboard.writeText(`${origin}/mc/${event.id}`).then(() => {
-                          setCopiedQrLink('mc')
+                        navigator.clipboard.writeText(`${origin}/presentador/${event.id}`).then(() => {
+                          setCopiedQrLink('presentador')
                           setTimeout(() => setCopiedQrLink(null), 2000)
                         })
                       }}
                       className="w-full py-2 bg-black hover:bg-neutral-900 border border-neutral-800 text-white font-bold text-[11px] rounded-lg flex items-center justify-center gap-1.5 transition-colors uppercase tracking-wider font-display active:scale-95"
                     >
-                      {copiedQrLink === 'mc' ? '¡Copiado!' : 'Copiar Enlace'}
+                      {copiedQrLink === 'presentador' ? '¡Copiado!' : 'Copiar Enlace'}
                     </button>
                     
                     <button
                       onClick={() => {
                         window.open(
                           `https://wa.me/?text=${encodeURIComponent(
-                            `Enlace de acceso al Portal del MC (Conducción) de *Dance4Ever*:\n\n🔗 ${origin}/mc/${event.id}`
+                            `Enlace de acceso al Portal del Presentador (Conducción) de *Dance4Ever*:\n\n🔗 ${origin}/presentador/${event.id}`
                           )}`,
                           '_blank'
                         )
@@ -916,10 +916,10 @@ export default function EventosPage() {
             <div className="bg-neutral-800/30 rounded-2xl border border-neutral-700/40 p-4 space-y-3">
               <div className="grid grid-cols-2 gap-2">
                 <button onClick={() => runExport('excel')} disabled={exporting === 'excel'} className="py-3 bg-fuchsia-500 text-white font-display text-xs tracking-wider rounded-xl active:scale-95 disabled:opacity-50 flex items-center justify-center gap-1.5">
-                  <FileSpreadsheet className="w-4 h-4" /> {exporting === 'excel' ? '...' : 'Excel MC'}
+                  <FileSpreadsheet className="w-4 h-4" /> {exporting === 'excel' ? '...' : 'Excel Presentador'}
                 </button>
                 <button onClick={() => runExport('pdf')} disabled={exporting === 'pdf'} className="py-3 bg-fuchsia-500 text-white font-display text-xs tracking-wider rounded-xl active:scale-95 disabled:opacity-50 flex items-center justify-center gap-1.5">
-                  <FileText className="w-4 h-4" /> {exporting === 'pdf' ? '...' : 'PDF MC'}
+                  <FileText className="w-4 h-4" /> {exporting === 'pdf' ? '...' : 'PDF Presentador'}
                 </button>
                 <button onClick={() => runExport('regs')} disabled={exporting === 'regs'} className="col-span-2 py-3 bg-fuchsia-500 text-white font-display text-xs tracking-wider rounded-xl active:scale-95 disabled:opacity-50 flex items-center justify-center gap-1.5">
                   <FileSpreadsheet className="w-4 h-4" /> {exporting === 'regs' ? 'GENERANDO...' : 'Exportar Finanzas (XLSX)'}

@@ -3,7 +3,7 @@ import { useEffect, useState, useCallback, useRef } from 'react'
 import Image from 'next/image'
 import { supabase, Participant, Event } from '@/lib/supabase'
 import { useFitCount } from '@/lib/useFitCount'
-import { QrCode, X, ListOrdered, Monitor, Settings, ChevronLeft, ChevronRight, Star } from 'lucide-react'
+import { QrCode, X, ListOrdered, Monitor, Settings, ChevronLeft, ChevronRight } from 'lucide-react'
 import QRCode from 'qrcode'
 import { participantMatches } from '@/lib/search'
 import SearchBar from '@/components/SearchBar'
@@ -18,7 +18,7 @@ export default function StaffPage() {
   const [event, setEvent] = useState<Event | null>(null)
   const [participants, setParticipants] = useState<Participant[]>([])
   const [qrUrl, setQrUrl] = useState('')
-  const [mcQrUrl, setMcQrUrl] = useState('')
+  const [presentadorQrUrl, setPresentadorQrUrl] = useState('')
   const [showQr, setShowQr] = useState(false)
   const [showSetup, setShowSetup] = useState(false)
   const [showProgram, setShowProgram] = useState(false)
@@ -28,8 +28,6 @@ export default function StaffPage() {
   const [mode, setMode] = useState<'simple' | 'manager'>('simple')
   const [onDeckInput, setOnDeckInput] = useState(3)
   const [isAdvancing, setIsAdvancing] = useState(false)
-  const [isTogglingAwards, setIsTogglingAwards] = useState(false)
-  const [confirmAwards, setConfirmAwards] = useState(false)
   const [errorState, setErrorState] = useState<string | null>(null)
   const pendingUpdatesRef = useRef<Map<number, { present: boolean, time: number }>>(new Map())
 
@@ -167,13 +165,13 @@ export default function StaffPage() {
 
   async function generateQr(eventId: string) {
     const coachUrl = `${window.location.origin}/coach/${eventId}`
-    const mcUrl = `${window.location.origin}/mc/${eventId}`
-    const [coachQr, mcQr] = await Promise.all([
+    const presentadorUrl = `${window.location.origin}/presentador/${eventId}`
+    const [coachQr, presentadorQr] = await Promise.all([
       QRCode.toDataURL(coachUrl, { width: 400, margin: 2 }),
-      QRCode.toDataURL(mcUrl, { width: 400, margin: 2 }),
+      QRCode.toDataURL(presentadorUrl, { width: 400, margin: 2 }),
     ])
     setQrUrl(coachQr)
-    setMcQrUrl(mcQr)
+    setPresentadorQrUrl(presentadorQr)
   }
 
   async function updateOnDeck(val: number) {
@@ -195,19 +193,6 @@ export default function StaffPage() {
     await supabase.from('participants').update({ present: next }).eq('id', p.id)
   }
 
-  async function toggleAwards() {
-    if (!event || isTogglingAwards) return
-    setIsTogglingAwards(true)
-    
-    const next = !event.awards_mode
-    setEvent(prev => prev ? { ...prev, awards_mode: next } : null)
-    
-    await supabase.from('events').update({ awards_mode: next }).eq('id', event.id)
-    
-    setTimeout(() => {
-      setIsTogglingAwards(false)
-    }, 1000) // 1-second delay block
-  }
 
   async function advance(delta: number) {
     if (!event || isAdvancing) return
@@ -351,17 +336,7 @@ export default function StaffPage() {
           </div>
           {event ? (
             <div className="flex items-center gap-4 shrink-0">
-              {event.current_position > 0 && mode === 'manager' && (
-                <button
-                  onClick={() => { if (event.awards_mode) toggleAwards(); else setConfirmAwards(true) }}
-                  disabled={isTogglingAwards}
-                  className="active:opacity-70 disabled:opacity-50 text-white transition-opacity"
-                  aria-label="Premiación"
-                  title={event.awards_mode ? "Finalizar premiación" : "Iniciar premiación"}
-                >
-                  <Star className={`w-6 h-6 ${event.awards_mode ? 'fill-white text-white' : 'text-zinc-400'}`} />
-                </button>
-              )}
+  
               <button onClick={() => setShowProgram(true)} className="text-zinc-400 hover:text-white transition-colors" title="Ver programa completo">
                 <ListOrdered className="w-6 h-6" />
               </button>
@@ -502,7 +477,7 @@ export default function StaffPage() {
         )}
 
         {/* QR Modal */}
-        {showQr && qrUrl && mcQrUrl && event && (
+        {showQr && qrUrl && presentadorQrUrl && event && (
           <Modal onClose={() => setShowQr(false)}>
             <a
               href={`/coach/${event.id}`}
@@ -518,19 +493,19 @@ export default function StaffPage() {
             </a>
 
             <a
-              href={`/mc/${event.id}`}
+              href={`/presentador/${event.id}`}
               target="_blank"
               rel="noreferrer"
               className="flex items-center gap-3 w-full apple-btn apple-btn-secondary p-3 text-white"
             >
               <div className="w-1/4 bg-white p-1 rounded-md flex items-center justify-center aspect-square">
-                <img src={mcQrUrl} alt="QR Presentador" className="w-full rounded-sm" />
+                <img src={presentadorQrUrl} alt="QR Presentador" className="w-full rounded-sm" />
               </div>
               <div className="flex-1 min-w-0 text-left">
                 <h3 className="font-display text-sm tracking-widest flex items-center gap-1 font-bold">
                   <Monitor className="w-4 h-4 text-zinc-400" /> PORTAL PRESENTADOR
                 </h3>
-                <p className="text-[9px] text-zinc-500 break-all mt-1 opacity-70">{typeof window !== 'undefined' ? window.location.origin : ''}/mc/{event.id}</p>
+                <p className="text-[9px] text-zinc-500 break-all mt-1 opacity-70">{typeof window !== 'undefined' ? window.location.origin : ''}/presentador/{event.id}</p>
               </div>
             </a>
           </Modal>
@@ -611,30 +586,6 @@ export default function StaffPage() {
           </Modal>
         )}
 
-        {/* Confirmación iniciar premiación */}
-        {confirmAwards && event && (
-          <Modal onClose={() => setConfirmAwards(false)}>
-            <h2 className="font-display text-xl tracking-widest text-white text-center font-bold">¿INICIAR PREMIACIÓN?</h2>
-            <p className="text-sm text-zinc-400 text-center leading-relaxed mt-2">
-              Esto detendrá la visualización normal y mostrará la pantalla de premiación para coaches, MC y público.
-            </p>
-            <div className="grid grid-cols-2 gap-3 mt-4">
-              <button
-                onClick={() => setConfirmAwards(false)}
-                className="bg-white/5 border border-white/10 hover:bg-white/10 text-white px-4 py-2.5 rounded-xl font-bold text-sm transition-all"
-              >
-                NO
-              </button>
-              <button
-                onClick={() => { toggleAwards(); setConfirmAwards(false) }}
-                className="apple-btn apple-btn-primary px-4 py-2.5 text-sm"
-              >
-                SÍ
-              </button>
-            </div>
-          </Modal>
-        )}
-
         {/* Complete Program Modal */}
         {showProgram && event && (
           <div className="fixed inset-0 bg-black/70 backdrop-blur-md z-50 flex flex-col p-4 animate-fade-in">
@@ -644,19 +595,53 @@ export default function StaffPage() {
                 <button onClick={() => setShowProgram(false)} className="p-1 hover:text-zinc-400 transition-colors" aria-label="Cerrar"><X className="w-6 h-6" /></button>
               </div>
               <SearchBar value={programSearch} onChange={setProgramSearch} />
-              <div className="flex-1 min-h-0 overflow-y-auto p-3 space-y-2">
+              <div className="flex-1 min-h-0 overflow-y-auto p-3 space-y-1">
                 {(() => {
                   if (participants.length === 0) return <p className="text-center text-zinc-600 italic py-6">Sin programa</p>
                   const filtered = participants.filter(p => participantMatches(p, programSearch))
                   if (filtered.length === 0) return <p className="text-center text-zinc-600 italic py-6">Sin resultados</p>
-                  return filtered.map(p => {
+                  
+                  const rendered: React.ReactNode[] = []
+                  let lastCategory = ''
+                  let lastSubgroup = ''
+                  
+                  filtered.forEach(p => {
+                    const cat = p.category || 'Sin categoría'
+                    const subgroup = [p.style, p.type].filter(Boolean).join(' · ')
                     const isOnStage = event.current_position === p.position
                     const isOnDeck = !isOnStage && p.position > event.current_position && p.position <= event.current_position + event.on_deck_count
                     const done = p.position < event.current_position
                     const variant = isOnStage ? 'green' : isOnDeck ? (p.present ? 'green' : 'red') : done ? 'gray' : 'gray'
                     const pillVariant = done ? 'done' : variant
-                    return <Pill key={p.id} p={p} variant={pillVariant} />
+                    
+                    // Category header (lightweight)
+                    if (cat !== lastCategory) {
+                      rendered.push(
+                        <div key={`cat-${cat}-${p.position}`} className="flex items-center gap-2 pt-3 pb-1 first:pt-0">
+                          <div className="h-px flex-1 bg-white/10" />
+                          <span className="font-display text-[10px] tracking-[0.25em] text-zinc-400 uppercase font-bold px-1">{cat}</span>
+                          <div className="h-px flex-1 bg-white/10" />
+                        </div>
+                      )
+                      lastCategory = cat
+                      lastSubgroup = '' // reset subgroup on new category
+                    }
+                    
+                    // Style+Type sub-divider (even more subtle)
+                    if (subgroup && subgroup !== lastSubgroup) {
+                      rendered.push(
+                        <div key={`sub-${cat}-${subgroup}-${p.position}`} className="flex items-center gap-2 pb-0.5">
+                          <div className="h-px flex-1 bg-white/5" />
+                          <span className="font-display text-[8px] tracking-[0.2em] text-zinc-600 uppercase font-semibold">{subgroup}</span>
+                          <div className="h-px flex-1 bg-white/5" />
+                        </div>
+                      )
+                      lastSubgroup = subgroup
+                    }
+                    
+                    rendered.push(<Pill key={p.id} p={p} variant={pillVariant} />)
                   })
+                  return rendered
                 })()}
               </div>
             </div>
@@ -667,6 +652,12 @@ export default function StaffPage() {
   )
 }
 
+function pillDisplayName(p: Participant): string {
+  const type = (p.type || '').toLowerCase()
+  if (type === 'grupal') return p.academy || p.name
+  return p.name
+}
+
 function Pill({ p, variant, onClick, grow }: { p: Participant, variant: 'green' | 'red' | 'gray' | 'done', onClick?: () => void, grow?: boolean }) {
   const bg =
     variant === 'green' ? 'apple-pill-green' :
@@ -674,14 +665,20 @@ function Pill({ p, variant, onClick, grow }: { p: Participant, variant: 'green' 
     variant === 'done' ? 'apple-pill-done' :
     'apple-pill-gray'
   const Tag = onClick ? 'button' : 'div'
+  const isGrupal = (p.type || '').toLowerCase() === 'grupal'
+  const subtitle = [p.category, p.style, p.type].filter(Boolean).join(' · ')
   return (
-    <Tag onClick={onClick} className={`w-full rounded-xl px-4 py-2.5 flex items-center gap-3 ${bg} ${onClick ? 'text-left cursor-pointer' : ''} ${grow ? 'flex-1 min-h-0' : ''} transition-all duration-200 z-10`}>
+    <Tag onClick={onClick} className={`w-full rounded-xl px-4 py-2 flex items-center gap-3 ${bg} ${onClick ? 'text-left cursor-pointer' : ''} ${grow ? 'flex-1 min-h-0' : ''} transition-all duration-200 z-10`}>
       <span className="font-display text-base shrink-0 w-10 text-center leading-none opacity-80 font-bold">#{p.position}</span>
-      <p className="flex-1 min-w-0 font-display text-2.5xl uppercase truncate leading-none text-center font-bold">{p.name}</p>
-      <div className="shrink-0 leading-none text-right max-w-[30%]">
-        {p.academy && <p className="font-display text-sm uppercase truncate text-zinc-400 font-semibold">{p.academy.split('(')[0].trim()}</p>}
-        {p.category && <p className="font-display text-[9px] uppercase opacity-50 truncate mt-1 text-zinc-500">{p.category}</p>}
+      <div className="flex-1 min-w-0">
+        <p className="font-display text-xl uppercase truncate leading-none font-bold">{pillDisplayName(p)}</p>
+        <p className="font-display text-[9px] uppercase opacity-50 truncate mt-0.5 text-zinc-400">{subtitle}</p>
       </div>
+      {!isGrupal && p.academy && (
+        <div className="shrink-0 leading-none text-right max-w-[30%]">
+          <p className="font-display text-xs uppercase truncate text-zinc-400 font-semibold">{p.academy.split('(')[0].trim()}</p>
+        </div>
+      )}
     </Tag>
   )
 }

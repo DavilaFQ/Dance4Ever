@@ -210,28 +210,15 @@ export default function StandaloneBuilderPage() {
     setVerifyingPassword(true)
     setAuthError(null)
 
-    try {
-      const res = await fetch('/api/auth', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password: authPassword.trim() }),
-      })
-
-      if (res.ok) {
-        const h = await hashPassword(authPassword.trim())
-        if (h) {
-          localStorage.setItem('d4e_dashboard_hash', h)
-          localStorage.setItem('d4e_dashboard_gate', 'unlocked')
-        }
-        setIsAuthenticated(true)
-      } else {
-        setAuthError('Contraseña incorrecta')
-      }
-    } catch (err) {
-      setAuthError('Error de conexión con el servidor')
-    } finally {
-      setVerifyingPassword(false)
+    const envPassword = process.env.NEXT_PUBLIC_DASHBOARD_PASSWORD
+    if (authPassword.trim() === envPassword) {
+      localStorage.setItem('d4e_builder_password', authPassword.trim())
+      localStorage.setItem('d4e_dashboard_gate', 'unlocked')
+      setIsAuthenticated(true)
+    } else {
+      setAuthError('Contraseña incorrecta')
     }
+    setVerifyingPassword(false)
   }
 
   // Security gate check
@@ -241,30 +228,20 @@ export default function StandaloneBuilderPage() {
     // Auto-unlock gate since they are accessing the standalone builder directly
     localStorage.setItem('d4e_dashboard_gate', 'unlocked')
 
-    const hash = localStorage.getItem('d4e_dashboard_hash')
+    const savedPassword = localStorage.getItem('d4e_builder_password')
     const envPassword = process.env.NEXT_PUBLIC_DASHBOARD_PASSWORD
 
-    if (hash && envPassword) {
-      setVerifyingPassword(true)
-      hashPassword(envPassword).then(expectedHash => {
-        if (hash === expectedHash) {
-          setIsAuthenticated(true)
-        } else {
-          localStorage.removeItem('d4e_dashboard_hash')
-          setIsAuthenticated(false)
-        }
-        setCheckingAuth(false)
-        setVerifyingPassword(false)
-      }).catch(() => {
-        localStorage.removeItem('d4e_dashboard_hash')
+    if (savedPassword && envPassword) {
+      if (savedPassword === envPassword) {
+        setIsAuthenticated(true)
+      } else {
+        localStorage.removeItem('d4e_builder_password')
         setIsAuthenticated(false)
-        setCheckingAuth(false)
-        setVerifyingPassword(false)
-      })
+      }
     } else {
       setIsAuthenticated(false)
-      setCheckingAuth(false)
     }
+    setCheckingAuth(false)
   }, [])
 
   // Fetch events
@@ -981,69 +958,91 @@ export default function StandaloneBuilderPage() {
               ) : (
                 groupedLeft.map(group => (
                   <div key={`left-group-${group.category}`} className="space-y-2">
-                    <div className="text-sm md:text-base font-display font-black text-black tracking-widest uppercase pl-2 border-l-4 border-black">
-                      {group.category}
+                    <div className="flex items-center gap-3 pt-3 pb-0.5 first:pt-0">
+                      <div className="h-0.5 flex-1 bg-red-500/70 rounded-full" />
+                      <span className="font-display text-sm tracking-[0.35em] uppercase font-black px-1 text-red-600">{group.category}</span>
+                      <div className="h-0.5 flex-1 bg-red-500/70 rounded-full" />
                     </div>
                     <div className="space-y-2">
-                      {group.items.map(item => {
-                        const comp = getCompatibility(item)
-                        const compStyle = COMPATIBILITY_STYLES[comp]
-                        return (
-                          <div
-                            key={item.id}
-                            onClick={() => moveToRight(item)}
-                            className={`flex items-center gap-3 p-3 rounded-none border-2 cursor-pointer transition-all ${compStyle.border} ${compStyle.bg} hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]`}
-                          >
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-1.5 flex-wrap">
-                                <span className="text-[9px] font-extrabold bg-black text-white px-1.5 py-0.5 rounded-none uppercase tracking-wider">
-                                  {MODALITY_LABELS[item.act.modality].toUpperCase()}
-                                </span>
-                                {item.act.style && (
-                                  <span className="text-[9px] text-neutral-600 font-bold uppercase">{item.act.style}</span>
-                                )}
+                      {(() => {
+                        const leftRendered: React.ReactNode[] = []
+                        let lastLeftSubgroup = ''
+                        group.items.forEach((item, idx) => {
+                          const comp = getCompatibility(item)
+                          const compStyle = COMPATIBILITY_STYLES[comp]
+                          const mod = MODALITY_LABELS[item.act.modality].toUpperCase()
+                          const styleLabel = item.act.style ? item.act.style.toUpperCase() : ''
+                          const subgroup = [mod, styleLabel].filter(Boolean).join(' · ')
+
+                          if (subgroup && subgroup !== lastLeftSubgroup) {
+                            leftRendered.push(
+                              <div key={`left-sub-${group.category}-${subgroup}-${idx}`} className="flex items-center gap-2 pt-1 pb-0.5">
+                                <div className="h-0.5 flex-1 bg-purple-400/50 rounded-full" />
+                                <span className="font-display text-xs tracking-[0.2em] uppercase font-black text-purple-500 px-1">{subgroup}</span>
+                                <div className="h-0.5 flex-1 bg-purple-400/50 rounded-full" />
                               </div>
-                              <p className="text-xs font-black truncate mt-1 text-black">
-                                {item.reg.academy}{item.reg.team_name ? ` (${item.reg.team_name})` : ''}
-                              </p>
-                              {(() => {
-                                const dancersInAct = item.reg.dancers.filter(d => (item.act.dancer_ids || []).includes(d.id))
-                                return dancersInAct.length > 0 && (
-                                  <div className="mt-1 flex flex-col gap-0.5">
-                                    {dancersInAct.map(d => (
-                                      <p key={d.id} className="text-xs text-neutral-600 font-bold leading-tight">
-                                        {d.name}
-                                      </p>
-                                    ))}
-                                  </div>
-                                )
-                              })()}
-                            </div>
+                            )
+                            lastLeftSubgroup = subgroup
+                          }
 
-                            <div className="shrink-0 flex items-center gap-1.5">
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  openEditDancers(item)
-                                }}
-                                className="p-1.5 bg-white border-2 border-black text-neutral-400 hover:text-black rounded-none hover:bg-neutral-50 active:scale-95 transition-all"
-                                title="Editar Integrantes"
-                              >
-                                <Edit3 className="w-3.5 h-3.5" />
-                              </button>
+                          leftRendered.push(
+                            <div
+                              key={item.id}
+                              onClick={() => moveToRight(item)}
+                              className={`flex items-center gap-3 p-3 rounded-none border-2 cursor-pointer transition-all ${compStyle.border} ${compStyle.bg} hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]`}
+                            >
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  <span className="text-[9px] font-extrabold bg-black text-white px-1.5 py-0.5 rounded-none uppercase tracking-wider">
+                                    {MODALITY_LABELS[item.act.modality].toUpperCase()}
+                                  </span>
+                                  {item.act.style && (
+                                    <span className="text-[9px] text-neutral-600 font-bold uppercase">{item.act.style}</span>
+                                  )}
+                                </div>
+                                <p className="text-xs font-black truncate mt-1 text-black">
+                                  {item.reg.academy}{item.reg.team_name ? ` (${item.reg.team_name})` : ''}
+                                </p>
+                                {(() => {
+                                  const dancersInAct = item.reg.dancers.filter(d => (item.act.dancer_ids || []).includes(d.id))
+                                  return dancersInAct.length > 0 && (
+                                    <div className="mt-1 flex flex-col gap-0.5">
+                                      {dancersInAct.map(d => (
+                                        <p key={d.id} className="text-xs text-neutral-600 font-bold leading-tight">
+                                          {d.name}
+                                        </p>
+                                      ))}
+                                    </div>
+                                  )
+                                })()}
+                              </div>
 
-                              <div className="shrink-0 flex items-center gap-1 px-2 py-0.5 rounded-none border border-black/10 bg-white">
-                                <span className={`w-1.5 h-1.5 rounded-full ${compStyle.dot}`} />
-                                <span className={`text-[8px] font-black tracking-wider ${compStyle.text}`}>{compStyle.label}</span>
+                              <div className="shrink-0 flex items-center gap-1.5">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    openEditDancers(item)
+                                  }}
+                                  className="p-1.5 bg-white border-2 border-black text-neutral-400 hover:text-black rounded-none hover:bg-neutral-50 active:scale-95 transition-all"
+                                  title="Editar Integrantes"
+                                >
+                                  <Edit3 className="w-3.5 h-3.5" />
+                                </button>
+
+                                <div className="shrink-0 flex items-center gap-1 px-2 py-0.5 rounded-none border border-black/10 bg-white">
+                                  <span className={`w-1.5 h-1.5 rounded-full ${compStyle.dot}`} />
+                                  <span className={`text-[8px] font-black tracking-wider ${compStyle.text}`}>{compStyle.label}</span>
+                                </div>
+                              </div>
+
+                              <div className="shrink-0 text-neutral-400 hover:text-black transition-colors">
+                                <ArrowRight className="w-4 h-4" />
                               </div>
                             </div>
-
-                            <div className="shrink-0 text-neutral-400 hover:text-black transition-colors">
-                              <ArrowRight className="w-4 h-4" />
-                            </div>
-                          </div>
-                        )
-                      })}
+                          )
+                        })
+                        return leftRendered
+                      })()}
                     </div>
                   </div>
                 ))
@@ -1091,26 +1090,46 @@ export default function StandaloneBuilderPage() {
                   onDragEnd={handleDragEnd}
                 >
                   <SortableContext items={sortableIds} strategy={verticalListSortingStrategy}>
-                    <div className="space-y-4 pr-1">
+                    <div className="space-y-1 pr-1">
                       {(() => {
                         let globalIdx = 0
                         const rendered: React.ReactNode[] = []
+                        let lastSubgroup = ''
 
                         for (let gIdx = 0; gIdx < groupedRight.length; gIdx++) {
                           const group = groupedRight[gIdx]
                           const colors = (group.items[0]?.act.age_category && CATEGORY_COLORS[group.items[0].act.age_category]) ?? CATEGORY_COLORS.open
+                          
+                          // Category header — red accent, bold, large
                           rendered.push(
-                            <div key={`cat-right-${group.category}-${gIdx}`} className={`${colors.solidBg} border-2 border-black rounded-none px-4 py-3 flex items-center justify-center shadow-sm`}>
-                              <p className="font-display text-base tracking-[0.2em] uppercase text-center font-black text-black">
-                                {group.category}
-                              </p>
+                            <div key={`cat-right-${group.category}-${gIdx}`} className="flex items-center gap-3 pt-4 pb-1.5 first:pt-0">
+                              <div className="h-0.5 flex-1 bg-red-500/70 rounded-full" />
+                              <span className="font-display text-sm tracking-[0.35em] uppercase font-black px-1 text-red-600">{group.category}</span>
+                              <div className="h-0.5 flex-1 bg-red-500/70 rounded-full" />
                             </div>
                           )
+                          lastSubgroup = ''
 
                           for (const item of group.items) {
                             const isIntermedioPos = intermedioIndex === globalIdx
                             if (isIntermedioPos) {
                               rendered.push(<IntermedioMarker key={INTERMEDIO_ID} isEditing={isEditing} />)
+                            }
+
+                            // Sub-divider by modality + style
+                            const mod = MODALITY_LABELS[item.act.modality].toUpperCase()
+                            const styleLabel = item.act.style ? item.act.style.toUpperCase() : ''
+                            const subgroup = [mod, styleLabel].filter(Boolean).join(' · ')
+                            
+                            if (subgroup && subgroup !== lastSubgroup) {
+                              rendered.push(
+                                <div key={`sub-right-${group.category}-${subgroup}-${globalIdx}`} className="flex items-center gap-2 pt-1 pb-0.5">
+                                  <div className="h-0.5 flex-1 bg-purple-400/50 rounded-full" />
+                                  <span className="font-display text-xs tracking-[0.2em] uppercase font-black text-purple-500 px-1">{subgroup}</span>
+                                  <div className="h-0.5 flex-1 bg-purple-400/50 rounded-full" />
+                                </div>
+                              )
+                              lastSubgroup = subgroup
                             }
 
                             rendered.push(

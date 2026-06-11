@@ -356,7 +356,7 @@ export async function exportRegistrationsDoc(event: Event): Promise<ExcelJS.Work
     return a.avgAge - b.avgAge
   })
 
-  // ── 3. Hoja PROGRAMA (vista limpia para el MC / coordinador de escenario) ──
+  // ── 3. Hoja PROGRAMA (vista limpia para el Presentador / coordinador de escenario) ──
   const programa = flat.map((a, i) => ({
     '#': i + 1,
     'Modalidad': modalidadOf(a.modality),
@@ -627,7 +627,7 @@ function addStyledSheet(
 }
 
 // ════════════════════════════════════════════════════════════════════════════
-// exportExcel — Excel simple del programa en vivo (para el MC)
+// exportExcel — Excel simple del programa en vivo (para el Presentador)
 // ════════════════════════════════════════════════════════════════════════════
 export function getExportExcelBuffer(event: Event, participants: Participant[], coaches: Coach[]): ArrayBuffer {
   const coachMap = new Map(coaches.map(c => [c.id, c.name]))
@@ -967,14 +967,14 @@ export async function exportAllRegistrationsZip(event: Event): Promise<void> {
   const refDate = toDate(event.date) || new Date()
 
   // 1. Agregar archivos master en la raíz
-  // A. Master_Programa_Vivo_MC.xlsx
+  // A. Master_Programa_Vivo_Presentador.xlsx
   const masterExcelBuf = getExportExcelBuffer(event, participants, coaches)
-  zip.file('Master_Programa_Vivo_MC.xlsx', masterExcelBuf)
+  zip.file('Master_Programa_Vivo_Presentador.xlsx', masterExcelBuf)
 
-  // B. Master_Programa_Vivo_MC.pdf
+  // B. Master_Programa_Vivo_Presentador.pdf
   const masterPdfDoc = await exportPdfDoc(event, participants, coaches)
   const masterPdfBuf = masterPdfDoc.output('arraybuffer')
-  zip.file('Master_Programa_Vivo_MC.pdf', masterPdfBuf)
+  zip.file('Master_Programa_Vivo_Presentador.pdf', masterPdfBuf)
 
   // C. Master_Finanzas_Completo.xlsx
   const masterFinWb = await exportRegistrationsDoc(event)

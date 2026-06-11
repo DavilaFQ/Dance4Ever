@@ -468,12 +468,44 @@ export default function CoachPage({ params }: Props) {
                       if (fullList.length === 0) return <p className="text-center text-zinc-600 italic py-6">Sin programa</p>
                       const filtered = fullList.filter(p => participantMatches(p, search))
                       if (filtered.length === 0) return <p className="text-center text-zinc-600 italic py-6">Sin resultados</p>
-                      return filtered.map(p => {
+                      
+                      const rendered: React.ReactNode[] = []
+                      let lastCategory = ''
+                      let lastSubgroup = ''
+                      
+                      filtered.forEach(p => {
+                        const cat = p.category || 'Sin categoría'
+                        const subgroup = [p.style, p.type].filter(Boolean).join(' · ')
                         const isOnStage = event.current_position === p.position
                         const done = p.position < event.current_position
                         const mine = p.coach_id === coach.id
-                        return <Pill key={p.id} p={p} onStage={isOnStage} done={done} mine={mine} />
+                        
+                        if (cat !== lastCategory) {
+                          rendered.push(
+                            <div key={`cat-${cat}-${p.position}`} className="flex items-center gap-2 pt-3 pb-1 first:pt-0">
+                              <div className="h-px flex-1 bg-white/10" />
+                              <span className="font-display text-[10px] tracking-[0.25em] text-zinc-400 uppercase font-bold px-1">{cat}</span>
+                              <div className="h-px flex-1 bg-white/10" />
+                            </div>
+                          )
+                          lastCategory = cat
+                          lastSubgroup = ''
+                        }
+                        
+                        if (subgroup && subgroup !== lastSubgroup) {
+                          rendered.push(
+                            <div key={`sub-${cat}-${subgroup}-${p.position}`} className="flex items-center gap-2 pb-0.5">
+                              <div className="h-px flex-1 bg-white/5" />
+                              <span className="font-display text-[8px] tracking-[0.2em] text-zinc-600 uppercase font-semibold">{subgroup}</span>
+                              <div className="h-px flex-1 bg-white/5" />
+                            </div>
+                          )
+                          lastSubgroup = subgroup
+                        }
+                        
+                        rendered.push(<Pill key={p.id} p={p} onStage={isOnStage} done={done} mine={mine} />)
                       })
+                      return rendered
                     })()}
                   </div>
                 </>
@@ -486,20 +518,32 @@ export default function CoachPage({ params }: Props) {
   )
 }
 
+function pillDisplayName(p: Participant): string {
+  const type = (p.type || '').toLowerCase()
+  if (type === 'grupal') return p.academy || p.name
+  return p.name
+}
+
 function Pill({ p, mine, onStage, done, grow }: { p: Participant, mine?: boolean, onStage?: boolean, done?: boolean, grow?: boolean }) {
   const bg =
     onStage ? 'apple-pill-onstage' :
     done ? 'apple-pill-done' :
     mine ? 'apple-pill-mine' :
     'apple-pill'
+  const isGrupal = (p.type || '').toLowerCase() === 'grupal'
+  const subtitle = [p.category, p.style, p.type].filter(Boolean).join(' · ')
   return (
-    <div className={`w-full px-4 py-2.5 flex items-center gap-3 ${bg} ${grow ? 'flex-1 min-h-0' : ''}`}>
+    <div className={`w-full px-4 py-2 flex items-center gap-3 ${bg} ${grow ? 'flex-1 min-h-0' : ''}`}>
       <span className="font-display text-base shrink-0 w-10 text-center leading-none opacity-80 font-bold">#{p.position}</span>
-      <p className="flex-1 min-w-0 font-display text-2xl uppercase truncate leading-none text-center font-bold">{p.name}</p>
-      <div className="shrink-0 leading-none text-right max-w-[35%]">
-        {p.academy && <p className="font-display text-sm uppercase truncate text-zinc-400 font-semibold">{p.academy.split('(')[0].trim()}</p>}
-        {p.category && <p className="font-display text-[9px] uppercase opacity-50 truncate mt-1 text-zinc-500">{p.category}</p>}
+      <div className="flex-1 min-w-0">
+        <p className="font-display text-xl uppercase truncate leading-none font-bold">{pillDisplayName(p)}</p>
+        <p className="font-display text-[9px] uppercase opacity-50 truncate mt-0.5 text-zinc-400">{subtitle}</p>
       </div>
+      {!isGrupal && p.academy && (
+        <div className="shrink-0 leading-none text-right max-w-[35%]">
+          <p className="font-display text-xs uppercase truncate text-zinc-400 font-semibold">{p.academy.split('(')[0].trim()}</p>
+        </div>
+      )}
     </div>
   )
 }

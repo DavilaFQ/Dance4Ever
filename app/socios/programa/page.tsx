@@ -213,80 +213,96 @@ export default function ProgramaTab() {
           <span className="text-[10px] text-neutral-500 bg-neutral-800 px-2 py-0.5 rounded-full font-bold">{orderedItems.length} coreografías</span>
         </div>
 
-        {orderedItems.length === 0 ? (
-          <div className="text-center py-12 text-neutral-600 text-sm">
-            No hay coreografías confirmadas para mostrar en el borrador.
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {(() => {
-              let globalIdx = 0
-              const rendered: React.ReactNode[] = []
+          {orderedItems.length === 0 ? (
+            <div className="text-center py-12 text-neutral-600 text-sm">
+              No hay coreografías confirmadas para mostrar en el borrador.
+            </div>
+          ) : (
+            <div className="space-y-1">
+              {(() => {
+                let globalIdx = 0
+                const rendered: React.ReactNode[] = []
+                let lastCat = ''
+                let lastSubgroup = ''
 
-              for (let gIdx = 0; gIdx < grouped.length; gIdx++) {
-                const group = grouped[gIdx]
-                const colors = (group.items[0]?.act.age_category && CATEGORY_COLORS[group.items[0].act.age_category]) ?? CATEGORY_COLORS.open
+                for (let gIdx = 0; gIdx < grouped.length; gIdx++) {
+                  const group = grouped[gIdx]
+                  
+                  // Lightweight category header
+                  rendered.push(
+                    <div key={`cat-preview-${group.category}-${gIdx}`} className="flex items-center gap-2 pt-4 pb-1 first:pt-0">
+                      <div className="h-px flex-1 bg-neutral-700/60" />
+                      <span className="font-display text-[10px] tracking-[0.3em] text-neutral-400 uppercase font-bold px-2">{group.category}</span>
+                      <div className="h-px flex-1 bg-neutral-700/60" />
+                    </div>
+                  )
+                  lastCat = group.category
+                  lastSubgroup = ''
+
+                  for (const item of group.items) {
+                    const isIntermedioPos = intermedioIndex === globalIdx
+                    if (isIntermedioPos) {
+                      rendered.push(
+                        <div key={`intermedio-${globalIdx}`} className="flex items-center justify-center gap-2 p-2 rounded-lg bg-amber-500/10 border border-dashed border-amber-500/30">
+                          <Award className="w-3.5 h-3.5 text-amber-400" />
+                          <span className="font-display text-[10px] tracking-wider text-amber-400 uppercase font-bold">Premiacion Intermedia</span>
+                        </div>
+                      )
+                    }
+
+                    const { act, reg } = item
+                    const mod = MODALITY_LABELS[act.modality].toUpperCase()
+                    const styleLabel = act.style ? act.style.toUpperCase() : ''
+                    const subgroup = [mod, styleLabel].filter(Boolean).join(' · ')
+                    const dancersInAct = reg.dancers.filter(d => (act.dancer_ids || []).includes(d.id))
+                    const names = dancersInAct.map(d => d.name.split(' ').slice(0, 2).join(' ')).join(', ')
+
+                    // Sub-divider by modality + style
+                    if (subgroup && subgroup !== lastSubgroup) {
+                      rendered.push(
+                        <div key={`sub-${group.category}-${subgroup}-${globalIdx}`} className="flex items-center gap-2 pb-0.5 pt-1">
+                          <div className="h-px flex-1 bg-neutral-800/80" />
+                          <span className="text-[8px] text-neutral-600 uppercase font-bold tracking-wider">{subgroup}</span>
+                          <div className="h-px flex-1 bg-neutral-800/80" />
+                        </div>
+                      )
+                      lastSubgroup = subgroup
+                    }
+
+                    rendered.push(
+                      <div key={`act-prev-${item.id}`} className="flex items-center gap-2.5 p-2.5 rounded-lg border border-neutral-800/60 bg-neutral-950/10">
+                        <span className="font-display text-xs font-bold text-neutral-500 w-7 text-right shrink-0">
+                          #{String(globalIdx + 1).padStart(2, '0')}
+                        </span>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-semibold truncate text-neutral-200">
+                            {reg.academy}{reg.team_name ? ` (${reg.team_name})` : ''}
+                          </p>
+                          {names && act.modality !== 'grupal' && (
+                            <p className="text-[9px] text-neutral-500 truncate mt-0.5">{names}</p>
+                          )}
+                        </div>
+                        <div className="shrink-0 text-[8px] text-neutral-600 uppercase text-right">
+                          <div>{act.level === 'basico' ? 'Básico' : 'Avanzado'}</div>
+                        </div>
+                      </div>
+                    )
+                    globalIdx++
+                  }
+                }
+
+                // Final ceremony
                 rendered.push(
-                  <div key={`cat-preview-${group.category}-${gIdx}`} className={`${colors.solidBg} border rounded-xl px-4 py-2.5 flex items-center justify-center`}>
-                    <p className="font-display text-sm tracking-[0.2em] uppercase text-center font-bold text-black" style={{ color: '#000000' }}>
-                      {group.category}
-                    </p>
+                  <div key="ceremony-final-prev" className="flex items-center justify-center gap-2 mt-2 p-2.5 rounded-lg bg-fuchsia-950/20 border border-fuchsia-900/30">
+                    <Award className="w-3.5 h-3.5 text-fuchsia-400" />
+                    <span className="font-display text-[10px] tracking-wider text-fuchsia-400 uppercase font-bold">Premiacion Final</span>
                   </div>
                 )
 
-                for (const item of group.items) {
-                  const isIntermedioPos = intermedioIndex === globalIdx
-                  if (isIntermedioPos) {
-                    rendered.push(
-                      <div key={INTERMEDIO_ID} className="flex items-center justify-center gap-2 p-2.5 rounded-xl bg-amber-500/10 border border-dashed border-amber-500/30">
-                        <Award className="w-4 h-4 text-amber-400" />
-                        <span className="font-display text-xs tracking-wider text-amber-400 uppercase font-bold">Premiacion Intermedia</span>
-                      </div>
-                    )
-                  }
-
-                  const { act, reg } = item
-                  const catLabel = act.age_category ? AGE_CATEGORY_LABELS[act.age_category].toUpperCase() : 'OPEN'
-                  const mod = MODALITY_LABELS[act.modality].toUpperCase()
-                  const dancersInAct = reg.dancers.filter(d => (act.dancer_ids || []).includes(d.id))
-                  const names = dancersInAct.map(d => d.name.split(' ').slice(0, 2).join(' ')).join(', ')
-
-                  rendered.push(
-                    <div key={`act-prev-${item.id}`} className="flex items-center gap-3 p-3 rounded-xl border border-neutral-800 bg-neutral-950/20">
-                      <span className="font-display text-sm font-bold text-neutral-500 w-8 text-right shrink-0">
-                        #{String(globalIdx + 1).padStart(2, '0')}
-                      </span>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="text-[8px] font-bold bg-neutral-800 text-neutral-300 px-1.5 py-0.5 rounded uppercase">{mod}</span>
-                          <span className="text-[8px] font-bold text-neutral-400 uppercase">{catLabel}</span>
-                          {act.style && <span className="text-[8px] text-neutral-500 uppercase">- {act.style}</span>}
-                        </div>
-                        <p className="text-xs font-semibold truncate mt-0.5 text-neutral-200">
-                          {reg.academy}{reg.team_name ? ` (${reg.team_name})` : ''}
-                        </p>
-                      </div>
-                      <div className="shrink-0 text-[8px] text-neutral-600 uppercase text-right">
-                        <div>{act.level === 'basico' ? 'Basico' : 'Avanzado'}</div>
-                      </div>
-                    </div>
-                  )
-                  globalIdx++
-                }
-              }
-
-              // Final ceremony
-              rendered.push(
-                <div key="ceremony-final-prev" className="bg-fuchsia-950/20 border border-fuchsia-900/30 rounded-xl px-4 py-2.5 flex items-center justify-center gap-2">
-                  <Award className="w-4 h-4 text-fuchsia-400" />
-                  <span className="font-display text-xs tracking-wider text-fuchsia-400 uppercase font-bold">Premiacion Final</span>
-                </div>
-              )
-
-              return rendered
-            })()}
-          </div>
-        )}
+                return rendered
+              })()}
+            </div>
+          )}
       </div>
 
     </div>
