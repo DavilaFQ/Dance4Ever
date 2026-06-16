@@ -3,7 +3,7 @@ import { useEffect, useState, use, useCallback, useRef } from 'react'
 import Image from 'next/image'
 import { supabase, Participant, Event, Coach } from '@/lib/supabase'
 import { useFitCount } from '@/lib/useFitCount'
-import { ChevronLeft, X, ArrowUpRight } from 'lucide-react'
+import { ChevronLeft, X, ArrowUpRight, MessageSquare } from 'lucide-react'
 import { participantMatches } from '@/lib/search'
 import SearchBar from '@/components/SearchBar'
 import { getAvgPerTurnMs, etaLabel } from '@/lib/eta'
@@ -31,6 +31,97 @@ export default function CoachPage({ params }: Props) {
   const [, setTick] = useState(0)
   const [activeAnnouncement, setActiveAnnouncement] = useState('')
   const [portalConfig, setPortalConfig] = useState<PortalConfig | null>(null)
+
+  // Chat / Alertas Rápidas
+  interface ChatMessage {
+    id: string
+    sender: 'staff' | 'presenter' | 'coach'
+    senderName: string
+    text: string
+    timestamp: number
+    isCritical?: boolean
+  }
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([])
+  const [unreadChatCount, setUnreadChatCount] = useState(0)
+  const [showChatDrawer, setShowChatDrawer] = useState(false)
+  const [chatInput, setChatInput] = useState('')
+  const [activeCriticalAlert, setActiveCriticalAlert] = useState<ChatMessage | null>(null)
+  
+  const broadcastRef = useRef<any>(null)
+  const messagesEndRef = useRef<HTMLDivElement>(null)
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }
+
+  useEffect(() => {
+    if (showChatDrawer) {
+      setUnreadChatCount(0)
+      scrollToBottom()
+    }
+  }, [showChatDrawer, chatMessages])
+
+  // Repeating warning alarm for critical alert HUD
+  useEffect(() => {
+    if (!activeCriticalAlert) return
+    const playWarning = () => {
+      try {
+        const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext
+        if (AudioContextClass) {
+          const ctx = new AudioContextClass()
+          const now = ctx.currentTime
+          const osc1 = ctx.createOscillator()
+          const osc2 = ctx.createOscillator()
+          const gain = ctx.createGain()
+          
+          osc1.connect(gain)
+          osc2.connect(gain)
+          gain.connect(ctx.destination)
+          
+          osc1.type = 'sawtooth'
+          osc1.frequency.setValueAtTime(600, now)
+          osc1.frequency.linearRampToValueAtTime(800, now + 0.4)
+          
+          osc2.type = 'sine'
+          osc2.frequency.setValueAtTime(1200, now)
+          osc2.frequency.linearRampToValueAtTime(1000, now + 0.4)
+          
+          gain.gain.setValueAtTime(0, now)
+          gain.gain.linearRampToValueAtTime(0.4, now + 0.05)
+          gain.gain.linearRampToValueAtTime(0.01, now + 0.4)
+          
+          osc1.start(now)
+          osc1.stop(now + 0.4)
+          osc2.start(now)
+          osc2.stop(now + 0.4)
+        }
+      } catch (e) {
+        console.error(e)
+      }
+    }
+    playWarning()
+    const interval = setInterval(playWarning, 1200)
+    return () => clearInterval(interval)
+  }, [activeCriticalAlert])
+
+  const sendChatMessage = (text: string, isCritical = false) => {
+    if (!text.trim() || !broadcastRef.current) return
+    const currentCoach = coaches.find(c => c.id === coachId)
+    const msg: ChatMessage = {
+      id: Math.random().toString(36).substring(2, 9) + '-' + Date.now(),
+      sender: 'coach',
+      senderName: currentCoach ? currentCoach.name : 'Coach',
+      text: text.trim(),
+      timestamp: Date.now(),
+      isCritical
+    }
+    broadcastRef.current.send({
+      type: 'broadcast',
+      event: 'quick_message',
+      payload: msg
+    })
+    setChatInput('')
+  }
 
 
   useEffect(() => {
@@ -93,6 +184,7 @@ export default function CoachPage({ params }: Props) {
     const ch = supabase.channel(`broadcast-${eventId}`, {
       config: { broadcast: { self: true } }
     })
+    broadcastRef.current = ch
     
     ch.on('broadcast', { event: 'announcement' }, (payload) => {
       const text = payload.payload.text || ''
@@ -106,6 +198,77 @@ export default function CoachPage({ params }: Props) {
         } catch (e) {
           console.warn('Vibration failed:', e)
         }
+      }
+    })
+
+    ch.on('broadcast', { event: 'quick_message' }, (payload) => {
+      const msg = payload.payload as ChatMessage
+      if (!msg) return
+      
+      setChatMessages(prev => {
+        if (prev.some(m => m.id === msg.id)) return prev
+        return [...prev, msg]
+      })
+
+      setShowChatDrawer(isOpen => {
+        if (!isOpen) {
+          setUnreadChatCount(c => c + 1)
+        }
+        return isOpen
+      })
+
+      // Trigger physical haptic vibration if available
+      try {
+        if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+          if (msg.isCritical) {
+            navigator.vibrate([500, 250, 500, 250, 500])
+          } else {
+            navigator.vibrate([200])
+          }
+        }
+      } catch (e) {
+        console.warn('Vibration failed:', e)
+      }
+
+      if (msg.isCritical) {
+        setActiveCriticalAlert(msg)
+      }
+
+      // Play beep sound
+      try {
+        const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext
+        if (AudioContextClass) {
+          const ctx = new AudioContextClass()
+          const now = ctx.currentTime
+          if (msg.isCritical) {
+            const osc = ctx.createOscillator()
+            const gain = ctx.createGain()
+            osc.connect(gain)
+            gain.connect(ctx.destination)
+            osc.type = 'sawtooth'
+            osc.frequency.setValueAtTime(987.77, now) // B5
+            gain.gain.setValueAtTime(0, now)
+            gain.gain.linearRampToValueAtTime(0.4, now + 0.05)
+            gain.gain.linearRampToValueAtTime(0.01, now + 0.6)
+            osc.start(now)
+            osc.stop(now + 0.6)
+          } else {
+            const osc = ctx.createOscillator()
+            const gain = ctx.createGain()
+            osc.connect(gain)
+            gain.connect(ctx.destination)
+            osc.type = 'sine'
+            osc.frequency.setValueAtTime(659.25, now) // E5
+            osc.frequency.exponentialRampToValueAtTime(880, now + 0.1) // A5
+            gain.gain.setValueAtTime(0, now)
+            gain.gain.linearRampToValueAtTime(0.25, now + 0.01)
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15)
+            osc.start(now)
+            osc.stop(now + 0.15)
+          }
+        }
+      } catch (e) {
+        console.error('AudioContext message beep error:', e)
       }
     })
     
@@ -346,6 +509,20 @@ export default function CoachPage({ params }: Props) {
             </button>
           ) : (
             <h1 className="flex-1 min-w-0 font-display text-2xl tracking-[0.15em] text-white truncate uppercase leading-none font-bold">COACH</h1>
+          )}
+          {coach && (
+            <button
+              onClick={() => setShowChatDrawer(true)}
+              className="text-zinc-400 hover:text-white transition-colors relative shrink-0"
+              title="Chat / Alertas rápidas"
+            >
+              <MessageSquare className="w-6 h-6" />
+              {unreadChatCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white font-bold text-[10px] w-4.5 h-4.5 rounded-full flex items-center justify-center animate-bounce">
+                  {unreadChatCount}
+                </span>
+              )}
+            </button>
           )}
           <Image src="/logo.png" alt="Dance4ever" width={46} height={32} priority className="shrink-0 opacity-90" />
         </header>
@@ -605,6 +782,149 @@ export default function CoachPage({ params }: Props) {
                   </div>
                 </>
               )}
+            </div>
+          </div>
+        )}
+
+        {/* Chat Drawer Overlay */}
+        {showChatDrawer && (
+          <div className="fixed inset-0 bg-black/60 z-45 backdrop-blur-xs transition-opacity duration-300" onClick={() => setShowChatDrawer(false)} />
+        )}
+        <div className={`fixed right-0 top-0 bottom-0 z-50 w-80 md:w-96 bg-zinc-950/95 border-l border-white/10 flex flex-col backdrop-blur-md transition-transform duration-300 ease-out ${showChatDrawer ? 'translate-x-0' : 'translate-x-full'}`}>
+          <div className="bg-black/30 px-4 py-3.5 flex items-center justify-between shrink-0 border-b border-white/5">
+            <div className="flex items-center gap-2">
+              <MessageSquare className="w-5 h-5 text-yellow-400" />
+              <h3 className="font-display text-base tracking-widest text-white font-bold uppercase">Chat & Alertas</h3>
+            </div>
+            <button onClick={() => setShowChatDrawer(false)} className="p-1 hover:text-zinc-400 transition-colors text-zinc-400" aria-label="Cerrar"><X className="w-6 h-6" /></button>
+          </div>
+          
+          {/* Chat Messages */}
+          <div className="flex-1 min-h-0 overflow-y-auto p-4 space-y-3">
+            {chatMessages.length === 0 ? (
+              <div className="h-full flex flex-col items-center justify-center text-zinc-600 italic text-sm">
+                <span>Sin mensajes aún</span>
+                <span className="text-xs mt-1">Usa los botones rápidos de abajo</span>
+              </div>
+            ) : (
+              chatMessages.map((msg) => {
+                const isMe = msg.sender === 'coach'
+                const timeStr = new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                let senderColorClass = 'text-yellow-400'
+                let bubbleClass = 'bg-white/5 border border-white/5'
+                
+                if (msg.sender === 'staff') {
+                  senderColorClass = 'text-fuchsia-400'
+                  bubbleClass = 'bg-fuchsia-950/20 border border-fuchsia-500/20'
+                } else if (msg.sender === 'presenter') {
+                  senderColorClass = 'text-cyan-400'
+                  bubbleClass = 'bg-cyan-950/20 border border-cyan-500/20'
+                } else if (msg.sender === 'coach') {
+                  senderColorClass = 'text-emerald-400'
+                  bubbleClass = 'bg-emerald-950/20 border border-emerald-500/20'
+                }
+                
+                if (msg.isCritical) {
+                  bubbleClass = 'bg-red-950/30 border-2 border-red-500 animate-pulse-slow'
+                }
+                
+                return (
+                  <div key={msg.id} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
+                    <div className="flex items-center gap-1.5 mb-1 px-1">
+                      <span className={`text-[10px] font-bold tracking-wider uppercase ${senderColorClass}`}>
+                        {msg.senderName}
+                      </span>
+                      <span className="text-[9px] text-zinc-500">{timeStr}</span>
+                    </div>
+                    <div className={`rounded-2xl px-3.5 py-2 max-w-[85%] text-sm break-words ${bubbleClass}`}>
+                      {msg.isCritical && <span className="font-bold text-red-500 mr-1">⚠️ [CRÍTICO]</span>}
+                      {msg.text}
+                    </div>
+                  </div>
+                )
+              })
+            )}
+            <div ref={messagesEndRef} />
+          </div>
+
+          {/* Quick-Action Presets */}
+          <div className="p-3 bg-black/40 border-t border-white/5 shrink-0">
+            <span className="text-[10px] font-bold text-zinc-500 tracking-wider uppercase block mb-2 px-1">Mensajes Rápidos (Coach)</span>
+            <div className="grid grid-cols-2 gap-1.5 flex-wrap">
+              {[
+                { text: '🚑 Emergencia Camerinos', isCritical: true },
+                { text: '🔧 Falla con Vestuario', isCritical: false },
+                { text: '🙋 Duda de Orden', isCritical: false },
+                { text: '🏃 Danzante Listo', isCritical: false },
+              ].map((preset, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => sendChatMessage(preset.text, preset.isCritical)}
+                  className={`text-xs font-semibold py-2 px-2.5 rounded-xl border transition-all duration-200 active:scale-95 text-center ${
+                    preset.isCritical
+                      ? 'bg-red-950/40 hover:bg-red-900/40 text-red-300 border-red-500/30 hover:border-red-500 col-span-2'
+                      : 'bg-white/5 hover:bg-white/10 text-zinc-300 border-white/5 hover:border-white/20'
+                  }`}
+                >
+                  {preset.text}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Custom Input */}
+          <div className="p-3 bg-zinc-950 border-t border-white/10 shrink-0 pb-safe">
+            <form
+              onSubmit={(e) => {
+                e.preventDefault()
+                sendChatMessage(chatInput)
+              }}
+              className="flex gap-2"
+            >
+              <input
+                type="text"
+                value={chatInput}
+                onChange={(e) => setChatInput(e.target.value)}
+                placeholder="Escribe un mensaje..."
+                className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-yellow-500/50 transition-colors placeholder:text-zinc-500"
+              />
+              <button
+                type="submit"
+                className="bg-yellow-500 hover:bg-yellow-400 text-black font-bold text-xs px-4 rounded-xl transition-all duration-200 active:scale-95 uppercase tracking-wider shrink-0"
+              >
+                Enviar
+              </button>
+            </form>
+          </div>
+        </div>
+
+        {/* Critical HUD Overlay */}
+        {activeCriticalAlert && (
+          <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-red-950/95 p-6 text-center select-none animate-pulse-slow">
+            <div className="absolute inset-0 bg-red-900/20 animate-ping opacity-30 pointer-events-none" />
+            <div className="relative max-w-lg w-full space-y-8 p-8 rounded-3xl border-3 border-red-500 bg-black/80 shadow-2xl backdrop-blur-xl">
+              <div className="flex justify-center">
+                <span className="text-7xl animate-bounce">🚨</span>
+              </div>
+              <div className="space-y-3">
+                <span className="text-red-500 font-display font-black text-xl tracking-[0.3em] uppercase block">
+                  ALERTA CRÍTICA
+                </span>
+                <span className="text-zinc-400 text-xs font-semibold tracking-wider uppercase block">
+                  De: {activeCriticalAlert.senderName}
+                </span>
+              </div>
+              <p className="text-white font-display font-bold text-3xl md:text-4.5xl leading-tight uppercase tracking-wide break-words">
+                {activeCriticalAlert.text}
+              </p>
+              <div className="pt-4">
+                <button
+                  onClick={() => setActiveCriticalAlert(null)}
+                  className="w-full py-4 bg-red-600 hover:bg-red-500 text-white font-display font-black tracking-widest text-lg rounded-2xl border-2 border-red-400 transition-all duration-200 active:scale-95 shadow-lg shadow-red-900/50 uppercase"
+                >
+                  ENTENDIDO / ACUSAR RECIBO
+                </button>
+              </div>
             </div>
           </div>
         )}
