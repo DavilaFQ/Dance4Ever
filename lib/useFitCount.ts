@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 export function useFitCount(itemHeight: number, gap: number = 4) {
   const [el, setEl] = useState<HTMLElement | null>(null)
   const [count, setCount] = useState(0)
+  const [height, setHeight] = useState(0)
 
   useEffect(() => {
     if (!el || typeof window === 'undefined') return
@@ -12,6 +13,7 @@ export function useFitCount(itemHeight: number, gap: number = 4) {
       if (h <= 0) return
       const fits = Math.max(0, Math.floor((h + gap) / (itemHeight + gap)))
       setCount(prev => (prev === fits ? prev : fits))
+      setHeight(prev => (prev === h ? prev : h))
     }
     compute()
     const raf = requestAnimationFrame(compute)
@@ -23,5 +25,5 @@ export function useFitCount(itemHeight: number, gap: number = 4) {
     }
   }, [el, itemHeight, gap])
 
-  return { ref: setEl, count }
+  return { ref: setEl, count, height }
 }

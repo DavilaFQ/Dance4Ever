@@ -69,6 +69,7 @@ export default function EventosPage() {
   const [qrStaffUrl, setQrStaffUrl] = useState('')
   const [qrCoachProgUrl, setQrCoachProgUrl] = useState('')
   const [qrPresentadorUrl, setQrPresentadorUrl] = useState('')
+  const [qrBuilderUrl, setQrBuilderUrl] = useState('')
   const [copiedQrLink, setCopiedQrLink] = useState<string | null>(null)
 
   // Track initialization to avoid auto-save loop on mount
@@ -169,6 +170,10 @@ export default function EventosPage() {
     // 3. QR Presentador
     const urlPresentador = `${origin}/presentador/${event.id}`
     QRCode.toDataURL(urlPresentador, { width: 400, margin: 2 }).then(setQrPresentadorUrl).catch(() => {})
+
+    // 4. QR Organizador (Program Builder)
+    const urlBuilder = `${origin}/programa-builder`
+    QRCode.toDataURL(urlBuilder, { width: 400, margin: 2 }).then(setQrBuilderUrl).catch(() => {})
   }, [event?.id, origin])
 
   useEffect(() => {
@@ -739,14 +744,63 @@ export default function EventosPage() {
           >
             <div>
               <h2 className="font-display text-lg tracking-wider uppercase">Códigos QR de Accesos</h2>
-              <p className="text-xs text-neutral-500 mt-0.5">QRs de Programa (Coaches), Portal de Staff y Portal de Presentador (Conducción)</p>
+              <p className="text-xs text-neutral-500 mt-0.5">QRs de Organizador (Builder), Programa (Coaches), Portal de Staff y Portal de Presentador (Conducción)</p>
             </div>
             {qrsExpanded ? <ChevronUp className="w-5 h-5 text-neutral-400" /> : <ChevronDown className="w-5 h-5 text-neutral-400" />}
           </button>
 
           {/* QR Codes Section */}
           {qrsExpanded && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* 0. Creador de Programa */}
+              {qrBuilderUrl && (
+                <div className="bg-neutral-800/30 border border-neutral-700/40 rounded-2xl p-4 flex flex-col gap-3">
+                  <div className="flex flex-col gap-0.5">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-purple-400">
+                      Preparación
+                    </span>
+                    <h4 className="font-display text-sm font-bold text-white uppercase">
+                      Creador de Programa
+                    </h4>
+                    <p className="text-[11px] text-neutral-500">
+                      Lienzo interactivo para arrastrar y ordenar coreografías.
+                    </p>
+                  </div>
+
+                  <div className="bg-white p-3 rounded-xl flex items-center justify-center max-w-[200px] mx-auto w-full aspect-square shadow-md">
+                    <img src={qrBuilderUrl} alt="QR Creador" className="w-full h-full object-contain" />
+                  </div>
+
+                  <div className="flex flex-col gap-1.5 mt-auto">
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(`${origin}/programa-builder`).then(() => {
+                          setCopiedQrLink('builder')
+                          setTimeout(() => setCopiedQrLink(null), 2000)
+                        })
+                      }}
+                      className="w-full py-2 bg-black hover:bg-neutral-900 border border-neutral-800 text-white font-bold text-[11px] rounded-lg flex items-center justify-center gap-1.5 transition-colors uppercase tracking-wider font-display active:scale-95"
+                    >
+                      {copiedQrLink === 'builder' ? '¡Copiado!' : 'Copiar Enlace'}
+                    </button>
+                    
+                    <button
+                      onClick={() => {
+                        window.open(
+                          `https://wa.me/?text=${encodeURIComponent(
+                            `Enlace de acceso al Creador y Organizador de Programas de *Dance4Ever*:\n\n🔗 ${origin}/programa-builder`
+                          )}`,
+                          '_blank'
+                        )
+                      }}
+                      className="w-full py-2 text-white font-bold text-[11px] rounded-lg flex items-center justify-center gap-1.5 transition-all shadow-md uppercase tracking-wider font-display hover:brightness-90"
+                      style={{ backgroundColor: '#25D366' }}
+                    >
+                      Compartir
+                    </button>
+                  </div>
+                </div>
+              )}
               {/* 1. Programa Coaches */}
               {qrCoachProgUrl && (
                 <div className="bg-neutral-800/30 border border-neutral-700/40 rounded-2xl p-4 flex flex-col gap-3">

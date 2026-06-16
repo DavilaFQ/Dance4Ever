@@ -54,6 +54,13 @@ const CATEGORY_COLORS: Record<AgeCategory, { bg: string; border: string; text: s
 
 const MODALITY_ORDER: Modality[] = ['solista', 'dueto', 'trio', 'grupal']
 
+function shouldShowTeam(academy: string, teamName: string | null | undefined): boolean {
+  if (!teamName) return false
+  const cleanAcademy = academy.replace(/\s*\([^)]+\)$/, '').trim().toLowerCase()
+  const cleanTeam = teamName.trim().toLowerCase()
+  return cleanAcademy !== cleanTeam
+}
+
 type ProgramItem = {
   id: string
   act: RegistrationAct
@@ -662,9 +669,13 @@ export default function StandaloneBuilderPage() {
         const { act, reg } = item
         const dancersInAct = reg.dancers.filter(d => (act.dancer_ids || []).includes(d.id))
         const dancerNames = dancersInAct.map(d => d.name.split(' ').slice(0, 2).join(' ')).join(', ')
-        const actName = reg.team_name
-          ? `${reg.academy} (${reg.team_name})`
-          : `${reg.academy} - ${dancerNames}`
+        
+        // Si es solista, dueto o trío, usamos los nombres de los integrantes.
+        // Si es grupal, usamos el nombre del equipo.
+        const isIndividualOrCouple = ['solista', 'dueto', 'duo', 'trio', 'trío'].includes((act.modality || '').toLowerCase())
+        const actName = isIndividualOrCouple
+          ? `${reg.academy} - ${dancerNames}`
+          : (shouldShowTeam(reg.academy, reg.team_name) ? `${reg.academy} (${reg.team_name})` : reg.academy)
         const ageCatCode = act.age_category ? AGE_CATEGORY_LABELS[act.age_category].toUpperCase() : 'OPEN'
         const categoryCode = `${ageCatCode} | ${act.level?.toUpperCase() || 'AVANZADO'}`
 
@@ -675,6 +686,12 @@ export default function StandaloneBuilderPage() {
         const mainCoachName = registration?.coach_name?.toLowerCase().trim()
         const coachId = mainCoachName ? (coachMap.get(mainCoachName) || null) : null
 
+        let city = ''
+        const cityMatch = reg.academy.match(/\(([^)]+)\)$/)
+        if (cityMatch) {
+          city = cityMatch[1].trim()
+        }
+
         return {
           event_id: event.id,
           position: idx + 1,
@@ -683,7 +700,7 @@ export default function StandaloneBuilderPage() {
           category: categoryCode,
           name: actName,
           academy: reg.academy,
-          city: '',
+          city: city,
           coach_id: coachId,
           present: isPresent,
         }
@@ -977,9 +994,9 @@ export default function StandaloneBuilderPage() {
                           if (subgroup && subgroup !== lastLeftSubgroup) {
                             leftRendered.push(
                               <div key={`left-sub-${group.category}-${subgroup}-${idx}`} className="flex items-center gap-2 pt-1 pb-0.5">
-                                <div className="h-0.5 flex-1 bg-purple-400/50 rounded-full" />
-                                <span className="font-display text-xs tracking-[0.2em] uppercase font-black text-purple-500 px-1">{subgroup}</span>
-                                <div className="h-0.5 flex-1 bg-purple-400/50 rounded-full" />
+                                <div className="h-0.5 flex-1 bg-emerald-600/40 rounded-full" />
+                                <span className="font-display text-xs tracking-[0.2em] uppercase font-black text-emerald-700 px-1">{subgroup}</span>
+                                <div className="h-0.5 flex-1 bg-emerald-600/40 rounded-full" />
                               </div>
                             )
                             lastLeftSubgroup = subgroup
@@ -1001,7 +1018,7 @@ export default function StandaloneBuilderPage() {
                                   )}
                                 </div>
                                 <p className="text-xs font-black truncate mt-1 text-black">
-                                  {item.reg.academy}{item.reg.team_name ? ` (${item.reg.team_name})` : ''}
+                                  {item.reg.academy}{shouldShowTeam(item.reg.academy, item.reg.team_name) ? ` (${item.reg.team_name})` : ''}
                                 </p>
                                 {(() => {
                                   const dancersInAct = item.reg.dancers.filter(d => (item.act.dancer_ids || []).includes(d.id))
@@ -1124,9 +1141,9 @@ export default function StandaloneBuilderPage() {
                             if (subgroup && subgroup !== lastSubgroup) {
                               rendered.push(
                                 <div key={`sub-right-${group.category}-${subgroup}-${globalIdx}`} className="flex items-center gap-2 pt-1 pb-0.5">
-                                  <div className="h-0.5 flex-1 bg-purple-400/50 rounded-full" />
-                                  <span className="font-display text-xs tracking-[0.2em] uppercase font-black text-purple-500 px-1">{subgroup}</span>
-                                  <div className="h-0.5 flex-1 bg-purple-400/50 rounded-full" />
+                                  <div className="h-0.5 flex-1 bg-emerald-600/40 rounded-full" />
+                                  <span className="font-display text-xs tracking-[0.2em] uppercase font-black text-emerald-700 px-1">{subgroup}</span>
+                                  <div className="h-0.5 flex-1 bg-emerald-600/40 rounded-full" />
                                 </div>
                               )
                               lastSubgroup = subgroup
@@ -1374,7 +1391,7 @@ function ActCard({ item, index, dragHandle, isDragOverlay, conflicts, isEditing,
           )}
         </div>
         <p className="text-sm font-black mt-1 text-black">
-          {reg.academy}{reg.team_name ? ` - ${reg.team_name}` : ''}
+          {reg.academy}{shouldShowTeam(reg.academy, reg.team_name) ? ` - ${reg.team_name}` : ''}
         </p>
         {dancersInAct.length > 0 && (
           <div className="mt-1.5 flex flex-col gap-0.5">
@@ -1395,7 +1412,7 @@ function ActCard({ item, index, dragHandle, isDragOverlay, conflicts, isEditing,
       <div className="shrink-0 flex flex-col items-end gap-2">
         <div className="text-[9px] text-neutral-500 font-bold uppercase text-right leading-tight">
           {act.modality === 'grupal' && <div>{dancersInAct.length} INT.</div>}
-          <div>{act.level === 'basico' ? 'Basico' : 'Avanzado'}</div>
+          {act.modality === 'grupal' && <div>{act.level === 'basico' ? 'Basico' : 'Avanzado'}</div>}
         </div>
         
         {onEdit && (

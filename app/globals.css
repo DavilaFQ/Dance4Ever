@@ -41,7 +41,7 @@
 
 html, body {
   height: 100dvh;
-  background: #171717;
+  background: #000000;
   color: #ededed;
   font-family: var(--font-geist), Arial, sans-serif;
   overscroll-behavior: none;
@@ -711,5 +711,14 @@ html body .socios-light a.programa-btn:disabled *,
 button.programa-btn:disabled *,
 a.programa-btn:disabled * {
   color: #ffffff !important;
+}
+
+/* Hide scrollbar indicators globally for a clean, app-like experience */
+::-webkit-scrollbar {
+  display: none !important;
+}
+* {
+  -ms-overflow-style: none !important;  /* IE and Edge */
+  scrollbar-width: none !important;  /* Firefox */
 }
 

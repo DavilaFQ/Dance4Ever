@@ -105,7 +105,6 @@ create index if not exists idx_registration_acts_reg_id on public.registration_a
 create index if not exists idx_registration_dancers_reg_id on public.registration_dancers(registration_id);
 create index if not exists idx_coach_registrations_event_id on public.coach_registrations(event_id);
 
--- ============================================================
 -- 9. Migración: coaches extra existentes → asistentes
 -- ============================================================
 -- Migrar todos los elementos de extra_coaches que no tengan prefijo "Asistente:" a que lo tengan
@@ -121,3 +120,10 @@ set extra_coaches = (
   from unnest(extra_coaches) as elem
 )
 where extra_coaches is not null and cardinality(extra_coaches) > 0;
+
+-- ============================================================
+-- 10. Modificaciones para el soporte de 3 estados en participantes
+-- ============================================================
+alter table public.participants alter column present drop not null;
+alter table public.participants alter column present set default null;
+

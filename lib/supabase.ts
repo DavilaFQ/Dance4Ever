@@ -23,7 +23,7 @@ export type Participant = {
   city: string
   event_id: string
   coach_id: string | null
-  present: boolean
+  present: boolean | null
   created_at?: string
 }
 
