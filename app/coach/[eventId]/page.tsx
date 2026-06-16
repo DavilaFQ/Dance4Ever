@@ -3,7 +3,7 @@ import { useEffect, useState, use, useCallback, useRef } from 'react'
 import Image from 'next/image'
 import { supabase, Participant, Event, Coach } from '@/lib/supabase'
 import { useFitCount } from '@/lib/useFitCount'
-import { ChevronLeft, X, ArrowUpRight, MessageSquare, ShieldAlert, Shirt, HelpCircle, UserCheck } from 'lucide-react'
+import { ChevronLeft, X, ArrowUpRight, MessageSquare, ShieldAlert, Shirt, HelpCircle, UserCheck, Star, ListOrdered } from 'lucide-react'
 import { participantMatches } from '@/lib/search'
 import SearchBar from '@/components/SearchBar'
 import { getAvgPerTurnMs, etaLabel } from '@/lib/eta'
@@ -511,18 +511,34 @@ export default function CoachPage({ params }: Props) {
             <h1 className="flex-1 min-w-0 font-display text-2xl tracking-[0.15em] text-white truncate uppercase leading-none font-bold">COACH</h1>
           )}
           {coach && (
-            <button
-              onClick={() => setShowChatDrawer(true)}
-              className="text-zinc-400 hover:text-white transition-colors relative shrink-0"
-              title="Chat / Alertas rápidas"
-            >
-              <MessageSquare className="w-6 h-6" />
-              {unreadChatCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white font-bold text-[10px] w-4.5 h-4.5 rounded-full flex items-center justify-center animate-bounce">
-                  {unreadChatCount}
-                </span>
-              )}
-            </button>
+            <div className="flex items-center gap-4 shrink-0">
+              <button
+                onClick={() => setModal('mine')}
+                className="text-zinc-400 hover:text-white transition-colors p-1"
+                title="Mis turnos"
+              >
+                <Star className="w-6 h-6" />
+              </button>
+              <button
+                onClick={() => setModal('full')}
+                className="text-zinc-400 hover:text-white transition-colors p-1"
+                title="Programa completo"
+              >
+                <ListOrdered className="w-6.5 h-6.5" />
+              </button>
+              <button
+                onClick={() => setShowChatDrawer(true)}
+                className="text-zinc-400 hover:text-white transition-colors p-1 relative"
+                title="Chat / Alertas rápidas"
+              >
+                <MessageSquare className="w-6 h-6" />
+                {unreadChatCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white font-bold text-[10px] w-4.5 h-4.5 rounded-full flex items-center justify-center animate-bounce">
+                    {unreadChatCount}
+                  </span>
+                )}
+              </button>
+            </div>
           )}
           <Image src="/logo.png" alt="Dance4ever" width={46} height={32} priority className="shrink-0 opacity-90" />
         </header>
@@ -684,21 +700,7 @@ export default function CoachPage({ params }: Props) {
               </div>
             )}
 
-            {/* Buttons — mismos colores y tamaño que ATRÁS/SIGUIENTE */}
-            <div className="flex gap-0 shrink-0 relative z-20 -mx-4 bg-black pb-[env(safe-area-inset-bottom,0px)]">
-              <button 
-                onClick={() => setModal('mine')} 
-                className="flex-1 py-4 font-display text-xl uppercase tracking-wider text-fuchsia-400 bg-zinc-900 border-t border-r border-white/10 font-bold active:scale-95 transition-all text-center rounded-none outline-none"
-              >
-                MIS TURNOS
-              </button>
-              <button 
-                onClick={() => setModal('full')} 
-                className="flex-1 py-4 font-display text-xl uppercase tracking-wider text-black bg-white font-extrabold active:scale-95 transition-all text-center rounded-none outline-none border-t border-white/10"
-              >
-                PROGRAMA COMPLETO
-              </button>
-            </div>
+
           </>
         )}
 
