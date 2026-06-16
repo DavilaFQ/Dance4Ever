@@ -837,7 +837,7 @@ export default function CoachPage({ params }: Props) {
                       <span className="text-[9px] text-zinc-500">{timeStr}</span>
                     </div>
                     <div className={`rounded-2xl px-3.5 py-2 max-w-[85%] text-sm break-words ${bubbleClass}`}>
-                      {msg.isCritical && <span className="font-bold text-red-500 mr-1">⚠️ [CRÍTICO]</span>}
+                      {msg.isCritical && <span className="font-bold text-red-500 mr-1">[CRÍTICO]</span>}
                       {msg.text}
                     </div>
                   </div>
@@ -852,10 +852,10 @@ export default function CoachPage({ params }: Props) {
             <span className="text-[10px] font-bold text-zinc-500 tracking-wider uppercase block mb-2 px-1">Mensajes Rápidos (Coach)</span>
             <div className="grid grid-cols-2 gap-1.5 flex-wrap">
               {[
-                { text: '🚑 Emergencia Camerinos', isCritical: true },
-                { text: '🔧 Falla con Vestuario', isCritical: false },
-                { text: '🙋 Duda de Orden', isCritical: false },
-                { text: '🏃 Danzante Listo', isCritical: false },
+                { text: 'Emergencia Camerinos', isCritical: true },
+                { text: 'Falla con Vestuario', isCritical: false },
+                { text: 'Duda de Orden', isCritical: false },
+                { text: 'Danzante Listo', isCritical: false },
               ].map((preset, idx) => (
                 <button
                   key={idx}
@@ -903,9 +903,6 @@ export default function CoachPage({ params }: Props) {
           <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-red-950/95 p-6 text-center select-none animate-pulse-slow">
             <div className="absolute inset-0 bg-red-900/20 animate-ping opacity-30 pointer-events-none" />
             <div className="relative max-w-lg w-full space-y-8 p-8 rounded-3xl border-3 border-red-500 bg-black/80 shadow-2xl backdrop-blur-xl">
-              <div className="flex justify-center">
-                <span className="text-7xl animate-bounce">🚨</span>
-              </div>
               <div className="space-y-3">
                 <span className="text-red-500 font-display font-black text-xl tracking-[0.3em] uppercase block">
                   ALERTA CRÍTICA
