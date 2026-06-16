@@ -3,7 +3,7 @@ import { useEffect, useState, useCallback, useRef } from 'react'
 import Image from 'next/image'
 import { supabase, Participant, Event } from '@/lib/supabase'
 import { useFitCount } from '@/lib/useFitCount'
-import { QrCode, X, ListOrdered, Monitor, Settings, MessageSquare } from 'lucide-react'
+import { QrCode, X, ListOrdered, Monitor, Settings, MessageSquare, AlertTriangle, Music, Volume2, Megaphone, Pause } from 'lucide-react'
 import QRCode from 'qrcode'
 import { participantMatches } from '@/lib/search'
 import SearchBar from '@/components/SearchBar'
@@ -964,24 +964,28 @@ export default function StaffPage() {
             <span className="text-[10px] font-bold text-zinc-500 tracking-wider uppercase block mb-2 px-1">Mensajes Rápidos (Staff)</span>
             <div className="grid grid-cols-2 gap-1.5 flex-wrap">
               {[
-                { text: '¡Alto de Emergencia!', isCritical: true },
-                { text: 'Falta de Pista', isCritical: true },
-                { text: 'Pista Lista', isCritical: false },
-                { text: 'Llamar a Academias', isCritical: false },
-                { text: 'Pausar Cronómetro', isCritical: false },
-              ].map((preset, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => sendChatMessage(preset.text, preset.isCritical)}
-                  className={`text-xs font-semibold py-2 px-2.5 rounded-xl border transition-all duration-200 active:scale-95 text-center ${
-                    preset.isCritical
-                      ? 'bg-red-950/40 hover:bg-red-900/40 text-red-300 border-red-500/30 hover:border-red-500 col-span-2'
-                      : 'bg-white/5 hover:bg-white/10 text-zinc-300 border-white/5 hover:border-white/20'
-                  }`}
-                >
-                  {preset.text}
-                </button>
-              ))}
+                { text: '¡Alto de Emergencia!', isCritical: true, icon: AlertTriangle },
+                { text: 'Falta de Pista', isCritical: true, icon: Music },
+                { text: 'Pista Lista', isCritical: false, icon: Volume2 },
+                { text: 'Llamar a Academias', isCritical: false, icon: Megaphone },
+                { text: 'Pausar Cronómetro', isCritical: false, icon: Pause },
+              ].map((preset, idx) => {
+                const Icon = preset.icon
+                return (
+                  <button
+                    key={idx}
+                    onClick={() => sendChatMessage(preset.text, preset.isCritical)}
+                    className={`text-xs font-semibold py-2 px-2.5 rounded-xl border transition-all duration-200 active:scale-95 flex items-center justify-center gap-1.5 text-center ${
+                      preset.isCritical
+                        ? 'bg-red-950/40 hover:bg-red-900/40 text-red-300 border-red-500/30 hover:border-red-500 col-span-2'
+                        : 'bg-white/5 hover:bg-white/10 text-zinc-300 border-white/5 hover:border-white/20'
+                    }`}
+                  >
+                    <Icon className="w-3.5 h-3.5 shrink-0" />
+                    <span>{preset.text}</span>
+                  </button>
+                )
+              })}
             </div>
           </div>
 

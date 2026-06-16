@@ -4,7 +4,7 @@ import Image from 'next/image'
 import { supabase, Participant, Event } from '@/lib/supabase'
 import { participantMatches } from '@/lib/search'
 import SearchBar from '@/components/SearchBar'
-import { X, ChevronLeft, ChevronRight, Star, ListOrdered, RefreshCw, MessageSquare } from 'lucide-react'
+import { X, ChevronLeft, ChevronRight, Star, ListOrdered, RefreshCw, MessageSquare, MicOff, HelpCircle, CheckCircle, Clock } from 'lucide-react'
 import { subscribePortalConfig, PortalConfig } from '@/lib/portalConfig'
 import PortalLockout from '@/components/PortalLockout'
 
@@ -1035,23 +1035,27 @@ export default function PresentadorPage({ params }: Props) {
             <span className="text-[10px] font-bold text-zinc-500 tracking-wider uppercase block mb-2 px-1">Mensajes Rápidos</span>
             <div className="grid grid-cols-2 gap-1.5">
               {[
-                { text: 'Falla en Micrófono', isCritical: true },
-                { text: '¿Quién Sigue?', isCritical: false },
-                { text: 'Listo en Escenario', isCritical: false },
-                { text: 'Alargando Tiempo', isCritical: false },
-              ].map((preset, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => sendChatMessage(preset.text, preset.isCritical)}
-                  className={`text-xs font-semibold py-2 px-2.5 rounded-xl border transition-all duration-200 active:scale-95 text-center ${
-                    preset.isCritical
-                      ? 'bg-red-950/40 hover:bg-red-900/40 text-red-300 border-red-500/30 hover:border-red-500'
-                      : 'bg-white/5 hover:bg-white/10 text-zinc-300 border-white/5 hover:border-white/20'
-                  }`}
-                >
-                  {preset.text}
-                </button>
-              ))}
+                { text: 'Falla en Micrófono', isCritical: true, icon: MicOff },
+                { text: '¿Quién Sigue?', isCritical: false, icon: HelpCircle },
+                { text: 'Listo en Escenario', isCritical: false, icon: CheckCircle },
+                { text: 'Alargando Tiempo', isCritical: false, icon: Clock },
+              ].map((preset, idx) => {
+                const Icon = preset.icon
+                return (
+                  <button
+                    key={idx}
+                    onClick={() => sendChatMessage(preset.text, preset.isCritical)}
+                    className={`text-xs font-semibold py-2 px-2.5 rounded-xl border transition-all duration-200 active:scale-95 flex items-center justify-center gap-1.5 text-center ${
+                      preset.isCritical
+                        ? 'bg-red-950/40 hover:bg-red-900/40 text-red-300 border-red-500/30 hover:border-red-500'
+                        : 'bg-white/5 hover:bg-white/10 text-zinc-300 border-white/5 hover:border-white/20'
+                    }`}
+                  >
+                    <Icon className="w-3.5 h-3.5 shrink-0" />
+                    <span>{preset.text}</span>
+                  </button>
+                )
+              })}
             </div>
           </div>
 

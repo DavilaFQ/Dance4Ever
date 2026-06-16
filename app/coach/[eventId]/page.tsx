@@ -3,7 +3,7 @@ import { useEffect, useState, use, useCallback, useRef } from 'react'
 import Image from 'next/image'
 import { supabase, Participant, Event, Coach } from '@/lib/supabase'
 import { useFitCount } from '@/lib/useFitCount'
-import { ChevronLeft, X, ArrowUpRight, MessageSquare } from 'lucide-react'
+import { ChevronLeft, X, ArrowUpRight, MessageSquare, ShieldAlert, Shirt, HelpCircle, UserCheck } from 'lucide-react'
 import { participantMatches } from '@/lib/search'
 import SearchBar from '@/components/SearchBar'
 import { getAvgPerTurnMs, etaLabel } from '@/lib/eta'
@@ -852,23 +852,27 @@ export default function CoachPage({ params }: Props) {
             <span className="text-[10px] font-bold text-zinc-500 tracking-wider uppercase block mb-2 px-1">Mensajes Rápidos (Coach)</span>
             <div className="grid grid-cols-2 gap-1.5 flex-wrap">
               {[
-                { text: 'Emergencia Camerinos', isCritical: true },
-                { text: 'Falla con Vestuario', isCritical: false },
-                { text: 'Duda de Orden', isCritical: false },
-                { text: 'Danzante Listo', isCritical: false },
-              ].map((preset, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => sendChatMessage(preset.text, preset.isCritical)}
-                  className={`text-xs font-semibold py-2 px-2.5 rounded-xl border transition-all duration-200 active:scale-95 text-center ${
-                    preset.isCritical
-                      ? 'bg-red-950/40 hover:bg-red-900/40 text-red-300 border-red-500/30 hover:border-red-500 col-span-2'
-                      : 'bg-white/5 hover:bg-white/10 text-zinc-300 border-white/5 hover:border-white/20'
-                  }`}
-                >
-                  {preset.text}
-                </button>
-              ))}
+                { text: 'Emergencia Camerinos', isCritical: true, icon: ShieldAlert },
+                { text: 'Falla con Vestuario', isCritical: false, icon: Shirt },
+                { text: 'Duda de Orden', isCritical: false, icon: HelpCircle },
+                { text: 'Danzante Listo', isCritical: false, icon: UserCheck },
+              ].map((preset, idx) => {
+                const Icon = preset.icon
+                return (
+                  <button
+                    key={idx}
+                    onClick={() => sendChatMessage(preset.text, preset.isCritical)}
+                    className={`text-xs font-semibold py-2 px-2.5 rounded-xl border transition-all duration-200 active:scale-95 flex items-center justify-center gap-1.5 text-center ${
+                      preset.isCritical
+                        ? 'bg-red-950/40 hover:bg-red-900/40 text-red-300 border-red-500/30 hover:border-red-500 col-span-2'
+                        : 'bg-white/5 hover:bg-white/10 text-zinc-300 border-white/5 hover:border-white/20'
+                    }`}
+                  >
+                    <Icon className="w-3.5 h-3.5 shrink-0" />
+                    <span>{preset.text}</span>
+                  </button>
+                )
+              })}
             </div>
           </div>
 
