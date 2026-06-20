@@ -2,37 +2,38 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
 import Image from 'next/image'
 import { supabase, Participant, Event } from '@/lib/supabase'
-import { useFitCount } from '@/lib/useFitCount'
-import { QrCode, X, ListOrdered, Monitor, Settings, MessageSquare, AlertTriangle, Music, Volume2, Megaphone, Pause } from 'lucide-react'
+import { QrCode, X, Monitor, Settings, MessageSquare, AlertTriangle, Music, Volume2, Megaphone, Pause, Award, HeartPulse, Search } from 'lucide-react'
 import QRCode from 'qrcode'
 import { participantMatches } from '@/lib/search'
-import SearchBar from '@/components/SearchBar'
-import { subscribePortalConfig, PortalConfig } from '@/lib/portalConfig'
+import { subscribePortalConfig, PortalConfig, savePortalConfig } from '@/lib/portalConfig'
 import PortalLockout from '@/components/PortalLockout'
-
-const PILL_PX = 48
-const PILL_GAP = 4
 
 export default function StaffPage() {
   const [event, setEvent] = useState<Event | null>(null)
   const [participants, setParticipants] = useState<Participant[]>([])
   const [qrUrl, setQrUrl] = useState('')
   const [presentadorQrUrl, setPresentadorQrUrl] = useState('')
+  const [programaQrUrl, setProgramaQrUrl] = useState('')
   const [showQr, setShowQr] = useState(false)
   const [showSetup, setShowSetup] = useState(false)
-  const [showProgram, setShowProgram] = useState(false)
   const [activeAnnouncement, setActiveAnnouncement] = useState('')
-  const [programSearch, setProgramSearch] = useState('')
+  const [search, setSearch] = useState('')
   const [portalConfig, setPortalConfig] = useState<PortalConfig | null>(null)
+  const [scheduledStartTime, setScheduledStartTime] = useState('')
   const [mode, setMode] = useState<'simple' | 'manager'>('simple')
   const [managerPasswordInput, setManagerPasswordInput] = useState('')
   const [showManagerPasswordModal, setShowManagerPasswordModal] = useState(false)
   const [managerPasswordError, setManagerPasswordError] = useState(false)
   const [onDeckInput, setOnDeckInput] = useState(3)
-  const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set())
   const [errorState, setErrorState] = useState<string | null>(null)
   const pendingUpdatesRef = useRef<Map<number, { present: boolean | null, time: number }>>(new Map())
   const blockUpcomingClicksRef = useRef(0)
+
+  useEffect(() => {
+    if (portalConfig) {
+      setScheduledStartTime(portalConfig.scheduledStartTime || '')
+    }
+  }, [portalConfig])
 
   // Chat / Alertas Rápidas
   interface ChatMessage {
@@ -132,22 +133,6 @@ export default function StaffPage() {
     return () => unsubscribe()
   }, [event?.id])
 
-  useEffect(() => { if (!showProgram) setProgramSearch('') }, [showProgram])
-
-  const hasScrolledRef = useRef(false)
-  useEffect(() => {
-    if (!showProgram) hasScrolledRef.current = false
-  }, [showProgram])
-
-  const activeItemRef = useCallback((node: HTMLDivElement | null) => {
-    if (node && !hasScrolledRef.current) {
-      hasScrolledRef.current = true
-      setTimeout(() => {
-        node.scrollIntoView({ behavior: 'auto', block: 'center' })
-      }, 50)
-    }
-  }, [])
-
   useEffect(() => { loadLatestEvent() }, [])
 
   useEffect(() => {
@@ -178,6 +163,20 @@ export default function StaffPage() {
     }
   }
 
+  const handleSaveSetup = async () => {
+    if (event && portalConfig) {
+      try {
+        await savePortalConfig(event.id, {
+          ...portalConfig,
+          scheduledStartTime: scheduledStartTime || null
+        })
+      } catch (err) {
+        console.error('Error saving portal config:', err)
+      }
+    }
+    setShowSetup(false)
+  }
+
   const loadParticipants = useCallback(async (eventId: string) => {
     try {
       const { data, error } = await supabase.from('participants').select('*').eq('event_id', eventId).order('position')
@@ -203,21 +202,16 @@ export default function StaffPage() {
             const updated = payload.new as Participant
             const pending = pendingUpdatesRef.current.get(updated.id)
             
-            // If we have a very recent local update (less than 2.5 seconds ago)
             if (pending && Date.now() - pending.time < 2500) {
-              // Only update if the database state has caught up to our latest optimistic state
               if (updated.present !== pending.present) {
-                // Ignore this update because it's a stale realtime event from a previous click
                 return
               } else {
-                // Database has caught up, we can clear the pending reference
                 pendingUpdatesRef.current.delete(updated.id)
               }
             }
             
             setParticipants(prev => prev.map(x => x.id === updated.id ? { ...x, present: updated.present } : x))
           } else {
-            // For INSERT or DELETE, we reload to be 100% safe
             loadParticipants(event.id)
           }
         })
@@ -237,7 +231,6 @@ export default function StaffPage() {
       const text = payload.payload.text || ''
       setActiveAnnouncement(text)
       if (text) {
-        // play the synthesized chime
         try {
           const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext
           if (AudioContextClass) {
@@ -248,8 +241,8 @@ export default function StaffPage() {
               osc.connect(gain)
               gain.connect(ctx.destination)
               osc.type = 'sine'
-              osc.frequency.setValueAtTime(880, startTime) // A5
-              osc.frequency.exponentialRampToValueAtTime(1046.5, startTime + 0.15) // C6
+              osc.frequency.setValueAtTime(880, startTime)
+              osc.frequency.exponentialRampToValueAtTime(1046.5, startTime + 0.15)
               gain.gain.setValueAtTime(0, startTime)
               gain.gain.linearRampToValueAtTime(0.3, startTime + 0.02)
               gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.25)
@@ -258,7 +251,7 @@ export default function StaffPage() {
             }
             const now = ctx.currentTime
             playBeep(now)
-            playBeep(now + 0.28) // double beep glide
+            playBeep(now + 0.28)
           }
         } catch (e) {
           console.error('AudioContext error:', e)
@@ -282,7 +275,6 @@ export default function StaffPage() {
         return isOpen
       })
 
-      // Trigger physical haptic vibration if available
       try {
         if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
           if (msg.isCritical) {
@@ -299,7 +291,6 @@ export default function StaffPage() {
         setActiveCriticalAlert(msg)
       }
 
-      // Play beep sound
       try {
         const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext
         if (AudioContextClass) {
@@ -362,12 +353,15 @@ export default function StaffPage() {
   async function generateQr(eventId: string) {
     const coachUrl = `${window.location.origin}/coach/${eventId}`
     const presentadorUrl = `${window.location.origin}/presentador/${eventId}`
-    const [coachQr, presentadorQr] = await Promise.all([
+    const programaUrl = `${window.location.origin}/programa/${eventId}`
+    const [coachQr, presentadorQr, programaQr] = await Promise.all([
       QRCode.toDataURL(coachUrl, { width: 400, margin: 2 }),
       QRCode.toDataURL(presentadorUrl, { width: 400, margin: 2 }),
+      QRCode.toDataURL(programaUrl, { width: 400, margin: 2 }),
     ])
     setQrUrl(coachQr)
     setPresentadorQrUrl(presentadorQr)
+    setProgramaQrUrl(programaQr)
   }
 
   async function updateOnDeck(val: number) {
@@ -382,33 +376,26 @@ export default function StaffPage() {
     let next: boolean | null = null
     if (mode === 'manager') {
       if (p.present === null || p.present === undefined) {
-        next = false // gray -> red
+        next = false
       } else if (p.present === false) {
-        next = true  // red -> green
+        next = true
       } else {
-        next = null  // green -> gray (normal)
+        next = null
       }
     } else {
-      // Non-manager can only toggle between red and green
       if (p.present === false) {
-        next = true  // red -> green
+        next = true
       } else if (p.present === true) {
-        next = false // green -> red (cannot return to gray)
+        next = false
       } else {
-        return // Ignore gray cards for non-managers
+        return
       }
     }
     
-    // 1. Optimistic Update (instant UI feedback)
     setParticipants(prev => prev.map(x => x.id === p.id ? { ...x, present: next as any } : x))
-    
-    // 2. Lock it locally with a timestamp
     pendingUpdatesRef.current.set(p.id, { present: next, time: Date.now() })
-    
-    // 3. Dispatch to Supabase
     await supabase.from('participants').update({ present: next }).eq('id', p.id)
 
-    // 4. If returned to normal, potentially shrink waiting zone
     if (next === null && event) {
       let maxActivePos = 0
       participants.forEach(x => {
@@ -426,22 +413,31 @@ export default function StaffPage() {
     }
   }
 
-
-
-
   const current = participants.find(p => p.position === event?.current_position)
-  const nextParticipants = event ? participants.filter(p => p.position > event.current_position) : []
-  const { ref: listRef, count: listFit } = useFitCount(70, 0)
-  const visibleParticipants = nextParticipants.slice(0, listFit)
+
+  // Filter participants for main page list.
+  // Show only upcoming by default, or all matching search.
+  const displayParticipants = (
+    search 
+      ? participants 
+      : (event ? participants.filter(p => p.position > event.current_position) : [])
+  ).filter(p => participantMatches(p, search))
 
   if (portalConfig && !portalConfig.enableOperations) {
     return <PortalLockout portalName="Operativo (Staff)" />
   }
 
   return (
-      <div className="h-[100dvh] text-white flex flex-col overflow-hidden select-none relative" style={{
-        background: '#000000',
-      }}>
+      <div 
+        className={`text-white flex flex-col select-none relative ${
+          showChatDrawer || showQr || showSetup || event?.awards_mode
+            ? 'h-[100dvh] max-h-[100dvh] overflow-hidden' 
+            : 'min-h-[100dvh]'
+        }`} 
+        style={{
+          background: '#000000',
+        }}
+      >
         {/* Apple Premium Dark Mode styles */}
         <style dangerouslySetInnerHTML={{__html: `
           .apple-glass-card {
@@ -457,7 +453,7 @@ export default function StaffPage() {
             background: rgba(9, 9, 11, 0.75);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            border-b: 1px solid rgba(255, 255, 255, 0.05);
             z-index: 20;
           }
           .apple-btn {
@@ -484,24 +480,9 @@ export default function StaffPage() {
             color: #ffffff;
             border: 1px solid rgba(255, 255, 255, 0.08);
           }
-          .apple-btn-danger {
-            background: rgba(239, 68, 68, 0.12);
-            color: #ef4444;
-            border: 1px solid rgba(239, 68, 68, 0.25);
-          }
-          .apple-btn-success {
-            background: rgba(34, 197, 94, 0.12);
-            color: #22c55e;
-            border: 1px solid rgba(34, 197, 94, 0.25);
-          }
-          .apple-btn-warning {
-            background: rgba(249, 115, 22, 0.12);
-            color: #f97316;
-            border: 1px solid rgba(249, 115, 22, 0.25);
-          }
           .boxless-item {
             background: transparent;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.25);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
             transition: all 0.2s ease;
           }
           .boxless-item-green {
@@ -551,38 +532,48 @@ export default function StaffPage() {
           }
         `}} />
 
-        {/* Spacer for iOS Notch */}
-        <div className="shrink-0 bg-black" style={{ height: 'env(safe-area-inset-top, 0px)' }} />
-
-        {/* Header: LOGO izq | STAFF centro | iconos derecha */}
-        <header className="apple-glass-header px-4 py-3.5 flex items-center justify-between shrink-0 relative z-20">
+        {/* Header */}
+        <header 
+          className="apple-glass-header px-4 flex items-center justify-between shrink-0 relative z-20"
+          style={{
+            paddingTop: 'calc(env(safe-area-inset-top, 0px) + 0.875rem)',
+            paddingBottom: '0.875rem'
+          }}
+        >
           <div className="flex items-center gap-3 min-w-0 shrink-0">
-            <Image src="/logo.png" alt="Dance4ever" width={46} height={32} priority className="shrink-0 opacity-90" />
-            <h1 className="font-display text-2xl tracking-[0.15em] text-white leading-none font-bold uppercase">STAFF</h1>
+            <Image src="/logo.png" alt="Dance4ever" width={42} height={29} priority className="shrink-0 opacity-90" />
+            <div className="flex flex-col">
+              <h1 className="font-display text-lg tracking-[0.15em] text-white leading-none font-bold uppercase">STAFF</h1>
+              <span className="text-[9px] text-zinc-400 font-bold uppercase tracking-wider mt-0.5">Control de Bloque</span>
+            </div>
           </div>
           {event ? (
-            <div className="flex items-center gap-4 shrink-0">
-  
+            <div className="flex items-center gap-3.5 shrink-0">
               <button
                 onClick={() => setShowChatDrawer(true)}
-                className="text-zinc-400 hover:text-white transition-colors relative"
+                className="text-zinc-400 hover:text-white transition-all p-2 rounded-full border border-zinc-800 bg-zinc-900/40 relative active:scale-95"
                 title="Chat / Alertas rápidas"
               >
-                <MessageSquare className="w-6 h-6" />
+                <MessageSquare className="w-5 h-5" />
                 {unreadChatCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-red-500 text-white font-bold text-[10px] w-4.5 h-4.5 rounded-full flex items-center justify-center animate-bounce">
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white font-bold text-[9px] w-4 h-4 rounded-full flex items-center justify-center animate-bounce">
                     {unreadChatCount}
                   </span>
                 )}
               </button>
-              <button onClick={() => setShowProgram(true)} className="text-zinc-400 hover:text-white transition-colors" title="Ver programa completo">
-                <ListOrdered className="w-6 h-6" />
+              <button 
+                onClick={() => setShowQr(true)} 
+                className="text-zinc-400 hover:text-white transition-all p-2 rounded-full border border-zinc-800 bg-zinc-900/40 active:scale-95" 
+                title="Compartir códigos QR"
+              >
+                <QrCode className="w-5 h-5" />
               </button>
-              <button onClick={() => setShowQr(true)} className="text-zinc-400 hover:text-white transition-colors" title="Compartir códigos QR">
-                <QrCode className="w-6 h-6" />
-              </button>
-              <button onClick={() => setShowSetup(true)} className="text-zinc-400 hover:text-white transition-colors" title="Ajustes de operación">
-                <Settings className="w-6 h-6" />
+              <button 
+                onClick={() => setShowSetup(true)} 
+                className="text-zinc-400 hover:text-white transition-all p-2 rounded-full border border-zinc-800 bg-zinc-900/40 active:scale-95" 
+                title="Ajustes de operación"
+              >
+                <Settings className="w-5 h-5" />
               </button>
             </div>
           ) : <div className="w-px" />}
@@ -621,41 +612,51 @@ export default function StaffPage() {
         )}
 
         {event ? (
-          <>
+          <main className="flex-1 flex flex-col relative z-10 px-0 pb-0">
             {event.awards_mode ? (
-              <div className="flex-1 min-h-0 flex flex-col px-4 text-center bg-zinc-950 text-white z-10 justify-center">
+              <div className="py-12 px-4 text-center bg-zinc-950 text-white z-10 justify-center">
                 <div className="animate-pulse">
-                  <p className="font-display text-6.5xl leading-none uppercase tracking-wide font-black">Premiación</p>
-                  <p className="font-display text-6.5xl leading-none uppercase tracking-wide mt-2 font-black text-zinc-500">De Bloque</p>
+                  <p className="font-display text-5xl leading-none uppercase tracking-wide font-black">Premiación</p>
+                  <p className="font-display text-5xl leading-none uppercase tracking-wide mt-2 font-black text-zinc-500">De Bloque</p>
                 </div>
-                <div className="flex flex-col items-center justify-center animate-pulse mt-12">
-                  <p className="font-display text-3.5xl leading-tight uppercase tracking-wide text-zinc-300">Pantalla de Premiación</p>
-                  <p className="font-display text-3.5xl leading-tight uppercase tracking-wide mt-2 text-zinc-500">Activa en Portales</p>
+                <div className="flex flex-col items-center justify-center animate-pulse mt-8">
+                  <p className="font-display text-2xl leading-tight uppercase tracking-wide text-zinc-300">Pantalla de Premiación</p>
+                  <p className="font-display text-2xl leading-tight uppercase tracking-wide mt-1 text-zinc-500">Activa en Portales</p>
                 </div>
               </div>
             ) : (
               <>
-                {/* EN ESCENARIO panel — arriba */}
-                 <div className={`${current ? 'gold-card text-black' : 'neutral-header-card text-white'} px-4 py-4 shrink-0 text-center relative overflow-hidden mb-3 -mx-4`}>
-                  {current ? (
-                    <>
-                      <p className="font-display text-xs tracking-[0.3em] text-black/60 font-bold uppercase leading-none gold-pulse">EN ESCENARIO · #{String(event.current_position).padStart(2, '0')}</p>
-                      <p className="font-display text-4xl uppercase leading-tight mt-2.5 text-black break-words font-extrabold">{extractDancerName(current)}</p>
-                      <p className="font-display text-[13px] uppercase opacity-80 leading-tight mt-2.5 text-black/90">
-                        {formatSubtitle(current)}
-                      </p>
-                    </>
-                  ) : event.current_position === 0 ? (
-                    <p className="font-display text-2xl py-2 text-zinc-400 uppercase tracking-widest font-bold">POR INICIAR</p>
+                {/* EN ESCENARIO panel */}
+                <div className={`${current ? 'gold-card text-black' : 'neutral-header-card text-white'} px-4 py-4 shrink-0 text-center relative overflow-hidden`}>
+                  {current ? (() => {
+                    const isGrupal = (current.type || '').trim().toLowerCase() === 'grupal';
+                    const academyShort = current.academy ? current.academy.split('(')[0].trim() : '';
+                    return (
+                      <>
+                        <p className="font-display text-xs tracking-[0.3em] text-black/60 font-bold uppercase leading-none gold-pulse">EN ESCENARIO · #{String(event.current_position).padStart(2, '0')}</p>
+                        <p className="font-display text-xs tracking-wider text-black/70 font-bold uppercase mt-1.5 leading-none">
+                          {formatSubtitle(current, false)}
+                        </p>
+                        <p className="font-display text-3xl uppercase leading-tight mt-2.5 text-black break-words font-extrabold">{extractDancerName(current)}</p>
+                        {!isGrupal && academyShort && (
+                          <p className="font-display text-[13px] uppercase opacity-80 leading-tight mt-1 text-black/90">
+                            {academyShort}
+                          </p>
+                        )}
+                      </>
+                    );
+                  })() : event.current_position === 0 ? (
+                    <p className="font-display text-xl py-1 text-zinc-400 uppercase tracking-widest font-bold">POR INICIAR</p>
                   ) : (
-                    <p className="font-display text-xl py-2 text-zinc-600 uppercase tracking-widest font-bold">— PROGRAMA TERMINADO —</p>
+                    <p className="font-display text-lg py-1 text-zinc-600 uppercase tracking-widest font-bold">— PROGRAMA TERMINADO —</p>
                   )}
                 </div>
 
-                {/* LISTA COMPLETA DE PRÓXIMOS TURNOS */}
-                <div className="flex flex-col min-h-0 flex-1 px-4 pt-0 pb-0 gap-0 overflow-hidden relative z-10">
-                  <div ref={listRef} className="flex-1 min-h-0 overflow-hidden flex flex-col gap-0 -mx-4">
-                    {visibleParticipants.map(p => {
+
+                {/* Main list of acts (Upcoming by default, all on search) */}
+                <div className="flex flex-col pb-8">
+                  {displayParticipants.length > 0 ? (
+                    displayParticipants.map(p => {
                       const isClickable = mode === 'manager' || p.present === true || p.present === false
                       const clickHandler = isClickable ? async () => {
                         if (Date.now() < blockUpcomingClicksRef.current) return
@@ -673,41 +674,26 @@ export default function StaffPage() {
                           key={p.id} 
                           p={p} 
                           variant={p.present === true ? 'green' : p.present === false ? 'red' : 'gray'} 
-                          grow
                           onClick={clickHandler}
                         />
                       )
-                    })}
-                    {(() => {
-                      if (visibleParticipants.length === 0) return null
-                      const lastP = visibleParticipants[visibleParticipants.length - 1]
-                      const lastBg =
-                        lastP.present === true ? 'boxless-item-green' :
-                        lastP.present === false ? 'boxless-item-red' :
-                        'boxless-item'
-                      return (
-                        <div className={`w-full shrink-0 ${lastBg}`} style={{ height: 'env(safe-area-inset-bottom, 0px)' }} />
-                      )
-                    })()}
-                    {visibleParticipants.length === 0 && participants.length > 0 && (
-                      <p className="text-sm text-zinc-600 italic text-center py-4">No hay más turnos</p>
-                    )}
-                  </div>
+                    })
+                  ) : (
+                    <p className="text-sm text-zinc-600 italic text-center py-12">No hay más turnos programados</p>
+                  )}
                 </div>
               </>
             )}
-
-
-          </>
+          </main>
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center text-zinc-500 p-6 gap-4 z-10">
-            <Image src="/logo.png" alt="Dance4ever" width={180} height={130} priority className="opacity-80" />
-            <p className="text-center font-display text-lg tracking-wider font-semibold">No hay evento activo</p>
+            <Image src="/logo.png" alt="Dance4ever" width={140} height={100} priority className="opacity-80" />
+            <p className="text-center font-display text-base tracking-wider font-semibold">No hay evento activo</p>
           </div>
         )}
 
         {/* QR Modal */}
-        {showQr && qrUrl && presentadorQrUrl && event && (
+        {showQr && qrUrl && presentadorQrUrl && programaQrUrl && event && (
           <Modal onClose={() => setShowQr(false)}>
             <a
               href={`/coach/${event.id}`}
@@ -738,13 +724,30 @@ export default function StaffPage() {
                 <p className="text-[9px] text-zinc-500 break-all mt-1 opacity-70">{typeof window !== 'undefined' ? window.location.origin : ''}/presentador/{event.id}</p>
               </div>
             </a>
+
+            <a
+              href={`/programa/${event.id}`}
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center gap-3 w-full apple-btn apple-btn-secondary p-3 text-white"
+            >
+              <div className="w-1/4 bg-white p-1 rounded-md flex items-center justify-center aspect-square">
+                <img src={programaQrUrl} alt="QR Programa" className="w-full rounded-sm" />
+              </div>
+              <div className="flex-1 min-w-0 text-left">
+                <h3 className="font-display text-sm tracking-widest flex items-center gap-1 font-bold">
+                  <QrCode className="w-4 h-4 text-zinc-400" /> PROGRAMA EN VIVO
+                </h3>
+                <p className="text-[9px] text-zinc-500 break-all mt-1 opacity-70">{typeof window !== 'undefined' ? window.location.origin : ''}/programa/{event.id}</p>
+              </div>
+            </a>
           </Modal>
         )}
 
         {/* Simplified Settings Modal */}
         {showSetup && event && (
           <Modal onClose={() => setShowSetup(false)}>
-            <h2 className="font-display text-xl tracking-widest text-white uppercase font-bold text-center border-b border-white/5 pb-2">
+            <h2 className="font-display text-base tracking-widest text-white uppercase font-bold text-center border-b border-white/5 pb-2">
               Ajustes de Staff
             </h2>
             
@@ -757,7 +760,7 @@ export default function StaffPage() {
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     onClick={() => changeMode('simple')}
-                    className={`py-2 px-3 rounded-xl font-bold text-sm border transition-all ${
+                    className={`py-2 px-3 rounded-xl font-bold text-xs border transition-all ${
                       mode === 'simple'
                         ? 'bg-white text-black border-white'
                         : 'bg-white/5 border-white/10 text-zinc-400 hover:bg-white/10'
@@ -767,7 +770,7 @@ export default function StaffPage() {
                   </button>
                   <button
                     onClick={() => changeMode('manager')}
-                    className={`py-2 px-3 rounded-xl font-bold text-sm border transition-all ${
+                    className={`py-2 px-3 rounded-xl font-bold text-xs border transition-all ${
                       mode === 'manager'
                         ? 'bg-white text-black border-white'
                         : 'bg-white/5 border-white/10 text-zinc-400 hover:bg-white/10'
@@ -776,95 +779,37 @@ export default function StaffPage() {
                     Manager
                   </button>
                 </div>
-                <p className="text-[11px] text-zinc-500 leading-snug">
+                <p className="text-[10px] text-zinc-500 leading-snug">
                   El modo <b>Manager</b> permite activar coreografías por venir y gestionar la zona de espera en tiempo real.
                 </p>
               </div>
+
+              {/* Scheduled Start Time */}
+              {mode === 'manager' && (
+                <div className="space-y-2 text-center flex flex-col items-center animate-fade-in">
+                  <label className="text-xs font-bold text-zinc-400 uppercase tracking-wider block text-center">
+                    Hora de Inicio Programada
+                  </label>
+                  <input
+                    type="time"
+                    value={scheduledStartTime}
+                    onChange={(e) => setScheduledStartTime(e.target.value)}
+                    className="block w-32 bg-zinc-900 border border-white/10 rounded-xl px-2 py-2 text-sm text-white focus:outline-none focus:border-white/30 transition-all font-mono text-center"
+                  />
+                  <p className="text-[10px] text-zinc-500 leading-snug text-center max-w-[280px]">
+                    Se mostrará en la pantalla del portal público de las familias si el programa aún no comienza.
+                  </p>
+                </div>
+              )}
             </div>
             
             <button
-              onClick={() => setShowSetup(false)}
-              className="w-full mt-4 apple-btn apple-btn-primary py-3 text-sm uppercase tracking-widest"
+              onClick={handleSaveSetup}
+              className="w-full mt-4 apple-btn apple-btn-primary py-3 text-xs uppercase tracking-widest"
             >
               Aceptar
             </button>
           </Modal>
-        )}
-
-        {/* Complete Program Modal */}
-        {showProgram && event && (
-          <div className="fixed inset-0 bg-black/70 backdrop-blur-md z-50 flex flex-col p-4 animate-fade-in">
-            <div className="flex-1 min-h-0 flex flex-col apple-glass-card overflow-hidden bg-zinc-950/80 border border-white/10">
-              <div className="bg-black/30 px-4 py-3.5 flex items-center justify-between shrink-0 border-b border-white/5">
-                <h3 className="font-display text-xl tracking-widest text-white font-bold">PROGRAMA</h3>
-                <button onClick={() => setShowProgram(false)} className="p-1 hover:text-zinc-400 transition-colors" aria-label="Cerrar"><X className="w-6 h-6" /></button>
-              </div>
-              <SearchBar value={programSearch} onChange={setProgramSearch} />
-              <div className="flex-1 min-h-0 overflow-y-auto py-3 px-0">
-                {(() => {
-                  if (participants.length === 0) return <p className="text-center text-zinc-600 italic py-6">Sin programa</p>
-                  const filtered = participants.filter(p => participantMatches(p, programSearch))
-                  if (filtered.length === 0) return <p className="text-center text-zinc-600 italic py-6">Sin resultados</p>
-
-                  const rendered: React.ReactNode[] = []
-                  let lastCategory = ''
-                  let lastSubgroup = ''
-                  
-                  filtered.forEach(p => {
-                    const cat = p.category || 'Sin categoría'
-                    const subgroup = [p.style, p.type].filter(Boolean).join(' · ')
-                    const isOnStage = event.current_position === p.position
-                    const done = p.position < event.current_position
-                    const variant = isOnStage ? 'green' : done ? 'done' : (p.present === true ? 'green' : p.present === false ? 'red' : 'gray')
-                    
-                    if (cat !== lastCategory) {
-                      rendered.push(
-                        <div key={`cat-${cat}-${p.position}`} className="flex items-center gap-2 pt-3 pb-1 px-4 first:pt-0">
-                          <div className="h-px flex-1 bg-white/10" />
-                          <span className="font-display text-[10px] tracking-[0.25em] text-zinc-400 uppercase font-bold px-1">{cat}</span>
-                          <div className="h-px flex-1 bg-white/10" />
-                        </div>
-                      )
-                      lastCategory = cat
-                      lastSubgroup = ''
-                    }
-                    
-                    if (subgroup && subgroup !== lastSubgroup) {
-                      rendered.push(
-                        <div key={`sub-${cat}-${subgroup}-${p.position}`} className="flex items-center gap-2 pb-0.5 px-4">
-                          <div className="h-px flex-1 bg-white/5" />
-                          <span className="font-display text-[8px] tracking-[0.2em] text-zinc-650 uppercase font-semibold">{subgroup}</span>
-                          <div className="h-px flex-1 bg-white/5" />
-                        </div>
-                      )
-                      lastSubgroup = subgroup
-                    }
-                    
-                    rendered.push(
-                      <div key={p.id} ref={isOnStage ? activeItemRef : undefined} className="w-full mb-1.5">
-                        <Pill 
-                          p={p} 
-                          variant={variant} 
-                          onClick={(!isOnStage && !done && (mode === 'manager' || p.present === true || p.present === false)) ? async () => {
-                            const isUpcoming = p.position > event.current_position + event.on_deck_count
-                            if (isUpcoming) {
-                              if (mode !== 'manager') return
-                              const newCount = p.position - event.current_position
-                              if (newCount > event.on_deck_count) {
-                                await updateOnDeck(newCount)
-                              }
-                            }
-                            await togglePresentCycle(p)
-                          } : undefined}
-                        />
-                      </div>
-                    )
-                  })
-                  return rendered
-                })()}
-              </div>
-            </div>
-          </div>
         )}
 
         {/* Manager Password Modal */}
@@ -874,7 +819,7 @@ export default function StaffPage() {
               <div className="flex justify-end -mt-2 -mr-2">
                 <button onClick={() => setShowManagerPasswordModal(false)} className="p-1.5 hover:text-zinc-400 transition-colors"><X className="w-5 h-5" /></button>
               </div>
-              <h2 className="font-display text-lg tracking-widest text-white text-center font-bold uppercase">Modo Manager</h2>
+              <h2 className="font-display text-base tracking-widest text-white text-center font-bold uppercase">Modo Manager</h2>
               <p className="text-xs text-zinc-400 text-center">Ingresa la contraseña para habilitar el control del programa en vivo.</p>
               <input
                 type="password"
@@ -890,7 +835,7 @@ export default function StaffPage() {
               )}
               <button
                 onClick={confirmManagerPassword}
-                className="w-full apple-btn apple-btn-primary py-3 text-sm uppercase tracking-widest"
+                className="w-full apple-btn apple-btn-primary py-3 text-xs uppercase tracking-widest"
               >
                 Ingresar
               </button>
@@ -965,6 +910,8 @@ export default function StaffPage() {
             <div className="grid grid-cols-2 gap-1.5 flex-wrap">
               {[
                 { text: '¡Alto de Emergencia!', isCritical: true, icon: AlertTriangle },
+                { text: '¡Iniciar Premiación!', isCritical: true, icon: Award },
+                { text: '¡Solicitar Paramédico!', isCritical: true, icon: HeartPulse },
                 { text: 'Falta de Pista', isCritical: true, icon: Music },
                 { text: 'Pista Lista', isCritical: false, icon: Volume2 },
                 { text: 'Llamar a Academias', isCritical: false, icon: Megaphone },
@@ -1002,7 +949,7 @@ export default function StaffPage() {
                 type="text"
                 value={chatInput}
                 onChange={(e) => setChatInput(e.target.value)}
-                placeholder="Escribe un mensaje..."
+                placeholder="Escribe un message..."
                 className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-yellow-500/50 transition-colors placeholder:text-zinc-500"
               />
               <button
@@ -1046,31 +993,20 @@ export default function StaffPage() {
   )
 }
 
-/** Quita el prefijo de la academia del nombre del acto para mostrar solo el nombre del bailarín/equipo */
 function extractDancerName(p: Participant): string {
   const type = (p.type || '').trim().toLowerCase()
   if (type === 'grupal') return p.academy || p.name
   if (!p.academy || !p.name) return p.name
 
-  // Escape special regex characters in academy name
   const escaped = p.academy.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-  // Match: "Academy - something" OR "Academy (something)" — case insensitive
   const pattern = new RegExp('^' + escaped + '\\s*[-–(]\\s*', 'i')
   const result = p.name.replace(pattern, '').replace(/\)\s*$/, '').trim()
   if (result && result.toLowerCase() !== p.academy.toLowerCase()) return result
 
-  // Fallback: grab content in parentheses if present
   const parenMatch = p.name.match(/\(([^)]+)\)/)
   if (parenMatch) return parenMatch[1].trim()
 
   return p.name
-}
-
-function estimateStaffPillHeight(p: Participant): number {
-  const name = extractDancerName(p) || ''
-  const maxChars = 34
-  const lines = Math.max(1, Math.ceil(name.length / maxChars))
-  return 70 + (lines - 1) * 28
 }
 
 function formatSubtitle(p: Participant, includeAcademy: boolean = true): string {
@@ -1095,37 +1031,31 @@ function formatSubtitle(p: Participant, includeAcademy: boolean = true): string 
   ].filter(Boolean).join(' · ')
 }
 
-// Keep for backward compatibility with main screen Pill
-function pillDisplayName(p: Participant): string {
-  return extractDancerName(p)
-}
-
-function Pill({ p, variant, onClick, grow }: { p: Participant, variant: 'green' | 'red' | 'gray' | 'done', onClick?: () => void, grow?: boolean }) {
+function Pill({ p, variant, onClick }: { p: Participant, variant: 'green' | 'red' | 'gray' | 'done', onClick?: () => void }) {
   const bg =
     variant === 'green' ? 'boxless-item-green' :
     variant === 'red' ? 'boxless-item-red' :
     variant === 'done' ? 'boxless-item-done' :
     'boxless-item'
-  const dancerName = pillDisplayName(p)
+  const dancerName = extractDancerName(p)
   const subtitle = formatSubtitle(p)
-  const growClass = grow ? 'flex-1 min-h-0' : 'shrink-0 min-h-[48px]'
 
   const numberColor = 
     variant === 'green' ? 'text-emerald-400 font-extrabold' :
     variant === 'red' ? 'text-red-400 font-bold' :
-    variant === 'done' ? 'text-zinc-600' :
+    variant === 'done' ? 'text-zinc-650' :
     'text-zinc-500 font-semibold'
 
   const titleColor =
     variant === 'green' ? 'text-emerald-400 font-bold' :
     variant === 'red' ? 'text-red-400 font-bold' :
-    variant === 'done' ? 'text-zinc-500' :
+    variant === 'done' ? 'text-zinc-550' :
     'text-white'
 
   const subtitleColor =
     variant === 'green' ? 'text-emerald-200/50' :
     variant === 'red' ? 'text-red-200/50' :
-    variant === 'done' ? 'text-zinc-600' :
+    variant === 'done' ? 'text-zinc-700' :
     'text-zinc-400/80'
 
   const separatorColor =
@@ -1145,7 +1075,7 @@ function Pill({ p, variant, onClick, grow }: { p: Participant, variant: 'green' 
           onClick()
         }
       } : undefined}
-      className={`w-full flex items-center ${bg} ${onClick ? 'text-left cursor-pointer select-none outline-none' : ''} transition-all duration-200 z-10 overflow-hidden ${growClass}`}
+      className={`w-full flex items-center ${bg} ${onClick ? 'text-left cursor-pointer select-none outline-none' : ''} transition-all duration-200 z-10 overflow-hidden shrink-0 min-h-[48px]`}
     >
       <div className={`shrink-0 w-12 py-3 flex items-center justify-center border-r border-dotted ${separatorColor}`}>
         <span className={`font-display text-xl leading-none tabular-nums ${numberColor}`}>
@@ -1163,10 +1093,14 @@ function Pill({ p, variant, onClick, grow }: { p: Participant, variant: 'green' 
 function Modal({ children, onClose }: { children: React.ReactNode, onClose: () => void }) {
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-fade-in" onClick={onClose}>
-      <div className="apple-glass-card bg-zinc-950/85 border border-white/10 p-6 max-w-sm w-full space-y-4 text-white" onClick={e => e.stopPropagation()}>
-        <div className="flex justify-end -mt-2 -mr-2">
-          <button onClick={onClose} className="p-1.5 hover:text-zinc-400 transition-colors"><X className="w-5 h-5" /></button>
-        </div>
+      <div className="apple-glass-card bg-zinc-950/85 border border-white/10 p-6 pt-5 max-w-sm w-full space-y-4 text-white relative" onClick={e => e.stopPropagation()}>
+        <button 
+          onClick={onClose} 
+          className="absolute top-4 right-4 p-1 hover:text-zinc-400 transition-colors text-zinc-400 z-10"
+          aria-label="Cerrar"
+        >
+          <X className="w-5 h-5" />
+        </button>
         {children}
       </div>
     </div>

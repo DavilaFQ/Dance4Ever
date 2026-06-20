@@ -2,41 +2,28 @@
 import { useEffect, useState, use, useCallback, useRef } from 'react'
 import Image from 'next/image'
 import { supabase, Participant, Event } from '@/lib/supabase'
-import { participantMatches } from '@/lib/search'
-import SearchBar from '@/components/SearchBar'
-import { X, ChevronLeft, ChevronRight, Star, ListOrdered, RefreshCw, MessageSquare, MicOff, HelpCircle, CheckCircle, Clock } from 'lucide-react'
+import { X, ChevronLeft, ChevronRight, Star, MessageSquare, MicOff, HelpCircle, CheckCircle, Clock, HeartPulse, AlertTriangle } from 'lucide-react'
 import { subscribePortalConfig, PortalConfig } from '@/lib/portalConfig'
 import PortalLockout from '@/components/PortalLockout'
 
-
 type Props = { params: Promise<{ eventId: string }> }
 
-/** Quita el prefijo de la academia del nombre del acto para mostrar solo el nombre del bailarín/equipo */
 function extractDancerName(p: Participant): string {
   const type = (p.type || '').trim().toLowerCase()
   if (type === 'grupal') return p.academy || p.name
   if (!p.academy || !p.name) return p.name
 
-  // Escape special regex characters in academy name
   const escaped = p.academy.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-  // Match: "Academy - something" OR "Academy (something)" — case insensitive
   const pattern = new RegExp('^' + escaped + '\\s*[-–(]\\s*', 'i')
   const result = p.name.replace(pattern, '').replace(/\)\s*$/, '').trim()
   if (result && result.toLowerCase() !== p.academy.toLowerCase()) return result
 
-  // Fallback: grab content in parentheses if present
   const parenMatch = p.name.match(/\(([^)]+)\)/)
   if (parenMatch) return parenMatch[1].trim()
 
   return p.name
 }
 
-/** Determina el nombre de display según modalidad */
-function displayName(p: Participant): string {
-  return extractDancerName(p)
-}
-
-/** Línea de subtítulo — quita nivel para no-grupales */
 function formatSubtitle(p: Participant, includeAcademy: boolean = true): string {
   const isGrupal = (p.type || '').trim().toLowerCase() === 'grupal'
   let academy = p.academy ? p.academy.trim() : ''
@@ -66,21 +53,32 @@ export default function PresentadorPage({ params }: Props) {
   const [notFound, setNotFound] = useState(false)
   const [portalConfig, setPortalConfig] = useState<PortalConfig | null>(null)
 
-  const [showProgram, setShowProgram] = useState(false)
-  const [search, setSearch] = useState('')
   const [activeAnnouncement, setActiveAnnouncement] = useState('')
   const [audioUnlocked, setAudioUnlocked] = useState(false)
 
   // Alerta de doble avance
   const [doubleAdvanceAlert, setDoubleAdvanceAlert] = useState(false)
+  const [isAlertClosing, setIsAlertClosing] = useState(false)
   const lastNextPressRef = useRef<number | null>(null)
   const alertTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const dismissAlert = useCallback(() => {
+    setIsAlertClosing(true)
+    if (alertTimeoutRef.current) {
+      clearTimeout(alertTimeoutRef.current)
+      alertTimeoutRef.current = null
+    }
+    setTimeout(() => {
+      setDoubleAdvanceAlert(false)
+      setIsAlertClosing(false)
+    }, 250) // 250ms matches the animation duration
+  }, [])
 
   const [isAdvancing, setIsAdvancing] = useState(false)
   const [isTogglingAwards, setIsTogglingAwards] = useState(false)
   const [confirmAwards, setConfirmAwards] = useState(false)
 
-    // Cronómetro
+  // Cronómetro
   const [advancedAt, setAdvancedAt] = useState<number | null>(null)
   const [elapsed, setElapsed] = useState(0)
 
@@ -182,17 +180,11 @@ export default function PresentadorPage({ params }: Props) {
     return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
   }
 
-  // Refs para FitText
-  const academyRef = useRef<HTMLParagraphElement>(null)
-  const nextAcademyRef = useRef<HTMLParagraphElement>(null)
-
-  // Deduplicación: ocultar ciudad/name si ya están contenidos en otro campo
   function dedupInfo(p: Participant) {
     const isGrupal = (p.type || '').trim().toLowerCase() === 'grupal'
     let academy = p.academy || p.name || ''
     let city = p.city || ''
     
-    // Limpiar la ciudad del nombre de la academia en paréntesis si está presente
     if (academy) {
       const match = academy.match(/^(.*?)\s*\(([^)]+)\)$/)
       if (match) {
@@ -205,12 +197,10 @@ export default function PresentadorPage({ params }: Props) {
 
     let dancerName = p.name || ''
     
-    // Si la ciudad está en dancerName, la removemos temporalmente para limpiar la comparación
     if (city && dancerName.includes(`(${city})`)) {
       dancerName = dancerName.replace(`(${city})`, '').trim()
     }
 
-    // Extraer el nombre de los bailarines/equipo si viene formateado con el prefijo de la academia
     const cleanAcademy = academy.trim()
     if (dancerName && cleanAcademy && dancerName.startsWith(cleanAcademy)) {
       let suffix = dancerName.slice(cleanAcademy.length).trim()
@@ -225,10 +215,8 @@ export default function PresentadorPage({ params }: Props) {
       }
     }
 
-    // Limpiar espacios extras
     academy = academy.trim()
     dancerName = dancerName.trim()
-    // Mostramos el nombre del bailarín/integrantes si no es grupal y no está vacío
     const showName = !isGrupal && !!dancerName
 
     return {
@@ -330,7 +318,6 @@ export default function PresentadorPage({ params }: Props) {
         return isOpen
       })
 
-      // Trigger physical haptic vibration if available
       try {
         if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
           if (msg.isCritical) {
@@ -347,7 +334,6 @@ export default function PresentadorPage({ params }: Props) {
         setActiveCriticalAlert(msg)
       }
 
-      // Play beep sound
       try {
         const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext
         if (AudioContextClass) {
@@ -398,22 +384,6 @@ export default function PresentadorPage({ params }: Props) {
     return () => clearInterval(interval)
   }, [advancedAt])
 
-  useEffect(() => { if (!showProgram) setSearch('') }, [showProgram])
-
-  const hasScrolledRef = useRef(false)
-  useEffect(() => {
-    if (!showProgram) hasScrolledRef.current = false
-  }, [showProgram])
-
-  const activeItemRef = useCallback((node: HTMLDivElement | null) => {
-    if (node && !hasScrolledRef.current) {
-      hasScrolledRef.current = true
-      setTimeout(() => {
-        node.scrollIntoView({ behavior: 'auto', block: 'center' })
-      }, 50)
-    }
-  }, [])
-
   useEffect(() => {
     if (!eventId) return
     const unsubscribe = subscribePortalConfig(eventId, (config) => {
@@ -438,15 +408,11 @@ export default function PresentadorPage({ params }: Props) {
   useEffect(() => {
     loadAll()
     
-    const handleFocus = () => {
-      loadAll()
-    }
+    const handleFocus = () => loadAll()
     window.addEventListener('focus', handleFocus)
     
     const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        loadAll()
-      }
+      if (document.visibilityState === 'visible') loadAll()
     }
     window.addEventListener('visibilitychange', handleVisibilityChange)
     
@@ -471,24 +437,6 @@ export default function PresentadorPage({ params }: Props) {
   const current = participants.find(p => p.position === (event?.current_position ?? -1))
   const nextP = participants.find(p => p.position === ((event?.current_position ?? -1) + 1))
 
-  // FitText — ajusta font-size para que el texto quepa en su contenedor
-  useEffect(() => {
-    ;[
-      { ref: academyRef, max: 42 },
-      { ref: nextAcademyRef, max: 28 },
-    ].forEach(({ ref, max }) => {
-      const el = ref.current
-      if (!el) return
-      let size = max
-      el.style.fontSize = size + 'px'
-      el.style.lineHeight = '1.05'
-      while (el.scrollHeight > el.clientHeight && size > 8) {
-        size -= 0.5
-        el.style.fontSize = size + 'px'
-      }
-    })
-  }, [current?.academy, current?.name, current?.city, nextP?.academy, nextP?.name, nextP?.city])
-
   async function advance(delta: number) {
     if (!event || isAdvancing) return
 
@@ -496,8 +444,9 @@ export default function PresentadorPage({ params }: Props) {
       const now = Date.now()
       if (lastNextPressRef.current !== null && now - lastNextPressRef.current < 15000) {
         setDoubleAdvanceAlert(true)
+        setIsAlertClosing(false)
         if (alertTimeoutRef.current) clearTimeout(alertTimeoutRef.current)
-        alertTimeoutRef.current = setTimeout(() => setDoubleAdvanceAlert(false), 6000)
+        alertTimeoutRef.current = setTimeout(() => dismissAlert(), 6000)
       }
       lastNextPressRef.current = now
     }
@@ -555,9 +504,12 @@ export default function PresentadorPage({ params }: Props) {
   }
 
   return (
-      <div className="h-[100dvh] text-white flex flex-col overflow-hidden select-none relative" style={{
-        background: '#000000',
-      }}>
+      <div 
+        className="h-[100dvh] max-h-[100dvh] text-white flex flex-col overflow-hidden select-none relative" 
+        style={{
+          background: '#000000',
+        }}
+      >
         {/* Apple Premium Dark Mode styles */}
         <style dangerouslySetInnerHTML={{__html: `
           .apple-glass-card {
@@ -573,7 +525,7 @@ export default function PresentadorPage({ params }: Props) {
             background: rgba(9, 9, 11, 0.75);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            border-b: 1px solid rgba(255, 255, 255, 0.05);
             z-index: 20;
           }
           .apple-btn {
@@ -600,26 +552,6 @@ export default function PresentadorPage({ params }: Props) {
             color: #ffffff;
             border: 1px solid rgba(255, 255, 255, 0.08);
           }
-          .apple-btn-danger {
-            background: rgba(239, 68, 68, 0.12);
-            color: #ef4444;
-            border: 1px solid rgba(239, 68, 68, 0.25);
-          }
-          .apple-btn-success {
-            background: rgba(34, 197, 94, 0.12);
-            color: #22c55e;
-            border: 1px solid rgba(34, 197, 94, 0.25);
-          }
-          .apple-btn-warning {
-            background: rgba(249, 115, 22, 0.12);
-            color: #f97316;
-            border: 1px solid rgba(249, 115, 22, 0.25);
-          }
-          .gold-card {
-            background: linear-gradient(180deg, rgba(234,179,8,0.06) 0%, rgba(9,9,11,0.95) 100%);
-            border: 1px solid rgba(234,179,8,0.35);
-            border-radius: 24px;
-          }
           @keyframes goldPulse {
             0%, 100% { opacity: 1; }
             50% { opacity: 0.5; }
@@ -642,6 +574,20 @@ export default function PresentadorPage({ params }: Props) {
           .animate-bounce-in {
             animation: bounceIn 0.4s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
           }
+          @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-16px); }
+            to { opacity: 1; transform: translateY(0); }
+          }
+          .animate-slide-down {
+            animation: slideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+          }
+          @keyframes slideUpFadeOut {
+            from { opacity: 1; transform: translateY(0); }
+            to { opacity: 0; transform: translateY(-16px); }
+          }
+          .animate-slide-up-fade-out {
+            animation: slideUpFadeOut 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+          }
           @keyframes marquee {
             0% { transform: translateX(0%); }
             100% { transform: translateX(-33.33%); }
@@ -653,25 +599,27 @@ export default function PresentadorPage({ params }: Props) {
           }
         `}} />
 
-        {/* Spacer for iOS Notch */}
-        <div className="shrink-0 bg-black" style={{ height: 'env(safe-area-inset-top, 0px)' }} />
-
-        {/* Alerta de doble avance */}
         {doubleAdvanceAlert && (
-          <div className="fixed inset-x-0 top-0 z-[100] px-4 pt-4 animate-bounce-in">
-            <div className="bg-amber-500 border-2 border-amber-300 rounded-2xl px-4 py-3 flex items-start gap-3 shadow-2xl">
-              <span className="text-2xl shrink-0">⚠️</span>
-              <div className="flex-1 min-w-0">
-                <p className="font-display text-black font-black text-base leading-tight uppercase tracking-wide">
+          <div className="fixed top-24 inset-x-0 z-[100] flex justify-center px-4 pointer-events-none">
+            <div className={`w-full max-w-md pointer-events-auto relative overflow-hidden rounded-2xl bg-zinc-950 border border-red-500/30 p-4 flex items-start gap-4 shadow-[0_20px_50px_rgba(0,0,0,0.7),0_0_30px_rgba(239,68,68,0.15)] ${
+              isAlertClosing ? 'animate-slide-up-fade-out' : 'animate-slide-down'
+            }`}>
+              <div className="p-2 bg-red-500/10 border border-red-500/20 rounded-xl shrink-0 text-red-400">
+                <AlertTriangle className="w-5 h-5 animate-pulse" />
+              </div>
+              
+              <div className="flex-1 min-w-0 pr-2">
+                <h4 className="font-display text-xs font-black tracking-[0.2em] text-transparent bg-clip-text bg-gradient-to-r from-red-400 to-rose-400 uppercase leading-none">
                   ¡Doble avance detectado!
-                </p>
-                <p className="text-black/70 text-xs mt-0.5 leading-snug">
-                  Presionaste "Siguiente" dos veces en menos de 15 segundos. Verifica si ya avanzaste o si saltaste una coreografía.
+                </h4>
+                <p className="text-zinc-300 text-xs mt-2.5 leading-relaxed font-semibold">
+                  Presionaste <span className="text-red-400 font-bold">"Siguiente"</span> dos veces en menos de 15 segundos. Por favor verifica si saltaste una coreografía accidentalmente.
                 </p>
               </div>
+              
               <button
-                onClick={() => setDoubleAdvanceAlert(false)}
-                className="shrink-0 text-black/50 hover:text-black p-0.5"
+                onClick={dismissAlert}
+                className="shrink-0 p-1 rounded-lg bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white transition-all duration-200 border border-white/5 hover:border-white/10 active:scale-95 cursor-pointer"
                 aria-label="Cerrar alerta"
               >
                 <X className="w-4 h-4" />
@@ -696,11 +644,17 @@ export default function PresentadorPage({ params }: Props) {
         )}
 
         {/* Header */}
-        <header className="apple-glass-header px-4 py-3.5 flex items-center justify-between shrink-0 relative z-20">
+        <header 
+          className="apple-glass-header px-4 flex items-center justify-between shrink-0 relative z-20"
+          style={{
+            paddingTop: 'calc(env(safe-area-inset-top, 0px) + 0.875rem)',
+            paddingBottom: '0.875rem'
+          }}
+        >
           <div className="flex items-center gap-3 min-w-0 shrink-0">
-            <Image src="/logo.png" alt="Dance4ever" width={46} height={32} priority className="shrink-0 opacity-90" />
+            <Image src="/logo.png" alt="Dance4ever" width={42} height={29} priority className="shrink-0 opacity-90" />
             <div className="flex items-center gap-2">
-              <h1 className="font-display text-2xl tracking-[0.15em] text-white leading-none font-bold uppercase">PRESENTADOR</h1>
+              <h1 className="font-display text-lg tracking-[0.15em] text-white leading-none font-bold uppercase">PRESENTADOR</h1>
               {!audioUnlocked && (
                 <span className="text-[9px] font-bold bg-yellow-500 text-black px-1.5 py-0.5 rounded-full uppercase animate-pulse">
                   🔊 Toca
@@ -713,30 +667,23 @@ export default function PresentadorPage({ params }: Props) {
               <button
                 onClick={() => { if (event.awards_mode) toggleAwards(); else setConfirmAwards(true) }}
                 disabled={isTogglingAwards}
-                className="text-zinc-400 hover:text-white transition-colors disabled:opacity-50"
-                aria-label="Premiación"
+                className="text-zinc-400 hover:text-white transition-all p-2 rounded-full border border-zinc-800 bg-zinc-900/40 relative active:scale-95 disabled:opacity-50"
                 title={event.awards_mode ? "Finalizar premiación" : "Iniciar premiación"}
               >
-                <Star className={`w-6 h-6 ${event.awards_mode ? 'fill-white text-white' : 'text-zinc-400'}`} />
+                <Star className={`w-5 h-5 ${event.awards_mode ? 'fill-white text-white' : 'text-zinc-400'}`} />
               </button>
             )}
             <button
               onClick={() => setShowChatDrawer(true)}
-              className="text-zinc-400 hover:text-white transition-colors p-1 relative"
+              className="text-zinc-400 hover:text-white transition-all p-2 rounded-full border border-zinc-800 bg-zinc-900/40 relative active:scale-95"
               title="Chat / Alertas rápidas"
             >
-              <MessageSquare className="w-6 h-6" />
+              <MessageSquare className="w-5 h-5" />
               {unreadChatCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white font-bold text-[10px] w-4.5 h-4.5 rounded-full flex items-center justify-center animate-bounce">
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white font-bold text-[9px] w-4 h-4 rounded-full flex items-center justify-center animate-bounce">
                   {unreadChatCount}
                 </span>
               )}
-            </button>
-            <button onClick={() => window.location.reload()} className="text-zinc-400 hover:text-white transition-colors p-1" title="Recargar página">
-              <RefreshCw className="w-5.5 h-5.5" />
-            </button>
-            <button onClick={() => setShowProgram(true)} className="text-zinc-400 hover:text-white transition-colors p-1" title="Ver programa completo">
-              <ListOrdered className="w-6.5 h-6.5" />
             </button>
           </div>
         </header>
@@ -744,152 +691,249 @@ export default function PresentadorPage({ params }: Props) {
         {event.awards_mode ? (
           <div className="flex-1 min-h-0 flex flex-col px-4 text-center bg-zinc-950 text-white z-10 justify-center">
             <div className="animate-pulse">
-              <p className="font-display text-6.5xl leading-none uppercase tracking-wide font-black">Premiación</p>
-              <p className="font-display text-6.5xl leading-none uppercase tracking-wide mt-2 font-black text-zinc-500">De Bloque</p>
+              <p className="font-display text-5xl leading-none uppercase tracking-wide font-black">Premiación</p>
+              <p className="font-display text-5xl leading-none uppercase tracking-wide mt-2 font-black text-zinc-500">De Bloque</p>
             </div>
-            <div className="flex flex-col items-center justify-center animate-pulse mt-12">
-              <p className="font-display text-3.5xl leading-tight uppercase tracking-wide text-zinc-300">Pantalla de Premiación</p>
-              <p className="font-display text-3.5xl leading-tight uppercase tracking-wide mt-2 text-zinc-500">Activa en Portales</p>
+            <div className="flex flex-col items-center justify-center animate-pulse mt-8">
+              <p className="font-display text-2xl leading-tight uppercase tracking-wide text-zinc-300">Pantalla de Premiación</p>
+              <p className="font-display text-2xl leading-tight uppercase tracking-wide mt-1 text-zinc-500">Activa en Portales</p>
             </div>
+            {event.current_position > 0 && (
+              <button
+                onClick={() => setConfirmAwards(true)}
+                className="mt-12 px-6 py-3.5 bg-zinc-900 hover:bg-zinc-850 border border-zinc-800 rounded-xl font-display text-xs font-bold uppercase tracking-wider text-zinc-400 hover:text-white transition-colors"
+              >
+                Volver al Programa en Vivo
+              </button>
+            )}
           </div>
         ) : (
-          <div className="flex-1 min-h-0 flex flex-col overflow-hidden px-4 gap-1.5" style={{ paddingTop: '6px', paddingBottom: '6px' }}>
-            {/* EN ESCENARIO — 70% con estilo dorado */}
-            <div className="flex-[7] min-h-0 overflow-hidden">
-              <div className="gold-card w-full h-full flex flex-col overflow-hidden px-4 py-2.5">
+          <main className="flex-1 flex flex-col relative z-10 animate-fade-in" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 4.5rem)' }}>
+            
+            {/* Background Ambient Mesh Glows */}
+            <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
+              <div className="absolute top-1/4 -left-20 w-80 h-80 bg-yellow-500/[0.06] rounded-full blur-[100px]" />
+              <div className="absolute bottom-1/4 -right-20 w-80 h-80 bg-cyan-500/[0.04] rounded-full blur-[100px]" />
+            </div>
+
+            {/* EN ESCENARIO Panel (70% height) */}
+            <div className="flex-[7] flex flex-row items-stretch pl-0 pr-0 gap-5 relative z-10 bg-gradient-to-br from-yellow-500/[0.02] via-transparent to-transparent">
+              {/* Indented glowing indicator spine (runs full panel height) */}
+              <div className="w-1.5 bg-yellow-500/20 shadow-[0_0_15px_rgba(234,179,8,0.3)] relative overflow-hidden shrink-0 my-0">
+                <div className="absolute inset-0 bg-gradient-to-b from-yellow-400 via-amber-500 to-yellow-600 animate-pulse-slow" />
+              </div>
+
+              {/* Contenido */}
+              <div className="flex-1 min-w-0 flex flex-col items-stretch py-6 pr-8">
                 {current ? (() => {
-                  const { academy, city, dancerName, showCity, showName } = dedupInfo(current)
+                  const { academy, dancerName, showName } = dedupInfo(current)
+                  const isGrupal = (current.type || '').trim().toLowerCase() === 'grupal'
+                  const categoryDisplay = !isGrupal && current.category ? current.category.split('|')[0].trim() : current.category
+                  const tags = [
+                    current.city ? current.city.trim() : '',
+                    categoryDisplay ? categoryDisplay.trim() : '',
+                    current.style ? current.style.trim() : '',
+                    (current.type || '').trim()
+                  ].filter(Boolean)
+
                   return (
-                    <>
-                      <div className="w-full flex items-center justify-between shrink-0 border-b border-yellow-500/20 pb-2 mb-3">
-                        <span className="font-display text-xl md:text-2.5xl font-bold uppercase text-yellow-400 shrink-0 w-1/4 text-left leading-none gold-pulse">
-                          #{String(event.current_position).padStart(2, '0')}
-                        </span>
-                        <span className="font-display text-xl md:text-2.5xl font-bold uppercase text-yellow-400 text-center flex-1 tracking-[0.25em] leading-none gold-pulse">
-                          EN ESCENARIO
-                        </span>
-                        <span className="font-display text-xl md:text-2.5xl font-bold uppercase text-yellow-400 font-mono tabular-nums shrink-0 w-1/4 text-right leading-none gold-pulse">
-                          {formatElapsed(elapsed)}
-                        </span>
+                    <div className="w-full flex-1 flex flex-col justify-between">
+                      {/* Fixed Top Bar */}
+                      <div className="flex items-center justify-between w-full border-b border-yellow-500/10 pb-3 shrink-0">
+                        <div className="flex items-center gap-2">
+                          <span className="relative flex h-2 w-2">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-2 w-2 bg-yellow-500"></span>
+                          </span>
+                          <span className="font-display text-sm font-bold uppercase text-yellow-500 tracking-[0.25em] leading-none">
+                            EN ESCENARIO
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <span className="font-display text-xs font-bold uppercase text-zinc-400 tracking-[0.1em] leading-none">
+                            TURNO #{String(event.current_position).padStart(2, '0')}
+                          </span>
+                          <div className="h-4 w-px bg-white/10" />
+                          <span className="font-display text-sm font-bold uppercase text-yellow-500 font-mono tracking-wider leading-none">
+                            {formatElapsed(elapsed)}
+                          </span>
+                        </div>
                       </div>
-                      <div className="flex-1 flex flex-col items-center justify-center min-h-0 gap-0.5">
-                        <p ref={academyRef} className="font-display uppercase font-extrabold text-yellow-400/90 leading-tight break-words max-w-full text-balance text-center w-full">
+                      
+                      {/* Centered Content Area */}
+                      <div className="flex-1 flex flex-col justify-center py-4 min-h-0">
+                        <h2 className="font-display text-5xl md:text-7xl uppercase font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-amber-400 tracking-wide leading-[0.95] break-words max-w-full text-left drop-shadow-[0_0_30px_rgba(234,179,8,0.35)]">
                           {academy}
-                        </p>
+                        </h2>
                         {showName && (
-                          <p className="font-display text-sm md:text-base text-zinc-400 leading-tight text-center uppercase">
+                          <p className="font-display text-2xl md:text-3.5xl text-white font-bold uppercase mt-6 leading-tight text-left">
                             {dancerName}
                           </p>
                         )}
+                        
+                        <div className="flex flex-wrap gap-2 mt-10">
+                          {tags.map((tag, idx) => (
+                            <span 
+                              key={idx} 
+                              className="text-[10px] md:text-xs font-bold uppercase tracking-wider bg-white/[0.04] text-zinc-300 border border-white/5 px-2.5 py-1 rounded-md"
+                            >
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
                       </div>
-                      <div className="w-full flex flex-col items-center shrink-0 gap-1.5 mt-auto">
-                        <span className="font-display text-xl md:text-3xl text-zinc-200 font-bold uppercase tracking-wider text-center leading-none">
-                          {formatSubtitle(current, false)}
-                        </span>
-                      </div>
-                    </>
+                    </div>
                   )
-                })() : (
-                  <div className="flex-1 flex flex-col items-center justify-center min-h-0 px-4">
-                    {event.current_position === 0 ? (
-                      <p className="font-display text-2xl md:text-3xl text-zinc-500 uppercase tracking-widest font-bold text-center">
-                        POR INICIAR
-                      </p>
-                    ) : (
-                      <p className="font-display text-xl md:text-2xl text-zinc-600 uppercase tracking-widest font-bold text-center">
-                        — PROGRAMA TERMINADO —
-                      </p>
-                    )}
+                })() : event.current_position === 0 ? (
+                  <div className="w-full flex-1 flex flex-col justify-center">
+                    <div className="flex items-center gap-2 mb-4">
+                      <Clock className="w-6 h-6 text-yellow-500 animate-pulse" />
+                      <span className="font-display text-sm font-bold uppercase text-yellow-500 tracking-[0.25em] leading-none">
+                        ESTADO
+                      </span>
+                    </div>
+                    <h2 className="font-display text-5xl md:text-7xl uppercase font-black text-yellow-400 tracking-wide leading-none text-left drop-shadow-[0_0_20px_rgba(234,179,8,0.15)]">
+                      POR INICIAR
+                    </h2>
+                    <p className="text-xs text-zinc-400 font-semibold uppercase tracking-[0.15em] mt-3 text-left">
+                      PREPÁRATE PARA COMENZAR EL EVENTO
+                    </p>
+                  </div>
+                ) : (
+                  <div className="w-full flex-1 flex flex-col justify-center">
+                    <h2 className="font-display text-5xl md:text-7xl uppercase font-black text-zinc-500 tracking-wide leading-none text-left">
+                      PROGRAMA TERMINADO
+                    </h2>
+                    <p className="text-xs text-zinc-500 font-semibold uppercase tracking-[0.15em] mt-3 text-left">
+                      TODOS LOS TURNOS HAN CONCLUIDO
+                    </p>
                   </div>
                 )}
               </div>
             </div>
 
-            {/* SIGUIENTE — 30% con más contraste */}
-            <div className="flex-[3] min-h-0 overflow-hidden">
-              <div className="bg-white/[0.04] border border-white/10 rounded-2xl w-full h-full flex flex-col overflow-hidden px-3 py-1.5">
+            {/* Horizontal elegant divider */}
+            <div className="w-full shrink-0">
+              <div className="h-px w-full bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+            </div>
+
+            {/* SIGUIENTE Panel (30% height, bottom padded dynamically) */}
+            <div className="flex-[3] flex flex-row items-stretch pl-0 pr-0 gap-5 pb-0 relative z-10 bg-gradient-to-br from-white/[0.01] via-transparent to-transparent">
+              {/* Indented glowing indicator spine (runs full panel height) */}
+              <div className="w-1.5 bg-zinc-800 shadow-[0_0_10px_rgba(255,255,255,0.05)] relative overflow-hidden shrink-0 mt-0 mb-0">
+                <div className="absolute inset-0 bg-gradient-to-b from-zinc-500 via-zinc-700 to-zinc-850" />
+              </div>
+
+              {/* Contenido */}
+              <div className="flex-1 min-w-0 flex flex-col items-stretch py-4 pr-8">
                 {nextP ? (() => {
-                  const { academy, city, dancerName, showCity, showName } = dedupInfo(nextP)
+                  const { academy, dancerName, showName } = dedupInfo(nextP)
+                  const isGrupal = (nextP.type || '').trim().toLowerCase() === 'grupal'
+                  const categoryDisplay = !isGrupal && nextP.category ? nextP.category.split('|')[0].trim() : nextP.category
+                  const tags = [
+                    nextP.city ? nextP.city.trim() : '',
+                    categoryDisplay ? categoryDisplay.trim() : '',
+                    nextP.style ? nextP.style.trim() : '',
+                    (nextP.type || '').trim()
+                  ].filter(Boolean)
+
                   return (
-                    <>
-                      <div className="w-full flex items-center justify-between shrink-0 border-b border-white/10 pb-1.5 mb-2.5">
-                        <span className="font-display text-base md:text-xl font-bold uppercase text-zinc-200 shrink-0 w-1/4 text-left leading-none">
-                          #{nextP.position}
+                    <div className="w-full flex-1 flex flex-col justify-between">
+                      {/* Fixed Top Bar */}
+                      <div className="flex items-center justify-between w-full border-b border-white/5 pb-2.5 shrink-0">
+                        <span className="font-display text-xs font-bold text-zinc-400 uppercase tracking-[0.25em] leading-none">
+                          SIGUIENTE ACTO
                         </span>
-                        <span className="font-display text-base md:text-xl font-bold uppercase text-zinc-200 text-center flex-1 tracking-[0.2em] leading-none">
-                          SIGUIENTE
+                        <span className="font-display text-xs font-bold text-zinc-500 uppercase tracking-[0.1em] leading-none">
+                          TURNO #{String(nextP.position).padStart(2, '0')}
                         </span>
-                        <div className="shrink-0 w-1/4" />
                       </div>
-                      <div className="flex-1 flex flex-col items-center justify-center min-h-0 gap-0.5">
-                        <p ref={nextAcademyRef} className="font-display uppercase leading-tight text-zinc-100 font-bold break-words max-w-full px-2 text-center w-full">
+                      
+                      {/* Centered Content Area */}
+                      <div className="flex-1 flex flex-col justify-center py-2 min-h-0">
+                        <h3 className="font-display text-3xl md:text-5xl uppercase font-black text-white tracking-wide leading-[0.95] break-words max-w-full text-left drop-shadow-[0_0_20px_rgba(255,255,255,0.1)]">
                           {academy}
-                        </p>
+                        </h3>
                         {showName && (
-                          <p className="font-display text-xs text-zinc-400 leading-tight text-center uppercase break-words max-w-full px-2">
+                          <p className="font-display text-lg md:text-2xl text-zinc-400 font-bold uppercase mt-4 leading-tight text-left">
                             {dancerName}
                           </p>
                         )}
+                        
+                        <div className="flex flex-wrap gap-2 mt-6">
+                          {tags.map((tag, idx) => (
+                            <span 
+                              key={idx} 
+                              className="text-[10px] md:text-xs font-bold uppercase tracking-wider bg-white/[0.04] text-zinc-455 border border-white/5 px-2.5 py-1 rounded-md"
+                            >
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
                       </div>
-                      <div className="w-full flex flex-col items-center shrink-0 gap-1 mt-auto">
-                        <span className="font-display text-base md:text-xl text-zinc-300 font-semibold uppercase tracking-wider text-center leading-none">
-                          {formatSubtitle(nextP, false)}
-                        </span>
-                      </div>
-                    </>
+                    </div>
                   )
                 })() : (
-                  <p className="text-zinc-500 italic font-display text-xs md:text-sm tracking-wider text-center">
-                    — FIN DEL PROGRAMA —
-                  </p>
+                  <div className="w-full flex-1 flex flex-col justify-center">
+                    <h3 className="font-display text-2xl uppercase font-black text-zinc-650 tracking-wider leading-none text-left">
+                      FIN DEL PROGRAMA
+                    </h3>
+                    <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-[0.1em] mt-2 text-left">
+                      ESTE ES EL ÚLTIMO ACTO EN VIVO
+                    </p>
+                  </div>
                 )}
               </div>
             </div>
+          </main>
+        )}
+
+        {/* Fixed Bottom Action Buttons (Absolute Positioning Context) */}
+        {!event.awards_mode && (
+          <div className="absolute bottom-0 inset-x-0 z-20 h-[calc(env(safe-area-inset-bottom,0px)+4.5rem)] flex items-stretch overflow-hidden border-t border-white/5 bg-black">
+            <button
+              onClick={() => advance(-1)}
+              disabled={isAdvancing || event.current_position === 0 || !!event.awards_mode}
+              className="w-[42%] flex items-center justify-start pl-8 pr-12 text-zinc-400 hover:text-white disabled:opacity-20 active:bg-zinc-800 transition-all font-display font-bold text-base tracking-[0.2em] uppercase cursor-pointer select-none bg-zinc-900 pb-[env(safe-area-inset-bottom,0px)] disabled:cursor-not-allowed"
+              style={{ clipPath: 'polygon(0 0, 100% 0, calc(100% - 30px) 100%, 0 100%)' }}
+            >
+              <ChevronLeft className="w-5 h-5 shrink-0 text-zinc-450 relative -top-[3px] mr-1.5" /> ATRÁS
+            </button>
+            
+            <button
+              onClick={() => advance(1)}
+              disabled={isAdvancing || !!event.awards_mode}
+              className="flex-1 flex items-center justify-end pr-14 pl-12 text-black disabled:opacity-40 transition-all font-display font-black text-2xl tracking-[0.25em] uppercase cursor-pointer select-none bg-gradient-to-r from-yellow-400 to-amber-500 active:opacity-90 -ml-[30px] pb-[env(safe-area-inset-bottom,0px)]"
+              style={{ clipPath: 'polygon(30px 0, 100% 0, 100% 100%, 0 100%)' }}
+            >
+              {event.current_position === 0 ? 'COMENZAR' : 'SIGUIENTE'} <ChevronRight className="w-6 h-6 shrink-0 text-black relative -top-[3.5px] ml-1.5" />
+            </button>
           </div>
         )}
 
-        {/* Botones Siguiente / Atrás */}
-        <div className="flex gap-2.5 px-4 pb-4 shrink-0 relative z-20">
-          <button
-            onClick={() => advance(-1)}
-            disabled={isAdvancing || event.current_position === 0 || !!event.awards_mode}
-            className="flex-1 rounded-2xl font-bold font-display text-xl tracking-wide flex items-center justify-center gap-2 py-3.5 transition-all duration-200 active:scale-96 disabled:opacity-40 bg-red-600 text-white border border-red-500"
-          >
-            <ChevronLeft className="w-6 h-6" /> ATRÁS
-          </button>
-          <button
-            onClick={() => advance(1)}
-            disabled={isAdvancing || !!event.awards_mode}
-            className="flex-[2] rounded-2xl font-bold font-display text-xl tracking-wide flex items-center justify-center gap-2 py-3.5 transition-all duration-200 active:scale-96 disabled:opacity-40 bg-green-600 text-white border border-green-500"
-          >
-            {event.current_position === 0 ? 'COMENZAR' : 'SIGUIENTE'}
-            <ChevronRight className="w-6 h-6" />
-          </button>
-        </div>
-
         {/* Confirmación premiación */}
         {confirmAwards && (
-          <div className="fixed inset-0 bg-black/70 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-fade-in">
-            <div className="apple-glass-card bg-zinc-950/90 border border-white/10 p-6 max-w-sm w-full space-y-4 text-white">
+          <div className="fixed inset-0 bg-black/70 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-fade-in" onClick={() => setConfirmAwards(false)}>
+            <div className="apple-glass-card bg-zinc-950/90 border border-white/10 p-6 max-w-sm w-full space-y-4 text-white" onClick={e => e.stopPropagation()}>
               <div className="flex justify-end -mt-2 -mr-2">
                 <button onClick={() => setConfirmAwards(false)} className="p-1.5 hover:text-zinc-400 transition-colors">
                   <X className="w-5 h-5" />
                 </button>
               </div>
-              <h2 className="font-display text-xl tracking-widest text-white text-center font-bold">¿INICIAR PREMIACIÓN?</h2>
-              <p className="text-sm text-zinc-400 text-center leading-relaxed">
+              <h2 className="font-display text-lg tracking-widest text-white text-center font-bold">¿INICIAR PREMIACIÓN?</h2>
+              <p className="text-xs text-zinc-400 text-center leading-relaxed">
                 Esto detendrá la visualización normal y mostrará la pantalla de premiación para coaches y público.
               </p>
               <div className="grid grid-cols-2 gap-3 mt-4">
                 <button
                   onClick={() => setConfirmAwards(false)}
-                  className="apple-btn apple-btn-secondary py-2.5 font-bold text-sm"
+                  className="apple-btn apple-btn-secondary py-2.5 font-bold text-xs"
                 >
                   NO
                 </button>
                 <button
                   onClick={() => { toggleAwards(); setConfirmAwards(false) }}
-                  className="apple-btn apple-btn-primary py-2.5 font-bold text-sm"
+                  className="apple-btn apple-btn-primary py-2.5 font-bold text-xs"
                 >
                   SÍ
                 </button>
@@ -898,77 +942,6 @@ export default function PresentadorPage({ params }: Props) {
           </div>
         )}
 
-        {/* Modal Programa Completo */}
-        {showProgram && (
-          <div className="fixed inset-0 bg-black/70 backdrop-blur-md z-50 flex flex-col p-4 animate-fade-in">
-            <div className="flex-1 min-h-0 flex flex-col apple-glass-card overflow-hidden bg-zinc-950/80 border border-white/10">
-              <div className="bg-black/30 px-4 py-3.5 flex items-center justify-between shrink-0 border-b border-white/5">
-                <h3 className="font-display text-xl tracking-widest text-white font-bold">PROGRAMA</h3>
-                <button onClick={() => setShowProgram(false)} className="p-1 hover:text-zinc-400 transition-colors" aria-label="Cerrar"><X className="w-6 h-6" /></button>
-              </div>
-              <SearchBar value={search} onChange={setSearch} />
-              <div className="flex-1 min-h-0 overflow-y-auto p-3 space-y-1">
-                {(() => {
-                  if (participants.length === 0) return <p className="text-center text-zinc-600 italic py-6">Sin programa</p>
-                  const filtered = participants.filter(p => participantMatches(p, search))
-                  if (filtered.length === 0) return <p className="text-center text-zinc-600 italic py-6">Sin resultados</p>
-                  
-                  const rendered: React.ReactNode[] = []
-                  let lastCategory = ''
-                  let lastSubgroup = ''
-                  
-                  filtered.forEach(p => {
-                    const cat = p.category ? p.category.split('|')[0].trim() : 'Sin categoría'
-                    const subgroup = [p.style, p.type].filter(Boolean).join(' · ')
-                    const isOnStage = event.current_position === p.position
-                    const done = p.position < event.current_position
-                    const isGrupal = (p.type || '').trim().toLowerCase() === 'grupal'
-
-                    if (cat !== lastCategory) {
-                      rendered.push(
-                        <div key={`cat-${cat}-${p.position}`} className="flex items-center gap-2 pt-3 pb-1 first:pt-0">
-                          <div className="h-px flex-1 bg-white/10" />
-                          <span className="font-display text-[10px] tracking-[0.25em] text-zinc-400 uppercase font-bold px-1">{cat}</span>
-                          <div className="h-px flex-1 bg-white/10" />
-                        </div>
-                      )
-                      lastCategory = cat
-                      lastSubgroup = ''
-                    }
-                    
-                    if (subgroup && subgroup !== lastSubgroup) {
-                      rendered.push(
-                        <div key={`sub-${cat}-${subgroup}-${p.position}`} className="flex items-center gap-2 pb-0.5">
-                          <div className="h-px flex-1 bg-white/5" />
-                          <span className="font-display text-[8px] tracking-[0.2em] text-zinc-600 uppercase font-semibold">{subgroup}</span>
-                          <div className="h-px flex-1 bg-white/5" />
-                        </div>
-                      )
-                      lastSubgroup = subgroup
-                    }
-                    
-                    rendered.push(
-                      <div 
-                        key={p.id} 
-                        ref={isOnStage ? activeItemRef : undefined}
-                        className={`w-full rounded-xl px-4 py-2 flex items-center gap-3 transition-all ${
-                          isOnStage ? 'bg-white/15 border border-white/20' : done ? 'opacity-30 bg-white/2' : 'bg-white/4 border border-white/5'
-                        }`}
-                      >
-                        <span className="font-display text-base shrink-0 w-10 text-center leading-none opacity-80 font-bold">#{p.position}</span>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-display text-xl uppercase break-words leading-tight font-bold">{displayName(p)}</p>
-                          <p className="font-display text-xs uppercase opacity-60 truncate mt-1 text-zinc-400">{formatSubtitle(p, true)}</p>
-                        </div>
-                      </div>
-                    )
-                  })
-                  return rendered
-                })()}
-            </div>
-          </div>
-        </div>
-        )}
         {/* Chat Drawer Overlay */}
         {showChatDrawer && (
           <div className="fixed inset-0 bg-black/60 z-40 backdrop-blur-xs transition-opacity duration-300" onClick={() => setShowChatDrawer(false)} />
@@ -1035,6 +1008,7 @@ export default function PresentadorPage({ params }: Props) {
             <span className="text-[10px] font-bold text-zinc-500 tracking-wider uppercase block mb-2 px-1">Mensajes Rápidos</span>
             <div className="grid grid-cols-2 gap-1.5">
               {[
+                { text: '¡Solicitar Paramédico!', isCritical: true, icon: HeartPulse },
                 { text: 'Falla en Micrófono', isCritical: true, icon: MicOff },
                 { text: '¿Quién Sigue?', isCritical: false, icon: HelpCircle },
                 { text: 'Listo en Escenario', isCritical: false, icon: CheckCircle },
@@ -1072,7 +1046,7 @@ export default function PresentadorPage({ params }: Props) {
                 type="text"
                 value={chatInput}
                 onChange={(e) => setChatInput(e.target.value)}
-                placeholder="Escribe un mensaje..."
+                placeholder="Escribe un message..."
                 className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-yellow-500/50 transition-colors placeholder:text-zinc-500"
               />
               <button

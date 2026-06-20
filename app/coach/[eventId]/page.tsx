@@ -2,18 +2,12 @@
 import { useEffect, useState, use, useCallback, useRef } from 'react'
 import Image from 'next/image'
 import { supabase, Participant, Event, Coach } from '@/lib/supabase'
-import { useFitCount } from '@/lib/useFitCount'
-import { ChevronLeft, X, ArrowUpRight, MessageSquare, ShieldAlert, Shirt, HelpCircle, UserCheck, Star, ListOrdered } from 'lucide-react'
+import { ChevronLeft, X, MessageSquare, ShieldAlert, Shirt, HelpCircle, UserCheck, Star, HeartPulse, Search } from 'lucide-react'
 import { participantMatches } from '@/lib/search'
-import SearchBar from '@/components/SearchBar'
 import { getAvgPerTurnMs, etaLabel } from '@/lib/eta'
 import { syncServerTime, serverNow } from '@/lib/serverTime'
 import { subscribePortalConfig, PortalConfig } from '@/lib/portalConfig'
 import PortalLockout from '@/components/PortalLockout'
-
-
-const PILL_PX = 48
-const PILL_GAP = 4
 
 type Props = { params: Promise<{ eventId: string }> }
 
@@ -25,7 +19,7 @@ export default function CoachPage({ params }: Props) {
   const [participants, setParticipants] = useState<Participant[]>([])
   const [coaches, setCoaches] = useState<Coach[]>([])
   const [coachId, setCoachId] = useState<string | null>(null)
-  const [modal, setModal] = useState<null | 'mine' | 'full'>(null)
+  const [showOnlyMine, setShowOnlyMine] = useState(false)
   const [search, setSearch] = useState('')
   const [alertedAt, setAlertedAt] = useState<number | null>(null)
   const [, setTick] = useState(0)
@@ -123,28 +117,11 @@ export default function CoachPage({ params }: Props) {
     setChatInput('')
   }
 
-
   useEffect(() => {
     syncServerTime()
     const sync = setInterval(syncServerTime, 5 * 60 * 1000)
     const tick = setInterval(() => setTick(t => t + 1), 30000)
     return () => { clearInterval(sync); clearInterval(tick) }
-  }, [])
-
-  useEffect(() => { setSearch('') }, [modal])
-
-  const hasScrolledRef = useRef(false)
-  useEffect(() => {
-    if (!modal) hasScrolledRef.current = false
-  }, [modal])
-
-  const activeItemRef = useCallback((node: HTMLDivElement | null) => {
-    if (node && !hasScrolledRef.current) {
-      hasScrolledRef.current = true
-      setTimeout(() => {
-        node.scrollIntoView({ behavior: 'auto', block: 'center' })
-      }, 50)
-    }
   }, [])
 
   const loadAll = useCallback(async () => {
@@ -190,7 +167,6 @@ export default function CoachPage({ params }: Props) {
       const text = payload.payload.text || ''
       setActiveAnnouncement(text)
       if (text) {
-        // Physical haptic haptics double-vibration
         try {
           if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
             navigator.vibrate([200, 100, 200])
@@ -217,7 +193,6 @@ export default function CoachPage({ params }: Props) {
         return isOpen
       })
 
-      // Trigger physical haptic vibration if available
       try {
         if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
           if (msg.isCritical) {
@@ -234,7 +209,6 @@ export default function CoachPage({ params }: Props) {
         setActiveCriticalAlert(msg)
       }
 
-      // Play beep sound
       try {
         const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext
         if (AudioContextClass) {
@@ -284,10 +258,8 @@ export default function CoachPage({ params }: Props) {
     return () => unsubscribe()
   }, [eventId])
 
-
   const coach = coaches.find(c => c.id === coachId)
   const current = event ? participants.find(p => p.position === event.current_position) : null
-  const upcomingAll = event ? participants.filter(p => p.position > event.current_position) : []
 
   const myUpcoming = event && coach
     ? participants.filter(p => p.coach_id === coach.id && p.position >= event.current_position)
@@ -311,9 +283,10 @@ export default function CoachPage({ params }: Props) {
     setCoachId(c.id)
     if (typeof window !== 'undefined') localStorage.setItem(STORAGE_KEY(eventId), c.id)
   }
+  
   function logout() {
     setCoachId(null)
-    setModal(null)
+    setShowOnlyMine(false)
     if (typeof window !== 'undefined') localStorage.removeItem(STORAGE_KEY(eventId))
   }
 
@@ -322,20 +295,30 @@ export default function CoachPage({ params }: Props) {
     ? myList.some(p => p.position > 0 && p.position < event.current_position)
     : false
   const showAwards = !!(event?.awards_mode && hasPerformed)
-  const fullList = participants
 
-  const { ref: listRef, count: listFit } = useFitCount(70, 0)
-  const { ref: mineRef, count: mineFit } = useFitCount(70, 0)
-  const upcoming = upcomingAll.slice(0, listFit)
+  // Filter list of participants to display on main screen
+  const displayParticipants = participants.filter(p => {
+    if (showOnlyMine) {
+      return p.coach_id === (coach?.id ?? '')
+    }
+    return p.position > (event?.current_position ?? 0)
+  }).filter(p => participantMatches(p, search))
 
   if (portalConfig && !portalConfig.enableOperations) {
     return <PortalLockout portalName="Operativo (Coach)" />
   }
 
   return (
-      <div className="h-[100dvh] text-white flex flex-col overflow-hidden select-none relative" style={{
-        background: '#000000',
-      }}>
+      <div 
+        className={`text-white flex flex-col select-none relative ${
+          showChatDrawer || showAwards 
+            ? 'h-[100dvh] max-h-[100dvh] overflow-hidden' 
+            : 'min-h-[100dvh]'
+        }`} 
+        style={{
+          background: '#000000',
+        }}
+      >
         {/* Apple Premium Dark Mode styles */}
         <style dangerouslySetInnerHTML={{__html: `
           .apple-glass-card {
@@ -351,7 +334,7 @@ export default function CoachPage({ params }: Props) {
             background: rgba(9, 9, 11, 0.75);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            border-b: 1px solid rgba(255, 255, 255, 0.05);
             z-index: 20;
           }
           .apple-btn {
@@ -378,24 +361,9 @@ export default function CoachPage({ params }: Props) {
             color: #ffffff;
             border: 1px solid rgba(255, 255, 255, 0.08);
           }
-          .apple-btn-danger {
-            background: rgba(239, 68, 68, 0.12);
-            color: #ef4444;
-            border: 1px solid rgba(239, 68, 68, 0.25);
-          }
-          .apple-btn-success {
-            background: rgba(34, 197, 94, 0.12);
-            color: #22c55e;
-            border: 1px solid rgba(34, 197, 94, 0.25);
-          }
-          .apple-btn-warning {
-            background: rgba(249, 115, 22, 0.12);
-            color: #f97316;
-            border: 1px solid rgba(249, 115, 22, 0.25);
-          }
           .boxless-item {
             background: transparent;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.25);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
             transition: all 0.2s ease;
           }
           .boxless-item-onstage {
@@ -403,8 +371,8 @@ export default function CoachPage({ params }: Props) {
             border-bottom: 1px solid rgba(234, 179, 8, 0.5);
           }
           .boxless-item-mine {
-            background: linear-gradient(to right, rgba(217, 70, 239, 0.08) 0%, transparent 100%);
-            border-bottom: 1px solid rgba(217, 70, 239, 0.45);
+            background: linear-gradient(to right, rgba(6, 182, 212, 0.1) 0%, transparent 100%);
+            border-bottom: 1px solid rgba(6, 182, 212, 0.45);
           }
           .boxless-item-done {
             background: transparent;
@@ -430,30 +398,33 @@ export default function CoachPage({ params }: Props) {
             z-index: 10;
           }
           .next-turn-card-stage {
-            background: #10b981;
-            color: #000000;
-            border-bottom: 1px solid rgba(0, 0, 0, 0.15);
-            border-top: 1px solid rgba(0, 0, 0, 0.15);
-            border-radius: 0;
-            box-shadow: none;
+            background: rgba(16, 185, 129, 0.08);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            border: 1.5px solid rgba(16, 185, 129, 0.4);
+            border-radius: 18px;
+            box-shadow: 0 8px 32px 0 rgba(16, 185, 129, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            color: #ffffff;
             z-index: 10;
           }
           .next-turn-card-deck {
-            background: #f59e0b;
-            color: #000000;
-            border-bottom: 1px solid rgba(0, 0, 0, 0.15);
-            border-top: 1px solid rgba(0, 0, 0, 0.15);
-            border-radius: 0;
-            box-shadow: none;
+            background: rgba(245, 158, 11, 0.08);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            border: 1.5px solid rgba(245, 158, 11, 0.4);
+            border-radius: 18px;
+            box-shadow: 0 8px 32px 0 rgba(245, 158, 11, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            color: #ffffff;
             z-index: 10;
           }
           .next-turn-card-standard {
-            background: #d946ef;
-            color: #000000;
-            border-bottom: 1px solid rgba(0, 0, 0, 0.15);
-            border-top: 1px solid rgba(0, 0, 0, 0.15);
-            border-radius: 0;
-            box-shadow: none;
+            background: rgba(14, 165, 233, 0.08);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            border: 1.5px solid rgba(14, 165, 233, 0.4);
+            border-radius: 18px;
+            box-shadow: 0 8px 32px 0 rgba(14, 165, 233, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            color: #ffffff;
             z-index: 10;
           }
           @keyframes goldPulse {
@@ -469,6 +440,19 @@ export default function CoachPage({ params }: Props) {
           @keyframes fadeIn {
             from { opacity: 0; transform: scale(0.97); }
             to { opacity: 1; transform: scale(1); }
+          }
+          @keyframes logo-3d-float {
+            0%, 100% {
+              transform: translateY(0px) rotateY(-10deg);
+            }
+            50% {
+              transform: translateY(-4px) rotateY(10deg);
+            }
+          }
+          .animate-logo-3d {
+            transform-style: preserve-3d;
+            perspective: 1000px;
+            animation: logo-3d-float 6s ease-in-out infinite;
           }
         `}} />
 
@@ -499,48 +483,56 @@ export default function CoachPage({ params }: Props) {
         )}
 
         {/* Header */}
-        <header className="apple-glass-header px-4 py-3.5 flex items-center gap-3 shrink-0 relative z-20">
+        <header 
+          className="apple-glass-header px-4 flex items-center gap-3 shrink-0 relative z-20"
+          style={{
+            paddingTop: 'calc(env(safe-area-inset-top, 0px) + 0.875rem)',
+            paddingBottom: '0.875rem'
+          }}
+        >
           {coach ? (
-            <button onClick={logout} className="flex items-center gap-1.5 min-w-0 flex-1 shrink text-left">
+            <button onClick={logout} className="flex items-center gap-1.5 min-w-0 flex-1 shrink text-left active:opacity-75 transition-opacity">
               <ChevronLeft className="w-7 h-7 text-neutral-400 shrink-0" />
-              <h1 className="font-display text-2xl tracking-[0.1em] text-white truncate uppercase leading-none font-bold">
-                {myList.length > 0 && myList[0].academy ? myList[0].academy.split('(')[0].trim() : coach.name}
-              </h1>
+              <div className="flex flex-col min-w-0">
+                <h1 className="font-display text-lg tracking-[0.1em] text-white truncate uppercase leading-none font-bold">
+                  {myList.length > 0 && myList[0].academy ? myList[0].academy.split('(')[0].trim() : coach.name}
+                </h1>
+                <span className="text-[9px] text-zinc-400 font-bold uppercase tracking-wider mt-0.5">Portal Coach</span>
+              </div>
             </button>
           ) : (
             <h1 className="flex-1 min-w-0 font-display text-2xl tracking-[0.15em] text-white truncate uppercase leading-none font-bold">COACH</h1>
           )}
           {coach && (
-            <div className="flex items-center gap-4 shrink-0">
+            <div className="flex items-center gap-3.5 shrink-0">
               <button
-                onClick={() => setModal('mine')}
-                className="text-zinc-400 hover:text-white transition-colors p-1"
+                onClick={() => setShowOnlyMine(!showOnlyMine)}
+                className={`transition-all p-2 rounded-full border ${
+                  showOnlyMine 
+                    ? 'text-cyan-400 border-cyan-500/30 bg-cyan-500/10 shadow-[0_0_12px_rgba(6,182,212,0.25)]' 
+                    : 'text-zinc-400 border-zinc-800 bg-zinc-900/40 hover:text-white'
+                } active:scale-95`}
                 title="Mis turnos"
               >
-                <Star className="w-6 h-6" />
-              </button>
-              <button
-                onClick={() => setModal('full')}
-                className="text-zinc-400 hover:text-white transition-colors p-1"
-                title="Programa completo"
-              >
-                <ListOrdered className="w-6.5 h-6.5" />
+                <Star className={`w-5 h-5 ${showOnlyMine ? 'fill-current' : ''}`} />
               </button>
               <button
                 onClick={() => setShowChatDrawer(true)}
-                className="text-zinc-400 hover:text-white transition-colors p-1 relative"
+                className="text-zinc-400 hover:text-white transition-all p-2 rounded-full border border-zinc-800 bg-zinc-900/40 relative active:scale-95"
                 title="Chat / Alertas rápidas"
               >
-                <MessageSquare className="w-6 h-6" />
+                <MessageSquare className="w-5 h-5" />
                 {unreadChatCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-red-500 text-white font-bold text-[10px] w-4.5 h-4.5 rounded-full flex items-center justify-center animate-bounce">
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white font-bold text-[9px] w-4 h-4 rounded-full flex items-center justify-center animate-bounce">
                     {unreadChatCount}
                   </span>
                 )}
               </button>
             </div>
           )}
-          <Image src="/logo.png" alt="Dance4ever" width={46} height={32} priority className="shrink-0 opacity-90" />
+          <div className="animate-logo-3d shrink-0 relative">
+            <Image src="/logo.png" alt="Dance4ever" width={42} height={29} priority className="opacity-95" />
+          </div>
         </header>
 
         {!event ? (
@@ -548,7 +540,7 @@ export default function CoachPage({ params }: Props) {
         ) : !coach ? (
           <div className="flex-1 min-h-0 flex flex-col relative z-10 p-4">
             <p className="text-center font-display text-xs tracking-[0.3em] text-zinc-400 py-3 shrink-0 font-bold">ELIGE TU ACADEMIA / EQUIPO</p>
-            <div className="flex-1 min-h-0 overflow-y-auto space-y-3.5 pb-4">
+            <div className="flex-1 min-h-0 overflow-y-auto space-y-3 pb-4">
               {(() => {
                 const mapped = coaches.map(c => {
                   const firstPart = participants.find(p => p.coach_id === c.id)
@@ -557,7 +549,6 @@ export default function CoachPage({ params }: Props) {
                     : c.name
                   return { coach: c, displayName }
                 })
-                // Sort alphabetically by academy/display name
                 mapped.sort((a, b) => a.displayName.localeCompare(b.displayName))
 
                 return mapped.map(({ coach: c, displayName }) => (
@@ -573,224 +564,161 @@ export default function CoachPage({ params }: Props) {
             </div>
           </div>
         ) : (
-          <>
+          <main className="flex-1 flex flex-col relative z-10 px-0 pb-0">
             {showAwards ? (
-              <div className="flex-1 min-h-0 flex flex-col px-4 text-center bg-zinc-950 text-white z-10 justify-center">
+              <div className="py-12 px-4 flex flex-col items-center justify-center text-center bg-zinc-950 text-white z-10">
                 <div className="animate-pulse">
-                  <p className="font-display text-6.5xl leading-none uppercase tracking-wide font-black">Premiación</p>
-                  <p className="font-display text-6.5xl leading-none uppercase tracking-wide mt-2 font-black text-neutral-400">De Bloque</p>
+                  <p className="font-display text-5xl leading-none uppercase tracking-wide font-black">Premiación</p>
+                  <p className="font-display text-5xl leading-none uppercase tracking-wide mt-2 font-black text-neutral-400">De Bloque</p>
                 </div>
-                <div className="flex flex-col items-center justify-center animate-pulse mt-12">
-                  <p className="font-display text-3.5xl leading-tight uppercase tracking-wide text-zinc-300">Dirígete al escenario</p>
-                  <p className="font-display text-3.5xl leading-tight uppercase tracking-wide mt-2 text-zinc-500">y sube al podio</p>
+                <div className="flex flex-col items-center justify-center animate-pulse mt-8">
+                  <p className="font-display text-2xl leading-tight uppercase tracking-wide text-zinc-300">Dirígete al escenario</p>
+                  <p className="font-display text-2xl leading-tight uppercase tracking-wide mt-1 text-zinc-500">y sube al podio</p>
                 </div>
               </div>
             ) : (
-              <div className="flex-1 min-h-0 flex flex-col z-10 p-4 pb-0">
-                {/* EN ESCENARIO arriba */}
-                 <div className={`${current ? 'gold-card text-black' : 'neutral-header-card text-white'} px-4 py-4 shrink-0 text-center relative overflow-hidden mb-4 -mx-4`}>
-                  {current ? (
-                    <>
-                      <p className="font-display text-xs tracking-[0.3em] text-black/60 font-bold uppercase leading-none gold-pulse">EN ESCENARIO · #{String(event.current_position).padStart(2, '0')}</p>
-                      <p className="font-display text-4xl uppercase leading-tight mt-2.5 text-black break-words font-extrabold">{extractDancerName(current)}</p>
-                      <p className="font-display text-[13px] uppercase opacity-80 leading-tight mt-2.5 text-black/90">
-                        {formatSubtitle(current)}
-                      </p>
-                    </>
-                  ) : event.current_position === 0 ? (
-                    <p className="font-display text-2xl py-2 text-zinc-400 uppercase tracking-widest font-bold">POR INICIAR</p>
-                  ) : (
-                    <p className="font-display text-xl py-2 text-zinc-600 uppercase tracking-widest font-bold">— PROGRAMA TERMINADO —</p>
-                  )}
-                </div>
-
-
-
-                {/* Lista — todos GRIS, dinámico al tamaño */}
-                <div ref={listRef} className="flex-1 min-h-0 overflow-hidden pt-1 pb-3 flex flex-col gap-0 -mx-4">
-                  {upcoming.length === 0 ? (
-                    <p className="text-center text-zinc-600 italic py-4">No quedan más turnos</p>
-                  ) : (
-                    upcoming.map(p => (
-                      <Pill key={p.id} p={p} mine={p.coach_id === coach.id} grow />
-                    ))
-                  )}
-                </div>
-
-                {/* Tarjeta grande con próximo turno del coach */}
-                {(() => {
-                  if (!nextMine) {
+              <>
+                {/* Active Stage display */}
+                <div className={`${current ? 'gold-card text-black' : 'neutral-header-card text-white'} px-4 py-4 shrink-0 text-center relative overflow-hidden`}>
+                  {current ? (() => {
+                    const isGrupal = (current.type || '').trim().toLowerCase() === 'grupal';
+                    const academyShort = current.academy ? current.academy.split('(')[0].trim() : '';
                     return (
-                      <div className="apple-glass-card px-4 py-5 shrink-0 text-center mb-2">
-                        <p className="font-display text-xs tracking-widest text-zinc-500 leading-none font-bold">YA NO TIENES TURNOS PENDIENTES</p>
-                      </div>
-                    )
-                  }
-                  const avgMs = getAvgPerTurnMs(event, serverNow())
-                  const turnsToStage = (turns ?? 0)
-                  const turnsToWait = Math.max(0, turnsToStage - event.on_deck_count)
-                  const etaStage = etaLabel(turnsToStage, avgMs)
-                  const etaWait = etaLabel(turnsToWait, avgMs)
-
-                  if (onStage) {
-                    return (
-                      <div className="next-turn-card-stage px-4 py-5 shrink-0 relative overflow-hidden mb-2 animate-pulse -mx-4 text-black">
-                        <p className="font-display text-[10px] tracking-[0.25em] leading-none text-black/60 font-bold uppercase text-center">TU PRÓXIMO TURNO</p>
-                        <div className="flex items-center gap-4 mt-3.5">
-                          <div className="flex flex-col items-center justify-center shrink-0 w-14 h-14 rounded-xl bg-black text-white">
-                            <span className="font-display text-[9px] tracking-widest leading-none opacity-75 font-bold uppercase mb-1">TURNO</span>
-                            <span className="font-display text-2xl leading-none font-black tabular-nums">#{nextMine.position}</span>
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="font-display text-lg uppercase leading-none text-black font-black">¡ES TU TURNO!</p>
-                            <p className="font-display text-xl uppercase break-words leading-tight text-black font-bold mt-2">{extractDancerName(nextMine)}</p>
-                            <p className="font-display text-xs uppercase leading-tight opacity-85 mt-1.5 text-black/80">
-                              {formatSubtitle(nextMine)}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    )
-                  }
-                  if (onDeck) {
-                    return (
-                      <div className="next-turn-card-deck px-4 py-4 shrink-0 relative overflow-hidden mb-2 animate-pulse -mx-4 text-black">
-                        <p className="font-display text-[10px] tracking-[0.25em] leading-none text-black/60 font-bold uppercase text-center">TU PRÓXIMO TURNO</p>
-                        <div className="flex items-center gap-4 mt-3.5">
-                          <div className="flex flex-col items-center justify-center shrink-0 w-14 h-14 rounded-xl bg-black text-white">
-                            <span className="font-display text-[9px] tracking-widest leading-none opacity-75 font-bold uppercase mb-1">TURNO</span>
-                            <span className="font-display text-2xl leading-none font-black tabular-nums">#{nextMine.position}</span>
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="font-display text-xl uppercase break-words leading-tight text-black font-bold">{extractDancerName(nextMine)}</p>
-                            <p className="font-display text-xs uppercase leading-tight opacity-85 mt-1.5 text-black/80">
-                              {formatSubtitle(nextMine)}
-                            </p>
-                            <p className="font-display text-md tracking-wider leading-none mt-3 text-black font-bold uppercase">
-                              SUBES EN {etaStage ? etaStage : `${turnsToStage} TURNO${turnsToStage === 1 ? '' : 'S'}`}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    )
-                  }
-                  return (
-                    <div className="next-turn-card-standard px-4 py-4 shrink-0 relative overflow-hidden mb-2 -mx-4 text-black">
-                      <p className="font-display text-[10px] tracking-[0.25em] leading-none text-black/60 font-bold uppercase text-center">TU PRÓXIMO TURNO</p>
-                      <div className="flex items-center gap-4 mt-3.5">
-                        <div className="flex flex-col items-center justify-center shrink-0 w-14 h-14 rounded-xl bg-black text-white">
-                          <span className="font-display text-[9px] tracking-widest leading-none opacity-75 font-bold uppercase mb-1">TURNO</span>
-                          <span className="font-display text-2xl leading-none font-black tabular-nums">#{nextMine.position}</span>
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-display text-xl uppercase break-words leading-tight text-black font-bold">{extractDancerName(nextMine)}</p>
-                          <p className="font-display text-xs uppercase leading-tight opacity-85 mt-1.5 text-black/80">
-                            {formatSubtitle(nextMine)}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="mt-3.5 border-t border-black/20 pt-2.5 text-center">
-                        <p className="font-display text-md tracking-wider leading-none text-black font-semibold">
-                          VE A PREPARACIÓN EN {etaWait ? etaWait : `${turnsToWait} TURNO${turnsToWait === 1 ? '' : 'S'}`}
+                      <>
+                        <p className="font-display text-xs tracking-[0.3em] text-black/60 font-bold uppercase leading-none gold-pulse">EN ESCENARIO · #{String(event.current_position).padStart(2, '0')}</p>
+                        <p className="font-display text-xs tracking-wider text-black/70 font-bold uppercase mt-1.5 leading-none">
+                          {formatSubtitle(current, false)}
                         </p>
-                      </div>
-                    </div>
-                  )
-                })()}
-              </div>
-            )}
-
-
-          </>
-        )}
-
-        {/* Modal */}
-        {modal && event && coach && (
-          <div className="fixed inset-0 bg-black/70 backdrop-blur-md z-50 flex flex-col p-4 animate-fade-in">
-            <div className="flex-1 min-h-0 flex flex-col apple-glass-card overflow-hidden bg-zinc-950/80 border border-white/10">
-              <div className="bg-black/30 px-4 py-3.5 flex items-center justify-between shrink-0 border-b border-white/5">
-                <h3 className="font-display text-xl tracking-widest text-white font-bold">
-                  {modal === 'mine' ? 'MIS TURNOS' : 'PROGRAMA OFICIAL'}
-                </h3>
-                <button onClick={() => setModal(null)} className="p-1 hover:text-zinc-400 transition-colors"><X className="w-6 h-6" /></button>
-              </div>
-              {modal === 'mine' ? (
-                <div ref={mineRef} className="flex-1 min-h-0 overflow-hidden py-3 px-0 flex flex-col gap-0">
-                  {myList.length === 0 ? (
-                    <p className="text-center text-zinc-600 italic py-6">No tienes participaciones</p>
+                        <p className="font-display text-3xl uppercase leading-tight mt-2.5 text-black break-words font-extrabold">{extractDancerName(current)}</p>
+                        {!isGrupal && academyShort && (
+                          <p className="font-display text-[13px] uppercase opacity-80 leading-tight mt-1 text-black/90">
+                            {academyShort}
+                          </p>
+                        )}
+                      </>
+                    );
+                  })() : event.current_position === 0 ? (
+                    <p className="font-display text-xl py-1 text-zinc-400 uppercase tracking-widest font-bold">POR INICIAR</p>
                   ) : (
-                    myList.slice(0, mineFit).map(p => {
-                      const isOnStage = event.current_position === p.position
-                      const done = p.position < event.current_position
-                      return (
-                        <div key={p.id} ref={isOnStage ? activeItemRef : undefined} className="w-full">
-                          <Pill p={p} onStage={isOnStage} done={done} grow />
-                        </div>
-                      )
-                    })
+                    <p className="font-display text-lg py-1 text-zinc-600 uppercase tracking-widest font-bold">— PROGRAMA TERMINADO —</p>
                   )}
                 </div>
-              ) : (
-                <>
-                  <SearchBar value={search} onChange={setSearch} />
-                  <div className="flex-1 min-h-0 overflow-y-auto py-3 px-0 space-y-0">
-                    {(() => {
-                      if (fullList.length === 0) return <p className="text-center text-zinc-600 italic py-6">Sin programa</p>
-                      const filtered = fullList.filter(p => participantMatches(p, search))
-                      if (filtered.length === 0) return <p className="text-center text-zinc-600 italic py-6">Sin resultados</p>
-                      
-                      const rendered: React.ReactNode[] = []
-                      let lastCategory = ''
-                      let lastSubgroup = ''
-                      
-                      filtered.forEach(p => {
-                        const cat = p.category || 'Sin categoría'
-                        const subgroup = [p.style, p.type].filter(Boolean).join(' · ')
-                        const isOnStage = event.current_position === p.position
+
+
+                {/* Main scrollable list of participants */}
+                <div className="flex flex-col" style={{ paddingBottom: '160px' }}>
+                  {displayParticipants.length > 0 ? (
+                    <div className="flex flex-col">
+                      {displayParticipants.map(p => {
+                        const isCurrent = p.position === event.current_position
                         const done = p.position < event.current_position
-                        const mine = p.coach_id === coach.id
-                        
-                        if (cat !== lastCategory) {
-                          rendered.push(
-                            <div key={`cat-${cat}-${p.position}`} className="flex items-center gap-2 pt-3 pb-1 px-4 first:pt-0">
-                              <div className="h-px flex-1 bg-white/10" />
-                              <span className="font-display text-[10px] tracking-[0.25em] text-zinc-400 uppercase font-bold px-1">{cat}</span>
-                              <div className="h-px flex-1 bg-white/10" />
-                            </div>
-                          )
-                          lastCategory = cat
-                          lastSubgroup = ''
-                        }
-                        
-                        if (subgroup && subgroup !== lastSubgroup) {
-                          rendered.push(
-                            <div key={`sub-${cat}-${subgroup}-${p.position}`} className="flex items-center gap-2 pb-0.5 px-4">
-                              <div className="h-px flex-1 bg-white/5" />
-                              <span className="font-display text-[8px] tracking-[0.2em] text-zinc-600 uppercase font-semibold">{subgroup}</span>
-                              <div className="h-px flex-1 bg-white/5" />
-                            </div>
-                          )
-                          lastSubgroup = subgroup
-                        }
-                        
-                        rendered.push(
-                          <div key={p.id} ref={isOnStage ? activeItemRef : undefined} className="w-full">
-                            <Pill p={p} onStage={isOnStage} done={done} mine={mine} />
+                        const isMine = p.coach_id === coach.id
+                        return (
+                          <Pill key={p.id} p={p} mine={isMine} onStage={isCurrent} done={done} />
+                        )
+                      })}
+                    </div>
+                  ) : (
+                    <div className="text-center text-zinc-600 italic py-12">
+                      {showOnlyMine ? 'No tienes turnos programados en este bloque' : 'No quedan más turnos'}
+                    </div>
+                  )}
+                </div>
+
+                {/* Sticky Bottom Turn Indicator */}
+                <div 
+                  className="fixed bottom-0 inset-x-0 z-20 px-4 pb-safe bg-gradient-to-t from-black via-black/95 to-transparent pt-6 pointer-events-none"
+                >
+                  <div className="max-w-md mx-auto w-full pointer-events-auto">
+                    {(() => {
+                      if (!nextMine) {
+                        return (
+                          <div className="apple-glass-card px-4 py-4 text-center mb-3">
+                            <p className="font-display text-[10px] tracking-widest text-zinc-500 leading-none font-bold uppercase">YA NO TIENES TURNOS PENDIENTES</p>
                           </div>
                         )
-                      })
-                      return rendered
+                      }
+                      const avgMs = getAvgPerTurnMs(event, serverNow())
+                      const turnsToStage = (turns ?? 0)
+                      const turnsToWait = Math.max(0, turnsToStage - event.on_deck_count)
+                      const etaStage = etaLabel(turnsToStage, avgMs)
+                      const etaWait = etaLabel(turnsToWait, avgMs)
+
+                      if (onStage) {
+                        return (
+                          <div className="next-turn-card-stage px-4 py-4 relative overflow-hidden mb-3 animate-pulse text-white">
+                            <p className="font-display text-[9px] tracking-[0.25em] leading-none text-emerald-400/90 font-bold uppercase text-center">TU PRÓXIMO TURNO</p>
+                            <div className="flex items-center gap-3.5 mt-2.5">
+                              <div className="flex flex-col items-center justify-center shrink-0 w-12 h-12 rounded-xl bg-emerald-50/20 border border-emerald-500/30 text-white">
+                                <span className="font-display text-[8px] tracking-wider leading-none opacity-75 font-bold uppercase mb-0.5">TURNO</span>
+                                <span className="font-display text-xl leading-none font-black tabular-nums">#{nextMine.position}</span>
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="font-display text-sm uppercase leading-none text-emerald-400 font-black">¡ES TU TURNO!</p>
+                                <p className="font-display text-base uppercase truncate leading-tight text-white font-bold mt-1.5">{extractDancerName(nextMine)}</p>
+                                <p className="font-display text-[10px] uppercase leading-none opacity-85 mt-1 text-white/70">
+                                  {formatSubtitle(nextMine, false)}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        )
+                      }
+                      if (onDeck) {
+                        return (
+                          <div className="next-turn-card-deck px-4 py-4 relative overflow-hidden mb-3 animate-pulse text-white">
+                            <p className="font-display text-[9px] tracking-[0.25em] leading-none text-amber-400/95 font-bold uppercase text-center">TU PRÓXIMO TURNO</p>
+                            <div className="flex items-center gap-3.5 mt-2.5">
+                              <div className="flex flex-col items-center justify-center shrink-0 w-12 h-12 rounded-xl bg-amber-500/20 border border-amber-500/30 text-white">
+                                <span className="font-display text-[8px] tracking-wider leading-none opacity-75 font-bold uppercase mb-0.5">TURNO</span>
+                                <span className="font-display text-xl leading-none font-black tabular-nums">#{nextMine.position}</span>
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="font-display text-base uppercase truncate leading-tight text-white font-bold">{extractDancerName(nextMine)}</p>
+                                <p className="font-display text-[10px] uppercase leading-none opacity-85 mt-1 text-white/70">
+                                  {formatSubtitle(nextMine, false)}
+                                </p>
+                                <p className="font-display text-xs tracking-wider leading-none mt-2 text-amber-400 font-bold uppercase">
+                                  SUBES EN {etaStage ? etaStage : `${turnsToStage} TURNO${turnsToStage === 1 ? '' : 'S'}`}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        )
+                      }
+                      return (
+                        <div className="next-turn-card-standard px-4 py-4 relative overflow-hidden mb-3 text-white">
+                          <p className="font-display text-[9px] tracking-[0.25em] leading-none text-sky-400/90 font-bold uppercase text-center">TU PRÓXIMO TURNO</p>
+                          <div className="flex items-center gap-3.5 mt-2.5">
+                            <div className="flex flex-col items-center justify-center shrink-0 w-12 h-12 rounded-xl bg-sky-500/20 border border-sky-500/30 text-white">
+                              <span className="font-display text-[8px] tracking-wider leading-none opacity-75 font-bold uppercase mb-0.5">TURNO</span>
+                              <span className="font-display text-xl leading-none font-black tabular-nums">#{nextMine.position}</span>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="font-display text-base uppercase truncate leading-tight text-white font-bold">{extractDancerName(nextMine)}</p>
+                              <p className="font-display text-[10px] uppercase leading-none opacity-85 mt-1 text-white/70">
+                                {formatSubtitle(nextMine, false)}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="mt-2.5 border-t border-sky-500/20 pt-2 text-center">
+                            <p className="font-display text-xs tracking-wider leading-none text-sky-300 font-bold uppercase">
+                              VE A PREPARACIÓN EN {etaWait ? etaWait : `${turnsToWait} TURNO${turnsToWait === 1 ? '' : 'S'}`}
+                            </p>
+                          </div>
+                        </div>
+                      )
                     })()}
                   </div>
-                </>
-              )}
-            </div>
-          </div>
+                </div>
+              </>
+            )}
+          </main>
         )}
 
         {/* Chat Drawer Overlay */}
         {showChatDrawer && (
-          <div className="fixed inset-0 bg-black/60 z-45 backdrop-blur-xs transition-opacity duration-300" onClick={() => setShowChatDrawer(false)} />
+          <div className="fixed inset-0 bg-black/60 z-40 backdrop-blur-xs transition-opacity duration-300" onClick={() => setShowChatDrawer(false)} />
         )}
         <div className={`fixed right-0 top-0 bottom-0 z-50 w-80 md:w-96 bg-zinc-950/95 border-l border-white/10 flex flex-col backdrop-blur-md transition-transform duration-300 ease-out ${showChatDrawer ? 'translate-x-0' : 'translate-x-full'}`}>
           <div className="bg-black/30 px-4 py-3.5 flex items-center justify-between shrink-0 border-b border-white/5">
@@ -854,6 +782,7 @@ export default function CoachPage({ params }: Props) {
             <span className="text-[10px] font-bold text-zinc-500 tracking-wider uppercase block mb-2 px-1">Mensajes Rápidos (Coach)</span>
             <div className="grid grid-cols-2 gap-1.5 flex-wrap">
               {[
+                { text: '¡Solicitar Paramédico!', isCritical: true, icon: HeartPulse },
                 { text: 'Emergencia Camerinos', isCritical: true, icon: ShieldAlert },
                 { text: 'Falla con Vestuario', isCritical: false, icon: Shirt },
                 { text: 'Duda de Orden', isCritical: false, icon: HelpCircle },
@@ -891,7 +820,7 @@ export default function CoachPage({ params }: Props) {
                 type="text"
                 value={chatInput}
                 onChange={(e) => setChatInput(e.target.value)}
-                placeholder="Escribe un mensaje..."
+                placeholder="Escribe un message..."
                 className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-yellow-500/50 transition-colors placeholder:text-zinc-500"
               />
               <button
@@ -935,33 +864,20 @@ export default function CoachPage({ params }: Props) {
   )
 }
 
-/** Quita el prefijo de la academia del nombre del acto para mostrar solo el nombre del bailarín/equipo */
 function extractDancerName(p: Participant): string {
   const type = (p.type || '').trim().toLowerCase()
   if (type === 'grupal') return p.academy || p.name
   if (!p.academy || !p.name) return p.name
 
-  // Escape special regex characters in academy name
   const escaped = p.academy.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-  // Match: "Academy - something" OR "Academy (something)" — case insensitive
   const pattern = new RegExp('^' + escaped + '\\s*[-–(]\\s*', 'i')
   const result = p.name.replace(pattern, '').replace(/\)\s*$/, '').trim()
   if (result && result.toLowerCase() !== p.academy.toLowerCase()) return result
 
-  // Fallback: grab content in parentheses if present
   const parenMatch = p.name.match(/\(([^)]+)\)/)
   if (parenMatch) return parenMatch[1].trim()
 
   return p.name
-}
-
-function estimateCoachPillHeight(p: Participant): number {
-  const name = extractDancerName(p) || ''
-  const isGrupal = (p.type || '').trim().toLowerCase() === 'grupal'
-  const hasAcademyOnRight = !isGrupal && p.academy
-  const maxChars = hasAcademyOnRight ? 24 : 34
-  const lines = Math.max(1, Math.ceil(name.length / maxChars))
-  return 60 + (lines - 1) * 28
 }
 
 function formatSubtitle(p: Participant, includeAcademy: boolean = true): string {
@@ -986,53 +902,55 @@ function formatSubtitle(p: Participant, includeAcademy: boolean = true): string 
   ].filter(Boolean).join(' · ')
 }
 
-function pillDisplayName(p: Participant): string {
-  return extractDancerName(p)
-}
-
-function Pill({ p, mine, onStage, done, grow }: { p: Participant, mine?: boolean, onStage?: boolean, done?: boolean, grow?: boolean }) {
+function Pill({ p, mine, onStage, done }: { p: Participant, mine?: boolean, onStage?: boolean, done?: boolean }) {
   const bg =
     onStage ? 'boxless-item-onstage' :
     done ? 'boxless-item-done' :
     mine ? 'boxless-item-mine' :
     'boxless-item'
-  const dancerName = pillDisplayName(p)
+  const dancerName = extractDancerName(p)
   const subtitle = formatSubtitle(p)
-  const growClass = grow ? 'flex-1 min-h-0' : 'shrink-0 min-h-[48px]'
 
   const numberColor = 
     onStage ? 'text-yellow-400 font-extrabold' :
-    done ? 'text-zinc-600' :
-    mine ? 'text-fuchsia-400 font-bold' :
+    done ? 'text-zinc-650' :
+    mine ? 'text-cyan-400 font-bold' :
     'text-zinc-500 font-semibold'
 
   const titleColor =
     onStage ? 'text-yellow-400 font-bold' :
-    done ? 'text-zinc-500' :
-    mine ? 'text-fuchsia-200' :
+    done ? 'text-zinc-550' :
+    mine ? 'text-cyan-200' :
     'text-white'
 
   const subtitleColor =
     onStage ? 'text-yellow-200/50' :
-    done ? 'text-zinc-600' :
-    mine ? 'text-fuchsia-300/40' :
+    done ? 'text-zinc-700' :
+    mine ? 'text-cyan-300/40' :
     'text-zinc-400/80'
 
   const separatorColor =
     onStage ? 'border-yellow-500/50' :
     done ? 'border-white/5' :
-    mine ? 'border-fuchsia-500/45' :
+    mine ? 'border-cyan-500/45' :
     'border-white/15'
 
   return (
-    <div className={`w-full flex items-center ${bg} ${growClass} transition-all duration-200 z-10 overflow-hidden`}>
+    <div className={`w-full flex items-center ${bg} shrink-0 min-h-[48px] transition-all duration-200 z-10 overflow-hidden`}>
       <div className={`shrink-0 w-12 py-3 flex items-center justify-center border-r border-dotted ${separatorColor}`}>
         <span className={`font-display text-xl leading-none tabular-nums ${numberColor}`}>
           #{p.position}
         </span>
       </div>
       <div className="flex-1 min-w-0 pl-3.5 pr-4 py-3">
-        <p className={`font-display text-xl uppercase break-words leading-tight ${titleColor}`}>{dancerName}</p>
+        <div className="flex items-center justify-between gap-2">
+          <p className={`font-display text-xl uppercase break-words leading-tight flex-1 ${titleColor}`}>{dancerName}</p>
+          {mine && (
+            <span className="text-[8px] font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 px-1.5 py-0.5 rounded-full uppercase shrink-0 tracking-wider animate-pulse">
+              Mi Equipo
+            </span>
+          )}
+        </div>
         <p className={`font-display text-xs uppercase opacity-85 truncate mt-1 ${subtitleColor}`}>{subtitle}</p>
       </div>
     </div>

@@ -70,6 +70,7 @@ export default function EventosPage() {
   const [qrCoachProgUrl, setQrCoachProgUrl] = useState('')
   const [qrPresentadorUrl, setQrPresentadorUrl] = useState('')
   const [qrBuilderUrl, setQrBuilderUrl] = useState('')
+  const [qrPublicProgUrl, setQrPublicProgUrl] = useState('')
   const [copiedQrLink, setCopiedQrLink] = useState<string | null>(null)
 
   // Track initialization to avoid auto-save loop on mount
@@ -174,6 +175,10 @@ export default function EventosPage() {
     // 4. QR Organizador (Program Builder)
     const urlBuilder = `${origin}/programa-builder`
     QRCode.toDataURL(urlBuilder, { width: 400, margin: 2 }).then(setQrBuilderUrl).catch(() => {})
+
+    // 5. QR Programa Público (Familias)
+    const urlPublicProg = `${origin}/programa/${event.id}`
+    QRCode.toDataURL(urlPublicProg, { width: 400, margin: 2 }).then(setQrPublicProgUrl).catch(() => {})
   }, [event?.id, origin])
 
   useEffect(() => {
@@ -744,14 +749,14 @@ export default function EventosPage() {
           >
             <div>
               <h2 className="font-display text-lg tracking-wider uppercase">Códigos QR de Accesos</h2>
-              <p className="text-xs text-neutral-500 mt-0.5">QRs de Organizador (Builder), Programa (Coaches), Portal de Staff y Portal de Presentador (Conducción)</p>
+              <p className="text-xs text-neutral-500 mt-0.5">QRs de Organizador (Builder), Programa (Coaches), Portal de Staff, Portal de Presentador y Programa Público (Familias)</p>
             </div>
             {qrsExpanded ? <ChevronUp className="w-5 h-5 text-neutral-400" /> : <ChevronDown className="w-5 h-5 text-neutral-400" />}
           </button>
 
           {/* QR Codes Section */}
           {qrsExpanded && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
               {/* 0. Creador de Programa */}
               {qrBuilderUrl && (
                 <div className="bg-neutral-800/30 border border-neutral-700/40 rounded-2xl p-4 flex flex-col gap-3">
@@ -938,6 +943,56 @@ export default function EventosPage() {
                         window.open(
                           `https://wa.me/?text=${encodeURIComponent(
                             `Enlace de acceso al Portal del Presentador (Conducción) de *Dance4Ever*:\n\n🔗 ${origin}/presentador/${event.id}`
+                          )}`,
+                          '_blank'
+                        )
+                      }}
+                      className="w-full py-2 text-white font-bold text-[11px] rounded-lg flex items-center justify-center gap-1.5 transition-all shadow-md uppercase tracking-wider font-display hover:brightness-90"
+                      style={{ backgroundColor: '#25D366' }}
+                    >
+                      Compartir
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* 5. Programa Público (Familias) */}
+              {qrPublicProgUrl && (
+                <div className="bg-neutral-800/30 border border-neutral-700/40 rounded-2xl p-4 flex flex-col gap-3">
+                  <div className="flex flex-col gap-0.5">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-fuchsia-400">
+                      Público General
+                    </span>
+                    <h4 className="font-display text-sm font-bold text-white uppercase">
+                      Programa Público
+                    </h4>
+                    <p className="text-[11px] text-neutral-500">
+                      Acceso para padres y familiares para seguir el programa.
+                    </p>
+                  </div>
+
+                  <div className="bg-white p-3 rounded-xl flex items-center justify-center max-w-[200px] mx-auto w-full aspect-square shadow-md">
+                    <img src={qrPublicProgUrl} alt="QR Programa Público" className="w-full h-full object-contain" />
+                  </div>
+
+                  <div className="flex flex-col gap-1.5 mt-auto">
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(`${origin}/programa/${event.id}`).then(() => {
+                          setCopiedQrLink('public-prog')
+                          setTimeout(() => setCopiedQrLink(null), 2000)
+                        })
+                      }}
+                      className="w-full py-2 bg-black hover:bg-neutral-900 border border-neutral-800 text-white font-bold text-[11px] rounded-lg flex items-center justify-center gap-1.5 transition-colors uppercase tracking-wider font-display active:scale-95"
+                    >
+                      {copiedQrLink === 'public-prog' ? '¡Copiado!' : 'Copiar Enlace'}
+                    </button>
+                    
+                    <button
+                      onClick={() => {
+                        window.open(
+                          `https://wa.me/?text=${encodeURIComponent(
+                            `Sigue el programa oficial y orden de las coreografías de *Dance4Ever* en vivo aquí:\n\n🔗 ${origin}/programa/${event.id}`
                           )}`,
                           '_blank'
                         )

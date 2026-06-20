@@ -9,7 +9,9 @@ export function getAvgPerTurnMs(event: Event, now: number = Date.now()): number 
 
 export function etaMinutes(turns: number, avgMs: number | null): number | null {
   if (avgMs === null || turns <= 0) return null
-  return Math.max(1, Math.round((turns * avgMs) / 60000))
+  // Si el promedio es irreal (más de 10 minutos por turno), usamos un estándar de 3 minutos
+  const safeAvgMs = avgMs > 600000 ? 180000 : avgMs
+  return Math.max(1, Math.round((turns * safeAvgMs) / 60000))
 }
 
 export function etaLabel(turns: number, avgMs: number | null): string | null {

@@ -3,11 +3,13 @@ import { supabase } from './supabase'
 export interface PortalConfig {
   enableOperations: boolean
   enableRegistration: boolean
+  scheduledStartTime?: string | null
 }
 
 export const DEFAULT_CONFIG: PortalConfig = {
   enableOperations: true,
   enableRegistration: true,
+  scheduledStartTime: null,
 }
 
 /**
@@ -35,6 +37,7 @@ export async function fetchPortalConfig(eventId: string): Promise<PortalConfig> 
         return {
           enableOperations: typeof parsed.enableOperations === 'boolean' ? parsed.enableOperations : true,
           enableRegistration: typeof parsed.enableRegistration === 'boolean' ? parsed.enableRegistration : true,
+          scheduledStartTime: parsed.scheduledStartTime || null,
         }
       } catch {
         return DEFAULT_CONFIG
@@ -124,6 +127,7 @@ export function subscribePortalConfig(eventId: string, callback: (config: Portal
               callback({
                 enableOperations: typeof parsed.enableOperations === 'boolean' ? parsed.enableOperations : true,
                 enableRegistration: typeof parsed.enableRegistration === 'boolean' ? parsed.enableRegistration : true,
+                scheduledStartTime: parsed.scheduledStartTime || null,
               })
             } catch {
               callback(DEFAULT_CONFIG)
