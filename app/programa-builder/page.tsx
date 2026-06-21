@@ -655,10 +655,10 @@ export default function StandaloneBuilderPage() {
         .select('name, style, category, present')
         .eq('event_id', event.id)
 
-      const presentMap = new Map<string, boolean>()
+      const presentMap = new Map<string, boolean | null>()
       existingParts?.forEach(p => {
         const key = `${p.name ?? ''}|${p.style ?? ''}|${p.category ?? ''}`.toLowerCase().trim()
-        presentMap.set(key, !!p.present)
+        presentMap.set(key, p.present)
       })
 
       await supabase.from('participants').delete().eq('event_id', event.id)
@@ -680,7 +680,7 @@ export default function StandaloneBuilderPage() {
         const categoryCode = `${ageCatCode} | ${act.level?.toUpperCase() || 'AVANZADO'}`
 
         const key = `${actName}|${act.style || ''}|${categoryCode}`.toLowerCase().trim()
-        const isPresent = presentMap.get(key) ?? false
+        const isPresent = presentMap.get(key) ?? null
 
         const registration = regMap.get(reg.id)
         const mainCoachName = registration?.coach_name?.toLowerCase().trim()
