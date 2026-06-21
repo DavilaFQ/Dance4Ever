@@ -669,10 +669,10 @@ export default function StaffPage() {
 
                         if (cat !== lastCategory) {
                           rendered.push(
-                            <div key={`cat-div-${p.id}`} className="flex items-center gap-2 px-4 pt-5 pb-1 select-none opacity-60">
-                              <div className="h-[1px] flex-1 bg-zinc-800/80" />
-                              <span className="font-display text-[9px] tracking-[0.25em] text-zinc-400 uppercase font-black px-1">{cat}</span>
-                              <div className="h-[1px] flex-1 bg-zinc-800/80" />
+                            <div key={`cat-div-${p.id}`} className="flex items-center gap-2 px-4 pt-5 pb-1 select-none opacity-95">
+                              <div className="h-[1px] flex-1 bg-rose-500/20" />
+                              <span className="font-display text-[9px] tracking-[0.25em] text-rose-400/80 uppercase font-black px-1">{cat}</span>
+                              <div className="h-[1px] flex-1 bg-rose-500/20" />
                             </div>
                           )
                           lastCategory = cat
@@ -681,10 +681,10 @@ export default function StaffPage() {
 
                         if (subgroup && subgroup !== lastSubgroup) {
                           rendered.push(
-                            <div key={`sub-div-${p.id}`} className="flex items-center gap-2 px-4 pt-3.5 pb-0.5 select-none opacity-40">
-                              <div className="h-[1px] w-3 bg-zinc-800/60" />
-                              <span className="text-[8px] text-zinc-500 uppercase font-extrabold tracking-widest">{subgroup}</span>
-                              <div className="h-[1px] flex-1 bg-zinc-800/40" />
+                            <div key={`sub-div-${p.id}`} className="flex items-center gap-2 px-4 pt-3.5 pb-0.5 select-none opacity-90">
+                              <div className="h-[1px] w-3 bg-emerald-500/20" />
+                              <span className="text-[8px] text-emerald-400/70 uppercase font-extrabold tracking-widest px-1">{subgroup}</span>
+                              <div className="h-[1px] flex-1 bg-emerald-500/10" />
                             </div>
                           )
                           lastSubgroup = subgroup
