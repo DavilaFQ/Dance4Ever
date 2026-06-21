@@ -1275,7 +1275,7 @@ export default function PublicProgramPage({ params }: Props) {
                   #Dance4everMX
                 </span>
                 <p className="text-[8px] text-zinc-500 font-semibold uppercase leading-tight">
-                  ¡Etiquétanos y comparte la emoción del escenario en nuestras redes!
+                  ¡Etiquétanos en tus historias para poder compartirlas en nuestro Instagram!
                 </p>
               </div>
             </div>
