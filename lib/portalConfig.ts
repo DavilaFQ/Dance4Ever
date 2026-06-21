@@ -117,7 +117,7 @@ export function subscribePortalConfig(eventId: string, callback: (config: Portal
         filter: `event_id=eq.${eventId}`,
       },
       (payload) => {
-        const record = (payload.eventType === 'DELETE' ? payload.old : payload.new) as any
+        const record = (payload.eventType === 'DELETE' ? payload.old : payload.new) as { category?: string; text?: string; notes?: string } | null
         if (record && record.category === 'system_config' && record.text === 'PORTAL_STATUS') {
           if (payload.eventType === 'DELETE') {
             callback(DEFAULT_CONFIG)

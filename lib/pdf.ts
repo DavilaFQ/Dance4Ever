@@ -1,6 +1,7 @@
 import { type Event, AGE_CATEGORY_LABELS, AGE_CATEGORY_HINTS } from '@/lib/supabase'
 import { type State, STYLES, MODALITY_OPTIONS } from '@/components/register/types'
 import { effectiveCategory, costBreakdown, costoTotal, formatMoney, formatEventDate, extractErrorMessage, loadImage, modalityLabel, participacionesPorAlumno, isBeforeCoreoDeadline, getPrecioEntradaRegistro } from '@/components/register/utils'
+import type jsPDF from 'jspdf'
 
 
 export async function generateReceiptPDF(state: State, event: Event | null) {
@@ -228,7 +229,7 @@ export async function generatePDF(state: State, event: Event | null, showBankInf
   y += 3
 
   // Unified page footer/header hooks
-  const pageFooterHook = (data: any) => {
+  const pageFooterHook = (data: { pageNumber: number }) => {
     if (data.pageNumber > 1) {
       doc.setFillColor(76, 29, 149) // Royal deep purple gala color `#4C1D95`
       doc.rect(0, 0, 210, 15, 'F')
@@ -291,7 +292,7 @@ export async function generatePDF(state: State, event: Event | null, showBankInf
     didDrawPage: pageFooterHook
   })
 
-  let finalY = (doc as any).lastAutoTable.finalY || (y + 10)
+  const finalY = (doc as jsPDF & { lastAutoTable?: { finalY: number } }).lastAutoTable?.finalY || (y + 10)
   
   // Section: Dancers
   let dancersY = finalY + 8
@@ -371,7 +372,7 @@ export async function generatePDF(state: State, event: Event | null, showBankInf
     didDrawPage: pageFooterHook
   })
 
-  let finalDancersY = (doc as any).lastAutoTable.finalY || (dancersY + 15)
+  const finalDancersY = (doc as jsPDF & { lastAutoTable?: { finalY: number } }).lastAutoTable?.finalY || (dancersY + 15)
   let costY: number
   if (showBankInfo) {
   let bankY = finalDancersY + 8
@@ -632,7 +633,7 @@ export async function generatePDF(state: State, event: Event | null, showBankInf
   return doc
 }
  
-export async function generateExtraTicketsPDF(state: State, event: Event | null, newTickets: number, action: 'view' | 'download' = 'download', pdfWindow: any = null) {
+export async function generateExtraTicketsPDF(state: State, event: Event | null, newTickets: number, action: 'view' | 'download' = 'download', pdfWindow: Window | null = null) {
   const jsPDF = (await import('jspdf')).default
   
   let logoImg: HTMLImageElement | null = null

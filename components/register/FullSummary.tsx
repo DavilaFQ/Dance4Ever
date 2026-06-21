@@ -44,9 +44,8 @@ function FullSummary({ state, editMode, confirmed, pending, isEditSave, confirm,
   const [whatsappCountdown, setWhatsappCountdown] = useState(5)
 
   useEffect(() => {
-    let interval: any = null
+    let interval: ReturnType<typeof setInterval> | null = null
     if (showWhatsAppModal) {
-      setWhatsappCountdown(5)
       interval = setInterval(() => {
         setWhatsappCountdown(prev => {
           if (prev <= 1) {
@@ -883,7 +882,10 @@ function FullSummary({ state, editMode, confirmed, pending, isEditSave, confirm,
           </button>
 
           <button
-            onClick={() => setShowWhatsAppModal(true)}
+            onClick={() => {
+              setShowWhatsAppModal(true)
+              setWhatsappCountdown(5)
+            }}
             className="w-full h-14 bg-gradient-to-r from-emerald-600 via-green-600 to-teal-600 hover:brightness-105 active:scale-[0.98] text-white font-display text-lg sm:text-xl tracking-wider rounded-2xl transition-all shadow-lg hover:shadow-green-500/15 duration-150 font-black flex items-center justify-center gap-3 cursor-pointer"
           >
             <MessageCircle className="w-6 h-6 text-white shrink-0" /> ENVIAR MENSAJE POR WHATSAPP
@@ -1033,7 +1035,7 @@ function FullSummary({ state, editMode, confirmed, pending, isEditSave, confirm,
                   <span>⚠️ REGLA CRÍTICA DE MODIFICACIONES:</span>
                 </p>
                 <p>
-                  Si necesitas agregar integrantes, corregir nombres, agregar coreografías o hacer cualquier cambio en tus datos, <strong className="text-red-700 font-extrabold uppercase underline">DEBES hacerlo tú mismo utilizando el botón de "MODIFICAR REGISTRO"</strong>. No se procesarán ni guardarán cambios o datos solicitados por mensaje de WhatsApp.
+                  Si necesitas agregar integrantes, corregir nombres, agregar coreografías o hacer cualquier cambio en tus datos, <strong className="text-red-700 font-extrabold uppercase underline">DEBES hacerlo tú mismo utilizando el botón de &quot;MODIFICAR REGISTRO&quot;</strong>. No se procesarán ni guardarán cambios o datos solicitados por mensaje de WhatsApp.
                 </p>
               </div>
             </div>
