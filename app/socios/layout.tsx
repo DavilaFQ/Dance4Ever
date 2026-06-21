@@ -99,7 +99,7 @@ export default function SociosLayout({ children }: { children: React.ReactNode }
 
     // 2. Verificar hash guardado contra la contraseña del servidor
     const savedHash = localStorage.getItem('d4e_dashboard_hash')
-    const envPassword = process.env.NEXT_PUBLIC_DASHBOARD_PASSWORD
+    const envPassword = process.env.NEXT_PUBLIC_DASHBOARD_PASSWORD || 'd4e2026'
     if (savedHash && envPassword) {
       setVerifyingPassword(true)
       hashPassword(envPassword).then(expectedHash => {
