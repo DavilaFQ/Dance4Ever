@@ -2,7 +2,7 @@ import { RegistrationAct, RegistrationDancer } from './supabase'
 
 export interface ScheduleItem {
   id: string
-  act: Pick<RegistrationAct, 'dancer_ids' | 'age_category' | 'modality'>
+  act: Pick<RegistrationAct, 'dancer_ids' | 'age_category' | 'modality' | 'style'>
   reg: {
     id: number
     academy: string
@@ -72,52 +72,19 @@ export function autoSchedule<T extends ScheduleItem>(items: T[]): T[] {
     const ca = a.act.age_category ? CATEGORY_ORDER.indexOf(a.act.age_category) : 99
     const cb = b.act.age_category ? CATEGORY_ORDER.indexOf(b.act.age_category) : 99
     if (ca !== cb) return ca - cb
+
     const ma = MODALITY_ORDER.indexOf(a.act.modality)
     const mb = MODALITY_ORDER.indexOf(b.act.modality)
-    return ma - mb
+    if (ma !== mb) return ma - mb
+
+    const sa = a.act.style || ''
+    const sb = b.act.style || ''
+    return sa.localeCompare(sb)
   })
 
-  const byCategory = new Map<string, T[]>()
-  for (const item of sorted) {
-    const cat = item.act.age_category || 'open'
-    if (!byCategory.has(cat)) byCategory.set(cat, [])
-    byCategory.get(cat)!.push(item)
-  }
-
-  const result: T[] = []
-
-  for (const cat of CATEGORY_ORDER) {
-    const catItems = byCategory.get(cat)
-    if (!catItems || catItems.length === 0) continue
-
-    const byReg = new Map<number, T[]>()
-    for (const item of catItems) {
-      const rid = item.reg.id
-      if (!byReg.has(rid)) byReg.set(rid, [])
-      byReg.get(rid)!.push(item)
-    }
-
-    const regGroups = Array.from(byReg.values())
-    const scheduled: T[] = []
-    let round = 0
-    let hasMore = true
-
-    while (hasMore) {
-      hasMore = false
-      for (const acts of regGroups) {
-        if (round < acts.length) {
-          scheduled.push(acts[round])
-          hasMore = true
-        }
-      }
-      round++
-    }
-
-    result.push(...scheduled)
-  }
-
-  return result
+  return sorted
 }
+
 
 export function getConflictsForItem(
   conflicts: Conflict[],
