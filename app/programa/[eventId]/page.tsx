@@ -1158,7 +1158,7 @@ export default function PublicProgramPage({ params }: Props) {
                       {/* Active sliding sheen overlay */}
                       <span className="absolute inset-0 w-[50%] h-full bg-white/20 skew-x-[-20deg] -translate-x-[150%] group-hover:animate-button-shine" />
                       <Heart className="w-4 h-4 fill-current text-white animate-pulse" />
-                      <span>¡Apoyar haciendo ruido!</span>
+                      <span>¡Toca para enviar apoyo!</span>
                       
                       {/* Floating Particles */}
                       {particles.map(p => (
@@ -1275,7 +1275,7 @@ export default function PublicProgramPage({ params }: Props) {
                   #Dance4everMX
                 </span>
                 <p className="text-[8px] text-zinc-500 font-semibold uppercase leading-tight">
-                  ¡Etiquétanos y aparecerás en las transmisiones oficiales!
+                  ¡Etiquétanos y comparte la emoción del escenario en nuestras redes!
                 </p>
               </div>
             </div>
