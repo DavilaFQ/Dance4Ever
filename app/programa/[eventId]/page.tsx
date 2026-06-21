@@ -893,89 +893,124 @@ export default function PublicProgramPage({ params }: Props) {
           className="pb-[env(safe-area-inset-bottom,0px)]"
         >
           {filteredParticipants.length > 0 ? (
-            <div className="divide-y divide-zinc-900">
-              {filteredParticipants.map(p => {
-                const isCurrent = p.position === event.current_position
-                const isCompleted = p.position < event.current_position
-                const isSupported = !!(selectedAcademy && p.academy && p.academy.trim() === selectedAcademy.trim())
-                const eta = getETA(p.position)
+            <div className="flex flex-col">
+              {(() => {
+                const rendered: React.ReactNode[] = []
+                let lastCategory = ''
+                let lastSubgroup = ''
 
-                return (
-                  <div
-                    key={p.id}
-                    id={`part-${p.id}`}
-                    ref={isCurrent ? activeItemRef : null}
-                    className={`py-4 px-4 flex items-center gap-3.5 border-b border-zinc-900 transition-all duration-200 relative ${
-                      isCurrent 
-                        ? 'bg-gradient-to-r from-yellow-500/[0.08] to-transparent' 
-                        : isCompleted 
-                        ? 'opacity-40' 
-                        : ''
-                    }`}
-                  >
-                    {/* Floating Vertical Pill Indicator */}
-                    {isCurrent && (
-                      <div className="absolute left-[3px] top-1/2 -translate-y-1/2 w-[3px] h-[55%] bg-gradient-to-b from-yellow-400 to-amber-500 rounded-full animate-pulse-slow" />
-                    )}
-                    {isSupported && !isCurrent && (
-                      <div className="absolute left-[3.5px] top-1/2 -translate-y-1/2 w-[3.5px] h-[35%] bg-cyan-500/80 rounded-full animate-pulse-slow" />
-                    )}
-                    {/* Position / Index badge */}
-                    <div className="shrink-0 flex flex-col items-center justify-center w-10.5 h-10.5">
-                      <span className="text-[9px] text-zinc-500 font-bold uppercase block leading-none">Turno</span>
-                      <span className="text-base font-bold font-mono text-zinc-300 mt-1 leading-none">
-                        {String(p.position).padStart(2, '0')}
-                      </span>
-                    </div>
+                filteredParticipants.forEach(p => {
+                  const cat = p.category ? p.category.split('|')[0].trim().toUpperCase() : 'OPEN'
+                  const mod = p.type ? p.type.toUpperCase() : ''
+                  const styleLabel = p.style ? p.style.toUpperCase() : ''
+                  const subgroup = [mod, styleLabel].filter(Boolean).join(' · ')
 
-                    {/* Act Details */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <div className="flex-1 min-w-0">
-                          <ScrollableText 
-                            text={extractDancerName(p)} 
-                            align="left"
-                            className={`font-display text-sm uppercase font-extrabold ${isCurrent ? 'text-yellow-400' : 'text-zinc-200'}`}
-                          />
+                  if (cat !== lastCategory) {
+                    rendered.push(
+                      <div key={`cat-div-${p.id}`} className="flex items-center gap-2 px-4 pt-6 pb-2 select-none opacity-80">
+                        <div className="h-[1px] flex-1 bg-zinc-800/80" />
+                        <span className="font-display text-[9px] tracking-[0.25em] text-zinc-400 uppercase font-black px-1">{cat}</span>
+                        <div className="h-[1px] flex-1 bg-zinc-800/80" />
+                      </div>
+                    )
+                    lastCategory = cat
+                    lastSubgroup = ''
+                  }
+
+                  if (subgroup && subgroup !== lastSubgroup) {
+                    rendered.push(
+                      <div key={`sub-div-${p.id}`} className="flex items-center gap-2 px-4 pt-4 pb-1 select-none opacity-70">
+                        <div className="h-[1px] w-3 bg-zinc-800/60" />
+                        <span className="text-[8px] text-zinc-500 uppercase font-extrabold tracking-widest">{subgroup}</span>
+                        <div className="h-[1px] flex-1 bg-zinc-800/40" />
+                      </div>
+                    )
+                    lastSubgroup = subgroup
+                  }
+
+                  const isCurrent = p.position === event.current_position
+                  const isCompleted = p.position < event.current_position
+                  const isSupported = !!(selectedAcademy && p.academy && p.academy.trim() === selectedAcademy.trim())
+                  const eta = getETA(p.position)
+
+                  rendered.push(
+                    <div
+                      key={p.id}
+                      id={`part-${p.id}`}
+                      ref={isCurrent ? activeItemRef : null}
+                      className={`py-4 px-4 flex items-center gap-3.5 border-b border-zinc-900 transition-all duration-200 relative ${
+                        isCurrent 
+                          ? 'bg-gradient-to-r from-yellow-500/[0.08] to-transparent' 
+                          : isCompleted 
+                          ? 'opacity-40' 
+                          : ''
+                      }`}
+                    >
+                      {/* Floating Vertical Pill Indicator */}
+                      {isCurrent && (
+                        <div className="absolute left-[3px] top-1/2 -translate-y-1/2 w-[3px] h-[55%] bg-gradient-to-b from-yellow-400 to-amber-500 rounded-full animate-pulse-slow" />
+                      )}
+                      {isSupported && !isCurrent && (
+                        <div className="absolute left-[3.5px] top-1/2 -translate-y-1/2 w-[3.5px] h-[35%] bg-cyan-500/80 rounded-full animate-pulse-slow" />
+                      )}
+                      {/* Position / Index badge */}
+                      <div className="shrink-0 flex flex-col items-center justify-center w-10.5 h-10.5">
+                        <span className="text-[9px] text-zinc-500 font-bold uppercase block leading-none">Turno</span>
+                        <span className="text-base font-bold font-mono text-zinc-300 mt-1 leading-none">
+                          {String(p.position).padStart(2, '0')}
+                        </span>
+                      </div>
+
+                      {/* Act Details */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <div className="flex-1 min-w-0">
+                            <ScrollableText 
+                              text={extractDancerName(p)} 
+                              align="left"
+                              className={`font-display text-sm uppercase font-extrabold ${isCurrent ? 'text-yellow-400' : 'text-zinc-200'}`}
+                            />
+                          </div>
+                          {isCurrent && (
+                            <span className="text-[8px] font-bold bg-yellow-500 text-black px-1.5 py-0.5 rounded-full uppercase shrink-0 tracking-wider">
+                              PISO
+                            </span>
+                          )}
+                          {isSupported && (
+                            <span className="text-[8px] font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 px-1.5 py-0.5 rounded-full uppercase shrink-0 tracking-wider animate-pulse">
+                              Mi Equipo
+                            </span>
+                          )}
                         </div>
-                        {isCurrent && (
-                          <span className="text-[8px] font-bold bg-yellow-500 text-black px-1.5 py-0.5 rounded-full uppercase shrink-0 tracking-wider">
-                            PISO
-                          </span>
+                        
+                        <ScrollableText 
+                          text={formatSubtitle(p, true)} 
+                          align="left"
+                          className="text-[10px] text-zinc-400 uppercase mt-0.5"
+                        />
+
+                        {/* Performance countdown / ETA tags */}
+                        {!isCompleted && !isCurrent && eta && (
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className="text-[9px] bg-zinc-900 text-zinc-500 font-bold px-1.5 py-0.5 rounded uppercase">
+                              Faltan {eta.turnsLeft} {eta.turnsLeft === 1 ? 'turno' : 'turnos'}
+                            </span>
+                          </div>
                         )}
-                        {isSupported && (
-                          <span className="text-[8px] font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 px-1.5 py-0.5 rounded-full uppercase shrink-0 tracking-wider animate-pulse">
-                            Mi Equipo
-                          </span>
+
+                        {isCompleted && (
+                          <div className="flex items-center gap-1 mt-0.5 text-zinc-500">
+                            <CheckCircle className="w-3 h-3 text-zinc-600" />
+                            <span className="text-[9px] font-bold uppercase tracking-wider">Completado</span>
+                          </div>
                         )}
                       </div>
-                      
-                      <ScrollableText 
-                        text={formatSubtitle(p, true)} 
-                        align="left"
-                        className="text-[10px] text-zinc-400 uppercase mt-0.5"
-                      />
 
-                      {/* Performance countdown / ETA tags */}
-                      {!isCompleted && !isCurrent && eta && (
-                        <div className="flex items-center gap-2 mt-1">
-                          <span className="text-[9px] bg-zinc-900 text-zinc-500 font-bold px-1.5 py-0.5 rounded uppercase">
-                            Faltan {eta.turnsLeft} {eta.turnsLeft === 1 ? 'turno' : 'turnos'}
-                          </span>
-                        </div>
-                      )}
-
-                      {isCompleted && (
-                        <div className="flex items-center gap-1 mt-0.5 text-zinc-500">
-                          <CheckCircle className="w-3 h-3 text-zinc-600" />
-                          <span className="text-[9px] font-bold uppercase tracking-wider">Completado</span>
-                        </div>
-                      )}
                     </div>
-
-                  </div>
-                )
-              })}
+                  )
+                })
+                return rendered
+              })()}
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center p-8 text-center text-zinc-500 gap-2">

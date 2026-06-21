@@ -609,14 +609,51 @@ export default function CoachPage({ params }: Props) {
                 <div className="flex flex-col" style={{ paddingBottom: '160px' }}>
                   {displayParticipants.length > 0 ? (
                     <div className="flex flex-col">
-                      {displayParticipants.map(p => {
-                        const isCurrent = p.position === event.current_position
-                        const done = p.position < event.current_position
-                        const isMine = p.coach_id === coach.id
-                        return (
-                          <Pill key={p.id} p={p} mine={isMine} onStage={isCurrent} done={done} />
-                        )
-                      })}
+                      {(() => {
+                        const rendered: React.ReactNode[] = []
+                        let lastCategory = ''
+                        let lastSubgroup = ''
+
+                        displayParticipants.forEach(p => {
+                          const cat = p.category ? p.category.split('|')[0].trim().toUpperCase() : 'OPEN'
+                          const mod = p.type ? p.type.toUpperCase() : ''
+                          const styleLabel = p.style ? p.style.toUpperCase() : ''
+                          const subgroup = [mod, styleLabel].filter(Boolean).join(' · ')
+
+                          if (cat !== lastCategory) {
+                            rendered.push(
+                              <div key={`cat-div-${p.id}`} className="flex items-center gap-2 px-4 pt-5 pb-1 select-none opacity-60">
+                                <div className="h-[1px] flex-1 bg-zinc-800/80" />
+                                <span className="font-display text-[9px] tracking-[0.25em] text-zinc-400 uppercase font-black px-1">{cat}</span>
+                                <div className="h-[1px] flex-1 bg-zinc-800/80" />
+                              </div>
+                            )
+                            lastCategory = cat
+                            lastSubgroup = ''
+                          }
+
+                          if (subgroup && subgroup !== lastSubgroup) {
+                            rendered.push(
+                              <div key={`sub-div-${p.id}`} className="flex items-center gap-2 px-4 pt-3.5 pb-0.5 select-none opacity-40">
+                                <div className="h-[1px] w-3 bg-zinc-800/60" />
+                                <span className="text-[8px] text-zinc-500 uppercase font-extrabold tracking-widest">{subgroup}</span>
+                                <div className="h-[1px] flex-1 bg-zinc-800/40" />
+                              </div>
+                            )
+                            lastSubgroup = subgroup
+                          }
+
+                          const isCurrent = p.position === event.current_position
+                          const done = p.position < event.current_position
+                          const isMine = p.coach_id === coach.id
+
+                          rendered.push(
+                            <Pill key={p.id} p={p} mine={isMine} onStage={isCurrent} done={done} />
+                          )
+                        })
+
+                        return rendered
+                      })()}
                     </div>
                   ) : (
                     <div className="text-center text-zinc-600 italic py-12">
