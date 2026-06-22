@@ -671,7 +671,7 @@ export default function StaffPage() {
                           rendered.push(
                             <div key={`cat-div-${p.id}`} className="flex items-center gap-2 px-4 pt-5 pb-1 select-none opacity-95">
                               <div className="h-[1px] flex-1 bg-rose-500/20" />
-                              <span className="font-display text-[9px] tracking-[0.25em] text-rose-400/80 uppercase font-black px-1">{cat}</span>
+                              <span className="font-display text-xl tracking-[0.25em] text-rose-400/80 uppercase font-black px-1">{cat}</span>
                               <div className="h-[1px] flex-1 bg-rose-500/20" />
                             </div>
                           )
@@ -683,7 +683,7 @@ export default function StaffPage() {
                           rendered.push(
                             <div key={`sub-div-${p.id}`} className="flex items-center gap-2 px-4 pt-3.5 pb-0.5 select-none opacity-90">
                               <div className="h-[1px] w-3 bg-emerald-500/20" />
-                              <span className="text-[8px] text-emerald-400/70 uppercase font-extrabold tracking-widest px-1">{subgroup}</span>
+                              <span className="text-xs tracking-wider text-emerald-400/70 uppercase font-extrabold px-1">{subgroup}</span>
                               <div className="h-[1px] flex-1 bg-emerald-500/10" />
                             </div>
                           )

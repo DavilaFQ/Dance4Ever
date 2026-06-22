@@ -686,7 +686,7 @@ export default function EventosPage() {
                     </div>
                     <button
                       onClick={handleToggleOperations}
-                      disabled={loadingPortalConfig || !isAdminMode}
+                      disabled={loadingPortalConfig}
                       className={`w-12 h-6 rounded-none relative transition-colors shrink-0 ${
                         enableOperations ? 'bg-neutral-900 border border-neutral-950' : 'bg-neutral-200 border border-neutral-300'
                       }`}
@@ -709,7 +709,7 @@ export default function EventosPage() {
                     </div>
                     <button
                       onClick={handleToggleRegistration}
-                      disabled={loadingPortalConfig || !isAdminMode}
+                      disabled={loadingPortalConfig}
                       className={`w-12 h-6 rounded-none relative transition-colors shrink-0 ${
                         enableRegistration ? 'bg-neutral-900 border border-neutral-950' : 'bg-neutral-200 border border-neutral-300'
                       }`}

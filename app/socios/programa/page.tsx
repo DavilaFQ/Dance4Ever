@@ -207,7 +207,7 @@ export default function ProgramaTab() {
                 rendered.push(
                   <div key={`cat-preview-${group.category}-${gIdx}`} className="flex items-center gap-2 pt-4 pb-1 first:pt-0 select-none">
                     <div className="h-px flex-1 bg-red-500/50" />
-                    <span className="font-display text-[10px] tracking-[0.3em] text-red-500 uppercase font-bold px-2">{group.category}</span>
+                    <span className="font-display text-xs tracking-[0.3em] text-red-500 uppercase font-bold px-2">{group.category}</span>
                     <div className="h-px flex-1 bg-red-500/50" />
                   </div>
                 )
@@ -237,7 +237,7 @@ export default function ProgramaTab() {
                     rendered.push(
                       <div key={`sub-${group.category}-${subgroup}-${globalIdx}`} className="flex items-center gap-2 pb-0.5 pt-1 select-none">
                         <div className="h-px flex-1 bg-emerald-600/40" />
-                        <span className="text-[8px] text-emerald-400 uppercase font-bold tracking-wider">{subgroup}</span>
+                        <span className="text-[9px] text-emerald-400 uppercase font-bold tracking-wider">{subgroup}</span>
                         <div className="h-px flex-1 bg-emerald-600/40" />
                       </div>
                     )
