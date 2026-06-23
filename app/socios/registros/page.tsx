@@ -141,6 +141,14 @@ export default function RegistrosPage({ onSelectRegistration }: { onSelectRegist
             const isConfirmed = !isDraft && !!r.confirmed_at
             const wasEdited = !isDraft && isEditedAfterConfirm(r)
             const isPending = !isDraft && !isConfirmed && !wasEdited
+
+            // Calcular conteo de pulseras
+            const asistentesCount = (r.extra_coaches || [])
+              .filter((s: string) => s.startsWith('Asistente:') && s.replace(/^Asistente:\s*/, '').trim() !== '')
+              .length
+            const coachCount = 1
+            const totalPulseras = r.dancers.length + asistentesCount + coachCount
+
             return (
               <button
                 key={r.id}
@@ -193,6 +201,32 @@ export default function RegistrosPage({ onSelectRegistration }: { onSelectRegist
                   <div>
                     <span className="text-neutral-500 uppercase text-[9px] tracking-wider font-bold">Boletos</span>
                     <p className="text-xl sm:text-2xl font-black text-fuchsia-400 mt-0.5">{r.tickets_count ?? 0}</p>
+                  </div>
+                </div>
+
+                {/* Pulseras Requeridas */}
+                <div className="mt-2.5 p-3 rounded-xl bg-neutral-950/40 border border-neutral-800/60 text-xs space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-neutral-400 text-[10px] uppercase tracking-wider font-extrabold">
+                      Pulseras a Entregar
+                    </span>
+                    <span className="text-[10px] font-black px-2 py-0.5 rounded bg-fuchsia-500/20 text-fuchsia-400 border border-fuchsia-500/30">
+                      Total: {totalPulseras}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-1.5 text-[10px] text-neutral-400">
+                    <div className="flex justify-between border-r border-neutral-800 pr-2.5">
+                      <span>Integrantes:</span>
+                      <strong className="text-white">{r.dancers.length}</strong>
+                    </div>
+                    <div className="flex justify-between border-r border-neutral-800 px-2.5">
+                      <span>Asistentes:</span>
+                      <strong className="text-white">{asistentesCount}</strong>
+                    </div>
+                    <div className="flex justify-between pl-2.5">
+                      <span>Coach:</span>
+                      <strong className="text-white">{coachCount}</strong>
+                    </div>
                   </div>
                 </div>
               </button>
