@@ -30,7 +30,7 @@ interface ChecklistItem {
   id: string
   event_id: string
   text: string
-  category: 'escenografia' | 'iluminacion' | 'jueceo' | 'premiacion' | 'registro' | 'papeleria' | 'general'
+  category: 'escenografia' | 'iluminacion' | 'jueceo' | 'premiacion' | 'registro' | 'papeleria' | 'general' | 'pulseras' | 'team_support' | 'system_config'
   priority: 'alta' | 'media' | 'baja'
   completed: boolean
   notes: string | null
@@ -184,7 +184,7 @@ export default function ChecklistPage() {
 
   // Stats calculation
   const stats = useMemo(() => {
-    const logisticaItems = items.filter((i) => i.category !== 'pulseras')
+    const logisticaItems = items.filter((i) => i.category !== 'pulseras' && i.category !== 'team_support' && i.category !== 'system_config')
     const total = logisticaItems.length
     const completed = logisticaItems.filter((i) => i.completed).length
     const percentage = total > 0 ? Math.round((completed / total) * 100) : 0
@@ -194,7 +194,7 @@ export default function ChecklistPage() {
   // Filtered Checklist items
   const filteredItems = useMemo(() => {
     return items.filter((item) => {
-      if (item.category === 'pulseras') return false // Exclude pulseras from general list
+      if (item.category === 'pulseras' || item.category === 'team_support' || item.category === 'system_config') return false // Exclude non-logistics items from general list
       const matchesSearch = item.text.toLowerCase().includes(searchTerm.toLowerCase()) || 
                             (item.notes && item.notes.toLowerCase().includes(searchTerm.toLowerCase()))
       const matchesCategory = selectedCategory === 'all' || item.category === selectedCategory
