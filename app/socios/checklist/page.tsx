@@ -490,16 +490,18 @@ export default function ChecklistPage() {
         </button>
       </div>
 
-      {/* Search Input (Universal) */}
-      <div className="relative w-full px-1">
-        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-500" />
-        <input
-          value={searchTerm}
-          onChange={e => setSearchTerm(e.target.value)}
-          placeholder={activeSubTab === 'logistica' ? "Buscar tarea..." : "Buscar equipo..."}
-          className="search-input w-full pl-12 pr-3 py-2.5 bg-neutral-800/60 border border-neutral-600/40 text-xs focus:outline-none focus:border-fuchsia-500/50 focus:bg-neutral-800 text-white placeholder-neutral-500 rounded-xl"
-        />
-      </div>
+      {/* Search Input (Logística General only) */}
+      {activeSubTab === 'logistica' && (
+        <div className="relative w-full px-1">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-500" />
+          <input
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+            placeholder="Buscar tarea..."
+            className="search-input w-full pl-12 pr-3 py-2.5 bg-neutral-800/60 border border-neutral-600/40 text-xs focus:outline-none focus:border-fuchsia-500/50 focus:bg-neutral-800 text-white placeholder-neutral-500 rounded-xl"
+          />
+        </div>
+      )}
 
       {activeSubTab === 'logistica' ? (
         <>
@@ -693,13 +695,6 @@ export default function ChecklistPage() {
 
               <div className="space-y-3">
                 {registrationsWithPulseras
-                  .filter(r => {
-                    const q = searchTerm.toLowerCase().trim()
-                    if (!q) return true
-                    return (r.academy || '').toLowerCase().includes(q) || 
-                           (r.team_name || '').toLowerCase().includes(q) || 
-                           (r.coach_name || '').toLowerCase().includes(q)
-                  })
                   .map((reg) => {
                     return (
                       <div
@@ -732,7 +727,7 @@ export default function ChecklistPage() {
                               {reg.academy || '(sin academia)'}
                             </h3>
                             <p className="text-xs text-neutral-400 mt-0.5">
-                              Coach: <span className="text-neutral-300">{reg.coach_name}</span> {reg.team_name ? `· Equipo: ${reg.team_name}` : ''}
+                              Coach: <span className="text-neutral-300">{reg.coach_name}</span>
                             </p>
                           </div>
 
