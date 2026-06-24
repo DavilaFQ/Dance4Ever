@@ -480,7 +480,7 @@ export default function SociosLayout({ children }: { children: React.ReactNode }
           </div>
         </header>
 
-        <main className="flex-1 min-h-0 overflow-y-auto">
+        <main className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
           <PullToRefresh onRefresh={async () => { window.location.reload() }}>
             {activeTab === 'resumen' && <ResumenPage />}
             {activeTab === 'registros' && (

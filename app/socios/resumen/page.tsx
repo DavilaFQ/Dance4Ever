@@ -1,11 +1,11 @@
 'use client'
 
-import { useEffect, useState, useMemo, useCallback } from 'react'
+import { useEffect, useState, useMemo, useCallback, useRef } from 'react'
 import { supabase, CoachRegistration, RegistrationDancer, RegistrationAct, AGE_CATEGORY_ORDER, AGE_CATEGORY_LABELS } from '@/lib/supabase'
 import { useEventContext } from '@/app/socios/layout'
 import { formatMoney, formatRelative, safeFormatDate, isEditedAfterConfirm } from '@/lib/format'
 import { costoRegistro } from '@/lib/cost'
-import { Building2, Users, Activity, AlertTriangle, TrendingUp, DollarSign, Copy, Check, MessageCircle } from 'lucide-react'
+import { Building2, Users, Activity, AlertTriangle, TrendingUp, DollarSign, Copy, Check, MessageCircle, Award, Trophy, ChevronRight, ChevronDown } from 'lucide-react'
 import { CHART } from '../colors'
 
 export default function ResumenPage() {
@@ -20,6 +20,10 @@ export default function ResumenPage() {
   const [alertasExpanded, setAlertasExpanded] = useState(false)
   const [academiesExpanded, setAcademiesExpanded] = useState(false)
   const [actividadExpanded, setActividadExpanded] = useState(false)
+  const [premiacionSearch, setPremiacionSearch] = useState('')
+  const [expandedDivisions, setExpandedDivisions] = useState<Record<string, boolean>>({})
+  const [premiacionExpanded, setPremiacionExpanded] = useState(false)
+  const [gruposExpanded, setGruposExpanded] = useState(false)
 
   const loadAll = useCallback(async () => {
     if (!event) return
@@ -67,6 +71,114 @@ export default function ResumenPage() {
   )
 
   const confirmed = useMemo(() => enriched.filter(r => r.confirmed_at), [enriched])
+
+  const confirmedActs = useMemo(() => {
+    return confirmed.flatMap(r => {
+      return r.acts.map(act => {
+        const actDancerNames = act.dancer_ids
+          .map(id => r.dancers.find(d => d.id === id)?.name)
+          .filter(Boolean) as string[]
+
+        return {
+          ...act,
+          academy: r.academy,
+          coach_name: r.coach_name,
+          team_name: r.team_name,
+          dancerNames: actDancerNames
+        }
+      })
+    })
+  }, [confirmed])
+
+  const divisions = useMemo(() => {
+    const groups: Record<string, {
+      modality: string
+      age_category: string
+      level: string
+      style: string
+      acts: typeof confirmedActs
+    }> = {}
+
+    confirmedActs.forEach(act => {
+      const mod = (act.modality || 'grupal').trim().toLowerCase()
+      const age = (act.age_category || 'open').trim().toLowerCase()
+      const lev = (mod === 'grupal' ? act.level : 'avanzado') || 'avanzado'
+      const sty = (act.style || 'General').trim()
+
+      const key = `${mod}|${age}|${lev}|${sty.toLowerCase()}`
+
+      if (!groups[key]) {
+        groups[key] = {
+          modality: act.modality || 'grupal',
+          age_category: act.age_category || 'open',
+          level: lev,
+          style: sty,
+          acts: []
+        }
+      }
+      groups[key].acts.push(act)
+    })
+
+    return Object.values(groups).sort((a, b) => {
+      if (a.modality !== b.modality) return a.modality.localeCompare(b.modality)
+      if (a.age_category !== b.age_category) return a.age_category.localeCompare(b.age_category)
+      return a.style.localeCompare(b.style)
+    })
+  }, [confirmedActs])
+
+  const premiacionTotals = useMemo(() => {
+    let medals1st = 0
+    let medals2nd = 0
+    let medals3rd = 0
+    let medalsGeneric = 0
+
+    let cuadros1st = 0
+    let cuadros2nd = 0
+    let cuadros3rd = 0
+
+    divisions.forEach(div => {
+      const count = div.acts.length
+      const mod = div.modality.toLowerCase()
+      const isGrupal = mod === 'grupal'
+
+      if (isGrupal) {
+        // Todos los integrantes de grupales confirmados reciben medalla genérica
+        div.acts.forEach(act => {
+          medalsGeneric += (act.dancer_ids || []).length
+        })
+
+        // Cuadros para grupales
+        if (count >= 1) cuadros1st++
+        if (count >= 2) cuadros2nd++
+        if (count >= 3) cuadros3rd++
+      } else {
+        // Solista, Dueto, Trio
+        const dancersPerAct = mod === 'solista' ? 1 : mod === 'dueto' ? 2 : mod === 'trio' ? 3 : 1
+
+        if (count >= 1) {
+          medals1st += dancersPerAct
+        }
+        if (count >= 2) {
+          medals2nd += dancersPerAct
+        }
+        if (count >= 3) {
+          medals3rd += dancersPerAct
+        }
+      }
+    })
+
+    return {
+      medals1st,
+      medals2nd,
+      medals3rd,
+      medalsGeneric,
+      cuadros1st,
+      cuadros2nd,
+      cuadros3rd,
+      totalMedals: medals1st + medals2nd + medals3rd + medalsGeneric,
+      totalCuadros: cuadros1st + cuadros2nd + cuadros3rd,
+    }
+  }, [divisions])
 
   const kpis = useMemo(() => {
     const academies = new Set(confirmed.map(r => r.academy.trim().toLowerCase()).filter(Boolean))
@@ -172,7 +284,20 @@ export default function ResumenPage() {
   }
 
   return (
-    <div className="p-4 pb-6 space-y-5">
+    <div className="p-4 pb-6 space-y-5 overflow-x-hidden">
+      <style dangerouslySetInnerHTML={{ __html: `
+        @keyframes marquee {
+          0% { transform: translate3d(0, 0, 0); }
+          12% { transform: translate3d(0, 0, 0); }
+          50% { transform: translate3d(var(--scroll-dist), 0, 0); }
+          62% { transform: translate3d(var(--scroll-dist), 0, 0); }
+          100% { transform: translate3d(0, 0, 0); }
+        }
+        .animate-marquee {
+          animation: marquee 7s ease-in-out infinite;
+          display: inline-block;
+        }
+      ` }} />
       <div className="bg-neutral-800/50 rounded-none border border-neutral-700/50 p-4 text-center">
         <h1 className="font-display text-3xl tracking-wider uppercase font-bold text-neutral-800">
           {event ? event.name : 'Sin evento'}
@@ -277,6 +402,202 @@ export default function ResumenPage() {
           <p className="text-amber-300 text-sm font-bold">{kpis.editados} registro{kpis.editados !== 1 ? 's' : ''} editado{kpis.editados !== 1 ? 's' : ''} despues de confirmar</p>
         </div>
       )}
+
+      {/* SECCIÓN DE PREMIACIÓN (BOXLESS Y COLAPSABLE) */}
+      <div className="-mx-4 -my-2">
+        <button
+          onClick={() => setPremiacionExpanded(!premiacionExpanded)}
+          className="w-full py-3.5 px-4 bg-orange-100 hover:bg-orange-200/70 active:scale-98 transition-all flex items-center justify-between font-display text-base tracking-wider font-bold text-neutral-900 rounded-none cursor-pointer"
+        >
+          <div className="flex items-center gap-2.5">
+            <Trophy className="w-5 h-5 text-neutral-900 shrink-0" />
+            <span className="uppercase">Logística de Premiación</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="text-[10px] text-neutral-900 border border-neutral-300 px-2.5 py-0.5 uppercase tracking-wide hidden sm:inline-block font-bold">
+              {premiacionTotals.totalMedals} Medallas · {premiacionTotals.totalCuadros} Cuadros
+            </span>
+            <span className="text-sm text-neutral-600 font-bold uppercase tracking-wider">
+              {premiacionExpanded ? 'Colapsar ▲' : 'Expandir ▼'}
+            </span>
+          </div>
+        </button>
+
+        {premiacionExpanded && (
+          <div className="pt-2 pb-2 px-4 space-y-4">
+            {/* Tarjetas de Resumen Físico (Boxless) */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-y-6 md:gap-x-10 pb-1">
+              {/* Medallas Necesarias */}
+              <div className="bg-transparent">
+                <h3 className="text-xs font-bold uppercase tracking-widest text-neutral-600 mb-2 flex items-center gap-1.5">
+                  <Award className="w-4 h-4 text-neutral-900" /> Medallas para el Evento
+                </h3>
+                <div className="space-y-2 text-neutral-900">
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="flex items-center gap-2">🥇 1er Lugar:</span>
+                    <span className="font-mono font-bold text-base">{premiacionTotals.medals1st}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="flex items-center gap-2">🥈 2do Lugar:</span>
+                    <span className="font-mono font-bold text-base">{premiacionTotals.medals2nd}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="flex items-center gap-2">🥉 3er Lugar:</span>
+                    <span className="font-mono font-bold text-base">{premiacionTotals.medals3rd}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="flex items-center gap-2">🏅 Genéricas (Grupales):</span>
+                    <span className="font-mono font-bold text-base">{premiacionTotals.medalsGeneric}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-sm font-bold pt-1">
+                    <span className="text-neutral-700">Total Medallas:</span>
+                    <span className="font-mono text-base">{premiacionTotals.totalMedals}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Cuadros de Premiación */}
+              <div className="bg-transparent">
+                <h3 className="text-xs font-bold uppercase tracking-widest text-neutral-600 mb-2 flex items-center gap-1.5">
+                  <Trophy className="w-4 h-4 text-neutral-900" /> Cuadros por Posición
+                </h3>
+                <div className="space-y-2 text-neutral-900">
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="flex items-center gap-2">🥇 1er Lugar:</span>
+                    <span className="font-mono font-bold text-base">{premiacionTotals.cuadros1st}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="flex items-center gap-2">🥈 2do Lugar:</span>
+                    <span className="font-mono font-bold text-base">{premiacionTotals.cuadros2nd}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="flex items-center gap-2">🥉 3er Lugar:</span>
+                    <span className="font-mono font-bold text-base">{premiacionTotals.cuadros3rd}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-sm font-bold pt-1">
+                    <span className="text-neutral-700">Total Cuadros:</span>
+                    <span className="font-mono text-base">{premiacionTotals.totalCuadros}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* COLLAPSIBLE ANIDADO PARA GRUPOS DE COMPETENCIA (FULL-BLEED / SIN GAPS LATERALES) */}
+            <div className="-mx-4 mt-2">
+              <button
+                onClick={() => setGruposExpanded(!gruposExpanded)}
+                className="w-full py-2.5 px-4 bg-orange-100 hover:bg-orange-200/70 active:scale-98 transition-all flex items-center justify-between font-display text-base tracking-wider font-bold text-neutral-900 rounded-none cursor-pointer"
+              >
+                <div className="flex items-center gap-2.5">
+                  <Activity className="w-5 h-5 text-neutral-900 shrink-0" />
+                  <span className="uppercase text-sm">Grupos de Competencia</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="text-[10px] text-neutral-900 border border-neutral-300 px-2.5 py-0.5 uppercase tracking-wide hidden sm:inline-block font-bold">
+                    {divisions.length} Categorías
+                  </span>
+                  <span className="text-sm text-neutral-600 font-bold uppercase tracking-wider">
+                    {gruposExpanded ? 'Ocultar ▲' : 'Mostrar ▼'}
+                  </span>
+                </div>
+              </button>
+
+              {gruposExpanded && (
+                <div className="mt-1 space-y-0">
+                  {/* Acordeón de Categorías - SIN scroll interno y SIN gaps laterales */}
+                  {(() => {
+                    const query = premiacionSearch.toLowerCase().trim()
+                    const filteredDivs = divisions.filter(div => {
+                      const label = `${div.modality} ${div.age_category} ${div.level} ${div.style}`.toLowerCase()
+                      return label.includes(query)
+                    })
+
+                    if (filteredDivs.length === 0) {
+                      return <p className="text-xs text-neutral-500 text-center py-4">No se encontraron grupos de competencia.</p>
+                    }
+
+                    return filteredDivs.map(div => {
+                      const count = div.acts.length
+                      const mod = div.modality.toLowerCase()
+                      const isGrupal = mod === 'grupal'
+                      
+                      // Label formatting
+                      const ageLabel = AGE_CATEGORY_LABELS[div.age_category.toLowerCase() as AgeCategory] || div.age_category
+                      const modLabel = mod === 'solista' ? 'Solista' : mod === 'dueto' ? 'Dueto' : mod === 'trio' ? 'Trío' : 'Grupal'
+                      const titleLabel = `${modLabel} · ${ageLabel} · ${div.level.toUpperCase()} · ${div.style.toUpperCase()}`
+                      const divKey = `${div.modality}-${div.age_category}-${div.level}-${div.style.toLowerCase()}`
+                      const isExpanded = !!expandedDivisions[divKey]
+
+                      // Determine what prizes are awarded
+                      const prizeDesc = count === 1 ? '🥇 Solo 1er Lugar' : count === 2 ? '🥇 1er y 🥈 2do Lugar' : '🥇 1°, 🥈 2° y 🥉 3er Lugar'
+
+                      return (
+                        <div key={divKey} className="bg-white rounded-none overflow-hidden">
+                          {/* Header click */}
+                          <button
+                            onClick={() => setExpandedDivisions(prev => ({ ...prev, [divKey]: !prev[divKey] }))}
+                            className="w-full text-left px-4 py-2.5 hover:bg-neutral-50 transition-colors flex items-center justify-between text-xs cursor-pointer text-neutral-800"
+                          >
+                            <div className="min-w-0 pr-2 flex-1">
+                              <ScrollableText text={titleLabel} align="left" className="font-bold text-neutral-900 uppercase tracking-wide text-xs" />
+                              <p className="text-[10px] text-neutral-500 mt-0.5 font-semibold uppercase">{prizeDesc} ({count} coreografía{count === 1 ? '' : 's'})</p>
+                            </div>
+                            <div className="flex items-center gap-2 shrink-0">
+                              <span className="font-bold font-mono bg-transparent text-neutral-900 border border-neutral-300 px-2 py-0.5 uppercase text-xs">
+                                {count} {count === 1 ? 'Coreografía' : 'Coreografías'}
+                              </span>
+                              {isExpanded ? <ChevronDown className="w-4 h-4 text-neutral-500" /> : <ChevronRight className="w-4 h-4 text-neutral-500" />}
+                            </div>
+                          </button>
+
+                          {/* Expanded Competitors */}
+                          {isExpanded && (
+                            <div className="px-4 pb-2.5 pt-1.5 bg-transparent space-y-1.5">
+                              <h4 className="text-[9px] font-black text-neutral-500 uppercase tracking-wider mb-1">Coreografías en Competencia:</h4>
+                              <div className="space-y-1.5">
+                                {div.acts.map((act, idx) => {
+                                  const memberCount = (act.dancer_ids || []).length
+                                  return (
+                                    <div key={act.id} className="p-2 bg-white border border-neutral-200 flex items-start justify-between text-[11px] gap-2 text-neutral-850">
+                                      <div className="min-w-0">
+                                        <p className="font-bold text-neutral-900 uppercase flex items-center gap-2 flex-wrap">
+                                          <span>{idx + 1}. {act.academy || '(sin academia)'} {act.team_name ? `(${act.team_name})` : ''}</span>
+                                          {act.level && (
+                                            <span className="text-[8px] font-extrabold px-1.5 py-0.5 bg-transparent text-neutral-900 border border-neutral-300 uppercase rounded-none tracking-wider">
+                                              {act.level}
+                                            </span>
+                                          )}
+                                        </p>
+                                        {act.dancerNames && act.dancerNames.length > 0 && (
+                                          <p className="text-neutral-500 mt-1 italic truncate">
+                                            Integrantes: {act.dancerNames.join(', ')}
+                                          </p>
+                                        )}
+                                      </div>
+                                      <div className="text-right shrink-0">
+                                        <span className="font-bold font-mono bg-transparent text-neutral-900 border border-neutral-300 px-1.5 py-0.5 uppercase text-[9px]">
+                                          {memberCount} alumno{memberCount === 1 ? '' : 's'}
+                                        </span>
+                                        {isGrupal && (
+                                          <p className="text-[8px] text-neutral-900 font-bold uppercase mt-1 tracking-wider">Medalla Genérica</p>
+                                        )}
+                                      </div>
+                                    </div>
+                                  )
+                                })}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )
+                    })
+                  })()}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
 
       <div className="grid grid-cols-1 gap-4">
         <div>
@@ -422,6 +743,53 @@ function RegistrationCurve({ points }: { points: { date: string; count: number }
         <span>{points[0].date}</span><span>{points[points.length - 1].date}</span>
       </div>
       <p className="text-xs text-neutral-400 mt-1.5">Total: <strong className="text-fuchsia-500 text-sm">{points[points.length - 1].count}</strong> registros</p>
+    </div>
+  )
+}
+
+function ScrollableText({ text, className = '', align = 'center' }: { text: string; className?: string; align?: 'left' | 'center' | 'right' }) {
+  const containerRef = useRef<HTMLDivElement>(null)
+  const textRef = useRef<HTMLSpanElement>(null)
+  const [scrollDistance, setScrollDistance] = useState(0)
+
+  const checkOverflow = useCallback(() => {
+    const container = containerRef.current
+    const textEl = textRef.current
+    if (container && textEl) {
+      const distance = textEl.offsetWidth - container.offsetWidth
+      setScrollDistance(distance > 0 ? distance : 0)
+    }
+  }, [])
+
+  useEffect(() => {
+    const container = containerRef.current
+    if (!container) return
+
+    const observer = new ResizeObserver(() => {
+      checkOverflow()
+    })
+    observer.observe(container)
+    checkOverflow()
+
+    return () => {
+      observer.disconnect()
+    }
+  }, [text, checkOverflow])
+
+  return (
+    <div
+      ref={containerRef}
+      className={`overflow-hidden whitespace-nowrap relative w-full ${scrollDistance === 0 && align === 'center' ? 'text-center' : ''} ${className}`}
+    >
+      <span
+        ref={textRef}
+        className={`inline-block ${scrollDistance > 0 ? 'animate-marquee' : ''}`}
+        style={{
+          '--scroll-dist': `-${scrollDistance}px`,
+        } as React.CSSProperties}
+      >
+        {text}
+      </span>
     </div>
   )
 }

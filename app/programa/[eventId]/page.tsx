@@ -10,6 +10,7 @@ type Props = { params: Promise<{ eventId: string }> }
 
 function extractDancerName(p: Participant): string {
   const type = (p.type || '').trim().toLowerCase()
+  // Grupal: show only academy name
   if (type === 'grupal') return p.academy || p.name
   if (!p.academy || !p.name) return p.name
 
@@ -736,6 +737,20 @@ export default function PublicProgramPage({ params }: Props) {
         .animate-screensaver-logo-fade-in {
           animation: screensaver-logo-fade-in 0.6s ease-out forwards;
         }
+        @keyframes gradient-shift {
+          0% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+          100% { background-position: 0% 50%; }
+        }
+        .gradient-names-text span {
+          background: linear-gradient(90deg, #f472b6, #a78bfa, #38bdf8, #a78bfa, #f472b6);
+          background-size: 300% auto;
+          -webkit-background-clip: text;
+          background-clip: text;
+          -webkit-text-fill-color: transparent;
+          color: transparent;
+          animation: gradient-shift 4s ease infinite;
+        }
       `}} />
 
       {/* Main Page Layout Wrapper (to apply background blur when screensaver is active) */}
@@ -963,30 +978,55 @@ export default function PublicProgramPage({ params }: Props) {
 
                       {/* Act Details */}
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <div className="flex-1 min-w-0">
-                            <ScrollableText 
-                              text={extractDancerName(p)} 
-                              align="left"
-                              className={`font-display text-sm uppercase font-extrabold ${isCurrent ? 'text-yellow-400' : 'text-zinc-200'}`}
-                            />
-                          </div>
-                          {isCurrent && (
-                            <span className="text-[8px] font-bold bg-yellow-500 text-black px-1.5 py-0.5 rounded-full uppercase shrink-0 tracking-wider">
-                              PISO
-                            </span>
-                          )}
-                          {isSupported && (
-                            <span className="text-[8px] font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 px-1.5 py-0.5 rounded-full uppercase shrink-0 tracking-wider animate-pulse">
-                              Mi Equipo
-                            </span>
-                          )}
-                        </div>
-                        
-                        <ScrollableText 
-                          text={formatSubtitle(p, true)} 
+                        {(() => {
+                          const pType = (p.type || '').trim().toLowerCase()
+                          const isSolista = pType === 'solista' || pType === 'solo'
+                          const isDueto = pType === 'dueto' || pType === 'duo'
+                          const isTrio = pType === 'trío' || pType === 'trio'
+                          
+                          // For trio: show academy as main title, member names as secondary line
+                          const mainText = isTrio ? (p.academy || p.name) : extractDancerName(p)
+                          const memberNames = isTrio ? extractDancerName(p) : null
+                          // Names are on a separate line only when they differ from the title
+                          const hasSecondLine = isTrio && memberNames && memberNames !== mainText
+                          // Apply gradient to the title itself ONLY IF it represents names AND the user is supporting this academy
+                          const titleGradient = isSupported && (isSolista || isDueto || (isTrio && !hasSecondLine)) && !isCurrent
+                          return (
+                            <>
+                              <div className="flex items-center gap-2">
+                                <div className={`flex-1 min-w-0 ${titleGradient ? 'gradient-names-text' : ''}`}>
+                                  <ScrollableText
+                                    text={mainText}
+                                    align="left"
+                                    className={`font-display text-lg uppercase font-extrabold leading-tight ${!titleGradient ? (isCurrent ? 'text-yellow-400' : 'text-zinc-200') : ''}`}
+                                  />
+                                </div>
+                                {isCurrent && (
+                                  <span className="text-[8px] font-bold bg-yellow-500 text-black px-1.5 py-0.5 rounded-full uppercase shrink-0 tracking-wider">
+                                    PISO
+                                  </span>
+                                )}
+                                {isSupported && (
+                                  <span className="text-[8px] font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 px-1.5 py-0.5 rounded-full uppercase shrink-0 tracking-wider animate-pulse">
+                                    Mi Equipo
+                                  </span>
+                                )}
+                              </div>
+                              {hasSecondLine && (
+                                <ScrollableText
+                                  text={memberNames!}
+                                  align="left"
+                                  className={`text-[11px] uppercase mt-0.5 font-bold tracking-wide ${isSupported ? 'gradient-names-text' : 'text-zinc-400'}`}
+                                />
+                              )}
+                            </>
+                          )
+                        })()}
+
+                        <ScrollableText
+                          text={formatSubtitle(p, true)}
                           align="left"
-                          className="text-[10px] text-zinc-400 uppercase mt-0.5"
+                          className="text-sm text-zinc-400 uppercase mt-0.5"
                         />
 
                         {/* Performance countdown / ETA tags */}
