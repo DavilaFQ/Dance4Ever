@@ -114,6 +114,7 @@ export type CoachRegistration = {
   payment_notes: string | null
   updated_at?: string
   signature?: string
+  draft_id?: string | null
 }
 
 export type RegistrationDancer = {

@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState, useMemo, useCallback, useRef } from 'react'
-import { supabase, CoachRegistration, RegistrationDancer, RegistrationAct, AGE_CATEGORY_ORDER, AGE_CATEGORY_LABELS } from '@/lib/supabase'
+import { supabase, CoachRegistration, RegistrationDancer, RegistrationAct, AGE_CATEGORY_ORDER, AGE_CATEGORY_LABELS, AgeCategory } from '@/lib/supabase'
 import { useEventContext } from '@/app/socios/layout'
 import { formatMoney, formatRelative, safeFormatDate, isEditedAfterConfirm } from '@/lib/format'
 import { costoRegistro } from '@/lib/cost'

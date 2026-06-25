@@ -557,8 +557,15 @@ export default function RegisterPage({ params }: Props) {
                     .from('registration_drafts')
                     .select('state')
                     .eq('draft_id', draftId)
-                  if (!error && draftRows && draftRows.length > 0) {
-                    rawState = migrateSaved(draftRows[0].state as State)
+                  if (!error) {
+                    if (draftRows && draftRows.length > 0) {
+                      rawState = migrateSaved(draftRows[0].state as State)
+                    } else if (draftId) {
+                      // The draft does not exist on the server (e.g. deleted by admin)
+                      // Clear local storage so we don't restore and recreate it
+                      localStorage.removeItem(LS_KEY(eventId))
+                      localStorage.removeItem(`d4e:register-draft-id:${eventId}`)
+                    }
                   }
                 } catch { /* Supabase might not be ready */ }
 

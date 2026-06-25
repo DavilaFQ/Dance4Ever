@@ -1020,6 +1020,9 @@ export default function RegistrationDetailPage({ registrationIdProp, onBack }: {
             <button
               onClick={async () => {
                 if (!confirm('ELIMINAR COMPLETAMENTE este registro? Esto borrara todos los integrantes, coreografías e historial de forma permanente.')) return
+                if (reg.draft_id) {
+                  await supabase.from('registration_drafts').delete().eq('draft_id', reg.draft_id)
+                }
                 await supabase.from('coach_registrations').delete().eq('id', reg.id)
                 if (onBack) onBack(); else router.push('/socios/registros')
               }} className="w-full py-2.5 rounded-xl text-xs font-bold bg-red-500/10 text-red-400 border border-red-500/30 active:scale-95 transition-all">
