@@ -2,7 +2,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
 import Image from 'next/image'
 import { supabase, Participant, Event } from '@/lib/supabase'
-import { QrCode, X, Monitor, Settings, MessageSquare, AlertTriangle, Music, Volume2, Megaphone, Pause, Award, HeartPulse, Search } from 'lucide-react'
+import { QrCode, X, Monitor, Settings, MessageSquare, AlertTriangle, Music, Volume2, Megaphone, Pause, Award, HeartPulse, Search, Trophy } from 'lucide-react'
 import QRCode from 'qrcode'
 import { participantMatches } from '@/lib/search'
 import { subscribePortalConfig, PortalConfig, savePortalConfig } from '@/lib/portalConfig'
@@ -11,6 +11,7 @@ import PortalLockout from '@/components/PortalLockout'
 export default function StaffPage() {
   const [event, setEvent] = useState<Event | null>(null)
   const [participants, setParticipants] = useState<Participant[]>([])
+  const [isDancerOfYearActive, setIsDancerOfYearActive] = useState(false)
   const [intermedioIndex, setIntermedioIndex] = useState<number | null>(null)
   const [qrUrl, setQrUrl] = useState('')
   const [presentadorQrUrl, setPresentadorQrUrl] = useState('')
@@ -192,18 +193,25 @@ export default function StaffPage() {
   }, [])
 
   useEffect(() => {
-    if (!event) return
-    const channel = supabase
-      .channel('staff-' + event.id)
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'events', filter: `id=eq.${event.id}` },
-        (payload) => setEvent(payload.new as Event))
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'program_drafts', filter: `event_id=eq.${event.id}` },
-        async (payload) => {
-          if (payload.new && 'intermedio_index' in payload.new) {
-            setIntermedioIndex(payload.new.intermedio_index ?? null)
-          }
-        })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'participants', filter: `event_id=eq.${event.id}` },
+      if (!event) return
+      const channel = supabase
+        .channel('staff-' + event.id)
+        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'events', filter: `id=eq.${event.id}` },
+          (payload) => setEvent(payload.new as Event))
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'program_drafts', filter: `event_id=eq.${event.id}` },
+          async (payload) => {
+            if (payload.new && 'intermedio_index' in payload.new) {
+              setIntermedioIndex(payload.new.intermedio_index ?? null)
+            }
+          })
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'event_checklist', filter: `event_id=eq.${event.id}` },
+          (payload) => {
+            const record = (payload.eventType === 'DELETE' ? payload.old : payload.new) as any
+            if (record && record.category === 'banner_dancer_ano') {
+              setIsDancerOfYearActive(payload.eventType !== 'DELETE' && !!record.completed)
+            }
+          })
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'participants', filter: `event_id=eq.${event.id}` },
         (payload) => {
           if (payload.eventType === 'UPDATE') {
             const updated = payload.new as Participant
@@ -349,6 +357,14 @@ export default function StaffPage() {
         setOnDeckInput(data.on_deck_count)
         loadParticipants(data.id)
         generateQr(data.id)
+        
+        const { data: chk } = await supabase
+          .from('event_checklist')
+          .select('completed')
+          .eq('event_id', data.id)
+          .eq('category', 'banner_dancer_ano')
+          .maybeSingle()
+        setIsDancerOfYearActive(chk?.completed ?? false)
         
         const { data: draftData } = await supabase
           .from('program_drafts')
@@ -592,6 +608,13 @@ export default function StaffPage() {
             </div>
           ) : <div className="w-px" />}
         </header>
+        {isDancerOfYearActive && (
+          <div className="bg-gradient-to-r from-amber-600 via-yellow-500 to-amber-600 text-black py-2.5 px-4 font-display text-xs font-black tracking-[0.2em] uppercase text-center flex items-center justify-center gap-2 shadow-lg shadow-yellow-500/10 border-b border-yellow-400/30 shrink-0 relative z-50 animate-pulse">
+            <Trophy className="w-4 h-4 fill-black text-black animate-bounce" />
+            <span>Dancer del año</span>
+            <Trophy className="w-4 h-4 fill-black text-black animate-bounce" />
+          </div>
+        )}
 
         {errorState && (
           <div className="bg-red-950/90 backdrop-blur-md border-b border-red-500 py-3 px-4 text-center text-red-200 text-sm font-semibold z-50">

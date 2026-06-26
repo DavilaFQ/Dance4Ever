@@ -2,7 +2,7 @@
 import { useEffect, useState, use, useCallback, useRef } from 'react'
 import Image from 'next/image'
 import { supabase, Participant, Event } from '@/lib/supabase'
-import { X, ChevronLeft, ChevronRight, Star, MessageSquare, MicOff, HelpCircle, CheckCircle, Clock, HeartPulse, AlertTriangle } from 'lucide-react'
+import { X, ChevronLeft, ChevronRight, Star, MessageSquare, MicOff, HelpCircle, CheckCircle, Clock, HeartPulse, AlertTriangle, Trophy } from 'lucide-react'
 import { subscribePortalConfig, PortalConfig } from '@/lib/portalConfig'
 import PortalLockout from '@/components/PortalLockout'
 
@@ -52,6 +52,9 @@ export default function PresentadorPage({ params }: Props) {
   const [participants, setParticipants] = useState<Participant[]>([])
   const [notFound, setNotFound] = useState(false)
   const [portalConfig, setPortalConfig] = useState<PortalConfig | null>(null)
+  const [isDancerOfYearActive, setIsDancerOfYearActive] = useState(false)
+  const [dancerOfYearRow, setDancerOfYearRow] = useState<any>(null)
+  const [isTogglingDancer, setIsTogglingDancer] = useState(false)
 
   const [activeAnnouncement, setActiveAnnouncement] = useState('')
   const [audioUnlocked, setAudioUnlocked] = useState(false)
@@ -393,9 +396,10 @@ export default function PresentadorPage({ params }: Props) {
   }, [eventId])
 
   const loadAll = useCallback(async () => {
-    const [ev, ps] = await Promise.all([
+    const [ev, ps, chk] = await Promise.all([
       supabase.from('events').select('*').eq('id', eventId).single(),
       supabase.from('participants').select('*').eq('event_id', eventId).order('position'),
+      supabase.from('event_checklist').select('*').eq('event_id', eventId).eq('category', 'banner_dancer_ano').maybeSingle()
     ])
     if (ev.error || !ev.data) {
       setNotFound(true)
@@ -403,6 +407,13 @@ export default function PresentadorPage({ params }: Props) {
     }
     setEvent(ev.data)
     if (ps.data) setParticipants(ps.data)
+    if (chk.data) {
+      setDancerOfYearRow(chk.data)
+      setIsDancerOfYearActive(chk.data.completed)
+    } else {
+      setDancerOfYearRow(null)
+      setIsDancerOfYearActive(false)
+    }
   }, [eventId])
 
   useEffect(() => {
@@ -430,12 +441,64 @@ export default function PresentadorPage({ params }: Props) {
         (payload) => setEvent(payload.new as Event))
       .on('postgres_changes', { event: '*', schema: 'public', table: 'participants', filter: `event_id=eq.${eventId}` },
         () => loadAll())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'event_checklist', filter: `event_id=eq.${eventId}` },
+        (payload) => {
+          const record = (payload.eventType === 'DELETE' ? payload.old : payload.new) as any
+          if (record && record.category === 'banner_dancer_ano') {
+            if (payload.eventType === 'DELETE') {
+              setIsDancerOfYearActive(false)
+              setDancerOfYearRow(null)
+            } else {
+              setIsDancerOfYearActive(record.completed)
+              setDancerOfYearRow(record)
+            }
+          }
+        })
       .subscribe()
     return () => { supabase.removeChannel(channel) }
   }, [eventId, loadAll])
 
   const current = participants.find(p => p.position === (event?.current_position ?? -1))
   const nextP = participants.find(p => p.position === ((event?.current_position ?? -1) + 1))
+
+  async function toggleDancerOfYear() {
+    if (isTogglingDancer) return
+    setIsTogglingDancer(true)
+    try {
+      const nextActive = !isDancerOfYearActive
+      if (dancerOfYearRow) {
+        const { data, error } = await supabase
+          .from('event_checklist')
+          .update({ completed: nextActive })
+          .eq('id', dancerOfYearRow.id)
+          .select()
+          .single()
+        if (!error && data) {
+          setDancerOfYearRow(data)
+          setIsDancerOfYearActive(data.completed)
+        }
+      } else {
+        const { data, error } = await supabase
+          .from('event_checklist')
+          .insert({
+            event_id: eventId,
+            category: 'banner_dancer_ano',
+            text: 'Dancer del año',
+            completed: nextActive
+          })
+          .select()
+          .single()
+        if (!error && data) {
+          setDancerOfYearRow(data)
+          setIsDancerOfYearActive(data.completed)
+        }
+      }
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setIsTogglingDancer(false)
+    }
+  }
 
   async function advance(delta: number) {
     if (!event || isAdvancing) return
@@ -674,6 +737,18 @@ export default function PresentadorPage({ params }: Props) {
               </button>
             )}
             <button
+              onClick={toggleDancerOfYear}
+              disabled={isTogglingDancer}
+              className={`transition-all p-2 rounded-full border relative active:scale-95 disabled:opacity-50 ${
+                isDancerOfYearActive 
+                  ? 'bg-yellow-500 border-yellow-400 text-black shadow-lg shadow-yellow-500/20' 
+                  : 'bg-zinc-900/40 border-zinc-800 text-zinc-400 hover:text-white'
+              }`}
+              title={isDancerOfYearActive ? "Desactivar Banner Dancer del año" : "Activar Banner Dancer del año"}
+            >
+              <Trophy className={`w-5 h-5 ${isDancerOfYearActive ? 'fill-black text-black' : 'text-zinc-400'}`} />
+            </button>
+            <button
               onClick={() => setShowChatDrawer(true)}
               className="text-zinc-400 hover:text-white transition-all p-2 rounded-full border border-zinc-800 bg-zinc-900/40 relative active:scale-95"
               title="Chat / Alertas rápidas"
@@ -687,6 +762,13 @@ export default function PresentadorPage({ params }: Props) {
             </button>
           </div>
         </header>
+        {isDancerOfYearActive && (
+          <div className="bg-gradient-to-r from-amber-600 via-yellow-500 to-amber-600 text-black py-2.5 px-4 font-display text-xs font-black tracking-[0.2em] uppercase text-center flex items-center justify-center gap-2 shadow-lg shadow-yellow-500/10 border-b border-yellow-400/30 shrink-0 relative z-50 animate-pulse">
+            <Trophy className="w-4 h-4 fill-black text-black animate-bounce" />
+            <span>Dancer del año</span>
+            <Trophy className="w-4 h-4 fill-black text-black animate-bounce" />
+          </div>
+        )}
 
         {event.awards_mode ? (
           <div className="flex-1 min-h-0 flex flex-col px-4 text-center bg-zinc-950 text-white z-10 justify-center">

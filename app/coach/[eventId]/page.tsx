@@ -2,7 +2,7 @@
 import { useEffect, useState, use, useCallback, useRef } from 'react'
 import Image from 'next/image'
 import { supabase, Participant, Event, Coach } from '@/lib/supabase'
-import { ChevronLeft, X, MessageSquare, ShieldAlert, Shirt, HelpCircle, UserCheck, Star, HeartPulse, Search, Award } from 'lucide-react'
+import { ChevronLeft, X, MessageSquare, ShieldAlert, Shirt, HelpCircle, UserCheck, Star, HeartPulse, Search, Award, Trophy } from 'lucide-react'
 import { participantMatches } from '@/lib/search'
 import { getAvgPerTurnMs, etaLabel } from '@/lib/eta'
 import { syncServerTime, serverNow } from '@/lib/serverTime'
@@ -16,6 +16,7 @@ const STORAGE_KEY = (eventId: string) => `d4e:coach:${eventId}`
 export default function CoachPage({ params }: Props) {
   const { eventId } = use(params)
   const [event, setEvent] = useState<Event | null>(null)
+  const [isDancerOfYearActive, setIsDancerOfYearActive] = useState(false)
   const [participants, setParticipants] = useState<Participant[]>([])
   const [intermedioIndex, setIntermedioIndex] = useState<number | null>(null)
   const [coaches, setCoaches] = useState<Coach[]>([])
@@ -126,11 +127,12 @@ export default function CoachPage({ params }: Props) {
   }, [])
 
   const loadAll = useCallback(async () => {
-    const [ev, ps, cs, draftData] = await Promise.all([
+    const [ev, ps, cs, draftData, chk] = await Promise.all([
       supabase.from('events').select('*').eq('id', eventId).single(),
       supabase.from('participants').select('*').eq('event_id', eventId).order('position'),
       supabase.from('coaches').select('*').eq('event_id', eventId).order('name'),
       supabase.from('program_drafts').select('intermedio_index').eq('event_id', eventId).maybeSingle(),
+      supabase.from('event_checklist').select('completed').eq('event_id', eventId).eq('category', 'banner_dancer_ano').maybeSingle(),
     ])
     if (ev.data) setEvent(ev.data)
     if (ps.data) setParticipants(ps.data)
@@ -140,6 +142,7 @@ export default function CoachPage({ params }: Props) {
     } else {
       setIntermedioIndex(null)
     }
+    setIsDancerOfYearActive(chk?.data?.completed ?? false)
   }, [eventId])
 
   useEffect(() => {
@@ -160,6 +163,13 @@ export default function CoachPage({ params }: Props) {
         () => loadAll())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'program_drafts', filter: `event_id=eq.${eventId}` },
         () => loadAll())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'event_checklist', filter: `event_id=eq.${eventId}` },
+        (payload) => {
+          const record = (payload.eventType === 'DELETE' ? payload.old : payload.new) as any
+          if (record && record.category === 'banner_dancer_ano') {
+            setIsDancerOfYearActive(payload.eventType !== 'DELETE' && !!record.completed)
+          }
+        })
       .subscribe()
     return () => { supabase.removeChannel(channel) }
   }, [eventId, loadAll])
@@ -543,6 +553,13 @@ export default function CoachPage({ params }: Props) {
             <Image src="/logo.png" alt="Dance4ever" width={42} height={29} priority className="opacity-95" />
           </div>
         </header>
+        {isDancerOfYearActive && (
+          <div className="bg-gradient-to-r from-amber-600 via-yellow-500 to-amber-600 text-black py-2.5 px-4 font-display text-xs font-black tracking-[0.2em] uppercase text-center flex items-center justify-center gap-2 shadow-lg shadow-yellow-500/10 border-b border-yellow-400/30 shrink-0 relative z-50 animate-pulse">
+            <Trophy className="w-4 h-4 fill-black text-black animate-bounce" />
+            <span>Dancer del año</span>
+            <Trophy className="w-4 h-4 fill-black text-black animate-bounce" />
+          </div>
+        )}
 
         {!event ? (
           <div className="flex-1 flex items-center justify-center text-zinc-500 z-10">Cargando…</div>

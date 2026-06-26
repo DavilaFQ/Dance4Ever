@@ -2,7 +2,7 @@
 import { useEffect, useState, use, useCallback, useRef } from 'react'
 import Image from 'next/image'
 import { supabase, Participant, Event } from '@/lib/supabase'
-import { X, Search, Clock, AlertTriangle, ChevronRight, CheckCircle, Award, Sparkles, Filter, Heart, Share2, Smartphone, Volume2 } from 'lucide-react'
+import { X, Search, Clock, AlertTriangle, ChevronRight, CheckCircle, Award, Sparkles, Filter, Heart, Share2, Smartphone, Volume2, Trophy } from 'lucide-react'
 import { subscribePortalConfig, PortalConfig } from '@/lib/portalConfig'
 
 type Props = { params: Promise<{ eventId: string }> }
@@ -92,6 +92,7 @@ export default function PublicProgramPage({ params }: Props) {
   const [intermedioIndex, setIntermedioIndex] = useState<number | null>(null)
   const [loading, setLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
+  const [isDancerOfYearActive, setIsDancerOfYearActive] = useState(false)
 
 
 
@@ -302,11 +303,12 @@ export default function PublicProgramPage({ params }: Props) {
   // Load data function
   const loadAll = useCallback(async () => {
     try {
-      const [ev, ps, supportData, draftData] = await Promise.all([
+      const [ev, ps, supportData, draftData, chk] = await Promise.all([
         supabase.from('events').select('*').eq('id', eventId).single(),
         supabase.from('participants').select('*').eq('event_id', eventId).order('position'),
         supabase.from('event_checklist').select('text, notes').eq('event_id', eventId).eq('category', 'team_support'),
-        supabase.from('program_drafts').select('intermedio_index').eq('event_id', eventId).maybeSingle()
+        supabase.from('program_drafts').select('intermedio_index').eq('event_id', eventId).maybeSingle(),
+        supabase.from('event_checklist').select('completed').eq('event_id', eventId).eq('category', 'banner_dancer_ano').maybeSingle()
       ])
       if (ev.error || !ev.data) {
         setNotFound(true)
@@ -314,6 +316,11 @@ export default function PublicProgramPage({ params }: Props) {
         return
       }
       setEvent(ev.data)
+      if (chk && chk.data) {
+        setIsDancerOfYearActive(chk.data.completed)
+      } else {
+        setIsDancerOfYearActive(false)
+      }
       if (ps.data) {
         setParticipants(ps.data)
       }
@@ -372,7 +379,7 @@ export default function PublicProgramPage({ params }: Props) {
       )
       .on('postgres_changes', { event: '*', schema: 'public', table: 'event_checklist', filter: `event_id=eq.${eventId}` },
         (payload) => {
-          const record = (payload.eventType === 'DELETE' ? payload.old : payload.new) as { category?: string; text?: string; notes?: string }
+          const record = (payload.eventType === 'DELETE' ? payload.old : payload.new) as { category?: string; text?: string; notes?: string; completed?: boolean }
           if (record && record.category === 'team_support' && record.text) {
             setSupportScores(prev => {
               const next = { ...prev }
@@ -383,6 +390,13 @@ export default function PublicProgramPage({ params }: Props) {
               }
               return next
             })
+          }
+          if (record && record.category === 'banner_dancer_ano') {
+            if (payload.eventType === 'DELETE') {
+              setIsDancerOfYearActive(false)
+            } else {
+              setIsDancerOfYearActive(!!record.completed)
+            }
           }
         }
       )
@@ -810,6 +824,13 @@ export default function PublicProgramPage({ params }: Props) {
           </button>
         </div>
       </header>
+      {isDancerOfYearActive && (
+        <div className="bg-gradient-to-r from-amber-600 via-yellow-500 to-amber-600 text-black py-2.5 px-4 font-display text-xs font-black tracking-[0.2em] uppercase text-center flex items-center justify-center gap-2 shadow-lg shadow-yellow-500/10 border-b border-yellow-400/30 shrink-0 relative z-50 animate-pulse">
+          <Trophy className="w-4 h-4 fill-black text-black animate-bounce" />
+          <span>Dancer del año</span>
+          <Trophy className="w-4 h-4 fill-black text-black animate-bounce" />
+        </div>
+      )}
 
       {/* Sub-header Academy selection */}
       {selectedAcademy ? (
