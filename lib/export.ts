@@ -769,17 +769,73 @@ export async function exportPdfDoc(event: Event, participants: Participant[], co
   doc.line(30, y + 6, 120, y + 6)
   y += 22
 
-  autoTable(doc, {
-    startY: y,
-    head: [['#', 'Nombre / Equipo', 'Academia', 'Categoría', 'Modalidad', 'Coach']],
-    body: participants.map(p => [
+  // Build grouped body rows with division and subdivision headers
+  const bodyRows: any[] = []
+  let lastCategory = ''
+  let lastSubgroup = ''
+
+  for (let i = 0; i < participants.length; i++) {
+    const p = participants[i]
+
+    // 1. Division Header Row (Age Category)
+    const catRaw = p.category || 'open'
+    const catLabel = (AGE_CATEGORY_LABELS[catRaw.toLowerCase() as AgeCategory] || catRaw).toUpperCase()
+    if (catLabel !== lastCategory) {
+      bodyRows.push([
+        {
+          content: `CATEGORÍA: ${catLabel}`,
+          colSpan: 6,
+          styles: {
+            fillColor: [76, 29, 149], // Deep purple background
+            textColor: [245, 200, 0], // Gold text
+            fontStyle: 'bold',
+            halign: 'left',
+            fontSize: 9.5
+          }
+        }
+      ])
+      lastCategory = catLabel
+      lastSubgroup = '' // Reset subgroup when category changes
+    }
+
+    // 2. Subdivision Header Row (Modality + Style)
+    const modRaw = p.type || ''
+    const modLabel = (modalidadOf(modRaw.toLowerCase() as Modality) || modRaw).toUpperCase()
+    const styleLabel = (p.style || '').toUpperCase()
+    const subgroup = [modLabel, styleLabel].filter(Boolean).join(' · ')
+
+    if (subgroup && subgroup !== lastSubgroup) {
+      bodyRows.push([
+        {
+          content: subgroup,
+          colSpan: 6,
+          styles: {
+            fillColor: [243, 232, 255], // Soft purple background tint
+            textColor: [107, 33, 168], // Dark purple text
+            fontStyle: 'bold',
+            halign: 'left',
+            fontSize: 8.5
+          }
+        }
+      ])
+      lastSubgroup = subgroup
+    }
+
+    // 3. Normal Row
+    bodyRows.push([
       String(p.position),
       p.name ?? '',
       p.academy ?? '',
-      p.category ?? '',
-      p.type ?? '',
+      catLabel,
+      modLabel + (p.style ? ` - ${p.style}` : ''),
       p.coach_id ? coachMap.get(p.coach_id) ?? '' : '',
-    ]),
+    ])
+  }
+
+  autoTable(doc, {
+    startY: y,
+    head: [['#', 'Nombre / Equipo', 'Academia', 'Categoría', 'Modalidad', 'Coach']],
+    body: bodyRows,
     theme: 'striped',
     headStyles:          { fillColor: [76, 29, 149], textColor: [245, 200, 0], fontStyle: 'bold', fontSize: 10 },
     bodyStyles:          { fontSize: 9, textColor: [30, 30, 30] },
