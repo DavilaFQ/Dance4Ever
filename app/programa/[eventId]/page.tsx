@@ -930,7 +930,7 @@ export default function PublicProgramPage({ params }: Props) {
                     rendered.push(
                       <div key={`intermedio-${p.position}`} className="flex items-center justify-center gap-2 py-3 px-4 my-3 rounded-xl bg-amber-500/10 border border-dashed border-amber-500/30 select-none">
                         <Award className="w-4 h-4 text-amber-400 animate-pulse" />
-                        <span className="font-display text-xs tracking-[0.2em] text-amber-400 uppercase font-bold">Bloque 1</span>
+                        <span className="font-display text-sm tracking-[0.2em] text-amber-400 uppercase font-bold">Bloque 1</span>
                       </div>
                     )
                   }
@@ -943,7 +943,7 @@ export default function PublicProgramPage({ params }: Props) {
                     rendered.push(
                       <div key={`cat-div-${p.id}`} className="flex items-center gap-2 px-4 pt-6 pb-2 select-none opacity-90">
                         <div className="h-[1px] flex-1 bg-rose-500/20" />
-                        <span className="font-display text-xl tracking-[0.25em] text-rose-400/80 uppercase font-black px-1">{cat}</span>
+                        <span className="font-display text-2xl tracking-[0.25em] text-rose-400/80 uppercase font-black px-1">{cat}</span>
                         <div className="h-[1px] flex-1 bg-rose-500/20" />
                       </div>
                     )
@@ -955,7 +955,7 @@ export default function PublicProgramPage({ params }: Props) {
                     rendered.push(
                       <div key={`sub-div-${p.id}`} className="flex items-center gap-2 px-4 pt-4 pb-1 select-none opacity-80">
                         <div className="h-[1px] w-3 bg-emerald-500/20" />
-                        <span className="text-xs tracking-wider text-emerald-400/70 uppercase font-extrabold px-1">{subgroup}</span>
+                        <span className="text-sm tracking-wider text-emerald-400/70 uppercase font-extrabold px-1">{subgroup}</span>
                         <div className="h-[1px] flex-1 bg-emerald-500/10" />
                       </div>
                     )
