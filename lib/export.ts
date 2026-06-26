@@ -758,39 +758,8 @@ export async function exportPdfDoc(event: Event, participants: Participant[], co
   doc.setTextColor(170, 170, 170)
   doc.text('Dance4ever · Programa del evento', 120, 105)
 
-  // Resumen
-  let y = 160
-  doc.setTextColor(20, 20, 20)
-  doc.setFont('helvetica', 'bold')
-  doc.setFontSize(13)
-  doc.text('RESUMEN', 30, y)
-  y += 6
-  doc.setDrawColor(245, 200, 0)
-  doc.setLineWidth(2)
-  doc.line(30, y, 110, y)
-  y += 18
-
-  doc.setFont('helvetica', 'normal')
-  doc.setFontSize(11)
-  doc.setTextColor(40, 40, 40)
-  const rows: [string, string][] = [
-    ['Total turnos:',        String(participants.length)],
-    ['Presentados:',         String(presented)],
-    ['Pendientes:',          String(pending)],
-    ['Hora de inicio:',      startedAt ? startedAt.toLocaleString('es-MX') : '—'],
-    ['Tiempo transcurrido:', startedAt ? formatDuration(elapsedMs) : '—'],
-    ['Promedio por turno:',  avgMs > 0 ? formatDuration(avgMs) : '—'],
-  ]
-  for (const [label, value] of rows) {
-    doc.setFont('helvetica', 'bold')
-    doc.text(label, 30, y)
-    doc.setFont('helvetica', 'normal')
-    doc.text(value, 180, y)
-    y += 16
-  }
-  y += 14
-
   // Tabla del programa
+  let y = 160
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(13)
   doc.setTextColor(20, 20, 20)
@@ -802,7 +771,7 @@ export async function exportPdfDoc(event: Event, participants: Participant[], co
 
   autoTable(doc, {
     startY: y,
-    head: [['#', 'Nombre / Equipo', 'Academia', 'Categoría', 'Modalidad', 'Coach', 'Estado']],
+    head: [['#', 'Nombre / Equipo', 'Academia', 'Categoría', 'Modalidad', 'Coach']],
     body: participants.map(p => [
       String(p.position),
       p.name ?? '',
@@ -810,7 +779,6 @@ export async function exportPdfDoc(event: Event, participants: Participant[], co
       p.category ?? '',
       p.type ?? '',
       p.coach_id ? coachMap.get(p.coach_id) ?? '' : '',
-      statusFor(p, currentPos),
     ]),
     theme: 'striped',
     headStyles:          { fillColor: [76, 29, 149], textColor: [245, 200, 0], fontStyle: 'bold', fontSize: 10 },
@@ -819,19 +787,8 @@ export async function exportPdfDoc(event: Event, participants: Participant[], co
     columnStyles: {
       0: { halign: 'center', cellWidth: 32, fontStyle: 'bold' },
       1: { fontStyle: 'bold' },
-      6: { halign: 'center' },
     },
     margin: { left: 30, right: 30 },
-    didParseCell: (data) => {
-      if (data.section === 'body' && data.column.index === 6) {
-        const v = String(data.cell.raw)
-        if (v === 'PRESENTADO') data.cell.styles.textColor = [40, 130, 60]
-        else if (v === 'EN ESCENARIO') {
-          data.cell.styles.fillColor = [245, 200, 0]
-          data.cell.styles.fontStyle = 'bold'
-        } else if (v === 'PENDIENTE') data.cell.styles.textColor = [120, 120, 120]
-      }
-    },
   })
 
   // Pie de página
