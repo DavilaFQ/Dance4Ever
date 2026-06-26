@@ -220,7 +220,7 @@ export default function ProgramaTab() {
                     rendered.push(
                       <div key={`intermedio-${globalIdx}`} className="flex items-center justify-center gap-2 p-2 rounded-lg bg-amber-500/10 border border-dashed border-amber-500/30 select-none">
                         <Award className="w-3.5 h-3.5 text-amber-400" />
-                        <span className="font-display text-[10px] tracking-wider text-amber-400 uppercase font-bold">Premiacion Intermedia</span>
+                        <span className="font-display text-[10px] tracking-wider text-amber-400 uppercase font-bold">Bloque 1</span>
                       </div>
                     )
                   }

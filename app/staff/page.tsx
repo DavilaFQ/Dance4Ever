@@ -11,6 +11,7 @@ import PortalLockout from '@/components/PortalLockout'
 export default function StaffPage() {
   const [event, setEvent] = useState<Event | null>(null)
   const [participants, setParticipants] = useState<Participant[]>([])
+  const [intermedioIndex, setIntermedioIndex] = useState<number | null>(null)
   const [qrUrl, setQrUrl] = useState('')
   const [presentadorQrUrl, setPresentadorQrUrl] = useState('')
   const [programaQrUrl, setProgramaQrUrl] = useState('')
@@ -196,6 +197,12 @@ export default function StaffPage() {
       .channel('staff-' + event.id)
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'events', filter: `id=eq.${event.id}` },
         (payload) => setEvent(payload.new as Event))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'program_drafts', filter: `event_id=eq.${event.id}` },
+        async (payload) => {
+          if (payload.new && 'intermedio_index' in payload.new) {
+            setIntermedioIndex(payload.new.intermedio_index ?? null)
+          }
+        })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'participants', filter: `event_id=eq.${event.id}` },
         (payload) => {
           if (payload.eventType === 'UPDATE') {
@@ -342,6 +349,13 @@ export default function StaffPage() {
         setOnDeckInput(data.on_deck_count)
         loadParticipants(data.id)
         generateQr(data.id)
+        
+        const { data: draftData } = await supabase
+          .from('program_drafts')
+          .select('intermedio_index')
+          .eq('event_id', data.id)
+          .maybeSingle()
+        setIntermedioIndex(draftData?.intermedio_index ?? null)
       } else {
         setErrorState('No events returned from database.')
       }
@@ -662,6 +676,15 @@ export default function StaffPage() {
                       let lastSubgroup = ''
 
                       displayParticipants.forEach(p => {
+                        const isIntermedioPos = intermedioIndex !== null && p.position === intermedioIndex + 1
+                        if (isIntermedioPos) {
+                          rendered.push(
+                            <div key={`intermedio-${p.position}`} className="flex items-center justify-center gap-2 py-3 px-4 my-3 rounded-xl bg-amber-500/10 border border-dashed border-amber-500/30 select-none">
+                              <Award className="w-4 h-4 text-amber-400 animate-pulse" />
+                              <span className="font-display text-xs tracking-[0.2em] text-amber-400 uppercase font-bold">Bloque 1</span>
+                            </div>
+                          )
+                        }
                         const cat = p.category ? p.category.split('|')[0].trim().toUpperCase() : 'OPEN'
                         const mod = p.type ? p.type.toUpperCase() : ''
                         const styleLabel = p.style ? p.style.toUpperCase() : ''

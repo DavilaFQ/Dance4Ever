@@ -2,7 +2,7 @@
 import { useEffect, useState, use, useCallback, useRef } from 'react'
 import Image from 'next/image'
 import { supabase, Participant, Event, Coach } from '@/lib/supabase'
-import { ChevronLeft, X, MessageSquare, ShieldAlert, Shirt, HelpCircle, UserCheck, Star, HeartPulse, Search } from 'lucide-react'
+import { ChevronLeft, X, MessageSquare, ShieldAlert, Shirt, HelpCircle, UserCheck, Star, HeartPulse, Search, Award } from 'lucide-react'
 import { participantMatches } from '@/lib/search'
 import { getAvgPerTurnMs, etaLabel } from '@/lib/eta'
 import { syncServerTime, serverNow } from '@/lib/serverTime'
@@ -17,6 +17,7 @@ export default function CoachPage({ params }: Props) {
   const { eventId } = use(params)
   const [event, setEvent] = useState<Event | null>(null)
   const [participants, setParticipants] = useState<Participant[]>([])
+  const [intermedioIndex, setIntermedioIndex] = useState<number | null>(null)
   const [coaches, setCoaches] = useState<Coach[]>([])
   const [coachId, setCoachId] = useState<string | null>(null)
   const [showOnlyMine, setShowOnlyMine] = useState(false)
@@ -125,14 +126,20 @@ export default function CoachPage({ params }: Props) {
   }, [])
 
   const loadAll = useCallback(async () => {
-    const [ev, ps, cs] = await Promise.all([
+    const [ev, ps, cs, draftData] = await Promise.all([
       supabase.from('events').select('*').eq('id', eventId).single(),
       supabase.from('participants').select('*').eq('event_id', eventId).order('position'),
       supabase.from('coaches').select('*').eq('event_id', eventId).order('name'),
+      supabase.from('program_drafts').select('intermedio_index').eq('event_id', eventId).maybeSingle(),
     ])
     if (ev.data) setEvent(ev.data)
     if (ps.data) setParticipants(ps.data)
     if (cs.data) setCoaches(cs.data)
+    if (draftData && draftData.data) {
+      setIntermedioIndex(draftData.data.intermedio_index ?? null)
+    } else {
+      setIntermedioIndex(null)
+    }
   }, [eventId])
 
   useEffect(() => {
@@ -150,6 +157,8 @@ export default function CoachPage({ params }: Props) {
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'events', filter: `id=eq.${eventId}` },
         (payload) => setEvent(payload.new as Event))
       .on('postgres_changes', { event: '*', schema: 'public', table: 'participants', filter: `event_id=eq.${eventId}` },
+        () => loadAll())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'program_drafts', filter: `event_id=eq.${eventId}` },
         () => loadAll())
       .subscribe()
     return () => { supabase.removeChannel(channel) }
@@ -615,6 +624,15 @@ export default function CoachPage({ params }: Props) {
                         let lastSubgroup = ''
 
                         displayParticipants.forEach(p => {
+                          const isIntermedioPos = intermedioIndex !== null && p.position === intermedioIndex + 1
+                          if (isIntermedioPos) {
+                            rendered.push(
+                              <div key={`intermedio-${p.position}`} className="flex items-center justify-center gap-2 py-3 px-4 my-3 rounded-xl bg-amber-500/10 border border-dashed border-amber-500/30 select-none">
+                                <Award className="w-4 h-4 text-amber-400 animate-pulse" />
+                                <span className="font-display text-xs tracking-[0.2em] text-amber-400 uppercase font-bold">Bloque 1</span>
+                              </div>
+                            )
+                          }
                           const cat = p.category ? p.category.split('|')[0].trim().toUpperCase() : 'OPEN'
                           const mod = p.type ? p.type.toUpperCase() : ''
                           const styleLabel = p.style ? p.style.toUpperCase() : ''

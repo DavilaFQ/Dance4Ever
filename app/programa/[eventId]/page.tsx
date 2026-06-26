@@ -89,6 +89,7 @@ export default function PublicProgramPage({ params }: Props) {
   const { eventId } = use(params)
   const [event, setEvent] = useState<Event | null>(null)
   const [participants, setParticipants] = useState<Participant[]>([])
+  const [intermedioIndex, setIntermedioIndex] = useState<number | null>(null)
   const [loading, setLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
 
@@ -301,10 +302,11 @@ export default function PublicProgramPage({ params }: Props) {
   // Load data function
   const loadAll = useCallback(async () => {
     try {
-      const [ev, ps, supportData] = await Promise.all([
+      const [ev, ps, supportData, draftData] = await Promise.all([
         supabase.from('events').select('*').eq('id', eventId).single(),
         supabase.from('participants').select('*').eq('event_id', eventId).order('position'),
-        supabase.from('event_checklist').select('text, notes').eq('event_id', eventId).eq('category', 'team_support')
+        supabase.from('event_checklist').select('text, notes').eq('event_id', eventId).eq('category', 'team_support'),
+        supabase.from('program_drafts').select('intermedio_index').eq('event_id', eventId).maybeSingle()
       ])
       if (ev.error || !ev.data) {
         setNotFound(true)
@@ -314,6 +316,11 @@ export default function PublicProgramPage({ params }: Props) {
       setEvent(ev.data)
       if (ps.data) {
         setParticipants(ps.data)
+      }
+      if (draftData && draftData.data) {
+        setIntermedioIndex(draftData.data.intermedio_index ?? null)
+      } else {
+        setIntermedioIndex(null)
       }
       if (supportData.data) {
         const scores: Record<string, number> = {}
@@ -358,6 +365,9 @@ export default function PublicProgramPage({ params }: Props) {
         }
       )
       .on('postgres_changes', { event: '*', schema: 'public', table: 'participants', filter: `event_id=eq.${eventId}` },
+        () => loadAll()
+      )
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'program_drafts', filter: `event_id=eq.${eventId}` },
         () => loadAll()
       )
       .on('postgres_changes', { event: '*', schema: 'public', table: 'event_checklist', filter: `event_id=eq.${eventId}` },
@@ -915,6 +925,15 @@ export default function PublicProgramPage({ params }: Props) {
                 let lastSubgroup = ''
 
                 filteredParticipants.forEach(p => {
+                  const isIntermedioPos = intermedioIndex !== null && p.position === intermedioIndex + 1
+                  if (isIntermedioPos) {
+                    rendered.push(
+                      <div key={`intermedio-${p.position}`} className="flex items-center justify-center gap-2 py-3 px-4 my-3 rounded-xl bg-amber-500/10 border border-dashed border-amber-500/30 select-none">
+                        <Award className="w-4 h-4 text-amber-400 animate-pulse" />
+                        <span className="font-display text-xs tracking-[0.2em] text-amber-400 uppercase font-bold">Bloque 1</span>
+                      </div>
+                    )
+                  }
                   const cat = p.category ? p.category.split('|')[0].trim().toUpperCase() : 'OPEN'
                   const mod = p.type ? p.type.toUpperCase() : ''
                   const styleLabel = p.style ? p.style.toUpperCase() : ''

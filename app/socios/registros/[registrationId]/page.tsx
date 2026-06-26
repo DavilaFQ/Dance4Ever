@@ -172,6 +172,7 @@ export default function RegistrationDetailPage({ registrationIdProp, onBack }: {
   const [isSaving, setIsSaving] = useState(false)
 
   const [editingDancer, setEditingDancer] = useState<RegistrationDancer | null>(null)
+  const [showAddDancerForm, setShowAddDancerForm] = useState(false)
   const [dancerName, setDancerName] = useState('')
   const [dancerBirthdate, setDancerBirthdate] = useState('')
   const [dancerCategoryManual, setDancerCategoryManual] = useState(false)
@@ -702,28 +703,37 @@ export default function RegistrationDetailPage({ registrationIdProp, onBack }: {
 
       {/* Integrantes */}
       <Section title={`Integrantes (${dancers.length})`}>
-        <button onClick={() => { setEditingDancer(null); setDancerName(''); setDancerBirthdate('') }}
+        <button onClick={() => { setEditingDancer(null); setShowAddDancerForm(prev => !prev); setDancerName(''); setDancerBirthdate('') }}
           className="flex items-center gap-1.5 text-xs text-fuchsia-400 font-bold mb-3 hover:text-fuchsia-300">
           <Plus className="w-3.5 h-3.5" /> Agregar integrante
         </button>
 
-        {(dancerName || dancerBirthdate) && !editingDancer && (
+        {showAddDancerForm && !editingDancer && (
           <div className="mb-3 p-3 rounded-xl bg-neutral-800/60 border border-neutral-700/50 space-y-2">
             <div className="grid grid-cols-2 gap-2">
               <input value={dancerName} onChange={e => setDancerName(e.target.value)} placeholder="Nombre completo" className="w-full px-3 py-2 bg-neutral-700/50 rounded-lg border border-neutral-600 text-sm text-white focus:outline-none focus:border-fuchsia-500 placeholder-neutral-500" />
               <input type="date" value={dancerBirthdate} onChange={e => setDancerBirthdate(e.target.value)} className="w-full px-3 py-2 bg-neutral-700/50 rounded-lg border border-neutral-600 text-sm text-white focus:outline-none focus:border-fuchsia-500" />
             </div>
-            <button onClick={async () => {
-              if (!dancerName || !dancerBirthdate) return
-              const cat = categoryFromBirthdate(dancerBirthdate)
-              const lastIdx = dancers.reduce((m, d) => Math.max(m, d.order_idx), -1)
-              const { error } = await supabase.from('registration_dancers').insert({
-                registration_id: reg.id, name: dancerName, birthdate: dancerBirthdate,
-                category: cat, category_manual: false, order_idx: lastIdx + 1,
-              })
-              if (error) alert('Error: ' + error.message)
-              else { await logEdit(reg.id, { entity_type: 'dancer', action: 'create', changes: { name: { old: null, new: dancerName }, birthdate: { old: null, new: dancerBirthdate } } }); setDancerName(''); setDancerBirthdate(''); loadData() }
-            }} className="px-3 py-1.5 bg-fuchsia-500 text-white font-bold text-xs rounded-lg active:scale-95">AGREGAR</button>
+            <div className="flex gap-2">
+              <button onClick={async () => {
+                if (!dancerName || !dancerBirthdate) return
+                const cat = categoryFromBirthdate(dancerBirthdate)
+                const lastIdx = dancers.reduce((m, d) => Math.max(m, d.order_idx), -1)
+                const { error } = await supabase.from('registration_dancers').insert({
+                  registration_id: reg.id, name: dancerName, birthdate: dancerBirthdate,
+                  category: cat, category_manual: false, order_idx: lastIdx + 1,
+                })
+                if (error) alert('Error: ' + error.message)
+                else { 
+                  await logEdit(reg.id, { entity_type: 'dancer', action: 'create', changes: { name: { old: null, new: dancerName }, birthdate: { old: null, new: dancerBirthdate } } })
+                  setDancerName('')
+                  setDancerBirthdate('')
+                  setShowAddDancerForm(false)
+                  loadData() 
+                }
+              }} className="px-3 py-1.5 bg-fuchsia-500 text-white font-bold text-xs rounded-lg active:scale-95">AGREGAR</button>
+              <button onClick={() => { setShowAddDancerForm(false); setDancerName(''); setDancerBirthdate('') }} className="px-3 py-1.5 bg-black hover:bg-neutral-900 border border-neutral-800 text-white text-xs rounded-lg">Cancelar</button>
+            </div>
           </div>
         )}
 
@@ -795,6 +805,7 @@ export default function RegistrationDetailPage({ registrationIdProp, onBack }: {
                       <span className="text-xs font-bold text-green-400">{formatMoney(cost)}</span>
                       <button onClick={() => {
                         setEditingDancer(d)
+                        setShowAddDancerForm(false)
                         setDancerName(d.name)
                         setDancerBirthdate(d.birthdate)
                         setDancerCategoryManual(!!d.category_manual)

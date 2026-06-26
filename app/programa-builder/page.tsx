@@ -1186,7 +1186,7 @@ export default function StandaloneBuilderPage() {
                       activeId === INTERMEDIO_ID ? (
                         <div className="bg-amber-500 border-2 border-black rounded-none px-4 py-3 opacity-90 shadow-2xl">
                           <Award className="w-5 h-5 text-white inline-block mr-2" />
-                          <span className="font-display text-base tracking-wider text-white uppercase font-bold">Premiacion Intermedia</span>
+                          <span className="font-display text-base tracking-wider text-white uppercase font-bold">Bloque 1</span>
                         </div>
                       ) : (
                         (() => {
@@ -1466,7 +1466,7 @@ function IntermedioMarker({ isEditing }: { isEditing: boolean }) {
           <GripVertical className="w-5 h-5" />
         </button>
         <Award className="w-5 h-5 text-amber-600 shrink-0" />
-        <span className="font-display text-base tracking-[0.2em] text-amber-900 uppercase flex-1 text-center font-black italic">Premiacion Intermedia</span>
+        <span className="font-display text-base tracking-[0.2em] text-amber-900 uppercase flex-1 text-center font-black italic">Bloque 1</span>
         <Award className="w-5 h-5 text-amber-600 shrink-0" />
       </div>
     </div>
