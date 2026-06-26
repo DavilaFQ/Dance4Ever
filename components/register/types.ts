@@ -60,6 +60,7 @@ export const CATEGORY_COLORS: Record<AgeCategory, { bg: string; border: string; 
   senior: { bg: 'bg-teal-100', border: 'border-teal-300 focus-within:border-teal-500', text: 'text-teal-700' },
   college: { bg: 'bg-indigo-100', border: 'border-indigo-300 focus-within:border-indigo-500', text: 'text-indigo-700' },
   open: { bg: 'bg-purple-100', border: 'border-purple-300 focus-within:border-purple-500', text: 'text-purple-700' },
+  allstar: { bg: 'bg-violet-100', border: 'border-violet-300 focus-within:border-violet-500', text: 'text-violet-700' },
 }
 
 export const DEFAULT_DANCER_COLOR = {

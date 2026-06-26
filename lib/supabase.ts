@@ -50,10 +50,10 @@ export type Event = {
 }
 
 export type Modality = 'solista' | 'dueto' | 'trio' | 'grupal'
-export type AgeCategory = 'tiny' | 'mini' | 'elementary' | 'junior' | 'senior' | 'college' | 'open'
+export type AgeCategory = 'tiny' | 'mini' | 'elementary' | 'junior' | 'senior' | 'college' | 'open' | 'allstar'
 export type Level = 'basico' | 'avanzado'
 
-export const AGE_CATEGORY_ORDER: AgeCategory[] = ['tiny', 'mini', 'elementary', 'junior', 'senior', 'college', 'open']
+export const AGE_CATEGORY_ORDER: AgeCategory[] = ['tiny', 'mini', 'elementary', 'junior', 'senior', 'college', 'open', 'allstar']
 
 export const AGE_CATEGORY_LABELS: Record<AgeCategory, string> = {
   tiny: 'Tiny',
@@ -63,6 +63,7 @@ export const AGE_CATEGORY_LABELS: Record<AgeCategory, string> = {
   senior: 'Senior',
   college: 'College',
   open: 'Open',
+  allstar: 'AllStar',
 }
 
 export const AGE_CATEGORY_HINTS: Record<AgeCategory, string> = {
@@ -73,6 +74,7 @@ export const AGE_CATEGORY_HINTS: Record<AgeCategory, string> = {
   senior: 'Preparatoria - 15-17 años',
   college: 'Universidad - 18-21 años',
   open: 'Mayores de 21 años',
+  allstar: 'Categoría Especial',
 }
 
 export function categoryFromAge(age: number): AgeCategory {

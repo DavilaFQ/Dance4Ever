@@ -50,6 +50,7 @@ const CATEGORY_COLORS: Record<AgeCategory, { bg: string; border: string; text: s
   senior:     { bg: 'bg-teal-50', border: 'border-teal-200', text: 'text-teal-700', badge: 'bg-teal-100 text-teal-800 border-teal-200', solidBg: 'bg-teal-100 border-teal-300 text-teal-800 font-bold' },
   college:    { bg: 'bg-blue-50', border: 'border-blue-200', text: 'text-blue-700', badge: 'bg-blue-100 text-blue-800 border-blue-200', solidBg: 'bg-blue-100 border-blue-300 text-blue-800 font-bold' },
   open:       { bg: 'bg-purple-50', border: 'border-purple-200', text: 'text-purple-700', badge: 'bg-purple-100 text-purple-800 border-purple-200', solidBg: 'bg-purple-100 border-purple-300 text-purple-800 font-bold' },
+  allstar:    { bg: 'bg-violet-50', border: 'border-violet-200', text: 'text-violet-700', badge: 'bg-violet-100 text-violet-800 border-violet-200', solidBg: 'bg-violet-100 border-violet-300 text-violet-800 font-bold' },
 }
 
 const MODALITY_ORDER: Modality[] = ['solista', 'dueto', 'trio', 'grupal']
