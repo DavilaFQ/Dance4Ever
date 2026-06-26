@@ -179,6 +179,7 @@ export default function RegistrationDetailPage({ registrationIdProp, onBack }: {
   const [dancerCategoryOverride, setDancerCategoryOverride] = useState<AgeCategory>('open')
 
   const [editingAct, setEditingAct] = useState<RegistrationAct | null>(null)
+  const [showAddActForm, setShowAddActForm] = useState(false)
   const [actModality, setActModality] = useState<Modality>('solista')
   const [actLevel, setActLevel] = useState<Level>('avanzado')
   const [actStyle, setActStyle] = useState('')
@@ -854,7 +855,7 @@ export default function RegistrationDetailPage({ registrationIdProp, onBack }: {
 
       {/* Coreografías */}
       <Section title={`Coreografías (${acts.length})`}>
-        <button onClick={() => { setEditingAct(null); setActModality('solista'); setActLevel('avanzado'); setActStyle(''); setActDancerIds([]) }}
+        <button onClick={() => { setEditingAct(null); setShowAddActForm(prev => !prev); setActModality('solista'); setActLevel('avanzado'); setActStyle(''); setActDancerIds([]) }}
           className="flex items-center gap-1.5 text-xs text-fuchsia-400 font-bold mb-3 hover:text-fuchsia-300">
           <Plus className="w-3.5 h-3.5" /> Agregar coreografía
         </button>
@@ -881,7 +882,7 @@ export default function RegistrationDetailPage({ registrationIdProp, onBack }: {
                       <p className="text-xs text-neutral-500 mt-1.5 truncate">{dancersInAct.length} integrante{dancersInAct.length !== 1 ? 's' : ''}: {dancersInAct.map(d => d.name).join(', ')}</p>
                     </div>
                     <div className="flex items-center gap-1 shrink-0 opacity-30 group-hover:opacity-100 transition-opacity">
-                      <button onClick={() => { setEditingAct(a); setActModality(a.modality); setActLevel(a.level || 'avanzado'); setActStyle(a.style || ''); setActDancerIds(a.dancer_ids) }}
+                      <button onClick={() => { setEditingAct(a); setShowAddActForm(false); setActModality(a.modality); setActLevel(a.level || 'avanzado'); setActStyle(a.style || ''); setActDancerIds(a.dancer_ids) }}
                         className="w-7 h-7 rounded-lg bg-neutral-700/50 text-neutral-400 flex items-center justify-center hover:text-white"><Edit3 className="w-3.5 h-3.5" /></button>
                       <button onClick={async () => {
                         if (!confirm('Eliminar esta coreografía?')) return
@@ -897,7 +898,7 @@ export default function RegistrationDetailPage({ registrationIdProp, onBack }: {
           </div>
         )}
 
-        {(editingAct !== undefined && (editingAct || (!editingAct && actStyle !== ''))) ? (
+        {(showAddActForm || editingAct) ? (
           <div className="mt-3 p-3 rounded-xl bg-neutral-800/60 border border-fuchsia-500/30 space-y-3">
             <p className="text-xs font-bold text-fuchsia-400 uppercase tracking-wider">{editingAct ? 'Editar Coreografía' : 'Nueva Coreografía'}</p>
             <div className="grid grid-cols-2 gap-2">
@@ -950,11 +951,11 @@ export default function RegistrationDetailPage({ registrationIdProp, onBack }: {
                   if (error) alert('Error: ' + error.message)
                   else await logEdit(reg.id, { entity_type: 'act', action: 'create', changes: { style: { old: null, new: actStyle }, modality: { old: null, new: actModality } } })
                 }
-                setEditingAct(null); setActStyle(''); setActDancerIds([]); loadData()
+                setEditingAct(null); setShowAddActForm(false); setActStyle(''); setActDancerIds([]); loadData()
               }} className="px-3 py-1.5 bg-fuchsia-500 text-white font-bold text-xs rounded-lg active:scale-95">
                 {editingAct ? 'GUARDAR' : 'AGREGAR'}
               </button>
-              <button onClick={() => { setEditingAct(null); setActStyle('') }} className="px-3 py-1.5 bg-black hover:bg-neutral-900 border border-neutral-800 text-white text-xs rounded-lg">Cancelar</button>
+              <button onClick={() => { setEditingAct(null); setShowAddActForm(false); setActStyle(''); setActDancerIds([]) }} className="px-3 py-1.5 bg-black hover:bg-neutral-900 border border-neutral-800 text-white text-xs rounded-lg">Cancelar</button>
             </div>
           </div>
         ) : null}
