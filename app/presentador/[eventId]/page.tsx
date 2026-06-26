@@ -770,7 +770,22 @@ export default function PresentadorPage({ params }: Props) {
           </div>
         )}
 
-        {event.awards_mode ? (
+        {isDancerOfYearActive ? (
+          <div className="flex-1 min-h-0 flex flex-col px-4 text-center bg-zinc-950 text-white z-10 justify-center animate-fade-in">
+            <div className="animate-pulse">
+              <Trophy className="w-16 h-16 text-yellow-400 mx-auto fill-yellow-400/20 animate-bounce mb-6" />
+              <p className="font-display text-5xl leading-none uppercase tracking-wide font-black bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 bg-clip-text text-transparent">Dancer del Año</p>
+              <p className="font-display text-2xl leading-none uppercase tracking-wide mt-4 font-black text-zinc-500">Pantalla Activa en Portales</p>
+            </div>
+            <button
+              onClick={toggleDancerOfYear}
+              disabled={isTogglingDancer}
+              className="mt-12 mx-auto px-6 py-3.5 bg-zinc-900 hover:bg-zinc-850 border border-zinc-800 rounded-xl font-display text-xs font-bold uppercase tracking-wider text-zinc-400 hover:text-white transition-colors active:scale-95 disabled:opacity-50"
+            >
+              Volver al Programa en Vivo
+            </button>
+          </div>
+        ) : event.awards_mode ? (
           <div className="flex-1 min-h-0 flex flex-col px-4 text-center bg-zinc-950 text-white z-10 justify-center">
             <div className="animate-pulse">
               <p className="font-display text-5xl leading-none uppercase tracking-wide font-black">Premiación</p>

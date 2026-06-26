@@ -862,8 +862,18 @@ export default function PublicProgramPage({ params }: Props) {
       {/* Main Body */}
       <main className="flex-1 flex flex-col relative z-10 px-0 pb-0">
         
-        {/* Awards mode banner or Live stage panel */}
-        {event.awards_mode ? (
+        {/* Dancer of the year takeover, Awards mode banner, or Live stage panel */}
+        {isDancerOfYearActive ? (
+          <div className="flex-1 flex flex-col items-center justify-center text-center bg-zinc-950 text-white z-10 py-20 px-6 animate-fade-in">
+            <Trophy className="w-20 h-20 text-yellow-400 fill-yellow-400/20 animate-bounce mb-6" />
+            <h2 className="font-display text-4xl font-black uppercase tracking-[0.15em] bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 bg-clip-text text-transparent leading-none">Dancer del Año</h2>
+            <p className="text-zinc-500 font-display text-sm uppercase tracking-widest mt-4 font-bold">Presentación Especial</p>
+            <div className="mt-12 max-w-sm">
+              <p className="text-zinc-300 text-sm font-semibold uppercase tracking-wider leading-relaxed">El escenario principal se viste de gala</p>
+              <p className="text-zinc-500 text-xs mt-2 leading-relaxed">Disfruta de la presentación especial del Dancer del Año. El programa en vivo se reanudará en breve.</p>
+            </div>
+          </div>
+        ) : event.awards_mode ? (
           <div className="py-6 px-4 flex flex-col items-center justify-center text-center gap-3 mt-2 shrink-0 animate-fade-in border-b border-yellow-500/20">
             <Award className="w-12 h-12 text-yellow-400 animate-bounce" />
             <div>
