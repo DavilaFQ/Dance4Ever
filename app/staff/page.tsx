@@ -12,6 +12,8 @@ export default function StaffPage() {
   const [event, setEvent] = useState<Event | null>(null)
   const [participants, setParticipants] = useState<Participant[]>([])
   const [actDancerCounts, setActDancerCounts] = useState<Map<number, number>>(new Map())
+  const [realtimeStatus, setRealtimeStatus] = useState<'CONNECTING' | 'SUBSCRIBED' | 'DISCONNECTED' | 'ERROR'>('CONNECTING')
+  const [reconnectTrigger, setReconnectTrigger] = useState(0)
   const [isDancerOfYearActive, setIsDancerOfYearActive] = useState(false)
   const [intermedioIndex, setIntermedioIndex] = useState<number | null>(null)
   const [qrUrl, setQrUrl] = useState('')
@@ -238,6 +240,7 @@ export default function StaffPage() {
 
   useEffect(() => {
       if (!event) return
+      setRealtimeStatus('CONNECTING')
       const channel = supabase
         .channel('staff-live-' + event.id)
         .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'events', filter: `id=eq.${event.id}` },
@@ -271,7 +274,16 @@ export default function StaffPage() {
               loadParticipants(event.id)
             }
           })
-        .subscribe()
+        .subscribe((status) => {
+          console.log("STAFF Live status:", status)
+          if (status === 'SUBSCRIBED') {
+            setRealtimeStatus('SUBSCRIBED')
+          } else if (status === 'CLOSED') {
+            setRealtimeStatus('DISCONNECTED')
+          } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+            setRealtimeStatus('ERROR')
+          }
+        })
 
       const checklistChannel = supabase
         .channel('staff-checklist-' + event.id)
@@ -288,7 +300,7 @@ export default function StaffPage() {
         supabase.removeChannel(channel)
         supabase.removeChannel(checklistChannel)
       }
-  }, [event?.id, loadParticipants])
+  }, [event?.id, loadParticipants, reconnectTrigger])
 
   // Subscribing to live broadcast channel for voiceovers and announcements
   useEffect(() => {
@@ -630,8 +642,34 @@ export default function StaffPage() {
           <div className="flex items-center gap-3 min-w-0 shrink-0">
             <Image src="/logo.png" alt="Dance4ever" width={42} height={29} priority className="shrink-0 opacity-90" />
             <div className="flex flex-col">
-              <h1 className="font-display text-lg tracking-[0.15em] text-white leading-none font-bold uppercase">STAFF</h1>
-              <span className="text-[9px] text-zinc-400 font-bold uppercase tracking-wider mt-0.5">Control de Bloque</span>
+              <h1 className="font-display text-lg tracking-[0.15em] text-white leading-none font-bold uppercase flex items-center gap-1.5">
+                STAFF
+                <div 
+                  className={`w-2.5 h-2.5 rounded-full shrink-0 ${
+                    realtimeStatus === 'SUBSCRIBED' ? 'bg-emerald-500 animate-pulse' :
+                    realtimeStatus === 'CONNECTING' ? 'bg-amber-500' :
+                    'bg-rose-500'
+                  }`}
+                  title={
+                    realtimeStatus === 'SUBSCRIBED' ? 'Sincronizado' :
+                    realtimeStatus === 'CONNECTING' ? 'Conectando...' :
+                    'Desconectado (Presiona para reconectar)'
+                  }
+                  onClick={() => setReconnectTrigger(p => p + 1)}
+                  style={{ cursor: 'pointer' }}
+                />
+              </h1>
+              <span className="text-[9px] text-zinc-400 font-bold uppercase tracking-wider mt-0.5 flex items-center gap-1">
+                Control de Bloque
+                {realtimeStatus !== 'SUBSCRIBED' && (
+                  <button 
+                    onClick={() => setReconnectTrigger(p => p + 1)}
+                    className="text-[8px] text-amber-400 underline uppercase ml-1 cursor-pointer bg-transparent border-none p-0"
+                  >
+                    Reconectar
+                  </button>
+                )}
+              </span>
             </div>
           </div>
           {event ? (

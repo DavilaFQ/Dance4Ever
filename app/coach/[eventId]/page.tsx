@@ -16,8 +16,10 @@ const STORAGE_KEY = (eventId: string) => `d4e:coach:${eventId}`
 export default function CoachPage({ params }: Props) {
   const { eventId } = use(params)
   const [event, setEvent] = useState<Event | null>(null)
-  const [isDancerOfYearActive, setIsDancerOfYearActive] = useState(false)
   const [participants, setParticipants] = useState<Participant[]>([])
+  const [realtimeStatus, setRealtimeStatus] = useState<'CONNECTING' | 'SUBSCRIBED' | 'DISCONNECTED' | 'ERROR'>('CONNECTING')
+  const [reconnectTrigger, setReconnectTrigger] = useState(0)
+  const [isDancerOfYearActive, setIsDancerOfYearActive] = useState(false)
   const [intermedioIndex, setIntermedioIndex] = useState<number | null>(null)
   const [coaches, setCoaches] = useState<Coach[]>([])
   const [coachId, setCoachId] = useState<string | null>(null)
@@ -154,6 +156,7 @@ export default function CoachPage({ params }: Props) {
   }, [eventId, loadAll])
 
   useEffect(() => {
+    setRealtimeStatus('CONNECTING')
     const channelId = `coach-live-${eventId}-${Math.random().toString(36).slice(2, 9)}`
     const channel = supabase
       .channel(channelId)
@@ -166,7 +169,16 @@ export default function CoachPage({ params }: Props) {
         () => loadAll())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'program_drafts', filter: `event_id=eq.${eventId}` },
         () => loadAll())
-      .subscribe()
+      .subscribe((status) => {
+        console.log("COACH Live status:", status)
+        if (status === 'SUBSCRIBED') {
+          setRealtimeStatus('SUBSCRIBED')
+        } else if (status === 'CLOSED') {
+          setRealtimeStatus('DISCONNECTED')
+        } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+          setRealtimeStatus('ERROR')
+        }
+      })
 
     const checklistChannelId = `coach-checklist-${eventId}-${Math.random().toString(36).slice(2, 9)}`
     const checklistChannel = supabase
@@ -184,7 +196,7 @@ export default function CoachPage({ params }: Props) {
       supabase.removeChannel(channel)
       supabase.removeChannel(checklistChannel)
     }
-  }, [eventId, loadAll])
+  }, [eventId, loadAll, reconnectTrigger])
 
   // Subscribing to live broadcast channel for voiceovers and announcements
   useEffect(() => {
@@ -525,14 +537,60 @@ export default function CoachPage({ params }: Props) {
             <button onClick={logout} className="flex items-center gap-1.5 min-w-0 flex-1 shrink text-left active:opacity-75 transition-opacity">
               <ChevronLeft className="w-7 h-7 text-neutral-400 shrink-0" />
               <div className="flex flex-col min-w-0">
-                <h1 className="font-display text-lg tracking-[0.1em] text-white truncate uppercase leading-none font-bold">
+                <h1 className="font-display text-lg tracking-[0.1em] text-white truncate uppercase leading-none font-bold flex items-center gap-1.5">
                   {myList.length > 0 && myList[0].academy ? myList[0].academy.split('(')[0].trim() : coach.name}
+                  <div 
+                    className={`w-2.5 h-2.5 rounded-full shrink-0 ${
+                      realtimeStatus === 'SUBSCRIBED' ? 'bg-emerald-500 animate-pulse' :
+                      realtimeStatus === 'CONNECTING' ? 'bg-amber-500' :
+                      'bg-rose-500'
+                    }`}
+                    title={
+                      realtimeStatus === 'SUBSCRIBED' ? 'Sincronizado' :
+                      realtimeStatus === 'CONNECTING' ? 'Conectando...' :
+                      'Desconectado (Presiona para reconectar)'
+                    }
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setReconnectTrigger(p => p + 1);
+                    }}
+                    style={{ cursor: 'pointer' }}
+                  />
                 </h1>
-                <span className="text-[9px] text-zinc-400 font-bold uppercase tracking-wider mt-0.5">Portal Coach</span>
+                <span className="text-[9px] text-zinc-400 font-bold uppercase tracking-wider mt-0.5 flex items-center gap-1">
+                  Portal Coach
+                  {realtimeStatus !== 'SUBSCRIBED' && (
+                    <span 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setReconnectTrigger(p => p + 1);
+                      }}
+                      className="text-[8px] text-amber-400 underline uppercase ml-1 cursor-pointer"
+                    >
+                      Reconectar
+                    </span>
+                  )}
+                </span>
               </div>
             </button>
           ) : (
-            <h1 className="flex-1 min-w-0 font-display text-2xl tracking-[0.15em] text-white truncate uppercase leading-none font-bold">COACH</h1>
+            <h1 className="flex-1 min-w-0 font-display text-2xl tracking-[0.15em] text-white truncate uppercase leading-none font-bold flex items-center gap-2">
+              COACH
+              <div 
+                className={`w-2.5 h-2.5 rounded-full shrink-0 ${
+                  realtimeStatus === 'SUBSCRIBED' ? 'bg-emerald-500 animate-pulse' :
+                  realtimeStatus === 'CONNECTING' ? 'bg-amber-500' :
+                  'bg-rose-500'
+                }`}
+                title={
+                  realtimeStatus === 'SUBSCRIBED' ? 'Sincronizado' :
+                  realtimeStatus === 'CONNECTING' ? 'Conectando...' :
+                  'Desconectado (Presiona para reconectar)'
+                }
+                onClick={() => setReconnectTrigger(p => p + 1)}
+                style={{ cursor: 'pointer' }}
+              />
+            </h1>
           )}
           {coach && (
             <div className="flex items-center gap-3.5 shrink-0">
