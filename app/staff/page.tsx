@@ -2,7 +2,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
 import Image from 'next/image'
 import { supabase, Participant, Event } from '@/lib/supabase'
-import { QrCode, X, Monitor, Settings, MessageSquare, AlertTriangle, Music, Volume2, Megaphone, Pause, Award, HeartPulse, Search, Trophy } from 'lucide-react'
+import { QrCode, X, Monitor, Settings, MessageSquare, AlertTriangle, Music, Volume2, Megaphone, Pause, Award, HeartPulse, Search, Trophy, Users } from 'lucide-react'
 import QRCode from 'qrcode'
 import { participantMatches } from '@/lib/search'
 import { subscribePortalConfig, PortalConfig, savePortalConfig } from '@/lib/portalConfig'
@@ -11,6 +11,7 @@ import PortalLockout from '@/components/PortalLockout'
 export default function StaffPage() {
   const [event, setEvent] = useState<Event | null>(null)
   const [participants, setParticipants] = useState<Participant[]>([])
+  const [actDancerCounts, setActDancerCounts] = useState<Map<number, number>>(new Map())
   const [isDancerOfYearActive, setIsDancerOfYearActive] = useState(false)
   const [intermedioIndex, setIntermedioIndex] = useState<number | null>(null)
   const [qrUrl, setQrUrl] = useState('')
@@ -192,6 +193,49 @@ export default function StaffPage() {
     }
   }, [])
 
+  const loadDancerCounts = useCallback(async (eventId: string) => {
+    try {
+      const { data: draftData } = await supabase
+        .from('program_drafts')
+        .select('act_order')
+        .eq('event_id', eventId)
+        .maybeSingle()
+
+      if (!draftData || !draftData.act_order) return
+      const actOrder = draftData.act_order as number[]
+
+      const { data: registrations } = await supabase
+        .from('coach_registrations')
+        .select('id')
+        .eq('event_id', eventId)
+
+      if (!registrations || registrations.length === 0) return
+      const regIds = registrations.map(r => r.id)
+
+      const { data: acts } = await supabase
+        .from('registration_acts')
+        .select('id, dancer_ids')
+        .in('registration_id', regIds)
+
+      if (!acts) return
+
+      const actMap = new Map<number, number>()
+      acts.forEach(act => {
+        actMap.set(act.id, (act.dancer_ids || []).length)
+      })
+
+      const countsMap = new Map<number, number>()
+      actOrder.forEach((actId, idx) => {
+        const count = actMap.get(actId) || 0
+        countsMap.set(idx + 1, count)
+      })
+
+      setActDancerCounts(countsMap)
+    } catch (err) {
+      console.error("Error loading dancer counts:", err)
+    }
+  }, [])
+
   useEffect(() => {
       if (!event) return
       const channel = supabase
@@ -203,6 +247,7 @@ export default function StaffPage() {
             if (payload.new && 'intermedio_index' in payload.new) {
               setIntermedioIndex(payload.new.intermedio_index ?? null)
             }
+            loadDancerCounts(event.id)
           })
         .on('postgres_changes', { event: '*', schema: 'public', table: 'event_checklist', filter: `event_id=eq.${event.id}` },
           (payload) => {
@@ -356,6 +401,7 @@ export default function StaffPage() {
         setEvent(data)
         setOnDeckInput(data.on_deck_count)
         loadParticipants(data.id)
+        loadDancerCounts(data.id)
         generateQr(data.id)
         
         const { data: chk } = await supabase
@@ -762,6 +808,7 @@ export default function StaffPage() {
                             p={p} 
                             variant={p.present === true ? 'green' : p.present === false ? 'red' : 'gray'} 
                             onClick={clickHandler}
+                            dancerCount={actDancerCounts.get(p.position)}
                           />
                         )
                       })
@@ -1121,7 +1168,7 @@ function formatSubtitle(p: Participant, includeAcademy: boolean = true): string 
   ].filter(Boolean).join(' · ')
 }
 
-function Pill({ p, variant, onClick }: { p: Participant, variant: 'green' | 'red' | 'gray' | 'done', onClick?: () => void }) {
+function Pill({ p, variant, onClick, dancerCount }: { p: Participant, variant: 'green' | 'red' | 'gray' | 'done', onClick?: () => void, dancerCount?: number }) {
   const bg =
     variant === 'green' ? 'boxless-item-green' :
     variant === 'red' ? 'boxless-item-red' :
@@ -1176,6 +1223,12 @@ function Pill({ p, variant, onClick }: { p: Participant, variant: 'green' | 'red
         <p className={`font-display text-xl uppercase break-words leading-tight ${titleColor}`}>{dancerName}</p>
         <p className={`font-display text-xs uppercase opacity-85 truncate mt-1 ${subtitleColor}`}>{subtitle}</p>
       </div>
+      {dancerCount !== undefined && dancerCount > 0 && (p.type || '').trim().toLowerCase() === 'grupal' && (
+        <div className="shrink-0 pr-4 flex items-center gap-1 text-zinc-500 font-display text-xs select-none">
+          <Users className="w-3.5 h-3.5 opacity-60" />
+          <span className="font-bold">{dancerCount}</span>
+        </div>
+      )}
     </div>
   )
 }

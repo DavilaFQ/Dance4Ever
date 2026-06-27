@@ -524,17 +524,21 @@ export default function PresentadorPage({ params }: Props) {
 
     setEvent(prev => prev ? { ...prev, current_position: next } : null)
 
-    await supabase.from('events').update({
-      current_position: next,
-    }).eq('id', event.id)
+    try {
+      await supabase.from('events').update({
+        current_position: next,
+      }).eq('id', event.id)
 
-    if (shouldSetStart) {
-      await supabase.rpc('set_started_at_now', { p_id: event.id })
+      if (shouldSetStart) {
+        await supabase.rpc('set_started_at_now', { p_id: event.id })
+      }
+    } catch (err) {
+      console.error("Failed database update in advance:", err)
+    } finally {
+      setTimeout(() => {
+        setIsAdvancing(false)
+      }, 600)
     }
-
-    setTimeout(() => {
-      setIsAdvancing(false)
-    }, 600)
   }
 
   async function toggleAwards() {
@@ -542,8 +546,13 @@ export default function PresentadorPage({ params }: Props) {
     setIsTogglingAwards(true)
     const next = !event.awards_mode
     setEvent(prev => prev ? { ...prev, awards_mode: next } : null)
-    await supabase.from('events').update({ awards_mode: next }).eq('id', event.id)
-    setTimeout(() => { setIsTogglingAwards(false) }, 1000)
+    try {
+      await supabase.from('events').update({ awards_mode: next }).eq('id', event.id)
+    } catch (err) {
+      console.error("Failed database update in toggleAwards:", err)
+    } finally {
+      setTimeout(() => { setIsTogglingAwards(false) }, 1000)
+    }
   }
 
   if (notFound) {
