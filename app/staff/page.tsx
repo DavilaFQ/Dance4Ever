@@ -239,9 +239,12 @@ export default function StaffPage() {
   useEffect(() => {
       if (!event) return
       const channel = supabase
-        .channel('staff-' + event.id)
+        .channel('staff-live-' + event.id)
         .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'events', filter: `id=eq.${event.id}` },
-          (payload) => setEvent(payload.new as Event))
+          (payload) => {
+            console.log("STAFF REALTIME UPDATE RECEIVED:", payload.new);
+            setEvent(payload.new as Event);
+          })
         .on('postgres_changes', { event: '*', schema: 'public', table: 'program_drafts', filter: `event_id=eq.${event.id}` },
           async (payload) => {
             if (payload.new && 'intermedio_index' in payload.new) {
@@ -249,6 +252,29 @@ export default function StaffPage() {
             }
             loadDancerCounts(event.id)
           })
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'participants', filter: `event_id=eq.${event.id}` },
+          (payload) => {
+            if (payload.eventType === 'UPDATE') {
+              const updated = payload.new as Participant
+              const pending = pendingUpdatesRef.current.get(updated.id)
+              
+              if (pending && Date.now() - pending.time < 2500) {
+                if (updated.present !== pending.present) {
+                  return
+                } else {
+                  pendingUpdatesRef.current.delete(updated.id)
+                }
+              }
+              
+              setParticipants(prev => prev.map(x => x.id === updated.id ? { ...x, present: updated.present } : x))
+            } else {
+              loadParticipants(event.id)
+            }
+          })
+        .subscribe()
+
+      const checklistChannel = supabase
+        .channel('staff-checklist-' + event.id)
         .on('postgres_changes', { event: '*', schema: 'public', table: 'event_checklist', filter: `event_id=eq.${event.id}` },
           (payload) => {
             const record = (payload.eventType === 'DELETE' ? payload.old : payload.new) as any
@@ -256,27 +282,12 @@ export default function StaffPage() {
               setIsDancerOfYearActive(payload.eventType !== 'DELETE' && !!record.completed)
             }
           })
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'participants', filter: `event_id=eq.${event.id}` },
-        (payload) => {
-          if (payload.eventType === 'UPDATE') {
-            const updated = payload.new as Participant
-            const pending = pendingUpdatesRef.current.get(updated.id)
-            
-            if (pending && Date.now() - pending.time < 2500) {
-              if (updated.present !== pending.present) {
-                return
-              } else {
-                pendingUpdatesRef.current.delete(updated.id)
-              }
-            }
-            
-            setParticipants(prev => prev.map(x => x.id === updated.id ? { ...x, present: updated.present } : x))
-          } else {
-            loadParticipants(event.id)
-          }
-        })
-      .subscribe()
-    return () => { supabase.removeChannel(channel) }
+        .subscribe()
+
+      return () => {
+        supabase.removeChannel(channel)
+        supabase.removeChannel(checklistChannel)
+      }
   }, [event?.id, loadParticipants])
 
   // Subscribing to live broadcast channel for voiceovers and announcements

@@ -154,15 +154,23 @@ export default function CoachPage({ params }: Props) {
   }, [eventId, loadAll])
 
   useEffect(() => {
-    const channelId = `coach-${eventId}-${Math.random().toString(36).slice(2, 9)}`
+    const channelId = `coach-live-${eventId}-${Math.random().toString(36).slice(2, 9)}`
     const channel = supabase
       .channel(channelId)
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'events', filter: `id=eq.${eventId}` },
-        (payload) => setEvent(payload.new as Event))
+        (payload) => {
+          console.log("COACH REALTIME UPDATE RECEIVED:", payload.new);
+          setEvent(payload.new as Event);
+        })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'participants', filter: `event_id=eq.${eventId}` },
         () => loadAll())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'program_drafts', filter: `event_id=eq.${eventId}` },
         () => loadAll())
+      .subscribe()
+
+    const checklistChannelId = `coach-checklist-${eventId}-${Math.random().toString(36).slice(2, 9)}`
+    const checklistChannel = supabase
+      .channel(checklistChannelId)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'event_checklist', filter: `event_id=eq.${eventId}` },
         (payload) => {
           const record = (payload.eventType === 'DELETE' ? payload.old : payload.new) as any
@@ -171,7 +179,11 @@ export default function CoachPage({ params }: Props) {
           }
         })
       .subscribe()
-    return () => { supabase.removeChannel(channel) }
+
+    return () => {
+      supabase.removeChannel(channel)
+      supabase.removeChannel(checklistChannel)
+    }
   }, [eventId, loadAll])
 
   // Subscribing to live broadcast channel for voiceovers and announcements
