@@ -35,18 +35,10 @@ export const viewport: Viewport = {
   themeColor: "#000000",
 };
 
-import PortalLockout from "@/components/PortalLockout";
-
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout() {
   return (
-    <html lang="es" className={`${geist.variable} ${bebas.variable} antialiased`}>
-      <body className="bg-black text-white overscroll-none">
-        <PortalLockout portalName="Acceso General" />
-      </body>
+    <html lang="es">
+      <body className="bg-black" style={{ backgroundColor: 'black' }} />
     </html>
   );
 }
