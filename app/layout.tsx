@@ -62,15 +62,15 @@ export default function RootLayout() {
             user-select: none;
           }
           .error-text {
-            font-family: var(--font-geist), sans-serif;
-            font-size: 24px;
-            font-weight: 800;
-            letter-spacing: 0.25em;
+            font-family: var(--font-bebas), sans-serif;
+            font-size: 36px;
+            font-weight: 400;
+            letter-spacing: 0.15em;
             color: #ef4444;
             text-shadow: 0 0 12px rgba(239, 68, 68, 0.7);
             animation: slow-pulse 3s infinite ease-in-out;
             user-select: none;
-            text-transform: lowercase;
+            text-transform: uppercase;
           }
         `}</style>
       </head>
