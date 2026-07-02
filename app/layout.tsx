@@ -38,7 +38,37 @@ export const viewport: Viewport = {
 export default function RootLayout() {
   return (
     <html lang="es">
-      <body className="bg-black" style={{ backgroundColor: 'black' }} />
+      <head>
+        <style>{`
+          @keyframes glitch {
+            0% { transform: translate(0) }
+            20% { transform: translate(-2px, 2px) }
+            40% { transform: translate(-2px, -2px) }
+            60% { transform: translate(2px, 2px) }
+            80% { transform: translate(2px, -2px) }
+            100% { transform: translate(0) }
+          }
+          @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+          }
+          .glitch-text {
+            animation: glitch 1s infinite steps(2);
+            text-shadow: -2px 0 #ff00c1, 2px 0 #00fff0;
+          }
+          .blink-text {
+            animation: blink 2.5s infinite;
+          }
+        `}</style>
+      </head>
+      <body className="bg-black text-white min-h-screen flex flex-col items-center justify-center font-mono select-none" style={{ backgroundColor: 'black' }}>
+        <div className="text-center space-y-4">
+          <div className="text-8xl font-bold glitch-text select-none">:(</div>
+          <div className="text-xs tracking-[0.4em] uppercase text-neutral-500 blink-text">
+            Página no disponible
+          </div>
+        </div>
+      </body>
     </html>
   );
 }
