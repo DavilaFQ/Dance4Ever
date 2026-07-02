@@ -40,31 +40,44 @@ export default function RootLayout() {
     <html lang="es">
       <head>
         <style>{`
-          @keyframes glitch {
-            0% { transform: translate(0) }
-            20% { transform: translate(-2px, 2px) }
-            40% { transform: translate(-2px, -2px) }
-            60% { transform: translate(2px, 2px) }
-            80% { transform: translate(2px, -2px) }
-            100% { transform: translate(0) }
+          @keyframes slow-pulse {
+            0%, 100% { opacity: 0.95; filter: drop-shadow(0 0 2px rgba(239, 68, 68, 0.3)); }
+            50% { opacity: 0.6; filter: drop-shadow(0 0 12px rgba(239, 68, 68, 0.8)); }
           }
-          @keyframes blink {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.4; }
+          @keyframes terminal-glitch {
+            0%, 94%, 98%, 100% { transform: scaleY(1) skewX(0deg); filter: brightness(1); }
+            95% { transform: scaleY(1.4) skewX(12deg) scaleX(0.9); filter: brightness(1.8) red; }
+            96% { transform: scaleY(0.7) skewX(-15deg) scaleX(1.1); filter: brightness(0.6); }
+            97% { transform: scaleY(1.1) skewX(4deg); filter: brightness(1.2); }
           }
-          .glitch-text {
-            animation: glitch 1s infinite steps(2);
-            text-shadow: -2px 0 #ff00c1, 2px 0 #00fff0;
+          .glitch-container {
+            animation: terminal-glitch 5s infinite;
           }
-          .blink-text {
-            animation: blink 2.5s infinite;
+          .sad-face {
+            font-size: 130px;
+            font-weight: 300;
+            color: #ef4444;
+            text-shadow: 0 0 20px rgba(239, 68, 68, 0.8);
+            animation: slow-pulse 3s infinite ease-in-out;
+            user-select: none;
+          }
+          .error-text {
+            font-size: 13px;
+            font-weight: bold;
+            letter-spacing: 0.6em;
+            color: #ef4444;
+            text-shadow: 0 0 10px rgba(239, 68, 68, 0.6);
+            animation: slow-pulse 3s infinite ease-in-out;
+            user-select: none;
           }
         `}</style>
       </head>
       <body className="bg-black text-white min-h-screen flex flex-col items-center justify-center font-mono select-none" style={{ backgroundColor: 'black' }}>
-        <div className="text-center space-y-4">
-          <div className="text-8xl font-bold glitch-text select-none">:(</div>
-          <div className="text-xs tracking-[0.4em] uppercase text-neutral-500 blink-text">
+        <div className="text-center glitch-container">
+          {/* Carita triste con mayor separación (margin-bottom: 48px / pb-12) */}
+          <div className="sad-face mb-12">:(</div>
+          {/* Texto en rojo y espaciado */}
+          <div className="error-text">
             Página no disponible
           </div>
         </div>
