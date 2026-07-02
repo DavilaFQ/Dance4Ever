@@ -78,7 +78,7 @@ export default function RootLayout() {
           <div className="sad-face mb-12">:(</div>
           {/* Texto en rojo y espaciado */}
           <div className="error-text">
-            Página no disponible
+            page not found
           </div>
         </div>
       </body>
